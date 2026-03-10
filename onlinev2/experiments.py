@@ -18,18 +18,17 @@ import subprocess
 import numpy as np
 from scipy import stats as scipy_stats
 
-from mvp import (
+from onlinev2.simulation import (
     run_simulation,
     run_all_tests,
-    profit,
-    raja_competitive_payout,
     unit_pinball_nonneg,
     unit_crps_nonneg,
     unit_crps_perfect_better,
     unit_crps_bound,
 )
-from payoff.scoring import crps_hat_from_quantiles
-from payoff.payoff import aggregate_forecast
+from onlinev2.mechanism.settlement import profit, raja_competitive_payout
+from onlinev2.mechanism.scoring import crps_hat_from_quantiles
+from onlinev2.mechanism.aggregation import aggregate_forecast
 from onlinev2.legacy_dgps import (
     generate_truth_and_reports_latent,
     generate_truth_and_quantile_reports_latent,
@@ -2298,8 +2297,8 @@ def run_behaviour_matrix(outdir="outputs", seed=42, block="behaviour", write_sum
     from onlinev2.behaviour.adversaries.manipulator import ManipulatorBehaviour
     from onlinev2.behaviour.adversaries.collusion import CollusionGroupBehaviour
     from onlinev2.behaviour.adversaries.insider import InsiderBehaviour
-    from onlinev2.core.types import MechanismParams, MechanismState
-    from onlinev2.core.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
     from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "behaviour_matrix", block)
@@ -2446,8 +2445,8 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.policies.reporting import TruthfulReporting, HedgedReporting
     from onlinev2.behaviour.policies.staking import FixedFractionStaking
-    from onlinev2.core.types import MechanismParams, MechanismState
-    from onlinev2.core.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
     from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "preference_stress_test", block)
@@ -2569,8 +2568,8 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
         BaselineParticipation, BurstyParticipation,
         EdgeThresholdParticipation, AvoidSkillDecayParticipation,
     )
-    from onlinev2.core.types import MechanismParams, MechanismState
-    from onlinev2.core.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
     from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "intermittency_stress_test", block)
@@ -2702,8 +2701,8 @@ def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summa
     from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour
-    from onlinev2.core.types import MechanismParams, MechanismState
-    from onlinev2.core.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
     from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "arbitrage_scan", block)
@@ -2794,8 +2793,8 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.evader import AdaptiveEvaderBehaviour
     from onlinev2.behaviour.adversaries.manipulator import ManipulatorBehaviour
-    from onlinev2.core.types import MechanismParams, MechanismState
-    from onlinev2.core.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
     from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "detection_adaptation", block)

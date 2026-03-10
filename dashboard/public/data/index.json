@@ -1,0 +1,156 @@
+[
+  {
+    "name": "skill_wager",
+    "displayName": "Skill × Wager",
+    "description": "Tests the interaction between online skill learning and deposit-driven effective wagers across agents with different forecast quality.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 3,
+    "rounds": 50,
+    "dataFiles": { "timeseries": "timeseries.csv", "summary": "summary.csv" }
+  },
+  {
+    "name": "forecast_aggregation",
+    "displayName": "Forecast Aggregation",
+    "description": "Compares aggregate forecast quality across weighting rules: uniform, deposit-only, skill-only, and the full mechanism.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 500,
+    "dataFiles": { "crps_timeseries": "crps_timeseries.csv" }
+  },
+  {
+    "name": "behaviour_matrix",
+    "displayName": "Behaviour Matrix",
+    "description": "Holds the mechanism fixed and varies only behaviour modules: benign baselines, realistic frictions, and adversaries.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 200,
+    "dataFiles": { "behaviour_matrix": "behaviour_matrix.csv" }
+  },
+  {
+    "name": "parameter_sweep",
+    "displayName": "Parameter Sweep",
+    "description": "Sweeps over λ and σ_min to map the Pareto frontier between forecast quality and concentration.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 500,
+    "dataFiles": { "sweep": "sweep.csv" }
+  },
+  {
+    "name": "calibration",
+    "displayName": "Calibration",
+    "description": "Evaluates the calibration of the aggregate forecast by checking quantile coverage against nominal levels.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 300,
+    "dataFiles": { "reliability": "reliability.csv" }
+  },
+  {
+    "name": "settlement_sanity",
+    "displayName": "Settlement Sanity",
+    "description": "Verifies that the settlement mechanism is budget-balanced and payouts are non-negative.",
+    "block": "core",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 500,
+    "dataFiles": { "series": "series.csv", "summary": "summary.csv", "hist": "hist.csv" }
+  },
+  {
+    "name": "fixed_deposit",
+    "displayName": "Fixed Deposit",
+    "description": "Examines skill evolution when all agents make identical fixed deposits each round.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 4,
+    "rounds": 200,
+    "dataFiles": { "timeseries": "timeseries.csv" }
+  },
+  {
+    "name": "intermittency_stress_test",
+    "displayName": "Intermittency Stress",
+    "description": "Compares IID vs bursty vs edge-threshold vs avoid-skill-decay participation.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 200,
+    "dataFiles": { "intermittency_stress": "intermittency_stress.csv" }
+  },
+  {
+    "name": "sybil",
+    "displayName": "Sybil Attack",
+    "description": "Tests whether sybil splitting gains an advantage under the mechanism.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 200,
+    "dataFiles": { "sybil": "sybil.csv" }
+  },
+  {
+    "name": "arbitrage_scan",
+    "displayName": "Arbitrage Scan",
+    "description": "Runs arbitrageurs across a parameter grid to see when arbitrage appears and whether it dominates wealth.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 150,
+    "dataFiles": { "arbitrage_scan": "arbitrage_scan.csv" }
+  },
+  {
+    "name": "weight_learning",
+    "displayName": "Weight Learning",
+    "description": "Tests whether online learning converges to the correct weights for a mixture DGP.",
+    "block": "experiments",
+    "dgp": "aggregation_method1",
+    "scoringMode": "CRPS",
+    "nAgents": 3,
+    "rounds": 20000,
+    "dataFiles": { "summary": "summary.json", "config": "config.json" }
+  },
+  {
+    "name": "skill_recovery",
+    "displayName": "Skill Recovery",
+    "description": "Tests whether skill estimates recover after perturbation across CRPS and MAE scoring.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 500,
+    "dataFiles": { "quantiles_crps_summary": "quantiles_crps_summary.csv", "point_mae_summary": "point_mae_summary.csv" }
+  },
+  {
+    "name": "detection_adaptation",
+    "displayName": "Detection & Adaptation",
+    "description": "Compares a fixed manipulator with an adaptive evader that balances manipulation with detector evasion.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 150,
+    "dataFiles": { "detection_adaptation": "detection_adaptation.csv" }
+  },
+  {
+    "name": "deposit_policy_comparison",
+    "displayName": "Deposit Policy Comparison",
+    "description": "Compares deposit policies to understand their effect on market concentration and forecast quality.",
+    "block": "experiments",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 200,
+    "dataFiles": { "deposit_policy_comparison": "deposit_policy_comparison.csv" }
+  }
+]

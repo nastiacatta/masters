@@ -17,8 +17,8 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _root)
 sys.path.insert(0, os.path.join(_root, "src"))
 
-from onlinev2.core.types import MechanismParams, MechanismState
-from onlinev2.core.runner import run_round
+from onlinev2.mechanism.models import MechanismParams, MechanismState
+from onlinev2.mechanism.runner import run_round
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState
 from onlinev2.behaviour.traits import UserTraits, generate_population
 from onlinev2.behaviour.population import build_population
@@ -50,8 +50,8 @@ class TestCoreBehaviourSeparation:
 
     def test_core_does_not_import_behaviour(self):
         """core.runner and core.types must not depend on the behaviour package."""
-        import onlinev2.core.runner as runner_mod
-        import onlinev2.core.types as types_mod
+        import onlinev2.mechanism.runner as runner_mod
+        import onlinev2.mechanism.models as types_mod
         for mod in (runner_mod, types_mod):
             for name in dir(mod):
                 if name.startswith("_"):
@@ -59,9 +59,9 @@ class TestCoreBehaviourSeparation:
                 obj = getattr(mod, name)
                 if hasattr(obj, "__module__") and obj.__module__:
                     assert "onlinev2.behaviour" not in obj.__module__, (
-                        f"core module {mod.__name__} has attribute {name} from behaviour: {obj.__module__}"
+                        f"mechanism module {mod.__name__} has attribute {name} from behaviour: {obj.__module__}"
                     )
-        # Runner must use AgentInput from core.types, not AgentAction from behaviour
+        # Runner must use AgentInput from mechanism.models, not AgentAction from behaviour
         import inspect
         runner_source = inspect.getsource(runner_mod.run_round)
         assert "from onlinev2.behaviour" not in runner_source
@@ -223,7 +223,7 @@ class TestUnseenAccountInitialisation:
 
     def test_unseen_account_gets_initialised(self):
         """Introduce a previously unseen account id in round 2; assert wealth, ewma_loss, sigma."""
-        from onlinev2.core.runner import run_round
+        from onlinev2.mechanism.runner import run_round
 
         params = MechanismParams(scoring_mode="point_mae")
         state = MechanismState()
@@ -258,7 +258,7 @@ class TestUnseenAccountInitialisation:
 
     def test_unseen_account_non_participating(self):
         """Unseen account that does not participate still appears in state with zero exposure."""
-        from onlinev2.core.runner import run_round
+        from onlinev2.mechanism.runner import run_round
 
         params = MechanismParams(scoring_mode="point_mae")
         state = MechanismState()

@@ -51,7 +51,7 @@ class ArbitrageurBehaviour:
         self.arbitrage_log.clear()
 
     def act(self, state: RoundPublicState) -> List[AgentAction]:
-        from payoff.scoring import score_mae, score_crps_hat
+        from onlinev2.mechanism.scoring import score_mae, score_crps_hat
 
         assert self._rng is not None
 

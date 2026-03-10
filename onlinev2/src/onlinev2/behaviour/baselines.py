@@ -189,7 +189,7 @@ class BankrollBehaviour:
         self._prev_q = None
 
     def act(self, state: RoundPublicState) -> List[AgentAction]:
-        from online_algorithms.staking import confidence_from_quantiles, choose_deposits
+        from onlinev2.mechanism.staking import confidence_from_quantiles, choose_deposits
 
         assert self._rng is not None
         t = state.t

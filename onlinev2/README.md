@@ -240,7 +240,7 @@ Each round follows five steps:
 1. **Confidence proxy** (A): Quantile width in probit space → bounded multiplier `c_i ∈ [c_min, c_max]`
 2. **Deposit** (B): `b_i = min(W_i, b_max, f · W_i · c_i)` — proportional to wealth and confidence
 3. **Skill gate** (C): `m_i = b_i · (λ + (1-λ) · σ_i^η)` — power-law gating crushes low-skill wagers
-4. **Weight cap** (D): Cap aggregation shares at `ω_max`, renormalise (preserves budget)
+4. **Weight cap** (D): Project aggregation shares onto the simplex with upper bound `ω_max` (preserves budget; no share exceeds `ω_max` after projection)
 5. **Wealth update** (E): `W_{i,t+1} = max(0, W_{i,t} + π_{i,t})`
 
 Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` (base fraction), `omega_max` (cap), `beta_c` (confidence steepness).
@@ -274,9 +274,9 @@ Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` 
 
 ### Scoring rules
 
-- **Point/MAE**: `s = 1 - |y - r|`, bounded in [0,1] for y, r ∈ [0,1].
-- **Quantiles/CRPS-hat**: `s = 1 - Ĉ/2`, where `Ĉ = (2/K) Σ_k L^{τ_k}`. Bounded in [0,1] since Ĉ ∈ [0,2].
-- Both are **strictly proper** and satisfy Lambert's `s ∈ [0,1]` requirement.
+- **Point/MAE** (`point_mae`): elicits a **median-type** point forecast. `s = 1 - |y - r|`, bounded in [0,1] for y, r ∈ [0,1]. MAE is strictly proper for the median (Lambert-style absolute-loss); use for point reports, not probability forecasts.
+- **Quantiles/CRPS-hat** (`quantiles_crps`): elicits **probabilistic** forecasts. `s = 1 - Ĉ/2`, where `Ĉ = (2/K) Σ_k L^{τ_k}`. Bounded in [0,1] since Ĉ ∈ [0,2]. CRPS is strictly proper for probabilistic forecasts; Brier and log score are standard for probability forecasts.
+- Both modes satisfy Lambert's `s ∈ [0,1]` requirement.
 
 ### Quantile averaging (QA)
 

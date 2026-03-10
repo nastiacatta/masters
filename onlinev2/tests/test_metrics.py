@@ -10,7 +10,7 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _root)
 sys.path.insert(0, os.path.join(_root, "src"))
 
-from onlinev2.core.metrics import (
+from onlinev2.mechanism.metrics import (
     compute_hhi,
     compute_n_eff,
     compute_gini,
