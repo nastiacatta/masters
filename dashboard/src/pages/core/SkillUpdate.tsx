@@ -16,18 +16,14 @@ export default function SkillUpdate() {
             <SectionLabel type="mechanism_computation" />
             EWMA loss
           </h3>
-          <MathBlock accent label="Loss update (present agents)">
-            L_{'_{i,t}'} = (1 − ρ) L_{'_{i,t−1}'} + ρ · ℓ_{'_{i,t}'}
-          </MathBlock>
+          <MathBlock accent label="Loss update (present agents)" latex="L_{i,t} = (1 - \rho) L_{i,t-1} + \rho \cdot \ell_{i,t}" />
           <p className="text-xs text-slate-500 mt-2">
-            ℓ_{'_{i,t}'} is normalised loss (e.g. MAE or CRPS-hat/2). When κ &gt; 0 and agent is absent: L reverts toward L0 (staleness).
+            <MathBlock inline latex="\ell_{i,t}" /> is normalised loss (e.g. MAE or CRPS-hat/2). When κ &gt; 0 and agent is absent: L reverts toward L₀ (staleness).
           </p>
         </div>
 
         <div>
-          <MathBlock label="Loss to skill (next round’s σ)" accent>
-            σ_{'_{i,t+1}'} = σ_min + (1 − σ_min) · e^{'^{-γ L_{i,t}}'}
-          </MathBlock>
+          <MathBlock label="Loss to skill (next round’s σ)" accent latex="\sigma_{i,t+1} = \sigma_{\min} + (1 - \sigma_{\min}) \, e^{-\gamma L_{i,t}}" />
           <p className="text-xs text-slate-500 mt-2">
             Slow rise, fast drop; floor σ_min. This is the only skill update on the main page. Variants (e.g. different mappings) in appendix or secondary panel.
           </p>

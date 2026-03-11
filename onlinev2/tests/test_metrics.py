@@ -1,14 +1,8 @@
 """
 Tests for concentration metrics: HHI, N_eff, and Gini.
 """
-import os
-import sys
 import numpy as np
 import pytest
-
-_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, _root)
-sys.path.insert(0, os.path.join(_root, "src"))
 
 from onlinev2.mechanism.metrics import (
     compute_hhi,

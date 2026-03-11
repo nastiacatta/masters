@@ -1,3 +1,4 @@
+"""Deprecated compatibility layer; use onlinev2.mechanism.metrics instead."""
 # TODO: Deprecated. Import from onlinev2.mechanism.metrics instead.
 from onlinev2.mechanism.metrics import (
     compute_pit,

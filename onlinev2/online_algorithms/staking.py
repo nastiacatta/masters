@@ -1,4 +1,10 @@
-# TODO: Deprecated. Import from onlinev2.mechanism.staking instead.
+# Deprecated: use onlinev2.mechanism.staking instead.
+import warnings
+warnings.warn(
+    "online_algorithms.staking is deprecated; import from onlinev2.mechanism.staking instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 from onlinev2.mechanism.staking import (
     confidence_from_quantiles,
     choose_deposits,

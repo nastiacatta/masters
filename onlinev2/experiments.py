@@ -1,118 +1,43 @@
 """
 Experiments for the online wagering mechanism.
 
-Each experiment:
-  - runs simulations or tests via mvp.run_simulation
-  - saves data (CSV) to  outputs/experiments/<name>/data/
-  - saves plots (PNG) to outputs/experiments/<name>/plots/
-  - optionally calls an R script for ggplot2 visualisations
-
-Run all:
-    PYTHONPATH=src python experiments.py --exp all
-
-Run one:
-    PYTHONPATH=src python experiments.py --exp settlement
+Each experiment runs simulations, saves data/plots under outputs/<block>/experiments/<name>/.
+Run from this directory with package installed: python experiments.py --exp <name>
+or: run-onlinev2-experiments --exp <name>
 """
 import os
-import subprocess
 import numpy as np
 from scipy import stats as scipy_stats
 
-from onlinev2.simulation import (
-    run_simulation,
-    run_all_tests,
-    unit_pinball_nonneg,
-    unit_crps_nonneg,
-    unit_crps_perfect_better,
-    unit_crps_bound,
+from onlinev2.experiments.helpers import (
+    cummean as _cummean,
+    ewma_smooth as _ewma_smooth,
+    exp_paths as _exp_paths,
+    run_r_plot as _run_r_plot,
+    rolling_mean as _rolling_mean,
+    se as _se,
+    write_csv as _write_csv,
 )
-from onlinev2.mechanism.settlement import profit, raja_competitive_payout
-from onlinev2.mechanism.scoring import crps_hat_from_quantiles
-from onlinev2.mechanism.aggregation import aggregate_forecast
+from onlinev2.io.output_paths import ExperimentPaths
 from onlinev2.legacy_dgps import (
     generate_truth_and_reports_latent,
     generate_truth_and_quantile_reports_latent,
 )
-
-# Shared helpers
-from onlinev2.io.output_paths import ExperimentPaths
+from onlinev2.mechanism.aggregation import aggregate_forecast
+from onlinev2.mechanism.scoring import crps_hat_from_quantiles
+from onlinev2.mechanism.settlement import profit, raja_competitive_payout
 from onlinev2.plotting.style import (
-    apply_style, COLORS, PALETTE, agent_color,
-    new_figure, save_fig,
+    COLORS,
+    PALETTE,
+    agent_color,
+    apply_style,
+    new_figure,
+    save_fig,
 )
+from onlinev2.simulation import run_all_tests, run_simulation
 
 # Set headless backend once at import time
 apply_style()
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _exp_paths(base_outdir: str, name: str, block: str = "core") -> ExperimentPaths:
-    """Create experiment output directories under base_outdir/<block>/experiments/name/."""
-    from onlinev2.io.output_paths import ALLOWED_BLOCKS
-    if block not in ALLOWED_BLOCKS:
-        raise ValueError(f"block must be one of {sorted(ALLOWED_BLOCKS)}, got {block!r}")
-    base_dir = os.path.join(base_outdir, block, "experiments")
-    return ExperimentPaths(base_dir, name, block)
-
-
-def _ewma_smooth(x, span=15):
-    """Exponentially weighted moving average."""
-    alpha = 2 / (span + 1)
-    s = np.empty_like(x, dtype=float)
-    s[0] = x[0]
-    for t in range(1, len(x)):
-        s[t] = alpha * x[t] + (1 - alpha) * s[t - 1]
-    return s
-
-
-def _rolling_mean(x, w=50):
-    """Rolling mean with window w. NaN where window is incomplete."""
-    x = np.asarray(x, dtype=np.float64)
-    out = np.full_like(x, np.nan)
-    for i in range(len(x)):
-        sl = x[max(0, i - w + 1):i + 1]
-        finite = sl[np.isfinite(sl)]
-        if finite.size:
-            out[i] = float(np.mean(finite))
-    return out
-
-
-def _cummean(x):
-    """Cumulative mean, skipping NaNs."""
-    x = np.asarray(x, dtype=np.float64)
-    out = np.full_like(x, np.nan)
-    fin = np.isfinite(x)
-    idx = np.where(fin)[0]
-    if idx.size:
-        out[idx] = np.cumsum(x[fin]) / np.arange(1, len(idx) + 1)
-    return out
-
-
-def _se(vals, S):
-    """Standard error of the mean. Returns 0 if only one value or all NaN."""
-    vals = np.asarray(vals, dtype=np.float64)
-    finite = vals[np.isfinite(vals)]
-    if finite.size <= 1:
-        return 0.0
-    return float(np.std(finite, ddof=1) / np.sqrt(finite.size))
-
-
-def _run_r_plot(script_name: str, data_dir: str, plots_dir: str) -> None:
-    """Run an R script.  Pass data_dir as arg 1, plots_dir as arg 2."""
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    script_path = os.path.join(this_dir, "scripts", "r", script_name)
-    if not os.path.isfile(script_path):
-        return
-    try:
-        subprocess.run(
-            ["Rscript", script_path, os.path.abspath(data_dir), os.path.abspath(plots_dir)],
-            check=False, capture_output=True, timeout=60, cwd=this_dir,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
 
 
 # ===================================================================
@@ -863,19 +788,6 @@ def run_fixed_deposit_skill_effect(T=200, n_forecasters=6, seed=17, outdir="outp
 
 SKILL_RECOVERY_TAU = np.array([0.15, 0.22, 0.32, 0.46, 0.68, 1.0], dtype=np.float64)
 SKILL_RECOVERY_N_SEEDS = 10
-
-
-def unit_latent_generator_determinism(seed=99, T=30, n=3, tol=1e-15):
-    """Latent generators must be deterministic given same seed."""
-    tau = np.array([0.2, 0.5, 1.0])[:n]
-    taus_q = np.array([0.1, 0.5, 0.9])
-    y1, r1, t1 = generate_truth_and_reports_latent(T=T, n=n, tau_i=tau, seed=seed)
-    y2, r2, t2 = generate_truth_and_reports_latent(T=T, n=n, tau_i=tau, seed=seed)
-    if not (np.allclose(y1, y2, atol=tol) and np.allclose(r1, r2, atol=tol)):
-        return False
-    yq1, q1, _ = generate_truth_and_quantile_reports_latent(T=T, n=n, tau_i=tau, taus=taus_q, seed=seed)
-    yq2, q2, _ = generate_truth_and_quantile_reports_latent(T=T, n=n, tau_i=tau, taus=taus_q, seed=seed)
-    return bool(np.allclose(yq1, yq2, atol=tol) and np.allclose(q1, q2, atol=tol))
 
 
 def _pit_single_forecaster(y, q_tk, taus):
@@ -2924,98 +2836,10 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
             print(f"Warning: summary/dashboard failed: {e}")
 
 
-def _write_csv(path, fieldnames, rows):
-    """Helper to write CSV files."""
-    import csv
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
-
-
 # ===================================================================
-# Main entry point
+# Main entry point (CLI lives in package)
 # ===================================================================
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Run onlinev2 experiments")
-    parser.add_argument("--exp", choices=[
-            "settlement", "skill_wager", "aggregation", "calibration",
-        "parameter_sweep", "sybil", "scoring", "fixed_deposit",
-        "skill_recovery", "baseline_dgp", "latent_fixed_dgp",
-        "aggregation_dgp", "dgp_comparison", "weight_comparison",
-        "weight_rules", "deposit_policies",
-        "selective_participation",
-        "behaviour_matrix", "preference_stress", "intermittency_stress",
-        "arbitrage_scan", "detection_adaptation",
-        "all",
-    ], default="all")
-    parser.add_argument("--block", choices=["core", "behaviour", "all"], default="all",
-                        help="Run core experiments, behaviour experiments, or both (separate output roots)")
-    parser.add_argument("--outdir", default="outputs",
-                        help="Base output directory (core -> outdir/core/experiments/, behaviour -> outdir/behaviour/experiments/)")
-    parser.add_argument("--write_summary", type=str, default="true", choices=("true", "false"),
-                        help="Write summary.md and summary.json in behaviour experiment folders (default true)")
-    args = parser.parse_args()
-
-    outdir = args.outdir
-    write_summary = args.write_summary.lower() == "true"
-
-    core_experiments = [
-        ("settlement",       lambda: run_settlement_sanity(outdir=outdir, block="core")),
-        ("skill_wager",      lambda: run_skill_wager_intermittency(outdir=outdir, block="core")),
-        ("aggregation",      lambda: run_forecast_aggregation(outdir=outdir, block="core")),
-        ("calibration",      lambda: run_calibration_diagnostics(outdir=outdir, block="core")),
-        ("parameter_sweep",  lambda: run_parameter_sweep(outdir=outdir, block="core")),
-        ("sybil",            lambda: run_sybil_experiment(outdir=outdir, block="core")),
-        ("scoring",          lambda: run_scoring_validation(outdir=outdir, block="core")),
-        ("fixed_deposit",    lambda: run_fixed_deposit_skill_effect(outdir=outdir, block="core")),
-        ("skill_recovery",   lambda: run_skill_recovery_benchmark_latent(outdir=outdir, block="core")),
-        ("baseline_dgp",     lambda: run_baseline_dgp_diagnostic(outdir=outdir, block="core")),
-        ("latent_fixed_dgp", lambda: run_latent_fixed_dgp_diagnostic(outdir=outdir, block="core")),
-        ("aggregation_dgp",  lambda: run_aggregation_dgp_diagnostic(outdir=outdir, block="core")),
-        ("dgp_comparison",   lambda: run_dgp_comparison(outdir=outdir, block="core")),
-        ("weight_comparison", lambda: run_weight_learning_comparison(outdir=outdir, block="core")),
-        ("weight_rules",     lambda: run_weight_rule_comparison(outdir=outdir, block="core")),
-        ("deposit_policies", lambda: run_deposit_policy_comparison(outdir=outdir, block="core")),
-        ("selective_participation", lambda: run_selective_participation(outdir=outdir, block="core")),
-    ]
-
-    behaviour_experiments = [
-        ("behaviour_matrix", lambda: run_behaviour_matrix(outdir=outdir, block="behaviour", write_summary=write_summary)),
-        ("preference_stress", lambda: run_preference_stress_test(outdir=outdir, block="behaviour", write_summary=write_summary)),
-        ("intermittency_stress", lambda: run_intermittency_stress_test(outdir=outdir, block="behaviour", write_summary=write_summary)),
-        ("arbitrage_scan",   lambda: run_arbitrage_scan(outdir=outdir, block="behaviour", write_summary=write_summary)),
-        ("detection_adaptation", lambda: run_detection_adaptation(outdir=outdir, block="behaviour", write_summary=write_summary)),
-    ]
-
-    if args.block in ("core", "all"):
-        for name, fn in core_experiments:
-            if args.exp in (name, "all"):
-                fn()
-                print(f"{name} done")
-    if args.block in ("behaviour", "all"):
-        for name, fn in behaviour_experiments:
-            if args.exp in (name, "all"):
-                fn()
-                print(f"{name} done")
-
-    # Unit tests
-    tests_dir = os.path.join(args.outdir, "tests")
-    os.makedirs(tests_dir, exist_ok=True)
-    test_results = [
-        ("pinball_nonneg", unit_pinball_nonneg()),
-        ("crps_nonneg", unit_crps_nonneg()),
-        ("crps_perfect_better", unit_crps_perfect_better()),
-        ("crps_bound", unit_crps_bound()),
-        ("latent_generator_determinism", unit_latent_generator_determinism()),
-    ]
-    for name, ok in test_results:
-        print(f"{name}: {ok}")
-    with open(os.path.join(tests_dir, "test_results.txt"), "w") as f:
-        f.write("Unit tests\n==========\n")
-        for name, ok in test_results:
-            f.write(f"{name}: {'PASS' if ok else 'FAIL'}\n")
+    from onlinev2.experiments.cli import main
+    main()

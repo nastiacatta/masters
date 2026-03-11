@@ -1,4 +1,10 @@
-# TODO: Deprecated. Import from onlinev2.mechanism.scoring instead.
+# Deprecated: use onlinev2.mechanism.scoring instead.
+import warnings
+warnings.warn(
+    "payoff.scoring is deprecated; import from onlinev2.mechanism.scoring instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 from onlinev2.mechanism.scoring import (
     mae_loss,
     score_mae,

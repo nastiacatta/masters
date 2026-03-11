@@ -42,7 +42,10 @@ class ArbitrageurBehaviour:
         self.deposit_candidates = deposit_candidates or [0.5, 1.0, 2.0, 5.0]
         self.b_max = b_max
         self.scoring_mode = scoring_mode
-        self.taus = taus or np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+        if taus is None:
+            self.taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9], dtype=np.float64).ravel().copy()
+        else:
+            self.taus = np.asarray(taus, dtype=np.float64).ravel().copy()
         self._rng: Optional[np.random.Generator] = None
         self.arbitrage_log: List[Dict[str, Any]] = []
 

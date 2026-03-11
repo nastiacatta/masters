@@ -1,9 +1,38 @@
-"""Smoke tests: tiny T=50 run of each experiment."""
-import sys
-from pathlib import Path
+"""Smoke tests: tiny T=50 run of each experiment. Run with package installed (pip install -e .)."""
 
-root = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(root / "src"))
+import os
+import subprocess
+import tempfile
+
+
+def test_cli_settlement_smoke():
+    """Documented CLI path: run settlement experiment and check output dir and unit test file exist."""
+    root = os.path.join(os.path.dirname(__file__), "..")
+    src = os.path.abspath(os.path.join(root, "src"))
+    env = os.environ.copy()
+    env["PYTHONPATH"] = src + os.pathsep + env.get("PYTHONPATH", "")
+    with tempfile.TemporaryDirectory() as tmp:
+        outdir = os.path.join(tmp, "out")
+        result = subprocess.run(
+            [
+                "python", "-m", "onlinev2.experiments.cli",
+                "--exp", "settlement",
+                "--block", "core",
+                "--outdir", outdir,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=os.path.abspath(root),
+            env=env,
+        )
+        assert result.returncode == 0, (result.stdout, result.stderr)
+        core_exp = os.path.join(outdir, "core", "experiments", "settlement_sanity")
+        assert os.path.isdir(core_exp), f"Expected dir {core_exp}"
+        assert os.path.isdir(os.path.join(core_exp, "data"))
+        assert os.path.isdir(os.path.join(core_exp, "plots"))
+        test_results = os.path.join(outdir, "tests", "test_results.txt")
+        assert os.path.isfile(test_results), f"Expected {test_results}"
 
 
 def test_dgp_registry():

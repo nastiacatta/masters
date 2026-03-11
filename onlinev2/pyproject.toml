@@ -19,8 +19,14 @@ dev = [
     "pytest>=7.0",
 ]
 
+[project.scripts]
+run-onlinev2-experiments = "onlinev2.experiments.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100

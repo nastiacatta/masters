@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Run weight learning experiment and save artifacts."""
-import sys
+"""Run weight learning experiment and save artifacts. Requires package installed (pip install -e .)."""
 from pathlib import Path
-
-# Ensure package is on path when run from project root
-root = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(root / "src"))
 
 from onlinev2.experiments.config import WeightLearningConfig
 from onlinev2.experiments.runners import run_weight_learning

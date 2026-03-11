@@ -4,14 +4,8 @@ Tests for the arbitrageur adversary.
 1. Arbitrageur never returns participate=False with nonzero deposit
 2. Logs "arbitrage found" only if worst-case profit is positive
 """
-import os
-import sys
 import numpy as np
 import pytest
-
-_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, _root)
-sys.path.insert(0, os.path.join(_root, "src"))
 
 from onlinev2.behaviour.traits import UserTraits
 from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour

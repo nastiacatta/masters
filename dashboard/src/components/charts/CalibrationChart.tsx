@@ -31,7 +31,7 @@ export default function CalibrationChart({ data }: Props) {
           <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#94a3b8" strokeDasharray="4 4" />
           <Tooltip
             contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
-            formatter={(value: number) => value.toFixed(3)}
+            formatter={(value: unknown) => typeof value === 'number' ? value.toFixed(3) : String(value ?? '')}
           />
           <Scatter data={data} fill="#2563eb" r={5} />
         </ScatterChart>

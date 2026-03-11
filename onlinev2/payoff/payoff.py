@@ -1,4 +1,10 @@
-# TODO: Deprecated. Import from onlinev2.mechanism.settlement and onlinev2.mechanism.aggregation instead.
+# Deprecated: use onlinev2.mechanism.settlement and onlinev2.mechanism.aggregation instead.
+import warnings
+warnings.warn(
+    "payoff.payoff is deprecated; import from onlinev2.mechanism.settlement and onlinev2.mechanism.aggregation instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 from onlinev2.mechanism.settlement import (
     skill_payoff,
     utility_payoff,

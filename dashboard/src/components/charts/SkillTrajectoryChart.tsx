@@ -26,7 +26,7 @@ export default function SkillTrajectoryChart({
     const row: Record<string, number | null> = { t };
     for (const a of agents) {
       const pt = data.find(d => d.agent === a && d.t === t);
-      row[`agent_${a}`] = pt ? (pt as Record<string, number>)[yKey] ?? null : null;
+      row[`agent_${a}`] = pt ? (pt as unknown as Record<string, number>)[yKey] ?? null : null;
     }
     chartData.push(row);
   }

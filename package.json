@@ -1,0 +1,9 @@
+{
+  "name": "online",
+  "private": true,
+  "scripts": {
+    "dev": "cd dashboard && npx vite",
+    "build": "npm run build --prefix dashboard",
+    "preview": "npm run preview --prefix dashboard"
+  }
+}

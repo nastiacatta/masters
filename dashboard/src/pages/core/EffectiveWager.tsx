@@ -16,18 +16,14 @@ export default function EffectiveWager() {
             <SectionLabel type="mechanism_computation" />
             Effective wager
           </h3>
-          <MathBlock accent label="Skill-gated wager">
-            m_{'_{i,t}'} = b_{'_{i,t}'} · (λ + (1 − λ) σ_{'_{i,t}'})
-          </MathBlock>
+          <MathBlock accent label="Skill-gated wager" latex="m_{i,t} = b_{i,t} \bigl( \lambda + (1-\lambda) \sigma_{i,t}^\eta \bigr)" />
           <p className="text-xs text-slate-500 mt-2">
             With η = 1 (linear gate). For η &gt; 1 the code uses g(σ) = λ + (1−λ) σ^η so low-skill agents’ wagers shrink more sharply. m/b ∈ [λ, 1].
           </p>
         </div>
 
         <div>
-          <MathBlock label="Refund (user gets back the unconverted part)">
-            refund_{'_{i,t}'} = b_{'_{i,t}'} − m_{'_{i,t}'}
-          </MathBlock>
+          <MathBlock label="Refund (user gets back the unconverted part)" latex="\text{refund}_{i,t} = b_{i,t} - m_{i,t}" />
         </div>
 
         <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-4">

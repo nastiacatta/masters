@@ -59,7 +59,9 @@ def make_behaviour(
             b_max=b_max,
         )
 
-    # Adversarial preset: one benign population plus one adversary
+    # Adversarial preset: one benign population plus one adversary.
+    # Include a synthetic UserConfig for the adversary so CompositeBehaviourModel.act()
+    # iterates over it and dispatches to adv.act(state) via adversary_behaviours.
     from onlinev2.behaviour.policies.identity import SingleAccountIdentity
     from onlinev2.behaviour.policies.participation import BaselineParticipation
     from onlinev2.behaviour.policies.reporting import TruthfulReporting
@@ -97,8 +99,18 @@ def make_behaviour(
         raise ValueError(f"Unknown adversary: {adversary}")
 
     adversary_behaviours = {adv_traits.user_id: adv}
+    # Synthetic UserConfig so the adversary is in self.users and act() dispatches to it.
+    from onlinev2.behaviour.population import UserConfig
+    adv_user_config = UserConfig(
+        traits=adv_traits,
+        participation=BaselineParticipation(),
+        reporting=TruthfulReporting(),
+        staking=FixedFractionStaking(),
+        identity=SingleAccountIdentity(),
+    )
+    users_with_adv = list(benign_pop) + [adv_user_config]
     return CompositeBehaviourModel(
-        benign_pop,
+        users_with_adv,
         adversary_behaviours=adversary_behaviours,
         scoring_mode=scoring_mode,
         taus=taus,

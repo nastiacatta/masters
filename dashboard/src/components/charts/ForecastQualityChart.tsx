@@ -38,7 +38,7 @@ export default function ForecastQualityChart({ data }: Props) {
           <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
           <Tooltip
             contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
-            formatter={(value: number, name: string) => [value?.toFixed(5), metricLabel(name)]}
+            formatter={(value: unknown, name: unknown) => [typeof value === 'number' ? value.toFixed(5) : String(value ?? ''), metricLabel(String(name ?? ''))]}
           />
           <Legend wrapperStyle={{ fontSize: 10 }} formatter={(v: string) => metricLabel(v)} />
           {keys.map(key => (

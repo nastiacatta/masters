@@ -139,7 +139,7 @@ export default function Diagnostics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke="#94a3b8" />
                   <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, 1]} />
-                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} formatter={(v: number) => fmtPct(v)} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} formatter={(v: unknown) => typeof v === 'number' ? fmtPct(v) : String(v ?? '')} />
                   <Line type="monotone" dataKey="activeRate" stroke="#8b5cf6" strokeWidth={1.5} dot={false} name="Participation rate" />
                 </LineChart>
               </ResponsiveContainer>

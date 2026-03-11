@@ -17,9 +17,7 @@ export default function CoreOverview() {
           <SectionLabel type="mechanism_computation" />
           Round contract
         </h3>
-        <MathBlock accent label="One round">
-          (state_t, RoundInput_t, y_t) → (state_{t+1}, logs_t)
-        </MathBlock>
+        <MathBlock accent label="One round" latex="(\text{state}_t, \text{RoundInput}_t, y_t) \to (\text{state}_{t+1}, \text{logs}_t)" />
         <p className="text-xs text-slate-500 mt-2">
           Round input = set of (account_id, participation flag, report, stake, optional metadata). The mechanism does not observe user beliefs or strategies—only these actions and the outcome y_t.
         </p>

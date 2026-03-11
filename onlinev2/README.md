@@ -240,7 +240,7 @@ Each round follows five steps:
 1. **Confidence proxy** (A): Quantile width in probit space → bounded multiplier `c_i ∈ [c_min, c_max]`
 2. **Deposit** (B): `b_i = min(W_i, b_max, f · W_i · c_i)` — proportional to wealth and confidence
 3. **Skill gate** (C): `m_i = b_i · (λ + (1-λ) · σ_i^η)` — power-law gating crushes low-skill wagers
-4. **Weight cap** (D): Project aggregation shares onto the simplex with upper bound `ω_max` (preserves budget; no share exceeds `ω_max` after projection)
+4. **Weight cap** (D): Bounded simplex projection (not clip-then-renormalise). Project aggregation shares onto the simplex with upper bound `ω_max` (preserves total budget; each share ≤ `ω_max`; infeasible if `ω_max < 1/n`).
 5. **Wealth update** (E): `W_{i,t+1} = max(0, W_{i,t} + π_{i,t})`
 
 Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` (base fraction), `omega_max` (cap), `beta_c` (confidence steepness).

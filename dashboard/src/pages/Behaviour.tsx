@@ -87,7 +87,7 @@ export default function Behaviour() {
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="agent" tick={{ fontSize: 10 }} stroke="#94a3b8" />
               <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, 1]} />
-              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} formatter={(v: number) => `${(v * 100).toFixed(1)}%`} />
+              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} formatter={(v: unknown) => typeof v === 'number' ? `${(v * 100).toFixed(1)}%` : String(v ?? '')} />
               <Bar dataKey="frequency" radius={[4, 4, 0, 0]} maxBarSize={30}>
                 {participationFreq.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />

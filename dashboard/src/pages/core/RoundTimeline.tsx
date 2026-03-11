@@ -35,7 +35,7 @@ export default function RoundTimeline() {
               <p className="text-xs font-mono text-slate-500 truncate">{step.detail}</p>
             </div>
             {i < STEPS.length - 1 && (
-              <span className="text-slate-300 text-lg shrink-0">↓</span>
+              <span className="text-slate-300 shrink-0 self-center">↓</span>
             )}
           </div>
         ))}

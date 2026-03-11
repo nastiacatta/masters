@@ -8,14 +8,8 @@ Tests for the behaviour–mechanism boundary.
 5. Identity invariants: sybil splits preserve deposit sums
 6. Reproducibility: behaviour.reset(seed) gives identical action streams
 """
-import os
-import sys
 import numpy as np
 import pytest
-
-_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, _root)
-sys.path.insert(0, os.path.join(_root, "src"))
 
 from onlinev2.mechanism.models import MechanismParams, MechanismState
 from onlinev2.mechanism.runner import run_round

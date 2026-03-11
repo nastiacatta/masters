@@ -1,17 +1,9 @@
 """
 Entry point for simulation and inline unit tests.
 
-When run as __main__, ensures the package is on path when executed from repo root
-without pip install, then delegates to onlinev2.simulation.
+Run with package installed (pip install -e . from onlinev2/) or as python -m onlinev2.simulation.
+Delegates to onlinev2.simulation.
 """
-import os
-import sys
-
-_root = os.path.dirname(os.path.abspath(__file__))
-_src = os.path.join(_root, "src")
-if _src not in sys.path:
-    sys.path.insert(0, _src)
-
 from onlinev2.simulation import (
     run_simulation,
     run_all_tests,

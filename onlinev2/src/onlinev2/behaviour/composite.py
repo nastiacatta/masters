@@ -48,7 +48,10 @@ class CompositeBehaviourModel:
         self.users = users
         self.adversary_behaviours = adversary_behaviours or {}
         self.scoring_mode = scoring_mode
-        self.taus = taus or np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+        if taus is None:
+            self.taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9], dtype=np.float64).ravel().copy()
+        else:
+            self.taus = np.asarray(taus, dtype=np.float64).ravel().copy()
         self.b_max = b_max
         self._rng: Optional[np.random.Generator] = None
         self._belief_engine: Optional[PrivateSignalBelief] = None
@@ -128,16 +131,12 @@ class CompositeBehaviourModel:
                     belief, user, self._rng, context
                 )
             else:
-                if hasattr(user_cfg.reporting, "transform_report"):
-                    if isinstance(belief, (int, float)):
-                        report = belief + user.bias
-                        report = float(np.clip(report, 0.0, 1.0))
-                    else:
-                        report = user_cfg.reporting.transform_report(
-                            belief, user, self._rng, context
-                        )
-                else:
-                    report = belief
+                # Point mode: always route through the reporting policy (no bypass).
+                belief_arr = np.asarray([float(user_median)], dtype=np.float64)
+                report_arr = user_cfg.reporting.transform_report(
+                    belief_arr, user, self._rng, context
+                )
+                report = float(np.clip(np.asarray(report_arr).ravel()[0], 0.0, 1.0))
 
             deposit = user_cfg.staking.choose_stake(
                 user, state, self._rng, context, b_max=self.b_max

@@ -1,3 +1,4 @@
+"""Deprecated compatibility layer; use onlinev2.mechanism.models instead."""
 # TODO: Deprecated. Import from onlinev2.mechanism.models instead.
 from onlinev2.mechanism.models import (
     Report,

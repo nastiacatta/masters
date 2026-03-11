@@ -183,6 +183,9 @@ def cap_weight_shares(
     m_cap : (n,) capped wagers (shares sum to 1, each <= omega_max; then scaled by M)
     """
     m_t = np.asarray(m_t, dtype=np.float64).ravel().copy()
+    if np.any(m_t < -eps):
+        raise ValueError("cap_weight_shares requires non-negative wagers")
+    m_t = np.maximum(m_t, 0.0)
     M = float(m_t.sum())
     if M <= eps:
         return m_t

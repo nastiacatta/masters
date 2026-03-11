@@ -16,15 +16,11 @@ export default function Aggregation() {
             <SectionLabel type="mechanism_computation" />
             Weight shares
           </h3>
-          <MathBlock accent label="Normalised effective wagers">
-            m̂_{'_{i,t}'} = m_{'_{i,t}'} / Σ_j m_{'_{j,t}'}
-          </MathBlock>
+          <MathBlock accent label="Normalised effective wagers" latex="\hat{m}_{i,t} = \frac{m_{i,t}}{\sum_j m_{j,t}}" />
         </div>
 
         <div>
-          <MathBlock label="Point forecast aggregation">
-            r̂_t = Σ_i m̂_{'_{i,t}'} · r_{'_{i,t}'}
-          </MathBlock>
+          <MathBlock label="Point forecast aggregation" latex="\hat{r}_t = \sum_i \hat{m}_{i,t} \, r_{i,t}" />
           <p className="text-xs text-slate-500 mt-2">
             For quantile mode: same weights applied per quantile, q̂(tau) = Σ_i m̂_i · q_i(tau). Missing agents (α_i = 1) have m_i = 0 and do not contribute.
           </p>

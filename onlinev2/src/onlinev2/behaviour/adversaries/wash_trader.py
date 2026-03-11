@@ -37,7 +37,10 @@ class WashTradeLikeBehaviour:
         self.min_stake = min_stake
         self.report_entropy = report_entropy
         self.scoring_mode = scoring_mode
-        self.taus = taus or np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+        if taus is None:
+            self.taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9], dtype=np.float64).ravel().copy()
+        else:
+            self.taus = np.asarray(taus, dtype=np.float64).ravel().copy()
         self._rng: Optional[np.random.Generator] = None
 
     def reset(self, seed: int) -> None:

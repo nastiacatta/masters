@@ -1,0 +1,231 @@
+"""
+Regression tests for the onlinev2 refactor.
+
+- Adversary from make_behaviour emits actions (attacker_0 reachable).
+- Point mode always uses reporting policy transform_report (no scalar bypass).
+- taus as NumPy array does not trigger ambiguous truth-value.
+- sigma stored from L_new (post-round), not L_prev.
+- PIT only in quantiles mode and present in logs.
+- Gini/HHI/N_eff from onlinev2.mechanism.metrics.
+- cap_weight_shares: non-negative, sum 1, each <= omega_max, budget preserved; omega_max < 1/n raises.
+"""
+import numpy as np
+import pytest
+
+
+# ---------------------------------------------------------------------------
+# Adversary integration: make_behaviour(ARBITRAGEUR) yields model where attacker_0 acts
+# ---------------------------------------------------------------------------
+
+def test_adversary_from_make_behaviour_emits_actions():
+    from onlinev2.behaviour.factory import make_behaviour
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    behaviour = make_behaviour("ARBITRAGEUR", n_users=3, seed=42)
+    behaviour.reset(43)
+
+    state = RoundPublicState(
+        t=0,
+        y_history=[],
+        agg_history=[],
+        weights_prev={"user_0": 0.2, "user_1": 0.3, "attacker_0": 0.5},
+        sigma_prev={"user_0": 0.6, "user_1": 0.7, "attacker_0": 0.5},
+        wealth_prev={"user_0": 10.0, "user_1": 10.0, "attacker_0": 10.0},
+        profit_prev={"user_0": 0.0, "user_1": 0.0, "attacker_0": 0.0},
+    )
+    actions = behaviour.act(state)
+
+    account_ids = [a.account_id for a in actions]
+    assert "attacker_0" in account_ids, "attacker_0 must appear in actions from make_behaviour(ARBITRAGEUR)"
+    n_attacker = sum(1 for a in actions if a.account_id == "attacker_0")
+    assert n_attacker >= 1, "at least one action must come from the adversary"
+
+
+# ---------------------------------------------------------------------------
+# Point mode: transform_report is always called (no belief+bias bypass)
+# ---------------------------------------------------------------------------
+
+def test_point_mode_transform_report_called():
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import UserConfig
+    from onlinev2.behaviour.traits import generate_population
+    from onlinev2.behaviour.policies.reporting import TruthfulReporting
+    from onlinev2.behaviour.policies.participation import BaselineParticipation
+    from onlinev2.behaviour.policies.staking import FixedFractionStaking
+    from onlinev2.behaviour.policies.identity import SingleAccountIdentity
+    from onlinev2.behaviour.policies.belief import PrivateSignalBelief
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    class RecordingReporting(TruthfulReporting):
+        called = False
+
+        def transform_report(self, belief, user, rng, context):
+            RecordingReporting.called = True
+            return super().transform_report(belief, user, rng, context)
+
+    RecordingReporting.called = False
+    traits_list = generate_population(2, seed=101)
+    user_configs = [
+        UserConfig(
+            traits=t,
+            participation=BaselineParticipation(),
+            belief=PrivateSignalBelief(),
+            reporting=RecordingReporting(),
+            staking=FixedFractionStaking(),
+            identity=SingleAccountIdentity(),
+        )
+        for t in traits_list
+    ]
+    model = CompositeBehaviourModel(user_configs, scoring_mode="point_mae")
+    model.reset(102)
+    state = RoundPublicState(
+        t=0, y_history=[], agg_history=[],
+        weights_prev={t.user_id: 0.5 for t in traits_list},
+        sigma_prev={t.user_id: 0.5 for t in traits_list},
+        wealth_prev={t.user_id: 10.0 for t in traits_list},
+        profit_prev={t.user_id: 0.0 for t in traits_list},
+    )
+    model.act(state)
+    assert RecordingReporting.called, "Point mode must call transform_report"
+
+
+# ---------------------------------------------------------------------------
+# taus: NumPy array does not trigger ambiguous truth-value
+# ---------------------------------------------------------------------------
+
+def test_taus_numpy_array_no_ambiguous_truth():
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+
+    taus_arr = np.array([0.25, 0.5, 0.75], dtype=np.float64)
+    pop = build_population(2, seed=1)
+    model = CompositeBehaviourModel(pop, scoring_mode="quantiles_crps", taus=taus_arr)
+    np.testing.assert_array_almost_equal(model.taus, taus_arr)
+
+
+# ---------------------------------------------------------------------------
+# sigma from L_new; PIT only in quantiles; Gini/HHI/N_eff from metrics
+# ---------------------------------------------------------------------------
+
+def test_runner_sigma_from_L_new_and_metrics_from_module():
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState, AgentInput
+    from onlinev2.mechanism.skill import loss_to_skill, update_ewma_loss
+
+    n = 3
+    state = MechanismState(
+        t=0,
+        ewma_loss={"a": 0.0, "b": 0.2, "c": 0.4},
+        wealth={"a": 10.0, "b": 10.0, "c": 10.0},
+        sigma={"a": 0.5, "b": 0.5, "c": 0.5},
+        weights_prev={},
+        profit_prev={},
+        agg_prev=None,
+    )
+    params = MechanismParams(
+        scoring_mode="point_mae",
+        taus=None,
+        lam=0.3,
+        rho=0.1,
+        gamma=4.0,
+        sigma_min=0.1,
+        omega_max=None,
+        eps=1e-12,
+        U=0.0,
+        kappa=0.0,
+        L0=0.0,
+        eta=1.0,
+    )
+    actions = [
+        AgentInput(account_id="a", participate=True, report=0.5, deposit=1.0),
+        AgentInput(account_id="b", participate=True, report=0.5, deposit=1.0),
+        AgentInput(account_id="c", participate=True, report=0.5, deposit=1.0),
+    ]
+    y_t = 0.5
+
+    new_state, logs = run_round(state=state, params=params, actions=actions, y_t=y_t)
+
+    L_prev = np.array([0.0, 0.2, 0.4])
+    losses_norm = np.array([0.0, 0.0, 0.0])
+    alpha = np.array([0, 0, 0])
+    L_new = update_ewma_loss(L_prev, losses_norm, alpha, rho=params.rho, kappa=params.kappa, L0=params.L0)
+    sigma_expected = loss_to_skill(L_new, sigma_min=params.sigma_min, gamma=params.gamma)
+    sigma_expected = np.clip(sigma_expected, params.sigma_min, 1.0)
+    for i, aid in enumerate(["a", "b", "c"]):
+        assert abs(new_state.sigma[aid] - sigma_expected[i]) < 1e-9, "sigma must be from L_new"
+
+    assert "HHI" in logs and "N_eff" in logs and "Gini" in logs
+
+
+def test_pit_only_in_quantiles_mode():
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.mechanism.models import MechanismParams, MechanismState, AgentInput
+
+    def _state():
+        return MechanismState(
+            t=0,
+            ewma_loss={"a": 0.0, "b": 0.0},
+            wealth={"a": 10.0, "b": 10.0},
+            sigma={"a": 0.5, "b": 0.5},
+            weights_prev={},
+            profit_prev={},
+            agg_prev=None,
+        )
+
+    actions = [
+        AgentInput(account_id="a", participate=True, report=0.4, deposit=1.0),
+        AgentInput(account_id="b", participate=True, report=0.6, deposit=1.0),
+    ]
+
+    params_point = MechanismParams(
+        scoring_mode="point_mae", taus=None, lam=0.3, rho=0.1, gamma=4.0,
+        sigma_min=0.1, omega_max=None, eps=1e-12, U=0.0, kappa=0.0, L0=0.0, eta=1.0,
+    )
+    _, logs_point = run_round(state=_state(), params=params_point, actions=actions, y_t=0.5)
+    assert "PIT" not in logs_point, "PIT must not appear in point_mae mode"
+
+    taus = np.array([0.25, 0.5, 0.75])
+    params_quant = MechanismParams(
+        scoring_mode="quantiles_crps", taus=taus, lam=0.3, rho=0.1, gamma=4.0,
+        sigma_min=0.1, omega_max=None, eps=1e-12, U=0.0, kappa=0.0, L0=0.0, eta=1.0,
+    )
+    actions_q = [
+        AgentInput(account_id="a", participate=True, report=[0.3, 0.5, 0.7], deposit=1.0),
+        AgentInput(account_id="b", participate=True, report=[0.4, 0.5, 0.6], deposit=1.0),
+    ]
+    _, logs_quant = run_round(state=_state(), params=params_quant, actions=actions_q, y_t=0.5)
+    assert "PIT" in logs_quant, "PIT must appear in quantiles_crps mode"
+
+
+# ---------------------------------------------------------------------------
+# cap_weight_shares
+# ---------------------------------------------------------------------------
+
+def test_cap_weight_shares_invariants():
+    from onlinev2.mechanism.staking import cap_weight_shares
+
+    m = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+    omega_max = 0.4
+    m_cap = cap_weight_shares(m, omega_max=omega_max)
+    M = float(m.sum())
+    shares = m_cap / M
+    assert np.all(m_cap >= -1e-12), "capped wagers must be non-negative"
+    assert abs(shares.sum() - 1.0) < 1e-9, "shares must sum to 1"
+    assert np.all(shares <= omega_max + 1e-9), "each share must be <= omega_max"
+    assert abs(m_cap.sum() - M) < 1e-9, "total budget must be preserved"
+
+
+def test_cap_weight_shares_omega_max_infeasible_raises():
+    from onlinev2.mechanism.staking import cap_weight_shares
+
+    m = np.array([1.0, 1.0, 1.0], dtype=np.float64)
+    with pytest.raises(ValueError, match="omega_max.*1/n"):
+        cap_weight_shares(m, omega_max=0.2)
+
+
+def test_cap_weight_shares_negative_raises():
+    from onlinev2.mechanism.staking import cap_weight_shares
+
+    m = np.array([1.0, -0.5, 2.0], dtype=np.float64)
+    with pytest.raises(ValueError, match="non-negative"):
+        cap_weight_shares(m, omega_max=0.5)
