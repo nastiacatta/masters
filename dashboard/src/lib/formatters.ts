@@ -26,20 +26,20 @@ export function metricLabel(key: string): string {
     crpsUniform: 'CRPS (Equal)',
     crpsDeposit: 'CRPS (Stake)',
     crpsSkill: 'CRPS (Skill)',
-    crpsMechanism: 'CRPS (Mechanism)',
+    crpsMechanism: 'CRPS (Skill × stake)',
     crpsBestSingle: 'CRPS (Best Single)',
     crpsUniformCum: 'Cumulative CRPS (Equal)',
     crpsDepositCum: 'Cumulative CRPS (Stake)',
     crpsSkillCum: 'Cumulative CRPS (Skill)',
-    crpsMechanismCum: 'Cumulative CRPS (Mechanism)',
+    crpsMechanismCum: 'Cumulative CRPS (Skill × stake)',
     crpsBestSingleCum: 'Cumulative CRPS (Best Single)',
   };
   return labels[key] || key;
 }
 
 export const AGENT_COLORS = [
-  '#64748b', '#6366f1', '#ec4899', '#f59e0b',
-  '#10b981', '#8b5cf6', '#f97316', '#06b6d4',
+  '#64748b', '#6366f1', '#ec4899', '#0d9488',
+  '#10b981', '#8b5cf6', '#0d9488', '#06b6d4',
   '#ef4444', '#84cc16', '#a855f7', '#14b8a6',
 ];
 
@@ -48,12 +48,12 @@ export const MUTED = '#94a3b8';
 
 export const WEIGHTING_COLORS: Record<string, string> = {
   crpsUniform: '#94a3b8',
-  crpsDeposit: '#f59e0b',
+  crpsDeposit: '#0d9488',
   crpsSkill: '#8b5cf6',
   crpsMechanism: '#2563eb',
   crpsBestSingle: '#10b981',
   crpsUniformCum: '#94a3b8',
-  crpsDepositCum: '#f59e0b',
+  crpsDepositCum: '#0d9488',
   crpsSkillCum: '#8b5cf6',
   crpsMechanismCum: '#2563eb',
   crpsBestSingleCum: '#10b981',

@@ -82,7 +82,7 @@ export default function Diagnostics() {
       {activeTab === 'forecast' && (
         <div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <MetricCard label="Final Cum. CRPS (Mechanism)" value={fmtNum(lastForecast?.crpsMechanismCum, 5)} accent />
+            <MetricCard label="Final Cum. CRPS (Skill × stake)" value={fmtNum(lastForecast?.crpsMechanismCum, 5)} accent />
             <MetricCard label="Final Cum. CRPS (Equal)" value={fmtNum(lastForecast?.crpsUniformCum, 5)} />
             <MetricCard label="Final Cum. CRPS (Skill)" value={fmtNum(lastForecast?.crpsSkillCum, 5)} />
             <MetricCard
@@ -120,7 +120,7 @@ export default function Diagnostics() {
                   <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} />
                   <Bar dataKey="deviation" radius={[4, 4, 0, 0]} maxBarSize={40}>
                     {calibrationData.map((d, i) => (
-                      <Cell key={i} fill={Math.abs(d.pHat - d.tau) < 0.05 ? '#10b981' : Math.abs(d.pHat - d.tau) < 0.1 ? '#f59e0b' : '#ef4444'} />
+                      <Cell key={i} fill={Math.abs(d.pHat - d.tau) < 0.05 ? '#10b981' : Math.abs(d.pHat - d.tau) < 0.1 ? '#0d9488' : '#ef4444'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -174,7 +174,7 @@ export default function Diagnostics() {
           <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
             <h3 className="text-sm font-semibold text-slate-800 mb-2">Robustness to Strategic Behaviour</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              This panel examines whether the mechanism is robust to adversarial agents: sybil splits,
+              This panel examines whether skill × stake is robust to adversarial agents: sybil splits,
               arbitrageurs, colluders, and manipulators. The parameter sweep below maps the trade-off
               between forecast quality (CRPS) and market concentration (Gini) across <MathBlock inline latex="\lambda" /> and <MathBlock inline latex="\sigma_{\min}" />.
             </p>
@@ -187,7 +187,7 @@ export default function Diagnostics() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
               <div>
                 <span className="font-medium text-slate-700">Sybil resilience:</span>{' '}
-                Under the mechanism, sybil splits do not systematically gain; the effective wager
+                Under skill × stake, sybil splits do not systematically gain; the effective wager
                 scales with skill, neutralising identity fragmentation.
               </div>
               <div>

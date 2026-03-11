@@ -4,12 +4,13 @@ import Overview from '@/pages/Overview';
 import RoundReplay from '@/pages/RoundReplay';
 import Behaviour from '@/pages/Behaviour';
 import Diagnostics from '@/pages/Diagnostics';
+import ExperimentContext from '@/components/dashboard/ExperimentContext';
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'replay', label: 'Round Replay' },
-  { id: 'behaviour', label: 'Behaviour' },
-  { id: 'diagnostics', label: 'Diagnostics' },
+  { id: 'overview', label: 'Main result' },
+  { id: 'replay', label: 'What happens in one round' },
+  { id: 'behaviour', label: 'What changes when users behave strategically' },
+  { id: 'diagnostics', label: 'Robustness checks' },
 ] as const;
 
 export default function Validation() {
@@ -24,6 +25,9 @@ export default function Validation() {
 
   return (
     <div className="space-y-4 p-6">
+      {selectedExperiment && (
+        <ExperimentContext experiment={selectedExperiment} className="mb-2" />
+      )}
       <div className="inline-flex rounded-xl bg-slate-100 p-1">
         {TABS.map((t) => (
           <button

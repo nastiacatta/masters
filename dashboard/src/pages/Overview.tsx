@@ -17,7 +17,7 @@ export default function Overview() {
     return (
       <div className="p-6 max-w-7xl">
         <PageHeader title="Overview" description="Snapshot of the selected experiment." />
-        <EmptyState message="Select an experiment from the sidebar." />
+        <EmptyState message="Select an experiment from the bar above." />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function Overview() {
           </div>
           <div>
             <span className="font-medium text-slate-700">Why it matters:</span>{' '}
-            Validates that the mechanism {summary?.finalCRPS && summary.finalCRPS < 0.04 ? 'improves' : 'maintains'} forecast quality under this configuration.
+            Validates that skill × stake {summary?.finalCRPS && summary.finalCRPS < 0.04 ? 'improves' : 'maintains'} forecast quality under this configuration.
           </div>
           <div>
             <span className="font-medium text-slate-700">Key result:</span>{' '}

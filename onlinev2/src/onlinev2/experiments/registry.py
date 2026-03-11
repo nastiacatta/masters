@@ -1,10 +1,8 @@
 """
 Experiment registry: core and behaviour experiment names and callables.
 
-Callables are loaded from the top-level experiments module (onlinev2/experiments.py)
-when the CLI runs, so that the single large runner file stays outside src and remains
-the canonical entry point for "python experiments.py". The CLI adds the project root
-to sys.path and imports that module to get run_* functions.
+Callables are provided by onlinev2.experiments.runners.runner_module.
+The CLI imports that module from the package; no sys.path or PYTHONPATH required.
 """
 from __future__ import annotations
 

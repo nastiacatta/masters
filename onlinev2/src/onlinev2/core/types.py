@@ -1,10 +1,78 @@
-"""Deprecated compatibility layer; use onlinev2.mechanism.models instead."""
-# TODO: Deprecated. Import from onlinev2.mechanism.models instead.
-from onlinev2.mechanism.models import (
-    Report,
-    AgentInput,
-    MechanismParams,
-    MechanismState,
-)
+"""
+Canonical mechanism types: parameters and mutable state for the deterministic round runner.
 
-__all__ = ["Report", "AgentInput", "MechanismParams", "MechanismState"]
+This module defines the public interface between the core mechanism and the rest of the
+system. The core does not import behaviour; actions passed to run_round satisfy the
+AgentInput protocol (account_id, participate, report, deposit, meta). The behaviour
+layer produces AgentAction instances that conform to this interface.
+
+Assumptions:
+  - MechanismParams are immutable for a simulation run.
+  - MechanismState is updated in-place only by the core runner; callers receive
+    a new state from run_round.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, Protocol
+
+import numpy as np
+
+
+Report = Any
+
+
+class AgentInput(Protocol):
+    """Protocol for per-account round input. Satisfied by behaviour.protocol.AgentAction."""
+
+    account_id: str
+    participate: bool
+    report: Any
+    deposit: float
+    meta: Dict[str, Any]
+
+
+@dataclass
+class MechanismParams:
+    """Immutable mechanism hyper-parameters (fixed across a simulation run)."""
+
+    lam: float = 0.3
+    eta: float = 1.0
+    sigma_min: float = 0.1
+    omega_max: Optional[float] = None
+    rho: float = 0.1
+    gamma: float = 4.0
+    kappa: float = 0.0
+    L0: float = 0.0
+    U: float = 0.0
+    scoring_mode: str = "point_mae"
+    taus: Optional[np.ndarray] = None
+    eps: float = 1e-12
+
+
+@dataclass
+class MechanismState:
+    """Mutable state that evolves from round to round."""
+
+    t: int = 0
+    wealth: Dict[str, float] = field(default_factory=dict)
+    ewma_loss: Dict[str, float] = field(default_factory=dict)
+    sigma: Dict[str, float] = field(default_factory=dict)
+    weights_prev: Dict[str, float] = field(default_factory=dict)
+    agg_prev: Optional[Report] = None
+    profit_prev: Dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
+class RoundInput:
+    """
+    Concrete implementation of AgentInput for tests and programmatic use.
+    Satisfies the AgentInput protocol; use this when constructing actions
+    outside the behaviour layer (e.g. in tests). Behaviour layer uses AgentAction.
+    """
+    account_id: str
+    participate: bool
+    report: Any
+    deposit: float
+    meta: Dict[str, Any] = field(default_factory=dict)

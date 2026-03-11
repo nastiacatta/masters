@@ -1,8 +1,13 @@
 /**
- * One-round mechanism step-by-step (point/MAE scoring).
- * Mirrors onlinev2 mechanism: score_mae, effective wager, settle_round, aggregate, EWMA loss, loss_to_skill.
+ * One-round mechanism (point/MAE scoring).
+ * Aligned with onlinev2.core: scoring.score_mae, weights.effective_wager,
+ * aggregation.aggregate_forecast, settlement.skill_payoff / settle_round.
+ * Skill update (L, sigma from loss) is dashboard-specific; onlinev2 uses core.skill.
  */
 const EPS = 1e-12;
+
+/** How reports are combined: uniform, deposit-only, skill-only, or full skill × stake. */
+export type WeightingMode = 'uniform' | 'deposit' | 'skill' | 'full';
 
 export interface MechanismParams {
   lam: number;
@@ -14,6 +19,8 @@ export interface MechanismParams {
   s_client?: number;
   kappa?: number;
   L0?: number;
+  /** Weighting rule for aggregation. Default 'full' (skill × stake). */
+  weightingMode?: WeightingMode;
 }
 
 export interface AgentState {
@@ -108,7 +115,17 @@ export function runRound(
   const g = sigma_t.map(s =>
     params.lam + (1 - params.lam) * Math.pow(Math.max(0, Math.min(1, s)), params.eta ?? 1)
   );
-  let m = deposits.map((b, i) => (alpha[i] === 1 ? 0 : b * g[i]));
+  const mode = params.weightingMode ?? 'full';
+  let m: number[];
+  if (mode === 'uniform') {
+    m = alpha.map((a) => (a === 0 ? 1 : 0));
+  } else if (mode === 'deposit') {
+    m = deposits.map((b, i) => (alpha[i] === 0 ? b : 0));
+  } else if (mode === 'skill') {
+    m = g.map((gi, i) => (alpha[i] === 0 ? gi : 0));
+  } else {
+    m = deposits.map((b, i) => (alpha[i] === 1 ? 0 : b * g[i]));
+  }
 
   const M = m.reduce((a, b) => a + b, 0);
   const s_bar = M > EPS ? m.reduce((sum, mi, i) => sum + mi * scores[i], 0) / M : 0;

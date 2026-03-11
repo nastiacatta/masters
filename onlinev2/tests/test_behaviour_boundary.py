@@ -43,9 +43,9 @@ class TestCoreBehaviourSeparation:
     """Core module must not import behaviour; RoundPublicState must not expose y_t."""
 
     def test_core_does_not_import_behaviour(self):
-        """core.runner and core.types must not depend on the behaviour package."""
-        import onlinev2.mechanism.runner as runner_mod
-        import onlinev2.mechanism.models as types_mod
+        """Canonical core.runner and core.types must not depend on the behaviour package."""
+        import onlinev2.core.runner as runner_mod
+        import onlinev2.core.types as types_mod
         for mod in (runner_mod, types_mod):
             for name in dir(mod):
                 if name.startswith("_"):
@@ -53,9 +53,8 @@ class TestCoreBehaviourSeparation:
                 obj = getattr(mod, name)
                 if hasattr(obj, "__module__") and obj.__module__:
                     assert "onlinev2.behaviour" not in obj.__module__, (
-                        f"mechanism module {mod.__name__} has attribute {name} from behaviour: {obj.__module__}"
+                        f"core module {mod.__name__} has attribute {name} from behaviour: {obj.__module__}"
                     )
-        # Runner must use AgentInput from mechanism.models, not AgentAction from behaviour
         import inspect
         runner_source = inspect.getsource(runner_mod.run_round)
         assert "from onlinev2.behaviour" not in runner_source

@@ -1,21 +1,293 @@
-"""Deprecated compatibility layer; use onlinev2.mechanism.metrics instead."""
-# TODO: Deprecated. Import from onlinev2.mechanism.metrics instead.
-from onlinev2.mechanism.metrics import (
-    compute_pit,
-    compute_sharpness,
-    compute_hhi,
-    compute_n_eff,
-    compute_gini,
-    NetworkExporter,
-    RoundMetricsLogger,
-)
+"""
+Mechanism metrics: PIT, sharpness, concentration (HHI, N_eff, Gini), and
+in-memory network feature/edge data for collusion analysis.
 
-__all__ = [
-    "compute_pit",
-    "compute_sharpness",
-    "compute_hhi",
-    "compute_n_eff",
-    "compute_gini",
-    "NetworkExporter",
-    "RoundMetricsLogger",
-]
+Pure computation and in-memory accumulation only. No file I/O; CSV/plot
+export belongs in io/ or experiments/.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Sequence
+
+import numpy as np
+
+
+def compute_pit(
+    y_t: float,
+    quantiles: np.ndarray,
+    taus: np.ndarray,
+) -> float:
+    """
+    Probability Integral Transform: PIT_t = F_t(y_t).
+    Linearly interpolates between quantile levels.
+    """
+    quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
+    taus = np.asarray(taus, dtype=np.float64).ravel()
+
+    if y_t <= quantiles[0]:
+        return float(taus[0])
+    if y_t >= quantiles[-1]:
+        return float(taus[-1])
+
+    idx = np.searchsorted(quantiles, y_t)
+    if idx == 0:
+        return float(taus[0])
+    q_lo, q_hi = quantiles[idx - 1], quantiles[idx]
+    tau_lo, tau_hi = taus[idx - 1], taus[idx]
+    if abs(q_hi - q_lo) < 1e-15:
+        return float((tau_lo + tau_hi) / 2.0)
+    frac = (y_t - q_lo) / (q_hi - q_lo)
+    return float(tau_lo + frac * (tau_hi - tau_lo))
+
+
+def compute_sharpness(
+    quantiles: np.ndarray,
+    taus: np.ndarray,
+    *,
+    tau_L: float = 0.1,
+    tau_H: float = 0.9,
+) -> Dict[str, float]:
+    """Sharpness proxies: interval_width, iqr, entropy_proxy."""
+    quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
+    taus = np.asarray(taus, dtype=np.float64).ravel()
+
+    idx_L = int(np.argmin(np.abs(taus - tau_L)))
+    idx_H = int(np.argmin(np.abs(taus - tau_H)))
+    idx_25 = int(np.argmin(np.abs(taus - 0.25)))
+    idx_75 = int(np.argmin(np.abs(taus - 0.75)))
+
+    interval_width = float(quantiles[idx_H] - quantiles[idx_L])
+    iqr = float(quantiles[idx_75] - quantiles[idx_25])
+
+    diffs = np.diff(quantiles)
+    diffs = np.maximum(diffs, 1e-15)
+    entropy_proxy = float(-np.sum(np.log(diffs)))
+
+    return {
+        "interval_width": interval_width,
+        "iqr": iqr,
+        "entropy_proxy": entropy_proxy,
+    }
+
+
+def compute_hhi(weights: np.ndarray) -> float:
+    """Herfindahl–Hirschman Index: H_t = sum_i w_{i,t}^2. Weights normalised (sum 1)."""
+    w = np.asarray(weights, dtype=np.float64).ravel()
+    total = float(w.sum())
+    if total < 1e-15:
+        return 0.0
+    w_norm = w / total
+    return float(np.sum(w_norm ** 2))
+
+
+def compute_n_eff(weights: np.ndarray) -> float:
+    """Effective number of participants: N_eff = 1 / H_t."""
+    hhi = compute_hhi(weights)
+    if hhi < 1e-15:
+        return float(len(weights))
+    return 1.0 / hhi
+
+
+def compute_gini(values: np.ndarray) -> float:
+    """Gini coefficient. 0 = perfect equality, approaches 1 for maximal inequality."""
+    x = np.asarray(values, dtype=np.float64).ravel()
+    x = x[x >= 0]
+    if x.size == 0:
+        return 0.0
+    x_sorted = np.sort(x)
+    n = x.size
+    total = float(x_sorted.sum())
+    if total <= 0.0:
+        return 0.0
+    index = np.arange(1, n + 1, dtype=np.float64)
+    return float((2.0 * np.sum(index * x_sorted) - (n + 1) * total) / (n * total))
+
+
+class NetworkExporter:
+    """
+    Builds similarity graph data in rolling windows for collusion detection.
+    Node features and edge weights are computed in memory only.
+    Use io or experiments layer to write CSV/plots.
+    """
+
+    def __init__(self, window_size: int = 50) -> None:
+        self.window_size = window_size
+        self._agent_reports: Dict[str, List[float]] = {}
+        self._agent_stakes: Dict[str, List[float]] = {}
+        self._agent_participation: Dict[str, List[int]] = {}
+
+    def record_round(
+        self,
+        *,
+        agent_ids: List[str],
+        reports: Dict[str, float],
+        stakes: Dict[str, float],
+        participation: Dict[str, bool],
+    ) -> None:
+        """Record one round of observations."""
+        for aid in agent_ids:
+            if aid not in self._agent_reports:
+                self._agent_reports[aid] = []
+                self._agent_stakes[aid] = []
+                self._agent_participation[aid] = []
+
+            self._agent_reports[aid].append(reports.get(aid, np.nan))
+            self._agent_stakes[aid].append(stakes.get(aid, 0.0))
+            self._agent_participation[aid].append(
+                1 if participation.get(aid, False) else 0
+            )
+
+            if len(self._agent_reports[aid]) > self.window_size:
+                self._agent_reports[aid] = self._agent_reports[aid][-self.window_size:]
+                self._agent_stakes[aid] = self._agent_stakes[aid][-self.window_size:]
+                self._agent_participation[aid] = self._agent_participation[aid][-self.window_size:]
+
+    def compute_node_features(self) -> Dict[str, Dict[str, float]]:
+        """Compute node feature vector for each agent."""
+        features = {}
+        for aid in self._agent_reports:
+            stakes = np.array(self._agent_stakes[aid])
+            reports = np.array(self._agent_reports[aid])
+            participation = np.array(self._agent_participation[aid])
+
+            valid_reports = reports[np.isfinite(reports)]
+
+            features[aid] = {
+                "mean_stake": float(np.mean(stakes)),
+                "stake_var": float(np.var(stakes)),
+                "participation_rate": float(np.mean(participation)),
+                "median_report": float(np.median(valid_reports)) if valid_reports.size > 0 else 0.5,
+                "report_width": float(np.std(valid_reports)) if valid_reports.size > 1 else 0.0,
+            }
+        return features
+
+    def compute_edge_weights(self) -> List[Dict[str, Any]]:
+        """Compute pairwise similarity edges."""
+        agents = sorted(self._agent_reports.keys())
+        edges = []
+
+        for i, a1 in enumerate(agents):
+            for a2 in agents[i + 1:]:
+                r1 = np.array(self._agent_reports[a1])
+                r2 = np.array(self._agent_reports[a2])
+                s1 = np.array(self._agent_stakes[a1])
+                s2 = np.array(self._agent_stakes[a2])
+                p1 = np.array(self._agent_participation[a1])
+                p2 = np.array(self._agent_participation[a2])
+
+                min_len = min(len(r1), len(r2))
+                if min_len < 3:
+                    continue
+                r1, r2 = r1[-min_len:], r2[-min_len:]
+                s1, s2 = s1[-min_len:], s2[-min_len:]
+                p1, p2 = p1[-min_len:], p2[-min_len:]
+
+                valid = np.isfinite(r1) & np.isfinite(r2)
+                if valid.sum() < 3:
+                    report_corr = 0.0
+                else:
+                    rv1, rv2 = r1[valid], r2[valid]
+                    if np.std(rv1) < 1e-12 or np.std(rv2) < 1e-12:
+                        report_corr = 0.0
+                    else:
+                        report_corr = float(np.corrcoef(rv1, rv2)[0, 1])
+
+                if np.std(s1) < 1e-12 or np.std(s2) < 1e-12:
+                    stake_corr = 0.0
+                else:
+                    stake_corr = float(np.corrcoef(s1, s2)[0, 1])
+
+                sync_participation = float(np.mean(p1 == p2))
+
+                edges.append({
+                    "source": a1,
+                    "target": a2,
+                    "report_corr": report_corr,
+                    "stake_corr": stake_corr,
+                    "sync_participation": sync_participation,
+                })
+
+        return edges
+
+    def get_export_data(self) -> tuple:
+        """
+        Return (node_rows, edge_rows) for CSV export by io/ or experiments/.
+        Does not perform file I/O.
+        """
+        features = self.compute_node_features()
+        node_rows = [{"agent_id": aid, **feat} for aid, feat in features.items()]
+        edge_rows = self.compute_edge_weights()
+        return node_rows, edge_rows
+
+
+class RoundMetricsLogger:
+    """Accumulates per-round metrics (PIT, sharpness, HHI, N_eff, Gini) in memory."""
+
+    def __init__(self, taus: Optional[Sequence[float]] = None) -> None:
+        if taus is None:
+            self.taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9], dtype=np.float64)
+        else:
+            self.taus = np.asarray(taus, dtype=np.float64).ravel().copy()
+        self.pit_values: List[float] = []
+        self.sharpness_values: List[Dict[str, float]] = []
+        self.hhi_values: List[float] = []
+        self.n_eff_values: List[float] = []
+        self.gini_values: List[float] = []
+
+    def log_round(
+        self,
+        *,
+        y_t: float,
+        agg_quantiles: Optional[np.ndarray] = None,
+        weights: np.ndarray,
+        wealth: np.ndarray,
+    ) -> Dict[str, Any]:
+        """Log metrics for one round. Returns dict of computed values."""
+        metrics: Dict[str, Any] = {}
+
+        if agg_quantiles is not None:
+            pit = compute_pit(y_t, agg_quantiles, self.taus)
+            self.pit_values.append(pit)
+            metrics["PIT"] = pit
+
+            sharpness = compute_sharpness(agg_quantiles, self.taus)
+            self.sharpness_values.append(sharpness)
+            metrics["sharpness"] = sharpness
+
+        hhi = compute_hhi(weights)
+        n_eff = compute_n_eff(weights)
+        gini = compute_gini(wealth)
+
+        self.hhi_values.append(hhi)
+        self.n_eff_values.append(n_eff)
+        self.gini_values.append(gini)
+
+        metrics["HHI"] = hhi
+        metrics["N_eff"] = n_eff
+        metrics["Gini"] = gini
+
+        return metrics
+
+    def summary(self) -> Dict[str, Any]:
+        """Return summary statistics across all rounds."""
+        out: Dict[str, Any] = {}
+        if self.pit_values:
+            pit_arr = np.array(self.pit_values)
+            out["pit_mean"] = float(np.mean(pit_arr))
+            out["pit_std"] = float(np.std(pit_arr))
+            out["pit_ks_uniform"] = _ks_uniform(pit_arr)
+        if self.hhi_values:
+            out["hhi_mean"] = float(np.mean(self.hhi_values))
+            out["n_eff_mean"] = float(np.mean(self.n_eff_values))
+            out["gini_mean"] = float(np.mean(self.gini_values))
+            out["gini_final"] = float(self.gini_values[-1])
+        return out
+
+
+def _ks_uniform(x: np.ndarray) -> float:
+    """KS statistic against Uniform(0,1)."""
+    x_sorted = np.sort(x)
+    n = len(x_sorted)
+    ecdf = np.arange(1, n + 1) / n
+    return float(np.max(np.abs(ecdf - x_sorted)))

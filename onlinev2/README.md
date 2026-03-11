@@ -17,7 +17,7 @@ cd onlinev2
 pip install -e .
 ```
 
-If you run scripts from the project root without installing, set `PYTHONPATH=src` so that `onlinev2` is importable.
+No `PYTHONPATH` or `sys.path` changes are required when the package is installed. Without installing, use `PYTHONPATH=src` when running scripts from the project root.
 
 ---
 
@@ -31,13 +31,14 @@ Outputs are split by **block**:
 **Core only** (17 mechanism/DGP experiments):
 
 ```bash
-PYTHONPATH=src python experiments.py --block core
+python experiments.py --block core
+# or: python -m onlinev2.experiments.cli --block core
 ```
 
 **Behaviour only** (12 user-behaviour experiments):
 
 ```bash
-PYTHONPATH=src python experiments.py --block behaviour --exp all
+python experiments.py --block behaviour --exp all
 ```
 
 Experiments: behaviour_matrix, preference_stress, intermittency_stress, arbitrage_scan, detection_adaptation, collusion_stress, insider_advantage, wash_activity_gaming, strategic_reporting, identity_attack_matrix, drift_adaptation, stake_policy_matrix.
@@ -45,14 +46,14 @@ Experiments: behaviour_matrix, preference_stress, intermittency_stress, arbitrag
 **Both** (default):
 
 ```bash
-PYTHONPATH=src python experiments.py --block all
+python experiments.py --block all
 ```
 
 **Single experiment**:
 
 ```bash
-PYTHONPATH=src python experiments.py --block behaviour --exp behaviour_matrix
-PYTHONPATH=src python experiments.py --block core --exp settlement
+python experiments.py --block behaviour --exp behaviour_matrix
+python experiments.py --block core --exp settlement
 ```
 
 Every behaviour run writes `summary.md` and `summary.json` in the experiment folder. Use `--write_summary false` to skip them.
@@ -64,15 +65,13 @@ Every behaviour run writes `summary.md` and `summary.json` in the experiment fol
 Run the deterministic mechanism and **29 inline unit tests** in `mvp.py`:
 
 ```bash
-PYTHONPATH=src python mvp.py
+python mvp.py
 ```
 
 Run **pytest** tests (in `tests/`):
 
 ```bash
 pytest -q
-# or
-PYTHONPATH=src pytest tests/ -q
 ```
 
 **Test count**: 29 inline tests in `mvp.py` + N pytest tests in `tests/` (e.g. `test_smoke.py`, `test_behaviour_boundary.py`, `test_metrics.py`, `test_arbitrageur.py`). CI should run both: `python mvp.py` and `pytest -q`.
@@ -84,13 +83,13 @@ PYTHONPATH=src pytest tests/ -q
 Run one behaviour experiment:
 
 ```bash
-PYTHONPATH=src python experiments.py --exp behaviour_matrix
+python experiments.py --exp behaviour_matrix
 ```
 
 Run intermittency stress test:
 
 ```bash
-PYTHONPATH=src python experiments.py --exp intermittency_stress
+python experiments.py --exp intermittency_stress
 ```
 
 ---
@@ -100,8 +99,8 @@ PYTHONPATH=src python experiments.py --exp intermittency_stress
 Use the behaviour preset name with `make_behaviour` in code, or run the corresponding experiment. From the CLI, behaviour experiments use presets internally; to vary presets (e.g. for `behaviour_matrix`) you can pass options via code or extend the CLI. Example pattern (if supported by your runner):
 
 ```bash
-PYTHONPATH=src python experiments.py --exp behaviour_matrix --behaviour BURSTY_REALISTIC
-PYTHONPATH=src python experiments.py --exp behaviour_matrix --behaviour SYBIL_SPLIT_K --k 10
+python experiments.py --exp behaviour_matrix --behaviour BURSTY_REALISTIC
+python experiments.py --exp behaviour_matrix --behaviour SYBIL_SPLIT_K --k 10
 ```
 
 Presets: `BENIGN_BASELINE`, `BURSTY_REALISTIC`, `HEDGED_RISK_AVERSE`, `COLLUSION_GROUP`, `SYBIL_SPLIT_K`, `MANIPULATOR`, `EVADER`, `INSIDER`, `ARBITRAGEUR`.
@@ -122,20 +121,21 @@ Plots are generated during the experiment run. To regenerate plots from saved CS
 
 ---
 
-## Quick start (legacy)
+## Quick start
 
 ```bash
 cd onlinev2
+pip install -e .
 
 # Run all experiments (core + behaviour, separate output roots)
-PYTHONPATH=src python experiments.py --exp all
+python experiments.py --exp all
 
 # Run a single experiment
-PYTHONPATH=src python experiments.py --exp aggregation
-PYTHONPATH=src python experiments.py --block behaviour --exp behaviour_matrix
+python experiments.py --exp aggregation
+python experiments.py --block behaviour --exp behaviour_matrix
 
 # Run simulation + 29 inline unit tests
-PYTHONPATH=src python mvp.py
+python mvp.py
 ```
 
 ---
@@ -145,8 +145,8 @@ PYTHONPATH=src python mvp.py
 ```
 onlinev2/
 │
-├── mvp.py                          # Simulation engine + 29 unit tests
-├── experiments.py                  # 17 core + 5 behaviour experiment drivers (see table below)
+├── mvp.py                          # Thin demo; delegates to onlinev2.simulation
+├── experiments.py                  # Thin entry; delegates to onlinev2.experiments.cli
 │
 ├── payoff/                         # Settlement and scoring
 │   ├── payoff.py                   #   settle_round, skill_payoff, utility_payoff,
@@ -163,14 +163,10 @@ onlinev2/
 │
 ├── src/onlinev2/                   # Installable package (pip install -e .)
 │   │
-│   ├── mechanism/                  # —— SOURCE OF TRUTH: scoring, settlement, aggregation, runner, models ——
-│   │   #   Use onlinev2.mechanism.runner, onlinev2.mechanism.models, etc.
+│   ├── core/                       # —— CANONICAL MECHANISM: types, runner, scoring, settlement, skill, metrics, staking, weights ——
+│   │   #   Use onlinev2.core in new code. No behaviour, no I/O.
 │   │
-│   ├── core/                       # —— Compatibility layer (re-exports mechanism); boundary: no behaviour ——
-│   │   ├── README.md               #   Boundary: core never imports behaviour
-│   │   ├── types.py                #   → onlinev2.mechanism.models
-│   │   ├── runner.py               #   → onlinev2.mechanism.runner (run_round)
-│   │   └── metrics.py              #   PIT, sharpness, HHI, N_eff, Gini
+│   ├── mechanism/                  # —— Compatibility shim (re-exports from core) ——
 │   │
 │   ├── behaviour/                  # —— USER & ADVERSARY BEHAVIOUR ——
 │   │   ├── README.md               #   Boundary: act() sees only past state
@@ -185,7 +181,7 @@ onlinev2/
 │   ├── dgps/                       #   Object-based DGP registry
 │   ├── plotting/                   #   Shared style only (style.py)
 │   ├── io/                         #   output_paths.py (ExperimentPaths)
-│   └── experiments/                #   summarise, config, runners (weight learning)
+│   └── experiments/                #   CLI, registry, summarise, config; runners/runner_module.py = all run_* experiments
 │
 ├── data_generation/                # Standalone: 3-method aggregation DGP script
 │   └── data_generation_3methods.py
@@ -319,7 +315,7 @@ Sybilproofness holds for identity splits/merges with identical reports and conse
 
 ## Unit tests
 
-**29 inline tests in `mvp.py`**: run with `PYTHONPATH=src python mvp.py`.
+**29 inline tests in `mvp.py`**: run with `python mvp.py`.
 
 Core mechanism: two-player closed form, equal-score zero profit, permutation invariance,
 zero-wager dummy, score shift invariance, ROI bounds (skill pool), near-zero wager.
@@ -335,7 +331,7 @@ Smoke: quantiles + utility, extreme parameters.
 Bankroll staking: budget balanced, wealth non-negative, deposit ≤ wealth, wager ≤ deposit,
 skill gate effect, weight cap, wager-skill correlation, eta backward compatibility.
 
-**Pytest tests in `tests/`**: run with `pytest -q` or `PYTHONPATH=src pytest tests/ -q`. Includes `test_smoke.py`, `test_behaviour_boundary.py`, `test_metrics.py`, `test_arbitrageur.py` (boundary, action validation, identity invariants, reproducibility, metrics, arbitrageur constraints).
+**Pytest tests in `tests/`**: run with `pytest -q`. Includes `test_smoke.py`, `test_behaviour_boundary.py`, `test_metrics.py`, `test_arbitrageur.py` (boundary, action validation, identity invariants, reproducibility, metrics, arbitrageur constraints).
 
 ---
 

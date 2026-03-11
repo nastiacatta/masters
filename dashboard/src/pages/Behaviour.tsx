@@ -19,7 +19,7 @@ import {
   Scatter,
 } from 'recharts';
 
-const PALETTE = ['#2563eb', '#7c3aed', '#f59e0b', '#10b981', '#ef4444', '#06b6d4'];
+const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#10b981', '#ef4444', '#06b6d4'];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -49,7 +49,6 @@ export default function Behaviour() {
     identityAttackData,
     driftAdaptationData,
     stakePolicyData,
-    detectionMetricsData,
     loading,
   } = useExperimentData();
 
@@ -128,7 +127,7 @@ export default function Behaviour() {
         </CardGrid>
 
         <div className="grid gap-6 xl:grid-cols-2">
-          <ChartCard title="Total profit by scenario" subtitle="Mechanism fixed, behaviour varied">
+          <ChartCard title="Total profit by scenario" subtitle="Skill × stake fixed, behaviour varied">
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data}>
@@ -267,7 +266,7 @@ export default function Behaviour() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" angle={-15} textAnchor="end" height={70} interval={0} />
                   <YAxis tickFormatter={(v) => `${Math.round(v * 100)}%`} />
-                  <Tooltip formatter={(v: number) => fmtPct(v)} />
+                  <Tooltip formatter={(v: unknown) => (typeof v === 'number' ? fmtPct(v) : String(v ?? ''))} />
                   <Bar dataKey="participationRate" fill={PALETTE[2]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -316,7 +315,7 @@ export default function Behaviour() {
         </CardGrid>
 
         <div className="grid gap-6 xl:grid-cols-2">
-          <ChartCard title="Arbitrage profit against λ" subtitle="Where the mechanism becomes exploitable">
+          <ChartCard title="Arbitrage profit against λ" subtitle="Where skill × stake becomes exploitable">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data}>
@@ -410,7 +409,7 @@ export default function Behaviour() {
     );
   }
 
-  const genericBarData = (data: { scenario?: string; identity?: string; belief?: string; staking?: string }[], labelKey: string) =>
+  const genericBarData = (data: { scenario?: string; identity?: string; belief?: string; staking?: string; finalGini?: number; totalProfit?: number }[], _labelKey: string) =>
     data.map((row) => ({ ...row, label: scenarioLabel(row.scenario ?? row.identity ?? row.belief ?? row.staking ?? '') }));
 
   if (expName === 'collusion_stress') {

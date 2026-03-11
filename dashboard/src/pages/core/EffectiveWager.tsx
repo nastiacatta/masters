@@ -28,7 +28,7 @@ export default function EffectiveWager() {
 
         <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-4">
           <p className="text-xs text-slate-700">
-            <strong>Why it matters:</strong> The mechanism never takes more than <MathBlock inline latex="m_i" /> from the pool for agent <MathBlock inline latex="i" />. The refund is returned regardless of outcome, so exposure is exactly <MathBlock inline latex="m_i" />. Skill <MathBlock inline latex="\sigma_i" /> is fixed before reports in round <MathBlock inline latex="t" />, so there is no double-counting of current-round performance.
+            <strong>Why it matters:</strong> The design never takes more than <MathBlock inline latex="m_i" /> from the pool for agent <MathBlock inline latex="i" />. The refund is returned regardless of outcome, so exposure is exactly <MathBlock inline latex="m_i" />. Skill <MathBlock inline latex="\sigma_i" /> is fixed before reports in round <MathBlock inline latex="t" />, so there is no double-counting of current-round performance.
           </p>
         </div>
       </div>

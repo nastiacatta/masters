@@ -29,10 +29,10 @@ export function ErrorState({
   children,
 }: DataStatesProps & { error?: Error | null }) {
   return (
-    <div className="p-4 mb-4 bg-amber-50 border border-amber-200 rounded-xl">
-      <p className="text-sm font-medium text-amber-800">{message}</p>
+    <div className="p-4 mb-4 bg-slate-100 border border-slate-200 rounded-xl">
+      <p className="text-sm font-medium text-slate-800">{message}</p>
       {error?.message && (
-        <p className="text-xs text-amber-700 mt-1 font-mono">{error.message}</p>
+        <p className="text-xs text-slate-600 mt-1 font-mono">{error.message}</p>
       )}
       {children}
     </div>

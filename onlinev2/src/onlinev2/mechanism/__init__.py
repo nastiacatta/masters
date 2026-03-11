@@ -1,17 +1,17 @@
 """
-Mechanism: scoring, settlement, skill updates, aggregation, runner, metrics.
+Compatibility shim: canonical mechanism implementation is onlinev2.core.
 
-Single source of truth for the Lambert self-financed wagering mechanism.
-Does not import behaviour; actions are passed in via the AgentInput protocol.
+New code should import from onlinev2.core (types, runner, scoring, settlement, etc.).
+This package re-exports the same API for backward compatibility.
 """
 
-from onlinev2.mechanism.models import (
+from onlinev2.core.types import (
     AgentInput,
     MechanismParams,
     MechanismState,
     Report,
 )
-from onlinev2.mechanism.runner import run_round
+from onlinev2.core.runner import run_round
 
 __all__ = [
     "AgentInput",

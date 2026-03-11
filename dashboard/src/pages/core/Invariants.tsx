@@ -15,7 +15,7 @@ export default function Invariants() {
     <div className="p-6 max-w-4xl">
       <PageHeader
         title="Invariants and safety checks"
-        description="Concrete guarantees that make the mechanism disciplined rather than ad hoc."
+        description="Concrete guarantees that make the skill × stake design disciplined rather than ad hoc."
       />
 
       <div className="flex items-center gap-2 mb-4">

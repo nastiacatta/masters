@@ -9,7 +9,7 @@ interface Props {
   data: BehaviourScenario[];
 }
 
-const COLORS = ['#64748b', '#6366f1', '#f59e0b', '#10b981', '#ec4899', '#ef4444', '#8b5cf6', '#06b6d4'];
+const COLORS = ['#64748b', '#6366f1', '#0d9488', '#10b981', '#ec4899', '#ef4444', '#8b5cf6', '#06b6d4'];
 
 export default function BehaviourComparisonChart({ data }: Props) {
   const [metric, setMetric] = useState<'finalGini' | 'finalNEff'>('finalGini');

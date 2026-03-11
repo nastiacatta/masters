@@ -32,7 +32,7 @@ export const mockExperiments: ExperimentMeta[] = [
   {
     name: 'forecast_aggregation',
     displayName: 'Forecast Aggregation',
-    description: 'Compares aggregate forecast quality across weighting rules: uniform, deposit-only, skill-only, and the full mechanism.',
+    description: 'Compares aggregate forecast quality across weighting rules: uniform, deposit-only, skill-only, and skill × stake.',
     block: 'experiments',
     dgp: 'baseline',
     scoringMode: 'CRPS',
@@ -42,7 +42,7 @@ export const mockExperiments: ExperimentMeta[] = [
   {
     name: 'behaviour_matrix',
     displayName: 'Behaviour Matrix',
-    description: 'Holds the mechanism fixed and varies only behaviour modules: benign baselines, realistic frictions, and adversaries.',
+    description: 'Holds skill × stake fixed and varies only behaviour modules: benign baselines, realistic frictions, and adversaries.',
     block: 'behaviour',
     dgp: 'baseline',
     scoringMode: 'CRPS',
@@ -72,7 +72,7 @@ export const mockExperiments: ExperimentMeta[] = [
   {
     name: 'settlement_sanity',
     displayName: 'Settlement Sanity',
-    description: 'Verifies that the settlement mechanism is budget-balanced (zero budget gap) and payouts are non-negative across all rounds.',
+    description: 'Verifies that the settlement design is budget-balanced (zero budget gap) and payouts are non-negative across all rounds.',
     block: 'core',
     dgp: 'baseline',
     scoringMode: 'CRPS',
@@ -102,7 +102,7 @@ export const mockExperiments: ExperimentMeta[] = [
   {
     name: 'sybil',
     displayName: 'Sybil Attack',
-    description: 'Tests whether sybil splitting (one agent creating k accounts) gains an advantage under the mechanism.',
+    description: 'Tests whether sybil splitting (one agent creating k accounts) gains an advantage under skill × stake.',
     block: 'experiments',
     dgp: 'baseline',
     scoringMode: 'CRPS',

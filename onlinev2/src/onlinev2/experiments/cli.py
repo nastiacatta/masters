@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import sys
-from pathlib import Path
 
 from onlinev2.experiments.helpers import unit_latent_generator_determinism
 from onlinev2.experiments.registry import (
@@ -18,6 +16,7 @@ from onlinev2.experiments.registry import (
     get_core_experiments,
     set_cli_args,
 )
+from onlinev2.experiments.runners import runner_module
 from onlinev2.simulation import (
     unit_crps_bound,
     unit_crps_nonneg,
@@ -88,11 +87,7 @@ def main() -> None:
     write_summary = args.write_summary.lower() == "true"
     set_cli_args(outdir, write_summary)
 
-    # Load runner module (experiments.py at project root)
-    project_root = Path(__file__).resolve().parents[3]
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-    import experiments as runner  # noqa: E402
+    runner = runner_module
 
     if args.block in ("core", "all"):
         for name, fn in get_core_experiments(runner):

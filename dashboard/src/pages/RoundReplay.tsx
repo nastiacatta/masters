@@ -64,7 +64,7 @@ export default function RoundReplay() {
   if (loading) {
     return (
       <div className="p-6 max-w-7xl">
-        <PageHeader title="Round Replay" description="Step through the mechanism round by round." />
+        <PageHeader title="Round Replay" description="Step through the skill × stake pipeline round by round." />
         <LoadingState message="Loading timeseries data…" />
       </div>
     );
@@ -73,7 +73,7 @@ export default function RoundReplay() {
   if (!selectedExperiment) {
     return (
       <div className="p-6 max-w-7xl">
-        <PageHeader title="Round Replay" description="Step through the mechanism round by round." />
+        <PageHeader title="Round Replay" description="Step through the skill × stake pipeline round by round." />
         <EmptyState message="Select an experiment from the sidebar." />
       </div>
     );
@@ -82,7 +82,7 @@ export default function RoundReplay() {
   if (skillWagerData.length === 0) {
     return (
       <div className="p-6 max-w-7xl">
-        <PageHeader title="Round Replay" description="Step through the mechanism round by round." />
+        <PageHeader title="Round Replay" description="Step through the skill × stake pipeline round by round." />
         <ExperimentContext experiment={selectedExperiment} dataSource="timeseries" />
         <EmptyState message="No timeseries data for this experiment. Round-by-round view requires timeseries.csv." />
       </div>
@@ -163,16 +163,16 @@ export default function RoundReplay() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
-        <h3 className="text-sm font-semibold text-slate-800 mb-3">Mechanism Pipeline</h3>
+        <h3 className="text-sm font-semibold text-slate-800 mb-3">Skill × stake pipeline</h3>
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
           {mechanismSteps.map((step, i) => (
             <div key={step} className="flex items-center gap-1 shrink-0">
               <div
                 className="px-3 py-1.5 rounded-lg text-xs font-medium"
                 style={{
-                  background: i <= 4 ? `${ACCENT}15` : i <= 6 ? '#f59e0b15' : '#10b98115',
+                  background: i <= 4 ? `${ACCENT}15` : i <= 6 ? '#0d948815' : '#10b98115',
                   color: i <= 4 ? ACCENT : i <= 6 ? '#d97706' : '#059669',
-                  border: `1px solid ${i <= 4 ? ACCENT + '30' : i <= 6 ? '#f59e0b30' : '#10b98130'}`,
+                  border: `1px solid ${i <= 4 ? ACCENT + '30' : i <= 6 ? '#0d948830' : '#10b98130'}`,
                 }}
               >
                 {step}

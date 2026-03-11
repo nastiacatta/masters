@@ -58,6 +58,10 @@ class GaussianBeliefModel:
         return np.asarray(qs, dtype=float)
 
 
+# Alias for tests/configs that refer to "private signal" belief
+PrivateSignalBelief = GaussianBeliefModel
+
+
 @dataclass
 class BiasedBeliefModel:
     """Biased signal: adds systematic bias to the anchor."""

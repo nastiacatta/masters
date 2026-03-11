@@ -1,349 +1,480 @@
 import { useState, useMemo } from 'react';
-import PageHeader from '@/components/dashboard/PageHeader';
-import MathBlock from '@/components/dashboard/MathBlock';
-import SectionLabel from '@/components/dashboard/SectionLabel';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import ChartCard from '@/components/dashboard/ChartCard';
-import { fmtNum } from '@/lib/formatters';
-import {
-  DGP_OPTIONS,
-  generateDGP,
-  type DGPId,
-  type DGPSeries,
-  type RoundData,
-} from '@/lib/coreMechanism/dgpSimulator';
-import {
-  runRound,
-  stateAfterRounds,
-  buildInitialStateAndActions,
-  type MechanismParams,
-  type StepOutputs,
-} from '@/lib/coreMechanism/runRound';
+import SymbolGlossary from '@/components/dashboard/SymbolGlossary';
+import PageHeader from '@/components/dashboard/PageHeader';
+import FormulaCard from '@/components/dashboard/FormulaCard';
+import MathBlock from '@/components/dashboard/MathBlock';
+import { runRoundExtended } from '@/lib/coreMechanism/runRoundExtended';
+import type { AgentState, AgentAction } from '@/lib/coreMechanism/runRound';
+import type { ExtendedParams } from '@/lib/coreMechanism/runRoundExtended';
 
-const DEFAULT_PARAMS: MechanismParams = {
-  lam: 0.3,
-  sigma_min: 0.1,
-  gamma: 4,
-  rho: 0.1,
-  eta: 1,
-  U: 0,
-  s_client: 0,
+const CORE_SYMBOLS = [
+  { symbol: 'y', meaning: 'Outcome (realised)' },
+  { symbol: 'r_i', meaning: 'Agent i report' },
+  { symbol: 'r̂', meaning: 'Aggregate forecast' },
+  { symbol: 'b_i', meaning: 'Deposit (stake)' },
+  { symbol: 'σ_i', meaning: 'Skill weight' },
+  { symbol: 'm_i', meaning: 'Effective wager' },
+  { symbol: 's_i', meaning: 'Score: 1 − |y − r_i|' },
+  { symbol: 'π_i', meaning: 'Profit' },
+  { symbol: 'ω_max', meaning: 'Weight cap (concentration limit)' },
+];
+
+type EditableAgent = {
+  id: string;
+  label: string;
+  report: number;
+  deposit: number;
+  ewmaLoss: number;
+  wealth: number;
+  participate: boolean;
 };
-const DEFAULT_N = 3;
-const DEFAULT_T = 20;
-const DEFAULT_SEED = 42;
-const DEPOSIT = 1;
+
+function clamp(v: number, lo = 0, hi = 1): number {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+function roundTo(v: number, d = 3): number {
+  return Number(v.toFixed(d));
+}
+
+function makeInitialAgents(): EditableAgent[] {
+  return [
+    { id: 'a1', label: 'A', report: 0.72, deposit: 6.5, ewmaLoss: 0.12, wealth: 20, participate: true },
+    { id: 'a2', label: 'B', report: 0.58, deposit: 5.5, ewmaLoss: 0.21, wealth: 20, participate: true },
+    { id: 'a3', label: 'C', report: 0.42, deposit: 4.5, ewmaLoss: 0.31, wealth: 20, participate: true },
+    { id: 'a4', label: 'D', report: 0.33, deposit: 2.8, ewmaLoss: 0.4, wealth: 20, participate: true },
+  ];
+}
 
 export default function CoreOverview() {
-  const [dgpId, setDgpId] = useState<DGPId>('baseline');
-  const [seed, setSeed] = useState(DEFAULT_SEED);
-  const [nForecasters, setNForecasters] = useState(DEFAULT_N);
-  const [numRounds, setNumRounds] = useState(DEFAULT_T);
-  const [series, setSeries] = useState<DGPSeries | null>(null);
-  const [currentRound, setCurrentRound] = useState(0);
+  const [agents, setAgents] = useState<EditableAgent[]>(makeInitialAgents);
+  const [outcome, setOutcome] = useState(0.61);
+  const [lam, setLam] = useState(0.3);
+  const [eta, setEta] = useState(1.8);
+  const [sigmaMin, setSigmaMin] = useState(0.2);
+  const [gamma, setGamma] = useState(3.5);
+  const [rho, setRho] = useState(0.2);
+  const [omegaMax, setOmegaMax] = useState(0.45);
+  const [utilityPool, setUtilityPool] = useState(0);
+  const [scoreThreshold, setScoreThreshold] = useState(0.7);
+  const [history, setHistory] = useState<Array<{ round: number; aggregate: number; outcome: number; error: number; nEff: number; gini: number }>>([]);
 
-  const dgpOption = DGP_OPTIONS.find((o) => o.id === dgpId) ?? DGP_OPTIONS[0];
-
-  const generate = () => {
-    const s = generateDGP(dgpId, seed, numRounds, nForecasters);
-    setSeries(s);
-    setCurrentRound(0);
-  };
-
-  const { state: initialState, actionsTemplate } = useMemo(
-    () => buildInitialStateAndActions(nForecasters, DEPOSIT),
-    [nForecasters]
+  const params: ExtendedParams = useMemo(
+    () => ({
+      lam,
+      sigma_min: sigmaMin,
+      gamma,
+      rho,
+      eta,
+      omegaMax,
+      utilityPool,
+      scoreThreshold,
+    }),
+    [lam, sigmaMin, gamma, rho, eta, omegaMax, utilityPool, scoreThreshold]
   );
 
-  const stateAtStartOfRound = useMemo(() => {
-    if (!series || series.rounds.length === 0) return initialState;
-    const roundsData = series.rounds.map((r) => ({ y: r.y, reports: r.reports }));
-    return stateAfterRounds(
-      initialState,
-      roundsData,
-      DEFAULT_PARAMS,
-      DEPOSIT,
-      currentRound
+  const state: AgentState[] = useMemo(
+    () =>
+      agents.map((a, i) => ({
+        accountId: i,
+        L: a.ewmaLoss,
+        sigma: 0.5,
+        wealth: a.wealth,
+      })),
+    [agents]
+  );
+
+  const actions: AgentAction[] = useMemo(
+    () =>
+      agents.map((a, i) => ({
+        accountId: i,
+        participate: a.participate,
+        report: a.report,
+        deposit: a.deposit,
+      })),
+    [agents]
+  );
+
+  const result = useMemo(() => runRoundExtended(state, actions, outcome, params), [state, actions, outcome, params]);
+
+  const barData = useMemo(
+    () =>
+      agents.map((a, i) => ({
+        label: a.label,
+        Deposit: roundTo(a.deposit, 2),
+        'Effective wager': roundTo(result.m[i], 2),
+        Score: roundTo(result.scores[i], 3),
+        Profit: roundTo(result.profit[i], 2),
+      })),
+    [result, agents]
+  );
+
+  const rows = useMemo(
+    () =>
+      agents.map((a, idx) => ({
+        ...a,
+        sigma: result.sigma_t[idx],
+        score: result.scores[idx],
+        m: result.m[idx],
+        weight: result.weight[idx],
+        profit: result.profit[idx],
+        wealth_new: result.wealth_new[idx],
+      })),
+    [result, agents]
+  );
+
+  const runOneRound = () => {
+    setHistory((h) => [
+      ...h,
+      {
+        round: h.length + 1,
+        aggregate: roundTo(result.r_hat, 4),
+        outcome: roundTo(outcome, 4),
+        error: roundTo(Math.abs(outcome - result.r_hat), 4),
+        nEff: roundTo(1 / result.weight.reduce((s, w) => s + w * w, 0), 4),
+        gini: 0,
+      },
+    ]);
+    setAgents((prev) =>
+      prev.map((a, i) => ({
+        ...a,
+        report: a.report,
+        deposit: a.deposit,
+        participate: a.participate,
+        ewmaLoss: result.L_new[i],
+        wealth: result.wealth_new[i],
+      }))
     );
-  }, [series, currentRound, initialState, nForecasters]);
+  };
 
-  const roundData: RoundData | null = series?.rounds[currentRound] ?? null;
-  const stepOutputs: StepOutputs | null = useMemo(() => {
-    if (!roundData) return null;
-    const actions = actionsTemplate(roundData.reports);
-    return runRound(stateAtStartOfRound, actions, roundData.y, DEFAULT_PARAMS);
-  }, [roundData, stateAtStartOfRound, actionsTemplate]);
+  const resetDemo = () => {
+    setAgents(makeInitialAgents());
+    setOutcome(0.61);
+    setLam(0.3);
+    setEta(1.8);
+    setSigmaMin(0.2);
+    setGamma(3.5);
+    setRho(0.2);
+    setOmegaMax(0.45);
+    setUtilityPool(0);
+    setScoreThreshold(0.7);
+    setHistory([]);
+  };
 
-  const maxRound = series ? Math.max(0, series.rounds.length - 1) : 0;
+  const historyData =
+    history.length > 0
+      ? history
+      : [
+          {
+            round: 0,
+            aggregate: result.r_hat,
+            outcome,
+            error: Math.abs(outcome - result.r_hat),
+            nEff: 1 / Math.max(result.weight.reduce((s, w) => s + w * w, 0), 1e-12),
+            gini: 0,
+          },
+        ];
+
+  const nEff = (() => {
+    const h = result.weight.reduce((s, w) => s + w * w, 0);
+    return h > 0 ? 1 / h : 0;
+  })();
+  const giniValues = result.wealth_new;
+  const giniCoeff =
+    giniValues.length > 0
+      ? (() => {
+          const sorted = [...giniValues].sort((a, b) => a - b);
+          const total = sorted.reduce((a, b) => a + b, 0);
+          if (total <= 0) return 0;
+          let w = 0;
+          sorted.forEach((x, i) => {
+            w += (i + 1) * x;
+          });
+          return (2 * w - (sorted.length + 1) * total) / (sorted.length * total);
+        })()
+      : 0;
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div className="p-6 max-w-6xl space-y-6">
       <PageHeader
-        title="Core mechanism"
-        description="The mechanism is a deterministic state machine. Choose a data-generating process (DGP), generate rounds, and step through one round to see how state, actions, outcome, and mechanism computations interact."
+        title="Core"
+        description="Inputs → Effective wager → Aggregation → Settlement → Skill update"
+        breadcrumbs={[{ label: 'Core', to: '/core' }]}
+        controls={
+          <SymbolGlossary entries={CORE_SYMBOLS} className="sm:max-w-md" />
+        }
       />
 
-      {/* DGP selection */}
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-800 mb-2">Data generation (DGP)</h3>
-        <p className="text-xs text-slate-500 mb-3">
-          Select how the outcome <MathBlock inline latex="y_t" /> and forecaster reports are generated. Exogenous: truth is drawn first. Endogenous: truth depends on forecaster signals.
-        </p>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {DGP_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => setDgpId(opt.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                dgpId === opt.id
-                  ? opt.truthSource === 'exogenous'
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                    : 'bg-violet-50 text-violet-800 border-violet-300'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-700">
-          <p className="font-medium text-slate-800 mb-1">{dgpOption.description}</p>
-          <p className="text-slate-600">
-            Formula: <MathBlock inline latex={dgpOption.formula} />
-          </p>
-        </div>
-      </div>
-
-      {/* Generate controls */}
-      <div className="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-[10px] font-semibold uppercase text-slate-500">Seed</span>
-          <input
-            type="number"
-            value={seed}
-            onChange={(e) => setSeed(Number(e.target.value) || 0)}
-            className="w-20 rounded border border-slate-200 px-2 py-1.5 text-sm"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-[10px] font-semibold uppercase text-slate-500">Forecasters</span>
-          <input
-            type="number"
-            min={1}
-            max={10}
-            value={nForecasters}
-            onChange={(e) => setNForecasters(Math.max(1, Math.min(10, Number(e.target.value) || 1)))}
-            className="w-20 rounded border border-slate-200 px-2 py-1.5 text-sm"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-[10px] font-semibold uppercase text-slate-500">Rounds</span>
-          <input
-            type="number"
-            min={5}
-            max={100}
-            value={numRounds}
-            onChange={(e) => setNumRounds(Math.max(5, Math.min(100, Number(e.target.value) || 10)))}
-            className="w-20 rounded border border-slate-200 px-2 py-1.5 text-sm"
-          />
-        </label>
-        <button
-          onClick={generate}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Generate
-        </button>
-      </div>
-
-      {/* Round contract (static) */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-          <SectionLabel type="mechanism_computation" />
-          Round contract
-        </h3>
-        <MathBlock
-          accent
-          label="One round"
-          latex="(\text{state}_t, \text{RoundInput}_t, y_t) \to (\text{state}_{t+1}, \text{logs}_t)"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormulaCard
+          title="Score"
+          latex="s_{i,t} = 1 - |y_t - r_{i,t}|"
+          caption="Bounded point score in [0, 1]."
         />
-        <p className="text-xs text-slate-500 mt-2">
-          Round input = (account_id, participate, report, deposit). The mechanism uses only these actions and the outcome <MathBlock inline latex="y_t" />.
-        </p>
+        <FormulaCard
+          title="Skill mapping"
+          latex="\sigma_{i,t} = \sigma_{\min} + (1 - \sigma_{\min}) \exp(-\gamma L_{i,t})"
+          caption="Lower EWMA loss gives higher skill weight."
+        />
+        <FormulaCard
+          title="Effective wager"
+          latex="m_{i,t} = b_{i,t} \bigl( \lambda + (1-\lambda) \sigma_{i,t}^\eta \bigr)"
+          caption="Deposits filtered by skill gate."
+        />
+        <FormulaCard
+          title="Aggregation and payoff"
+          latex="\hat{r}_t = \sum_i \hat{m}_{i,t} r_{i,t},\quad \Pi_{i,t} = m_{i,t} (1 + s_{i,t} - \bar{s}_t)"
+          caption="Weights capped by ω_max. Settlement redistributes by relative score."
+        />
       </div>
 
-      {!series && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-          Select a DGP and click Generate to see step-by-step mechanism for each round.
+      <section className="space-y-4" aria-labelledby="experiment-heading">
+        <h2 id="experiment-heading" className="text-base font-semibold text-slate-800 border-b border-slate-200 pb-2">
+          Interactive experiment
+        </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-800 mb-3">Round controls</h3>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs text-slate-500">Outcome <MathBlock inline latex="y_t" /></span>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={outcome}
+                  onChange={(e) => setOutcome(Number(e.target.value))}
+                  className="w-full accent-blue-600"
+                />
+                <span className="text-xs text-slate-600">{roundTo(outcome, 2)}</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\lambda" /></span>
+                <input type="range" min={0} max={1} step={0.01} value={lam} onChange={(e) => setLam(Number(e.target.value))} className="w-full accent-blue-600" />
+                <span className="text-xs text-slate-600">{roundTo(lam, 2)}</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\eta" /></span>
+                <input type="range" min={1} max={4} step={0.1} value={eta} onChange={(e) => setEta(Number(e.target.value))} className="w-full accent-blue-600" />
+                <span className="text-xs text-slate-600">{roundTo(eta, 1)}</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\sigma_{\min}" /></span>
+                <input type="range" min={0.05} max={0.6} step={0.01} value={sigmaMin} onChange={(e) => setSigmaMin(Number(e.target.value))} className="w-full accent-blue-600" />
+                <span className="text-xs text-slate-600">{roundTo(sigmaMin, 2)}</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\gamma" /></span>
+                <input type="range" min={0.5} max={6} step={0.1} value={gamma} onChange={(e) => setGamma(Number(e.target.value))} className="w-full accent-blue-600" />
+                <span className="text-xs text-slate-600">{gamma}</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\rho" /></span>
+                <input type="range" min={0.05} max={0.5} step={0.01} value={rho} onChange={(e) => setRho(Number(e.target.value))} className="w-full accent-blue-600" />
+                <span className="text-xs text-slate-600">{roundTo(rho, 2)}</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\omega_{\max}" /></span>
+                <input type="range" min={0.25} max={1} step={0.01} value={omegaMax} onChange={(e) => setOmegaMax(Number(e.target.value))} className="w-full accent-blue-600" />
+                <span className="text-xs text-slate-600">{roundTo(omegaMax, 2)}</span>
+              </label>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={runOneRound} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                Run round
+              </button>
+              <button onClick={resetDemo} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 overflow-x-auto">
+            <h2 className="text-sm font-semibold text-slate-800 mb-3">Editable agents</h2>
+            <table className="w-full text-xs">
+              <thead>
+                <tr>
+                  <th className="text-left py-1.5 text-slate-500">Agent</th>
+                  <th className="text-left py-1.5 text-slate-500">Report</th>
+                  <th className="text-left py-1.5 text-slate-500">Deposit</th>
+                  <th className="text-left py-1.5 text-slate-500">Loss</th>
+                  <th className="text-left py-1.5 text-slate-500">Wealth</th>
+                </tr>
+              </thead>
+              <tbody>
+                {agents.map((a) => (
+                  <tr key={a.id}>
+                    <td className="py-1.5">{a.label}</td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={a.report}
+                        onChange={(e) =>
+                          setAgents((prev) =>
+                            prev.map((x) => (x.id === a.id ? { ...x, report: clamp(Number(e.target.value)) } : x))
+                          )
+                        }
+                        className="w-16 rounded border px-1.5 py-0.5 text-xs"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.1}
+                        value={a.deposit}
+                        onChange={(e) =>
+                          setAgents((prev) =>
+                            prev.map((x) => (x.id === a.id ? { ...x, deposit: Math.max(0, Number(e.target.value)) } : x))
+                          )
+                        }
+                        className="w-16 rounded border px-1.5 py-0.5 text-xs"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={roundTo(a.ewmaLoss, 3)}
+                        onChange={(e) =>
+                          setAgents((prev) =>
+                            prev.map((x) => (x.id === a.id ? { ...x, ewmaLoss: clamp(Number(e.target.value)) } : x))
+                          )
+                        }
+                        className="w-16 rounded border px-1.5 py-0.5 text-xs"
+                      />
+                    </td>
+                    <td>{roundTo(a.wealth, 2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
 
-      {series && (
-        <>
-          {/* Round selector */}
-          <div className="mb-6 flex flex-wrap items-center gap-4">
-            <span className="text-xs font-medium text-slate-600">Round</span>
-            <input
-              type="range"
-              min={0}
-              max={maxRound}
-              value={currentRound}
-              onChange={(e) => setCurrentRound(Number(e.target.value))}
-              className="flex-1 min-w-[120px] accent-blue-600"
-            />
-            <span className="text-sm font-mono text-slate-800 w-12">
-              {currentRound} / {maxRound}
-            </span>
-          </div>
-
-          {/* Step-by-step with live data */}
-          {stepOutputs && (
-            <div className="space-y-4">
-              {/* Step 1: Pre-round state */}
-              <ChartCard
-                title="Step 1: Pre-round state"
-                subtitle="Hidden state (fixed before reports)"
-              >
-                <div className="flex flex-wrap gap-4">
-                  <div className="min-w-[140px]">
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                      L_{'{i,t-1}'} (EWMA loss)
-                    </p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.L_prev.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                  <div className="min-w-[140px]">
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                      σ_{'{i,t}'} (skill)
-                    </p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.sigma_t.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                  <div className="min-w-[140px]">
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                      W_{'{i,t}'} (wealth)
-                    </p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.wealth.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                </div>
-              </ChartCard>
-
-              {/* Step 2: User submission */}
-              <ChartCard title="Step 2: User submission" subtitle="Reports and deposits">
-                <div className="flex flex-wrap gap-4">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                      r_{'{i,t}'} (reports)
-                    </p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.reports.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
-                      b_{'{i,t}'} (deposits)
-                    </p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.deposits.map((v, i) => `A${i}: ${fmtNum(v, 2)}`).join(' · ')}
-                    </p>
-                  </div>
-                </div>
-              </ChartCard>
-
-              {/* Step 3: Realised outcome */}
-              <ChartCard title="Step 3: Realised outcome" subtitle="From DGP">
-                <p className="font-mono text-sm text-slate-800">
-                  y_t = <span className="text-blue-600 font-semibold">{fmtNum(stepOutputs.y_t, 4)}</span>
-                </p>
-              </ChartCard>
-
-              {/* Step 4: Scores & effective wager */}
-              <ChartCard
-                title="Step 4: Scores & effective wager"
-                subtitle="s_i = 1 - |y - r_i|; m_i = b_i · (λ + (1-λ)σ_i)"
-              >
-                <div className="flex flex-wrap gap-4">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">s_i (scores)</p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.scores.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">m_i (effective wager)</p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.m.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                </div>
-              </ChartCard>
-
-              {/* Step 5: Aggregation */}
-              <ChartCard title="Step 5: Aggregation" subtitle="r̂ = Σ (m_i / M) · r_i">
-                <p className="font-mono text-sm text-slate-800">
-                  r̂_t = <span className="text-blue-600 font-semibold">{fmtNum(stepOutputs.r_hat, 4)}</span>
-                </p>
-              </ChartCard>
-
-              {/* Step 6: Settlement */}
-              <ChartCard
-                title="Step 6: Settlement"
-                subtitle="Skill payoff Π_i = m_i(1 + s_i - s̄); profit π_i = Π_i - m_i"
-              >
-                <p className="font-mono text-xs text-slate-700">
-                  π_i: {stepOutputs.profit.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                </p>
-              </ChartCard>
-
-              {/* Step 7: Wealth update */}
-              <ChartCard title="Step 7: Wealth update" subtitle="W_{i,t+1} = W_{i,t} + π_i">
-                <p className="font-mono text-xs text-slate-700">
-                  W_{'{i,t+1}'}: {stepOutputs.wealth_new.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                </p>
-              </ChartCard>
-
-              {/* Step 8: Skill update */}
-              <ChartCard
-                title="Step 8: Skill update"
-                subtitle="L_i updated by EWMA; σ_{i,t+1} = f(L_i)"
-              >
-                <div className="flex flex-wrap gap-4">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">L_{'{i,t}'} (new loss)</p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.L_new.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">σ_{'{i,t+1}'} (new skill)</p>
-                    <p className="font-mono text-xs text-slate-700">
-                      {stepOutputs.sigma_new.map((v, i) => `A${i}: ${fmtNum(v, 3)}`).join(' · ')}
-                    </p>
-                  </div>
-                </div>
-              </ChartCard>
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-[10px] uppercase text-slate-500 flex items-center gap-1">
+                Aggregate <MathBlock inline latex="\hat{r}_t" />
+              </p>
+              <p className="text-lg font-semibold text-slate-800 mt-0.5">{roundTo(result.r_hat, 3)}</p>
             </div>
-          )}
-
-          {/* Pipeline strip */}
-          <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Round flow</h3>
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <SectionLabel type="hidden_state" />
-              <span className="text-slate-400">→</span>
-              <SectionLabel type="user_choice" />
-              <span className="text-slate-400">+</span>
-              <span className="text-slate-500"><MathBlock inline latex="y_t" /></span>
-              <span className="text-slate-400">→</span>
-              <SectionLabel type="mechanism_computation" />
-              <span className="text-slate-400">→</span>
-              <SectionLabel type="observed_output" />
+            <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-[10px] uppercase text-slate-500">Error</p>
+              <p className="text-lg font-semibold text-slate-800 mt-0.5">{roundTo(Math.abs(outcome - result.r_hat), 3)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-[10px] uppercase text-slate-500 flex items-center gap-1">
+                <MathBlock inline latex="N_{\mathrm{eff}}" />
+              </p>
+              <p className="text-lg font-semibold text-slate-800 mt-0.5">{roundTo(nEff, 2)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-[10px] uppercase text-slate-500">Gini</p>
+              <p className="text-lg font-semibold text-slate-800 mt-0.5">{roundTo(giniCoeff, 3)}</p>
             </div>
           </div>
-        </>
-      )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ChartCard title="Deposit vs effective wager" subtitle="Skill gate effect">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="Deposit" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Effective wager" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+            <ChartCard title="Score and profit" subtitle="Per agent">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="Score" fill="#0f172a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Profit" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+
+          <ChartCard title="Round history" subtitle="After each commit">
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={historyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="round" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Line type="monotone" dataKey="aggregate" name="r̂" stroke="#2563eb" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="outcome" name="y" stroke="#0f172a" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="error" name="error" stroke="#ef4444" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Per-agent audit" subtitle="σ, gate, score, weight, profit">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th className="text-left py-2 text-slate-500">Agent</th>
+                    <th className="text-left py-2 text-slate-500"><MathBlock inline latex="\sigma" /></th>
+                    <th className="text-left py-2 text-slate-500">Gate</th>
+                    <th className="text-left py-2 text-slate-500">Score</th>
+                    <th className="text-left py-2 text-slate-500"><MathBlock inline latex="m" /></th>
+                    <th className="text-left py-2 text-slate-500">Weight</th>
+                    <th className="text-left py-2 text-slate-500">Profit</th>
+                    <th className="text-left py-2 text-slate-500">Next W</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id}>
+                      <td className="py-2">{r.label}</td>
+                      <td>{roundTo(r.sigma, 3)}</td>
+                      <td>{roundTo(lam + (1 - lam) * Math.pow(r.sigma, eta), 3)}</td>
+                      <td>{roundTo(r.score, 3)}</td>
+                      <td>{roundTo(r.m, 2)}</td>
+                      <td>{roundTo((r.weight ?? 0) * 100, 1)}%</td>
+                      <td>{roundTo(r.profit, 2)}</td>
+                      <td>{roundTo(r.wealth_new, 2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ChartCard>
+        </div>
+      </div>
+      </section>
     </div>
   );
 }

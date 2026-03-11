@@ -1,11 +1,17 @@
-# Core (mechanism only)
+# Core (canonical mechanism)
 
-Deterministic forecasting mechanism: no user behaviour, no DGP.
+Deterministic platform logic for the online wagering mechanism. **This is the single source of truth** for scoring, aggregation, settlement, skill updates, and the round runner.
 
-- **`types.py`** — Compatibility wrapper; re-exports `onlinev2.mechanism.models` (`MechanismParams`, `MechanismState`, `AgentInput`).
-- **`runner.py`** — Compatibility wrapper; re-exports `onlinev2.mechanism.runner` (`run_round(state, params, actions, y_t)`).
-- **`metrics.py`** — PIT, sharpness, HHI, N_eff, Gini, network export.
+- **`types.py`** — MechanismParams, MechanismState, AgentInput, Report.
+- **`runner.py`** — run_round(state, params, actions, y_t): pure deterministic round execution.
+- **`scoring.py`** — Loss and score functions (MAE, CRPS-hat, pinball).
+- **`aggregation.py`** — Quantile averaging by effective wager weights.
+- **`settlement.py`** — Lambert skill pool + utility payoff, profit.
+- **`skill.py`** — EWMA loss, loss-to-skill mapping, calibrate_gamma, missingness_L0.
+- **`weights.py`** — Effective wager and refund.
+- **`staking.py`** — Confidence, choose_deposits, cap_weight_shares, update_wealth.
+- **`metrics.py`** — PIT, sharpness, HHI, N_eff, Gini, NetworkExporter (in-memory only).
 
-**Source of truth:** Mechanism implementation lives in `onlinev2.mechanism` (runner, models, scoring, settlement, aggregation, etc.). Prefer importing from `onlinev2.mechanism` in new code.
+**Boundary:** Core does **not** import `onlinev2.behaviour`. No plotting, no CSV writing, no subprocess. The behaviour layer produces actions that satisfy the AgentInput protocol; the simulator passes them into `run_round`.
 
-**Boundary:** Core does **not** import `onlinev2.behaviour`. All stochasticity and behaviour live outside; the simulator passes actions from the behaviour layer into `run_round`.
+**Compatibility:** `onlinev2.mechanism` re-exports from `onlinev2.core` for backward compatibility. Prefer `onlinev2.core` in new code and docs.
