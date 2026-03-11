@@ -47,6 +47,8 @@ def main() -> None:
             "weight_rules",
             "deposit_policies",
             "selective_participation",
+            "master_comparison",
+            "bankroll_ablation",
             "behaviour_matrix",
             "preference_stress",
             "intermittency_stress",

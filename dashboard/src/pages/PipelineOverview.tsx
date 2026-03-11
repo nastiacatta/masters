@@ -31,7 +31,7 @@ export default function PipelineOverview() {
         dgpId,
         weighting,
         behaviourPreset,
-        rounds: 50,
+        rounds: 10000,
         seed: 42,
         n: 5,
       });

@@ -1,5 +1,6 @@
 import { useStore } from '@/lib/store';
 import clsx from 'clsx';
+import type { ExperimentMeta } from '@/lib/types';
 
 const EXPERIMENT_CATEGORIES = [
   { id: 'forecast_aggregation', label: 'Aggregation' },
@@ -10,14 +11,20 @@ const EXPERIMENT_CATEGORIES = [
   { id: 'parameter_sweep', label: 'Sweep' },
 ] as const;
 
-export default function ExperimentTopBar() {
+interface ExperimentTopBarProps {
+  /** When set, only these experiments are shown (e.g. filtered by tab on Experiments page). */
+  experimentsFilter?: ExperimentMeta[] | null;
+}
+
+export default function ExperimentTopBar({ experimentsFilter }: ExperimentTopBarProps = {}) {
   const { experiments, selectedExperiment, setSelectedExperiment } = useStore();
+  const source = experimentsFilter ?? experiments;
 
   const primaryExperiments = EXPERIMENT_CATEGORIES.map(({ id }) =>
-    experiments.find((e) => e.name === id)
+    source.find((e) => e.name === id)
   ).filter(Boolean);
 
-  const otherExperiments = experiments.filter(
+  const otherExperiments = source.filter(
     (e) => !EXPERIMENT_CATEGORIES.some((c) => c.id === e.name)
   );
 

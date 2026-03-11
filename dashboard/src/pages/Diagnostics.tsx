@@ -176,7 +176,7 @@ export default function Diagnostics() {
             <p className="text-xs text-slate-500 leading-relaxed">
               This panel examines whether skill × stake is robust to adversarial agents: sybil splits,
               arbitrageurs, colluders, and manipulators. The parameter sweep below maps the trade-off
-              between forecast quality (CRPS) and market concentration (Gini) across <MathBlock inline latex="\lambda" /> and <MathBlock inline latex="\sigma_{\min}" />.
+              between forecast quality (CRPS) and market concentration (Gini) across <MathBlock inline latex="\\lambda" /> and <MathBlock inline latex="\\sigma_{\\min}" />.
             </p>
           </div>
 
@@ -197,7 +197,7 @@ export default function Diagnostics() {
               </div>
               <div>
                 <span className="font-medium text-slate-700">Concentration:</span>{' '}
-                Higher <MathBlock inline latex="\lambda" /> increases skill learning speed but can increase Gini. The <MathBlock inline latex="\sigma_{\min}" /> floor
+                Higher <MathBlock inline latex="\\lambda" /> increases skill learning speed but can increase Gini. The <MathBlock inline latex="\\sigma_{\\min}" /> floor
                 prevents any agent from being completely silenced.
               </div>
             </div>

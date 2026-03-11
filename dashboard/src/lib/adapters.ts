@@ -21,6 +21,8 @@ import type {
   DriftAdaptationRow,
   StakePolicyRow,
   DetectionMetricsRow,
+  MasterComparisonRow,
+  BankrollAblationRow,
 } from './types';
 
 type RawRow = Record<string, unknown>;
@@ -402,4 +404,25 @@ export async function loadDetectionMetrics(exp: ExperimentMeta): Promise<Detecti
     detector: String(r.detector),
     score: Number(r.score),
   }));
+}
+
+/** Load master comparison (all methods on same panel, paired deltas). */
+export async function loadMasterComparison(): Promise<{
+  config: { T: number; n_forecasters: number; seeds: number[]; warm_start?: number };
+  rows: MasterComparisonRow[];
+} | null> {
+  const raw = await fetchJSON<{ config: unknown; rows: MasterComparisonRow[] }>(
+    `${DATA_BASE}/core/experiments/master_comparison/data/master_comparison.json`,
+  );
+  if (!raw?.rows?.length) return null;
+  return { config: raw.config as { T: number; n_forecasters: number; seeds: number[]; warm_start?: number }, rows: raw.rows };
+}
+
+/** Load bankroll ablation (Full vs A-, B-, C-, D-, E-). */
+export async function loadBankrollAblation(): Promise<{ config: unknown; rows: BankrollAblationRow[] } | null> {
+  const raw = await fetchJSON<{ experiment_name: string; config: unknown; rows: BankrollAblationRow[] }>(
+    `${DATA_BASE}/core/experiments/bankroll_ablation/data/summary.json`,
+  );
+  if (!raw?.rows?.length) return null;
+  return { config: raw.config, rows: raw.rows };
 }

@@ -1,4 +1,5 @@
 import type { SkillWagerPoint } from '@/lib/types';
+import { agentDisplayName } from '@/lib/formatters';
 import ChartCard from '../dashboard/ChartCard';
 import { Tooltip as RTooltip } from 'recharts';
 
@@ -36,7 +37,7 @@ export default function ParticipationHeatmap({ data }: Props) {
           <div className="shrink-0 pr-2">
             {agents.map(a => (
               <div key={a} className="flex items-center justify-end" style={{ height: cellH }}>
-                <span className="text-[9px] text-slate-400">A{a}</span>
+                <span className="text-[9px] text-slate-400">{agentDisplayName(a)}</span>
               </div>
             ))}
           </div>
@@ -57,7 +58,7 @@ export default function ParticipationHeatmap({ data }: Props) {
                           borderRadius: 1,
                           margin: '1px 0.5px',
                         }}
-                        title={`Agent ${b.agent}, rounds ${b.block * blockSize}–${(b.block + 1) * blockSize - 1}: ${(b.rate * 100).toFixed(0)}% active`}
+                        title={`${agentDisplayName(b.agent)}, rounds ${b.block * blockSize}–${(b.block + 1) * blockSize - 1}: ${(b.rate * 100).toFixed(0)}% active`}
                       />
                     );
                   })}

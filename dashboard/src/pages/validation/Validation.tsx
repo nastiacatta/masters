@@ -4,6 +4,7 @@ import Overview from '@/pages/Overview';
 import RoundReplay from '@/pages/RoundReplay';
 import Behaviour from '@/pages/Behaviour';
 import Diagnostics from '@/pages/Diagnostics';
+import Invariants from '@/pages/core/Invariants';
 import ExperimentContext from '@/components/dashboard/ExperimentContext';
 
 const TABS = [
@@ -11,6 +12,7 @@ const TABS = [
   { id: 'replay', label: 'What happens in one round' },
   { id: 'behaviour', label: 'What changes when users behave strategically' },
   { id: 'diagnostics', label: 'Robustness checks' },
+  { id: 'invariants', label: 'Invariants & assumptions' },
 ] as const;
 
 export default function Validation() {
@@ -46,6 +48,7 @@ export default function Validation() {
       {tab === 'replay' && <RoundReplay />}
       {tab === 'behaviour' && <Behaviour />}
       {tab === 'diagnostics' && <Diagnostics />}
+      {tab === 'invariants' && <Invariants />}
     </div>
   );
 }

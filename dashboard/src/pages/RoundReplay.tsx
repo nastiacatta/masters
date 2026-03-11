@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useStore } from '@/lib/store';
 import { useExperimentData } from '@/lib/useExperimentData';
-import { fmtNum, AGENT_COLORS, ACCENT } from '@/lib/formatters';
+import { fmtNum, AGENT_COLORS, ACCENT, agentDisplayName } from '@/lib/formatters';
 import {
   getRoundData,
   getMaxRound,
@@ -21,7 +21,7 @@ export default function RoundReplay() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const nAgents = selectedExperiment?.nAgents ?? 3;
-  const maxRound = getMaxRound(skillWagerData, selectedExperiment?.rounds ?? 50);
+  const maxRound = getMaxRound(skillWagerData, selectedExperiment?.rounds ?? 10000);
   const roundData = getRoundData(skillWagerData, currentRound);
   const { activeCount, totalWager, avgProfit, participationPct } = getRoundMetrics(
     roundData,
@@ -29,7 +29,7 @@ export default function RoundReplay() {
   );
 
   const wagerChartData = roundData.map((d, i) => ({
-    name: `A${d.agent}`,
+    name: agentDisplayName(d.agent),
     wager: d.missing ? 0 : d.wager,
     profit: d.profit,
     active: !d.missing,
@@ -193,13 +193,13 @@ export default function RoundReplay() {
           {roundData.filter(d => d.profit > 0.001).length > 0 && (
             <p>
               <span className="text-emerald-600 font-medium">Gained:</span>{' '}
-              {roundData.filter(d => d.profit > 0.001).map(d => `Agent ${d.agent} (+${fmtNum(d.profit)})`).join(', ')}
+              {roundData.filter(d => d.profit > 0.001).map(d => `${agentDisplayName(d.agent)} (+${fmtNum(d.profit)})`).join(', ')}
             </p>
           )}
           {roundData.filter(d => d.profit < -0.001).length > 0 && (
             <p>
               <span className="text-red-500 font-medium">Lost:</span>{' '}
-              {roundData.filter(d => d.profit < -0.001).map(d => `Agent ${d.agent} (${fmtNum(d.profit)})`).join(', ')}
+              {roundData.filter(d => d.profit < -0.001).map(d => `${agentDisplayName(d.agent)} (${fmtNum(d.profit)})`).join(', ')}
             </p>
           )}
         </div>

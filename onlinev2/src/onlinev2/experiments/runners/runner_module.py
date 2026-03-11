@@ -24,6 +24,7 @@ from onlinev2.legacy_dgps import (
     generate_truth_and_quantile_reports_latent,
 )
 from onlinev2.mechanism.aggregation import aggregate_forecast
+from onlinev2.mechanism.metrics import compute_gini, compute_hhi, compute_n_eff
 from onlinev2.mechanism.scoring import crps_hat_from_quantiles
 from onlinev2.mechanism.settlement import profit, raja_competitive_payout
 from onlinev2.plotting.style import (
@@ -1956,6 +1957,169 @@ def run_selective_participation(T=1000, n_forecasters=6, seed=42, outdir="output
                  fontsize=13, fontweight="bold")
     fig.tight_layout()
     save_fig(fig, ep.plot("selective_participation.png"))
+
+
+# ===================================================================
+# M3) Master comparison: all methods on same panel, paired deltas
+# ===================================================================
+
+def _headline_metrics_from_run(res, crps_by_rule, warm_start=0):
+    """Compute mean CRPS per rule and concentration from run. Returns dict."""
+    T = res["wager_hist"].shape[1]
+    t_slice = slice(warm_start, T)
+    out = {}
+    for rule, arr in crps_by_rule.items():
+        v = arr[t_slice][np.isfinite(arr[t_slice])]
+        out[f"mean_crps_{rule}"] = float(np.mean(v)) if v.size else np.nan
+    w = res["wager_hist"][:, t_slice]
+    wealth = res.get("wealth_hist")
+    hhi_list, n_eff_list = [], []
+    for t in range(w.shape[1]):
+        m_t = w[:, t]
+        M = float(np.sum(m_t))
+        if M > 1e-12:
+            shares = m_t / M
+            hhi_list.append(compute_hhi(shares))
+            n_eff_list.append(compute_n_eff(shares))
+    out["mean_HHI"] = float(np.mean(hhi_list)) if hhi_list else np.nan
+    out["mean_N_eff"] = float(np.mean(n_eff_list)) if n_eff_list else np.nan
+    if wealth is not None and wealth.shape[1] > t_slice.stop - 1:
+        out["final_gini"] = float(compute_gini(wealth[:, t_slice.stop - 1]))
+    else:
+        out["final_gini"] = np.nan
+    return out
+
+
+def run_master_comparison(T=500, n_forecasters=10, missing_prob=0.2, seeds=None,
+                          outdir="outputs", block="core", warm_start=100):
+    """Run all weighting methods on the same panel; output paired deltas vs equal.
+
+    One bankroll run per seed. For each run compute CRPS for uniform, deposit,
+    skill, mechanism, best_single. Report mean CRPS, Δ CRPS vs equal, and
+    concentration (HHI, N_eff, Gini) from the run.
+    """
+    from onlinev2.experiments.benchmark_config import get_canonical_config
+
+    cfg = get_canonical_config(seeds=seeds or [42, 43, 44], T=T, n_forecasters=n_forecasters)
+    ep = _exp_paths(outdir, "master_comparison", block)
+    taus = cfg.taus()
+    tau_i = cfg.tau_i()
+
+    rows = []
+    for seed in cfg.seeds:
+        y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+            cfg.T, cfg.n_forecasters, tau_i, taus, seed=seed, sigma_z=1.0,
+        )
+        res = run_simulation(
+            T=cfg.T, n_forecasters=cfg.n_forecasters, missing_prob=missing_prob,
+            seed=seed, scoring_mode="quantiles_crps", taus=taus,
+            y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
+            store_history=True,
+            deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
+            f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25,
+        )
+        crps = _crps_for_weight_rules(y, q_reports_pre, taus, res, tau_i)
+        metrics = _headline_metrics_from_run(res, crps, warm_start=warm_start)
+        crps_equal = metrics.get("mean_crps_uniform") or np.nan
+        for method in ["uniform", "deposit", "skill", "mechanism", "best_single"]:
+            mean_crps = metrics.get(f"mean_crps_{method}") or np.nan
+            rows.append({
+                "experiment": "master_comparison",
+                "method": method,
+                "seed": seed,
+                "DGP": cfg.dgp_name,
+                "preset": "bankroll",
+                "mean_crps": mean_crps,
+                "delta_crps_vs_equal": mean_crps - crps_equal if np.isfinite(crps_equal) else np.nan,
+                "mean_HHI": metrics.get("mean_HHI"),
+                "mean_N_eff": metrics.get("mean_N_eff"),
+                "final_gini": metrics.get("final_gini"),
+            })
+
+    _write_csv(
+        ep.data("master_comparison.csv"),
+        ["experiment", "method", "seed", "DGP", "preset", "mean_crps", "delta_crps_vs_equal",
+         "mean_HHI", "mean_N_eff", "final_gini"],
+        rows,
+    )
+    master = {
+        "config": {"T": cfg.T, "n_forecasters": cfg.n_forecasters, "seeds": cfg.seeds, "warm_start": warm_start},
+        "rows": rows,
+    }
+    with open(ep.data("master_comparison.json"), "w") as f:
+        import json
+        json.dump(master, f, indent=2)
+    print("Master comparison written to", ep.data("master_comparison.json"))
+
+
+# ===================================================================
+# M4) Bankroll ablation: Full vs A-, B-, C-, D-, E-
+# ===================================================================
+
+def run_bankroll_ablation(T=400, n_forecasters=6, seed=42, outdir="outputs", block="core", warm_start=80):
+    """Five-step bankroll ablation: remove one step at a time.
+
+    Full = A→B→C→D→E. A-=no confidence (c=1), B-=fixed deposit, C-=no skill gate (λ=1),
+    D-=no cap (ω_max=1), E-=freeze wealth.
+    """
+    ep = _exp_paths(outdir, "bankroll_ablation", block)
+    taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+    tau_i = np.array([0.15, 0.22, 0.32, 0.46, 0.68, 1.0])[:n_forecasters]
+
+    y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+        T, n_forecasters, tau_i, taus, seed=seed, sigma_z=1.0,
+    )
+
+    variants = [
+        ("Full", dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
+                     f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25)),
+        ("A-", dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
+                    f_stake=0.3, b_max=10.0, use_constant_confidence=True, omega_max=0.25)),
+        ("B-", dict(deposit_mode="fixed", fixed_deposit=1.0, lam=0.3)),
+        ("C-", dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=1.0,
+                    f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25)),
+        ("D-", dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
+                    f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=1.0)),
+        ("E-", dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
+                    f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25, freeze_wealth=True)),
+    ]
+
+    common = dict(
+        T=T, n_forecasters=n_forecasters, missing_prob=0.2, seed=seed,
+        scoring_mode="quantiles_crps", taus=taus,
+        y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
+        store_history=True,
+    )
+
+    rows = []
+    for label, kw in variants:
+        res = run_simulation(**common, **kw)
+        crps = _crps_for_weight_rules(y, q_reports_pre, taus, res, tau_i)
+        metrics = _headline_metrics_from_run(res, crps, warm_start=warm_start)
+        mean_crps = metrics.get("mean_crps_mechanism") or np.nan
+        rows.append({
+            "variant": label,
+            "mean_crps": mean_crps,
+            "delta_crps_vs_full": np.nan,
+            "mean_HHI": metrics.get("mean_HHI"),
+            "mean_N_eff": metrics.get("mean_N_eff"),
+            "final_gini": metrics.get("final_gini"),
+        })
+    if rows:
+        full_crps = rows[0]["mean_crps"]
+        for r in rows:
+            r["delta_crps_vs_full"] = r["mean_crps"] - full_crps
+
+    _write_csv(
+        ep.data("bankroll_ablation.csv"),
+        ["variant", "mean_crps", "delta_crps_vs_full", "mean_HHI", "mean_N_eff", "final_gini"],
+        rows,
+    )
+    summary = {"experiment_name": "bankroll_ablation", "config": {"T": T, "n_forecasters": n_forecasters, "seed": seed}, "rows": rows}
+    with open(ep.data("summary.json"), "w") as f:
+        import json
+        json.dump(summary, f, indent=2)
+    print("Bankroll ablation written to", ep.data("bankroll_ablation.csv"))
 
 
 # ===================================================================

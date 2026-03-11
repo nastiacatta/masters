@@ -226,17 +226,17 @@ export default function CoreOverview() {
         />
         <FormulaCard
           title="Skill mapping"
-          latex="\sigma_{i,t} = \sigma_{\min} + (1 - \sigma_{\min}) \exp(-\gamma L_{i,t})"
+          latex="\\sigma_{i,t} = \\sigma_{\\min} + (1 - \\sigma_{\\min}) \\exp(-\\gamma L_{i,t})"
           caption="Lower EWMA loss gives higher skill weight."
         />
         <FormulaCard
           title="Effective wager"
-          latex="m_{i,t} = b_{i,t} \bigl( \lambda + (1-\lambda) \sigma_{i,t}^\eta \bigr)"
+          latex="m_{i,t} = b_{i,t} \\bigl( \\lambda + (1-\\lambda) \\sigma_{i,t}^\\eta \\bigr)"
           caption="Deposits filtered by skill gate."
         />
         <FormulaCard
           title="Aggregation and payoff"
-          latex="\hat{r}_t = \sum_i \hat{m}_{i,t} r_{i,t},\quad \Pi_{i,t} = m_{i,t} (1 + s_{i,t} - \bar{s}_t)"
+          latex="\\hat{r}_t = \\sum_i \\hat{m}_{i,t} r_{i,t},\\quad \\Pi_{i,t} = m_{i,t} (1 + s_{i,t} - \\bar{s}_t)"
           caption="Weights capped by ω_max. Settlement redistributes by relative score."
         />
       </div>
@@ -264,32 +264,32 @@ export default function CoreOverview() {
                 <span className="text-xs text-slate-600">{roundTo(outcome, 2)}</span>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500"><MathBlock inline latex="\lambda" /></span>
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\\lambda" /></span>
                 <input type="range" min={0} max={1} step={0.01} value={lam} onChange={(e) => setLam(Number(e.target.value))} className="w-full accent-blue-600" />
                 <span className="text-xs text-slate-600">{roundTo(lam, 2)}</span>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500"><MathBlock inline latex="\eta" /></span>
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\\eta" /></span>
                 <input type="range" min={1} max={4} step={0.1} value={eta} onChange={(e) => setEta(Number(e.target.value))} className="w-full accent-blue-600" />
                 <span className="text-xs text-slate-600">{roundTo(eta, 1)}</span>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500"><MathBlock inline latex="\sigma_{\min}" /></span>
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\\sigma_{\\min}" /></span>
                 <input type="range" min={0.05} max={0.6} step={0.01} value={sigmaMin} onChange={(e) => setSigmaMin(Number(e.target.value))} className="w-full accent-blue-600" />
                 <span className="text-xs text-slate-600">{roundTo(sigmaMin, 2)}</span>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500"><MathBlock inline latex="\gamma" /></span>
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\\gamma" /></span>
                 <input type="range" min={0.5} max={6} step={0.1} value={gamma} onChange={(e) => setGamma(Number(e.target.value))} className="w-full accent-blue-600" />
                 <span className="text-xs text-slate-600">{gamma}</span>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500"><MathBlock inline latex="\rho" /></span>
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\\rho" /></span>
                 <input type="range" min={0.05} max={0.5} step={0.01} value={rho} onChange={(e) => setRho(Number(e.target.value))} className="w-full accent-blue-600" />
                 <span className="text-xs text-slate-600">{roundTo(rho, 2)}</span>
               </label>
               <label className="block">
-                <span className="text-xs text-slate-500"><MathBlock inline latex="\omega_{\max}" /></span>
+                <span className="text-xs text-slate-500"><MathBlock inline latex="\\omega_{\\max}" /></span>
                 <input type="range" min={0.25} max={1} step={0.01} value={omegaMax} onChange={(e) => setOmegaMax(Number(e.target.value))} className="w-full accent-blue-600" />
                 <span className="text-xs text-slate-600">{roundTo(omegaMax, 2)}</span>
               </label>
@@ -376,7 +376,7 @@ export default function CoreOverview() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
               <p className="text-[10px] uppercase text-slate-500 flex items-center gap-1">
-                Aggregate <MathBlock inline latex="\hat{r}_t" />
+                Aggregate <MathBlock inline latex="\\hat{r}_t" />
               </p>
               <p className="text-lg font-semibold text-slate-800 mt-0.5">{roundTo(result.r_hat, 3)}</p>
             </div>
@@ -386,7 +386,7 @@ export default function CoreOverview() {
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
               <p className="text-[10px] uppercase text-slate-500 flex items-center gap-1">
-                <MathBlock inline latex="N_{\mathrm{eff}}" />
+                <MathBlock inline latex="N_{\\mathrm{eff}}" />
               </p>
               <p className="text-lg font-semibold text-slate-800 mt-0.5">{roundTo(nEff, 2)}</p>
             </div>
@@ -446,7 +446,7 @@ export default function CoreOverview() {
                 <thead>
                   <tr>
                     <th className="text-left py-2 text-slate-500">Agent</th>
-                    <th className="text-left py-2 text-slate-500"><MathBlock inline latex="\sigma" /></th>
+                    <th className="text-left py-2 text-slate-500"><MathBlock inline latex="\\sigma" /></th>
                     <th className="text-left py-2 text-slate-500">Gate</th>
                     <th className="text-left py-2 text-slate-500">Score</th>
                     <th className="text-left py-2 text-slate-500"><MathBlock inline latex="m" /></th>

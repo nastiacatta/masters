@@ -21,7 +21,7 @@ export default function RoundTimeline() {
         description="Order of operations within one round."
       />
       <p className="text-xs text-slate-500 mb-4">
-        Timing: <MathBlock inline latex="\sigma_{i,t}" /> is fixed before reports in round <MathBlock inline latex="t" />.
+        Timing: <MathBlock inline latex="\\sigma_{i,t}" /> is fixed before reports in round <MathBlock inline latex="t" />.
       </p>
 
       <div className="space-y-2">

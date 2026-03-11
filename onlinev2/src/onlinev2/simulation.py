@@ -781,6 +781,8 @@ def run_simulation(
     c_max: float = 1.3,
     omega_max: float = 0.0,
     lag_confidence: bool = False,
+    use_constant_confidence: bool = False,
+    freeze_wealth: bool = False,
     # ---
     y_pre: np.ndarray = None,
     reports_pre: np.ndarray = None,
@@ -947,7 +949,9 @@ def run_simulation(
         # --- Step 2: deposit and wager ---
         m_agg = None
         if bankroll_mode:
-            if scoring_mode == "quantiles_crps" and q_reports is not None:
+            if use_constant_confidence:
+                c_t = np.ones(n_forecasters, dtype=np.float64)
+            elif scoring_mode == "quantiles_crps" and q_reports is not None:
                 q_source = prev_q if (lag_confidence and prev_q is not None) else q_reports[:, t, :]
                 c_t = confidence_from_quantiles(
                     q_source, taus,
@@ -1047,7 +1051,7 @@ def run_simulation(
         U_dist_t = float(np.sum(sett["utility_payoff"]))
         budget_gap[t] = float(np.sum(payouts_t) - M_t - U_dist_t)
 
-        if bankroll_mode:
+        if bankroll_mode and not freeze_wealth:
             W = update_wealth(W, prof_t)
 
         sigma_hist[:, t] = sigma_t

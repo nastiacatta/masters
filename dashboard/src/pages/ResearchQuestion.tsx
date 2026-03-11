@@ -37,7 +37,7 @@ const CHART_COLORS: Record<WeightingMode, string> = {
 export default function ResearchQuestion() {
   const [dgpId, setDgpId] = useState<DGPId>('baseline');
   const [scenario, setScenario] = useState<BehaviourPresetId>('baseline');
-  const [rounds, setRounds] = useState(50);
+  const [rounds, setRounds] = useState(10000);
   const [running, setRunning] = useState(false);
   const [results, setResults] = useState<Record<WeightingMode, PipelineResult | null>>({
     uniform: null,
@@ -124,9 +124,9 @@ export default function ResearchQuestion() {
               <span className="text-xs text-slate-500">Rounds</span>
               <input
                 type="range"
-                min={20}
-                max={200}
-                step={10}
+                min={500}
+                max={10000}
+                step={500}
                 value={rounds}
                 onChange={(e) => setRounds(Number(e.target.value))}
                 className="w-24 accent-blue-600"

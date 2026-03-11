@@ -240,5 +240,27 @@
     "nAgents": 6,
     "rounds": 200,
     "dataFiles": { "deposit_policy_comparison": "deposit_policy_comparison.csv" }
+  },
+  {
+    "name": "master_comparison",
+    "displayName": "Master Comparison",
+    "description": "All weighting methods (equal, stake-only, skill-only, blended, bankroll) on same panel; paired deltas vs equal.",
+    "block": "core",
+    "dgp": "latent_fixed",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 500,
+    "dataFiles": { "master_comparison": "master_comparison.json" }
+  },
+  {
+    "name": "bankroll_ablation",
+    "displayName": "Bankroll Ablation",
+    "description": "Five-step pipeline: Full vs A- (no confidence), B- (fixed deposit), C- (no skill gate), D- (no cap), E- (freeze wealth).",
+    "block": "core",
+    "dgp": "latent_fixed",
+    "scoringMode": "CRPS",
+    "nAgents": 6,
+    "rounds": 400,
+    "dataFiles": { "summary": "summary.json", "bankroll_ablation": "bankroll_ablation.csv" }
   }
 ]

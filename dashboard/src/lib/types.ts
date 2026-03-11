@@ -9,6 +9,12 @@ export interface ExperimentMeta {
   rounds?: number;
   config?: Record<string, unknown>;
   dataFiles?: Record<string, string>;
+  /** For thesis walkthrough: experiment family (core, behaviour, dgp, robustness, ablations) */
+  family?: string;
+  /** For thesis ordering / story */
+  thesisTags?: string[];
+  storyOrder?: number;
+  scenarioGroup?: string;
 }
 
 export interface RunSummary {
@@ -20,6 +26,30 @@ export interface RunSummary {
   meanNt?: number;
   finalRuinRate?: number;
   headlineResults: Record<string, unknown>;
+}
+
+/** One row from master_comparison: method comparison on same panel, paired deltas vs equal. */
+export interface MasterComparisonRow {
+  experiment: string;
+  method: string;
+  seed: number;
+  DGP: string;
+  preset: string;
+  mean_crps: number;
+  delta_crps_vs_equal: number;
+  mean_HHI?: number;
+  mean_N_eff?: number;
+  final_gini?: number;
+}
+
+/** One row from bankroll_ablation: Full vs A-, B-, C-, D-, E-. */
+export interface BankrollAblationRow {
+  variant: string;
+  mean_crps: number;
+  delta_crps_vs_full: number;
+  mean_HHI?: number;
+  mean_N_eff?: number;
+  final_gini?: number;
 }
 
 export interface RoundRecord {
@@ -222,3 +252,51 @@ export interface ExperimentData {
 }
 
 export type PageId = 'overview' | 'replay' | 'behaviour' | 'diagnostics' | 'compare';
+
+/** Walkthrough: inputs entering round t */
+export interface WalkthroughInputs {
+  taskType?: string;
+  scoringRule?: string;
+  activeAgentIds?: number[];
+  forecasts?: Record<number, number>;
+  wagers?: Record<number, number>;
+  previousSkill?: Record<number, number>;
+  previousWealth?: Record<number, number>;
+  roundIndex?: number;
+  nRounds?: number;
+}
+
+/** Walkthrough: DGP metadata for current scenario */
+export interface WalkthroughDGPMeta {
+  dgpId?: string;
+  label?: string;
+  truthSource?: 'exogenous' | 'endogenous';
+  description?: string;
+  driftRegime?: string;
+  signalPrecision?: string;
+  correlationStructure?: string;
+  formula?: string;
+}
+
+/** Walkthrough: round result metrics */
+export interface WalkthroughRoundResult {
+  aggregateForecast?: number;
+  realisedOutcome?: number;
+  score?: number;
+  loss?: number;
+  payoffs?: Record<number, number>;
+  wealthChanges?: Record<number, number>;
+  skillWeightChanges?: Record<number, number>;
+  nEff?: number;
+  gini?: number;
+  calibrationMetric?: number;
+}
+
+/** Walkthrough: state carried to t+1 */
+export interface WalkthroughNextState {
+  wealth?: Record<number, number>;
+  skill?: Record<number, number>;
+  weights?: Record<number, number>;
+  eligibility?: Record<number, boolean>;
+  missingnessState?: Record<string, unknown>;
+}

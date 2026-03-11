@@ -1,5 +1,5 @@
 import type { SkillWagerPoint } from '@/lib/types';
-import { fmtNum } from '@/lib/formatters';
+import { fmtNum, agentDisplayName } from '@/lib/formatters';
 
 interface Props {
   data: SkillWagerPoint[];
@@ -30,7 +30,7 @@ export default function AgentStateTable({ data, round }: Props) {
         <tbody>
           {roundData.map(d => (
             <tr key={d.agent} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-              <td className="py-1.5 px-2 font-medium text-slate-700">Agent {d.agent}</td>
+              <td className="py-1.5 px-2 font-medium text-slate-700">{agentDisplayName(d.agent)}</td>
               <td className="py-1.5 px-2 text-center">
                 <span className={`inline-block w-2 h-2 rounded-full ${d.missing ? 'bg-slate-300' : 'bg-emerald-400'}`} />
               </td>

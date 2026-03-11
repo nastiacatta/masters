@@ -1,21 +1,46 @@
-# Dashboard
+# Thesis Dashboard
 
-Optional React (Vite + TypeScript) frontend for the online wagering mechanism. It visualises the **core mechanism** (Block A) and **user behaviour** (Block B) and loads experiment outputs produced by the Python package. The Python package does not depend on the dashboard.
+Interactive dashboard for the thesis on **adaptive skill and stake in forecast markets**. It explains how one market round works, where the thesis contribution (online skill layer) enters, how state updates from \(t\) to \(t+1\), and how behaviour and DGP choices affect outcomes. The UI is a thesis-led walkthrough, not a generic KPI dashboard.
 
-## What the dashboard covers
+## What the dashboard is for
 
-### Clearly illustrated (data-backed or interactive)
+The dashboard supports a thesis on forecasting markets and wagering mechanisms. The research question is:
 
-- **Core mechanism**: Round contract, effective wager \(m_{i,t} = b_{i,t}\,g(\sigma_{i,t})\), aggregation, settlement, skill update, timing invariants (no double-counting). Dedicated routes: overview, round timeline, effective wager, aggregation, settlement, skill update, invariants.
-- **Core vs behaviour split**: Block A (deterministic mechanism) vs Block B (policy outputting participation, report, stake, identity). Shown in Behaviour overview and sidebar.
-- **Behaviour taxonomy**: Participation and timing, belief formation, reporting, staking, objectives, identity, learning, adversarial, operational frictions (see Behaviour families page).
-- **Concrete behaviour experiments**: Wired in the app and listed in `public/data/index.json`: behaviour matrix, preference stress, intermittency stress, arbitrage scan, detection adaptation, collusion stress, insider advantage, wash activity gaming, strategic reporting, identity attack matrix, drift adaptation, stake policy matrix; plus core/experiment runs (settlement, skill_wager, parameter_sweep, calibration, etc.).
+**Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation?**
 
-### Taxonomy only (no dedicated experiment view)
+It makes clear:
 
-Many finer-grained behaviours from the slide deck appear in the **taxonomy** (Behaviour families) but do not have their own data-backed dashboard experiment or panel. See **Behaviour coverage** below.
+1. **How one round works** — Inputs → DGP → Core → Behaviour → Results → Next state.
+2. **Where the thesis contribution enters** — The online skill update (EWMA loss → σ) and its interaction with stake in the effective wager and aggregation.
+3. **How state updates from t to t+1** — Wealth, skill weights, eligibility, and any missingness correction state.
+4. **How behaviour and DGP choices affect outcomes** — Via the Walkthrough (scenario/experiment/round selectors) and the Experiments page (cross-scenario comparison).
 
-## How to run
+## Relation to the thesis
+
+- **Core mechanism** follows Lambert (2008) and Raja–Pinson: skill-gated effective wager, aggregation by effective wager, Lambert settlement, and a skill weight. The **thesis extension** is the **online skill layer**: σ is updated each round from scoring-rule loss.
+- **Behaviour** is kept separate from the deterministic core (participation, reporting, deposits, missingness, identity/attacks). The dashboard treats it as a first-class block in the walkthrough.
+- **Validation** (invariants, tests, sanity checks, assumptions) supports thesis credibility and is available under the Validation route.
+
+## Route structure
+
+| Route | Purpose |
+|-------|--------|
+| `/overview` | Thesis overview: research question, why static stake-only is not enough, Raja vs online extension, how to use the dashboard. Default landing. |
+| `/walkthrough` | **Main page.** Step-by-step round walkthrough with stepper: Inputs → DGP → Core → Behaviour → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; right-hand explanation panel; summary metrics. |
+| `/experiments` | Cross-scenario comparison with tabs: Core, Behaviour, DGP comparison, Robustness / adversaries, Ablations. For evidence, not the main narrative. |
+| `/validation` | Invariants, tests, sanity checks, assumptions. Experiment selector and tabs (Main result, Round replay, Behaviour, Robustness checks). |
+
+Legacy routes (e.g. `/core`, `/behaviours`, `/pipeline`, `/mechanism`) remain for backward compatibility.
+
+## Data loading
+
+- **Source:** The dashboard loads experiment metadata and static outputs from `public/data/`.
+- **Index:** `public/data/index.json` lists all experiments (name, displayName, description, block, dgp, scoringMode, nAgents, rounds, dataFiles). Optional fields for the thesis walkthrough: `family`, `thesisTags`, `storyOrder`, `scenarioGroup`.
+- **Per-experiment data:** Under `public/data/<block>/experiments/<name>/` or `public/data/experiments/<name>/` (depending on `block`). The adapters (`src/lib/adapters.ts`) fetch CSVs and JSON (e.g. timeseries, summary, calibration) from paths derived from the index.
+- **Store:** `src/lib/store.tsx` holds the experiment list, selected experiment, block filter, current round, and data mode. The walkthrough uses the same store and derives round-level inputs, DGP meta, results, and next state via `src/lib/walkthroughSelectors.ts` from experiment meta and loaded series.
+- **No simulation in the browser:** The dashboard does not run the Python simulation; it visualises pre-run experiment outputs. The in-browser pipeline (e.g. `runPipeline`) is for illustration only where used.
+
+## How to run locally
 
 ```bash
 cd dashboard
@@ -23,52 +48,28 @@ npm install
 npm run dev
 ```
 
-Open the URL shown (e.g. http://localhost:5173). The app serves from `public/`; experiment data is loaded from `/data/` (i.e. `public/data/`).
+Open the URL shown (e.g. http://localhost:5173). The app serves from `public/`; data is loaded from `/data/` (i.e. `public/data/`).
 
-## Data: making the repo self-contained
+### Linking experiment data
 
-The dashboard expects:
+If experiment data lives outside the repo (e.g. Python package outputs), symlink or copy it into `public/data/`:
 
-- `public/data/index.json` — list of experiments (this file is in the repo).
-- `public/data/<block>/experiments/<name>/` — per-experiment outputs (CSVs, summaries) produced by the Python package.
+- `public/data/index.json` — must exist (in repo).
+- `public/data/core/`, `public/data/behaviour/`, `public/data/experiments/` — per-experiment outputs (CSVs, summaries).
 
-**Problem:** If `public/data/core`, `public/data/behaviour`, or `public/data/experiments` are **absolute symlinks** to a machine-specific path (e.g. `/Users/.../onlinev2/outputs/...`), the repo is not portable: someone else cloning the repo will not have those paths.
+From repo root you can use a helper script if available, e.g.:
 
-**Solution:** Use **relative** symlinks from the dashboard data folder to the Python output directory, or copy outputs into `public/data/`. From the repo root:
+```bash
+./scripts/link-dashboard-data.sh
+```
 
-1. Run some experiments so the Python package has written outputs, e.g.:
-   ```bash
-   cd onlinev2
-   pip install -e .
-   python experiments.py --exp settlement --block core --outdir outputs
-   python experiments.py --exp behaviour_matrix --block behaviour --outdir outputs
-   ```
-2. Link (or copy) those outputs into the dashboard data directory. A helper script is provided:
+If no data is present, the app falls back to mock data where configured so the walkthrough and navigation still work.
 
-   ```bash
-   ./scripts/link-dashboard-data.sh
-   ```
+## Main components
 
-   Or manually, from the repo root:
+- **Overview** (`/overview`) — Thesis framing and “how to use”.
+- **Walkthrough** (`/walkthrough`) — Stepper, step content (Inputs, DGP, Core with subtabs, Behaviour with subtabs, Results, Next state), explanation panel, summary metrics. Reuses Core and Behaviour concepts from existing pages where possible.
+- **Experiments** (`/experiments`) — Tabbed comparison (Core, Behaviour, DGP, Robustness, Ablations) with experiment selector and Validation content.
+- **Validation** (`/validation`) — Experiment selector and tabs for main result, round replay, behaviour, and robustness checks.
 
-   ```bash
-   cd dashboard/public/data
-   ln -sfn ../../onlinev2/outputs/core core
-   ln -sfn ../../onlinev2/outputs/behaviour behaviour
-   ```
-
-   If your Python `--outdir` is not `onlinev2/outputs`, adjust the paths accordingly.
-
-If no experiment data is present, the dashboard falls back to **mock data** so you can still use the core mechanism and behaviour overview pages.
-
-See `public/data/README.md` for more detail on the expected directory layout.
-
-## Behaviour coverage
-
-A **behaviour coverage checklist** (what is taxonomy-only vs data-backed) is in `docs/BEHAVIOUR_COVERAGE.md`. Summary: the dashboard has **partial coverage** of all behaviours described in the slides; a substantial subset is implemented and illustrated with dedicated experiments, and the rest are listed in the taxonomy.
-
-## Relation to the Python package
-
-- Experiment outputs are written by the Python package under `onlinev2/outputs/` (or whatever `--outdir` is). To view real data, copy or symlink those outputs into `dashboard/public/data/` as above.
-- The dashboard’s adapter code (`src/lib/adapters.ts`) loads series, calibration, behaviour CSVs, and summaries from paths under `/data/`.
-- The **full list** of experiments the dashboard can display is in `public/data/index.json`, not only the subset listed in the top-level repo README’s “Dashboard” section.
+Core mechanism details (effective wager, aggregation, settlement, skill update, invariants) remain available under legacy routes and are reflected in the Walkthrough Core step and in the thesis README/docs.

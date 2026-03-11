@@ -116,7 +116,7 @@ export function useExperimentData(): ExperimentDataResult {
     const thisReq = ++reqId.current;
     const exp = selectedExperiment;
     const nAgents = exp.nAgents ?? 6;
-    const T = exp.rounds ?? 100;
+    const T = exp.rounds ?? 10000;
 
     const mockFallback = (): ExperimentDataResult => ({
       summary: generateMockSummary(exp),

@@ -29,6 +29,8 @@ def get_core_experiments(runner_module) -> List[Tuple[str, Callable]]:
         ("weight_rules", lambda: runner_module.run_weight_rule_comparison(outdir=_outdir(), block="core")),
         ("deposit_policies", lambda: runner_module.run_deposit_policy_comparison(outdir=_outdir(), block="core")),
         ("selective_participation", lambda: runner_module.run_selective_participation(outdir=_outdir(), block="core")),
+        ("master_comparison", lambda: runner_module.run_master_comparison(outdir=_outdir(), block="core")),
+        ("bankroll_ablation", lambda: runner_module.run_bankroll_ablation(outdir=_outdir(), block="core")),
     ]
 
 

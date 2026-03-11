@@ -2,12 +2,11 @@ import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
 const TOP_LEVEL_ROUTES = [
-  { to: '/', label: 'Research question', end: true },
-  { to: '/pipeline', label: 'Time-step pipeline', end: true },
-  { to: '/mechanism', label: 'Mechanism', end: true },
+  { to: '/overview', label: 'Overview', end: true },
+  { to: '/mechanism-explorer', label: 'Mechanism explorer', end: true },
   { to: '/experiments', label: 'Experiments', end: true },
-  { to: '/findings', label: 'Findings', end: true },
-  { to: '/appendix', label: 'Appendix', end: false },
+  { to: '/comparison', label: 'Comparison', end: true },
+  { to: '/appendix', label: 'Appendix', end: true },
 ] as const;
 
 export default function Sidebar() {
@@ -18,7 +17,7 @@ export default function Sidebar() {
           Adaptive skill & stake
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
-          Forecast-trading prototype
+          Thesis demonstrator
         </p>
       </div>
 

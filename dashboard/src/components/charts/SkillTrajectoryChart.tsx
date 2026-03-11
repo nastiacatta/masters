@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { SkillWagerPoint, FixedDepositPoint } from '@/lib/types';
-import { AGENT_COLORS } from '@/lib/formatters';
+import { AGENT_COLORS, agentDisplayName } from '@/lib/formatters';
 import ChartCard from '../dashboard/ChartCard';
 
 interface Props {
@@ -51,7 +51,7 @@ export default function SkillTrajectoryChart({
               key={a}
               type="monotone"
               dataKey={`agent_${a}`}
-              name={`Agent ${a}`}
+              name={agentDisplayName(a)}
               stroke={AGENT_COLORS[i % AGENT_COLORS.length]}
               strokeWidth={1.2}
               dot={false}

@@ -32,7 +32,7 @@ const BEHAVIOUR_SYMBOLS = [
 
 const INITIAL_CONTROLS: BehaviourControls = {
   preset: 'baseline',
-  rounds: 80,
+  rounds: 10000,
   seed: 7,
   lam: 0.3,
   eta: 1.8,
@@ -106,12 +106,12 @@ export default function BehaviourOverview() {
                 <span className="text-xs text-slate-500">Rounds</span>
                 <input
                   type="number"
-                  min={20}
-                  max={300}
-                  step={10}
+                  min={100}
+                  max={10000}
+                  step={500}
                   value={controls.rounds}
                   onChange={(e) =>
-                    setControls((c) => ({ ...c, rounds: Math.max(20, Number(e.target.value)) }))
+                    setControls((c) => ({ ...c, rounds: Math.max(100, Number(e.target.value)) }))
                   }
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mt-1"
                 />

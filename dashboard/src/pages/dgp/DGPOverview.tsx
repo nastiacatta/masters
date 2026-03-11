@@ -21,7 +21,7 @@ function roundTo(v: number, d = 3): number {
 export default function DGPOverview() {
   const [dgpId, setDgpId] = useState<DGPId>('baseline');
   const [seed, setSeed] = useState(42);
-  const [rounds, setRounds] = useState(50);
+  const [rounds, setRounds] = useState(10000);
   const [nAgents, setNAgents] = useState(4);
 
   const series = useMemo(
@@ -88,8 +88,8 @@ export default function DGPOverview() {
                 <span className="text-xs text-slate-500">Rounds</span>
                 <input
                   type="number"
-                  min={10}
-                  max={200}
+                  min={100}
+                  max={10000}
                   value={rounds}
                   onChange={(e) => setRounds(Number(e.target.value))}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm mt-1"

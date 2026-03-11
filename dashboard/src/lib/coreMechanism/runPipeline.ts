@@ -31,7 +31,7 @@ export interface PipelineResult {
   };
 }
 
-const DEFAULT_ROUNDS = 50;
+const DEFAULT_ROUNDS = 10000;
 const DEFAULT_SEED = 42;
 const DEFAULT_N = 5;
 const INITIAL_WEALTH = 20;

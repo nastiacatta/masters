@@ -21,6 +21,31 @@ export function scenarioLabel(s: string): string {
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
+/** Human-readable label for task type (no internal codes in UI). */
+export function taskTypeLabel(code: string): string {
+  const labels: Record<string, string> = {
+    point: 'Point forecast',
+    distribution: 'Distribution (CRPS)',
+  };
+  return labels[code] ?? scenarioLabel(code);
+}
+
+/** Human-readable label for scoring rule (no internal codes in UI). */
+export function scoringRuleLabel(code: string): string {
+  const labels: Record<string, string> = {
+    CRPS: 'CRPS (Continuous Ranked Probability Score)',
+    MAE: 'MAE (Mean Absolute Error)',
+  };
+  return labels[code] ?? code;
+}
+
+/** Display name for an agent (1-based "Agent 1", "Agent 2", … instead of raw id/code). */
+export function agentDisplayName(agentId: string | number): string {
+  const num = typeof agentId === 'string' ? parseInt(agentId.replace(/^A/, ''), 10) : agentId;
+  if (!isNaN(num) && num >= 0) return `Agent ${num + 1}`;
+  return `Agent ${agentId}`;
+}
+
 export function metricLabel(key: string): string {
   const labels: Record<string, string> = {
     crpsUniform: 'CRPS (Equal)',
@@ -35,6 +60,15 @@ export function metricLabel(key: string): string {
     crpsBestSingleCum: 'Cumulative CRPS (Best Single)',
   };
   return labels[key] || key;
+}
+
+/** Labels for sweep/heatmap metric keys (avoid showing raw codes in tooltips). */
+export function sweepMetricLabel(key: string): string {
+  const labels: Record<string, string> = {
+    meanCrps: 'Mean CRPS',
+    gini: 'Gini coefficient',
+  };
+  return labels[key] ?? key;
 }
 
 export const AGENT_COLORS = [

@@ -29,7 +29,7 @@ const WEIGHTING_OPTIONS: { id: WeightingMode; label: string }[] = [
 ];
 
 export default function PipelineStepper() {
-  const [rounds, setRounds] = useState(50);
+  const [rounds, setRounds] = useState(10000);
   const [n, setN] = useState(6);
   const [seed, setSeed] = useState(42);
   const [dgpId, setDgpId] = useState<DGPId>('baseline');
@@ -97,8 +97,8 @@ export default function PipelineStepper() {
               <span className="text-xs text-slate-500">Rounds</span>
               <input
                 type="number"
-                min={10}
-                max={500}
+                min={100}
+                max={10000}
                 value={rounds}
                 onChange={(e) => setRounds(Number(e.target.value))}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"

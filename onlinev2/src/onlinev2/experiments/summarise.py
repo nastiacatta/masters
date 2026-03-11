@@ -53,6 +53,8 @@ EXPERIMENT_DESCRIPTIONS: Dict[str, str] = {
     "deposit_policy_comparison": "Compare four deposit policies under the Mechanism weight rule.",
     "selective_participation": "Strategic timing of absence vs random absence.",
     "weight_learning_comparison": "Compare weight learning across exogenous and endogenous DGPs.",
+    "master_comparison": "All weighting methods (equal, stake-only, skill-only, blended, bankroll) on same panel; paired deltas vs equal.",
+    "bankroll_ablation": "Five-step bankroll pipeline: Full vs A- (no confidence), B- (fixed deposit), C- (no skill gate), D- (no cap), E- (freeze wealth).",
 }
 
 

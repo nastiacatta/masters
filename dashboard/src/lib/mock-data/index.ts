@@ -27,7 +27,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 3,
-    rounds: 50,
+    rounds: 10000,
   },
   {
     name: 'forecast_aggregation',
@@ -37,7 +37,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 6,
-    rounds: 500,
+    rounds: 10000,
   },
   {
     name: 'behaviour_matrix',
@@ -47,7 +47,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 10,
-    rounds: 200,
+    rounds: 10000,
   },
   {
     name: 'parameter_sweep',
@@ -57,7 +57,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 6,
-    rounds: 500,
+    rounds: 10000,
   },
   {
     name: 'calibration',
@@ -67,7 +67,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 6,
-    rounds: 300,
+    rounds: 10000,
   },
   {
     name: 'settlement_sanity',
@@ -77,7 +77,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 10,
-    rounds: 500,
+    rounds: 10000,
   },
   {
     name: 'fixed_deposit',
@@ -87,7 +87,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 4,
-    rounds: 200,
+    rounds: 10000,
   },
   {
     name: 'intermittency_stress_test',
@@ -97,7 +97,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 10,
-    rounds: 200,
+    rounds: 10000,
   },
   {
     name: 'sybil',
@@ -107,7 +107,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 6,
-    rounds: 200,
+    rounds: 10000,
   },
   {
     name: 'arbitrage_scan',
@@ -117,7 +117,7 @@ export const mockExperiments: ExperimentMeta[] = [
     dgp: 'baseline',
     scoringMode: 'CRPS',
     nAgents: 10,
-    rounds: 150,
+    rounds: 10000,
   },
 ];
 

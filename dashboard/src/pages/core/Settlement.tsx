@@ -16,15 +16,15 @@ export default function Settlement() {
             <SectionLabel type="mechanism_computation" />
             Skill payoff and profit
           </h3>
-          <MathBlock accent label="Gross payoff (skill pool)" latex="\Pi_{i,t} = m_{i,t} (1 + s_{i,t} - \bar{s}_t)" />
-          <p className="text-xs text-slate-500 mt-1"><MathBlock inline latex="\bar{s}_t = \frac{\sum_j m_j s_j}{\sum_j m_j}" /></p>
-          <MathBlock label="Profit" className="mt-3" latex="\pi_{i,t} = \Pi_{i,t} - m_{i,t}" />
+          <MathBlock accent label="Gross payoff (skill pool)" latex="\\Pi_{i,t} = m_{i,t} (1 + s_{i,t} - \\bar{s}_t)" />
+          <p className="text-xs text-slate-500 mt-1"><MathBlock inline latex="\\bar{s}_t = \\frac{\\sum_j m_j s_j}{\\sum_j m_j}" /></p>
+          <MathBlock label="Profit" className="mt-3" latex="\\pi_{i,t} = \\Pi_{i,t} - m_{i,t}" />
         </div>
 
         <div>
-          <MathBlock label="Cashflow (observed output)" accent latex="\text{cashout}_{i,t} = \text{refund}_{i,t} + \hat{\Pi}_{i,t}" />
+          <MathBlock label="Cashflow (observed output)" accent latex="\\text{cashout}_{i,t} = \\text{refund}_{i,t} + \\hat{\\Pi}_{i,t}" />
           <p className="text-xs text-slate-500 mt-2">
-            Flow: deposit → effective wager → settlement → refund + payout. Zero-sum: <MathBlock inline latex="\sum_i \pi_i = 0" /> (skill pool only; utility component if <MathBlock inline latex="U > 0" /> is separate).
+            Flow: deposit → effective wager → settlement → refund + payout. Zero-sum: <MathBlock inline latex="\\sum_i \\pi_i = 0" /> (skill pool only; utility component if <MathBlock inline latex="U > 0" /> is separate).
           </p>
         </div>
       </div>

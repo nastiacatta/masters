@@ -3,7 +3,7 @@ import ChartCard from '../dashboard/ChartCard';
 import MathBlock from '../dashboard/MathBlock';
 import { useState } from 'react';
 import TabGroup from '../dashboard/TabGroup';
-import { fmtNum } from '@/lib/formatters';
+import { fmtNum, sweepMetricLabel } from '@/lib/formatters';
 
 interface Props {
   data: SweepPoint[];
@@ -38,7 +38,7 @@ export default function SweepHeatmap({ data }: Props) {
   const cellH = 36;
 
   return (
-    <ChartCard title="Parameter Sweep" subtitle={<><MathBlock inline latex="\lambda" /> vs <MathBlock inline latex="\sigma_{\min}" /> — explore the quality–concentration trade-off</>}>
+    <ChartCard title="Parameter Sweep" subtitle={<><MathBlock inline latex="\\lambda" /> vs <MathBlock inline latex="\\sigma_{\\min}" /> — explore the quality–concentration trade-off</>}>
       <TabGroup
         tabs={[
           { id: 'meanCrps', label: 'Mean CRPS' },
@@ -51,7 +51,7 @@ export default function SweepHeatmap({ data }: Props) {
         <table className="border-collapse">
           <thead>
             <tr>
-              <th className="text-[9px] text-slate-400 p-1"><MathBlock inline latex="\lambda \setminus \sigma_{\min}" /></th>
+              <th className="text-[9px] text-slate-400 p-1"><MathBlock inline latex="\\lambda \\setminus \\sigma_{\\min}" /></th>
               {sigmaMins.map(s => (
                 <th key={s} className="text-[9px] text-slate-500 p-1 text-center" style={{ width: cellW }}>{s}</th>
               ))}
@@ -69,7 +69,7 @@ export default function SweepHeatmap({ data }: Props) {
                       <div
                         className="rounded flex items-center justify-center"
                         style={{ width: cellW, height: cellH, background: getColor(val) }}
-                        title={`λ=${l}, σ_min=${s}: ${metric}=${fmtNum(val)}`}
+                        title={`λ=${l}, σ_min=${s}: ${sweepMetricLabel(metric)}=${fmtNum(val)}`}
                       >
                         <span className="text-[9px] text-white font-mono">{fmtNum(val, 4)}</span>
                       </div>
