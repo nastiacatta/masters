@@ -1,56 +1,87 @@
 """
-Named behaviour presets for experiments.
+Behaviour preset configurations.
 
-Experiments import presets from here instead of constructing policy classes directly.
-Presets are used with make_behaviour(name, **kwargs).
+Preset names use neutral research language. Legacy preset names are
+accepted and normalised to the canonical names below.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-# Lazy imports to avoid circular deps; factory resolves them by name.
-PRESET_NAMES = frozenset({
-    "BENIGN_BASELINE",
-    "BURSTY_REALISTIC",
-    "HEDGED_RISK_AVERSE",
-    "COLLUSION_GROUP",
-    "SYBIL_SPLIT_K",
-    "MANIPULATOR",
-    "EVADER",
-    "INSIDER",
-    "ARBITRAGEUR",
-})
+# Canonical preset names (academic / professional).
+PRESET_NAMES = frozenset(
+    {
+        "BENIGN_BASELINE",
+        "CLUSTERED_PARTICIPATION",
+        "PREFERENCE_SENSITIVE_HEDGING",
+        "COORDINATED_GROUP",
+        "MULTI_ACCOUNT_SPLIT_K",
+        "STRATEGIC_INFLUENCE",
+        "DETECTOR_AWARE",
+        "PRIVILEGED_INFORMATION",
+        "ARBITRAGE_SEEKING",
+        "WASH_TRADER",
+        "STRATEGIC_REPORTER",
+        "EDGE_THRESHOLD",
+        "AVOID_SKILL_DECAY",
+        "WEALTH_SHOCK_SENSITIVE",
+        "ADAPTIVE_PARTICIPATION",
+        "STRATEGIC_EXTERNALITY",
+        "REPUTATION_PROTECTION",
+        "BREAK_EVEN_STAKING",
+        "AFFORDABILITY_CAPPED",
+        "VOLATILITY_SENSITIVE",
+        "COLLUSIVE_MULTI_ACCOUNT",
+        "FAKE_ACTIVITY",
+    }
+)
+
+# Legacy names accepted for backwards compatibility; normalised to canonical.
+PRESET_ALIASES = {
+    "BURSTY_REALISTIC": "CLUSTERED_PARTICIPATION",
+    "HEDGED_RISK_AVERSE": "PREFERENCE_SENSITIVE_HEDGING",
+    "COLLUSION_GROUP": "COORDINATED_GROUP",
+    "SYBIL_SPLIT_K": "MULTI_ACCOUNT_SPLIT_K",
+    "MANIPULATOR": "STRATEGIC_INFLUENCE",
+    "EVADER": "DETECTOR_AWARE",
+    "INSIDER": "PRIVILEGED_INFORMATION",
+    "ARBITRAGEUR": "ARBITRAGE_SEEKING",
+}
 
 
 def get_preset_kwargs(name: str, **overrides: Any) -> Dict[str, Any]:
+    """Return kwargs for building a behaviour model from a preset name.
+    Accepts both canonical and legacy preset names; normalises to canonical.
     """
-    Return kwargs for build_population / CompositeBehaviourModel for a named preset.
+    name = PRESET_ALIASES.get(name, name)
 
-    name: one of BENIGN_BASELINE, BURSTY_REALISTIC, HEDGED_RISK_AVERSE,
-          COLLUSION_GROUP, SYBIL_SPLIT_K, MANIPULATOR, EVADER, INSIDER, ARBITRAGEUR.
-    overrides: override any key (e.g. n_users, seed, k for SYBIL_SPLIT_K).
-    """
     from onlinev2.behaviour.policies.participation import (
         BaselineParticipation,
         BurstyParticipation,
         EdgeThresholdParticipation,
         AvoidSkillDecayParticipation,
+        WealthShockSensitiveParticipation,
+        AdaptiveParticipation,
     )
     from onlinev2.behaviour.policies.reporting import (
         TruthfulReporting,
-        MiscalibratedReporting,
         HedgedReporting,
-        StrategicReporting,
+        StrategicExternalityReporting,
+        ReputationProtectionReporting,
     )
     from onlinev2.behaviour.policies.staking import (
         FixedFractionStaking,
         KellyLikeStaking,
         HouseMoneyStaking,
-        LumpyTierStaking,
+        BreakEvenStaking,
+        AffordabilityCappedStaking,
+        VolatilitySensitiveStaking,
     )
     from onlinev2.behaviour.policies.identity import (
         SingleAccountIdentity,
         SplitAccountIdentity,
+        CollusiveMultiAccountIdentity,
+        FakeActivityIdentity,
     )
 
     base: Dict[str, Any] = {
@@ -62,28 +93,52 @@ def get_preset_kwargs(name: str, **overrides: Any) -> Dict[str, Any]:
 
     if name == "BENIGN_BASELINE":
         pass
-    elif name == "BURSTY_REALISTIC":
+    elif name == "CLUSTERED_PARTICIPATION":
         base["participation_policy"] = BurstyParticipation()
         base["staking_policy"] = KellyLikeStaking()
-    elif name == "HEDGED_RISK_AVERSE":
+    elif name == "PREFERENCE_SENSITIVE_HEDGING":
         base["reporting_policy"] = HedgedReporting()
         base["staking_policy"] = HouseMoneyStaking()
-    elif name == "COLLUSION_GROUP":
-        base["participation_policy"] = BurstyParticipation()
-        base["reporting_policy"] = TruthfulReporting()
-        base["staking_policy"] = FixedFractionStaking()
-        base["_adversary"] = "collusion"
-    elif name == "SYBIL_SPLIT_K":
-        k = overrides.pop("k", 3)
+    elif name == "COORDINATED_GROUP":
+        base["_adversary"] = "coordinated_group"
+    elif name == "MULTI_ACCOUNT_SPLIT_K":
+        k = int(overrides.pop("k", 3))
         base["identity_policy"] = SplitAccountIdentity(k=k)
-    elif name == "MANIPULATOR":
-        base["_adversary"] = "manipulator"
-    elif name == "EVADER":
-        base["_adversary"] = "evader"
-    elif name == "INSIDER":
-        base["_adversary"] = "insider"
-    elif name == "ARBITRAGEUR":
-        base["_adversary"] = "arbitrageur"
+    elif name == "STRATEGIC_INFLUENCE":
+        base["_adversary"] = "strategic_influence"
+    elif name == "DETECTOR_AWARE":
+        base["_adversary"] = "detector_aware"
+    elif name == "PRIVILEGED_INFORMATION":
+        base["_adversary"] = "privileged_information"
+    elif name == "ARBITRAGE_SEEKING":
+        base["_adversary"] = "arbitrage_seeking"
+    elif name == "WASH_TRADER":
+        base["_adversary"] = "wash_trader"
+    elif name == "STRATEGIC_REPORTER":
+        base["_adversary"] = "strategic_reporter"
+    elif name == "EDGE_THRESHOLD":
+        base["participation_policy"] = EdgeThresholdParticipation()
+    elif name == "AVOID_SKILL_DECAY":
+        base["participation_policy"] = AvoidSkillDecayParticipation()
+    elif name == "WEALTH_SHOCK_SENSITIVE":
+        base["participation_policy"] = WealthShockSensitiveParticipation()
+    elif name == "ADAPTIVE_PARTICIPATION":
+        base["participation_policy"] = AdaptiveParticipation()
+    elif name == "STRATEGIC_EXTERNALITY":
+        base["reporting_policy"] = StrategicExternalityReporting()
+    elif name == "REPUTATION_PROTECTION":
+        base["reporting_policy"] = ReputationProtectionReporting()
+    elif name == "BREAK_EVEN_STAKING":
+        base["staking_policy"] = BreakEvenStaking()
+    elif name == "AFFORDABILITY_CAPPED":
+        base["staking_policy"] = AffordabilityCappedStaking()
+    elif name == "VOLATILITY_SENSITIVE":
+        base["staking_policy"] = VolatilitySensitiveStaking()
+    elif name == "COLLUSIVE_MULTI_ACCOUNT":
+        k = int(overrides.pop("k", 3))
+        base["identity_policy"] = CollusiveMultiAccountIdentity(k=k)
+    elif name == "FAKE_ACTIVITY":
+        base["identity_policy"] = FakeActivityIdentity()
     else:
         raise ValueError(f"Unknown preset: {name}. Known: {sorted(PRESET_NAMES)}")
 

@@ -43,6 +43,13 @@ def get_behaviour_experiments(runner_module, write_summary: bool = None) -> List
         ("intermittency_stress", lambda: runner_module.run_intermittency_stress_test(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("arbitrage_scan", lambda: runner_module.run_arbitrage_scan(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("detection_adaptation", lambda: runner_module.run_detection_adaptation(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("collusion_stress", lambda: runner_module.run_collusion_stress(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("insider_advantage", lambda: runner_module.run_insider_advantage(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("wash_activity_gaming", lambda: runner_module.run_wash_activity_gaming(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("strategic_reporting", lambda: runner_module.run_strategic_reporting(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("identity_attack_matrix", lambda: runner_module.run_identity_attack_matrix(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("drift_adaptation", lambda: runner_module.run_drift_adaptation(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("stake_policy_matrix", lambda: runner_module.run_stake_policy_matrix(outdir=_outdir(), block="behaviour", write_summary=ws)),
     ]
 
 

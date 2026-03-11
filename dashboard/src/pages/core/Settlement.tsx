@@ -24,7 +24,7 @@ export default function Settlement() {
         <div>
           <MathBlock label="Cashflow (observed output)" accent latex="\text{cashout}_{i,t} = \text{refund}_{i,t} + \hat{\Pi}_{i,t}" />
           <p className="text-xs text-slate-500 mt-2">
-            Flow: deposit → effective wager → settlement → refund + payout. Zero-sum: Σ_i π_i = 0 (skill pool only; utility component if U &gt; 0 is separate).
+            Flow: deposit → effective wager → settlement → refund + payout. Zero-sum: <MathBlock inline latex="\sum_i \pi_i = 0" /> (skill pool only; utility component if <MathBlock inline latex="U > 0" /> is separate).
           </p>
         </div>
       </div>

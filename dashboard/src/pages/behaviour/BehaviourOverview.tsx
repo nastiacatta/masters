@@ -1,6 +1,7 @@
 import PageHeader from '@/components/dashboard/PageHeader';
 import SectionLabel from '@/components/dashboard/SectionLabel';
 import ChartCard from '@/components/dashboard/ChartCard';
+import MathBlock from '@/components/dashboard/MathBlock';
 
 const LAYERS = [
   {
@@ -31,7 +32,7 @@ const LAYERS = [
   {
     title: 'Layer 4: Behaviour-to-core interface',
     subtitle: 'Observed output',
-    items: ['Real user traits → policy → (a_{i,t}, r_{i,t}, b_{i,t}, identity actions)'],
+    items: [<>Real user traits → policy → (<MathBlock inline latex="a_{i,t}, r_{i,t}, b_{i,t}" />, identity actions)</>],
   },
 ];
 
@@ -57,8 +58,8 @@ export default function BehaviourOverview() {
             subtitle={layer.subtitle}
           >
             <ul className="space-y-1.5 text-xs text-slate-600">
-              {layer.items.map((item) => (
-                <li key={item} className="flex items-center gap-2">
+              {layer.items.map((item, idx) => (
+                <li key={`${layer.title}-${idx}`} className="flex items-center gap-2">
                   <span className="text-slate-400">•</span>
                   {item}
                 </li>
@@ -75,7 +76,7 @@ export default function BehaviourOverview() {
         <span className="text-xs text-slate-600">policy</span>
         <span className="text-slate-400">→</span>
         <SectionLabel type="user_choice" />
-        <span className="text-slate-500 text-xs">(a_{'_{i,t}'}, r_{'_{i,t}'}, b_{'_{i,t}'}, identity)</span>
+        <span className="text-slate-500 text-xs">(<MathBlock inline latex="a_{i,t}, r_{i,t}, b_{i,t}" />, identity)</span>
       </div>
     </div>
   );

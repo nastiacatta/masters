@@ -2495,7 +2495,7 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
         "iid": BaselineParticipation(),
         "bursty": BurstyParticipation(),
         "edge_threshold": EdgeThresholdParticipation(),
-        "avoid_skill_decay": AvoidSkillDecayParticipation(s_min=0.5),
+        "avoid_skill_decay": AvoidSkillDecayParticipation(sigma_floor=0.5),
     }
 
     results = {}
@@ -2834,6 +2834,406 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
                 make_behaviour_dashboard(ep, dashboard_logs, config)
         except Exception as e:
             print(f"Warning: summary/dashboard failed: {e}")
+
+
+def _run_behaviour_scenario_loop(T, n_users, seed, scenarios, ep, block, write_summary, scenario_key="scenario"):
+    """Shared loop for behaviour experiments that vary scenarios."""
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.policies.identity import SingleAccountIdentity
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    results = []
+    for scenario_name, pop in scenarios:
+        behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        profits, n_t_list, gini_ts, n_eff_ts = [], [], [], []
+        for t in range(T):
+            pub = RoundPublicState(
+                t=t, y_history=y[:t].tolist(), agg_history=[],
+                weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                wealth_prev=state.wealth, profit_prev=state.profit_prev,
+            )
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            profits.append(sum(logs["profit"]))
+            n_t_list.append(sum(1 for a in actions if a.participate))
+            gini_ts.append(logs["Gini"])
+            n_eff_ts.append(logs["N_eff"])
+        results.append({
+            scenario_key: scenario_name,
+            "total_profit": sum(profits),
+            "mean_round_profit": float(np.mean(profits)),
+            "final_gini": logs["Gini"],
+            "final_n_eff": logs["N_eff"],
+            "participation_rate": float(np.mean(n_t_list)) / max(1, len(actions)) if actions else 0.0,
+        })
+    return results, y
+
+
+def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare no collusion vs collusion group; emit collusion metrics."""
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.adversaries.coordinated_group import CoordinatedGroupBehaviour
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "collusion_stress", block)
+    T, n_benign = 150, 8
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    members = [UserTraits(user_id=f"colluder_{j}", initial_wealth=10.0, noise_level=0.05, stake_fraction=0.2) for j in range(3)]
+    results = []
+    for label in ["no_collusion", "collusion"]:
+        pop = build_population(n_benign, seed=seed)
+        if label == "collusion":
+            adv = CoordinatedGroupBehaviour(members, scoring_mode="point_mae")
+            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"collusion_group": adv}, scoring_mode="point_mae")
+        else:
+            behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        if label == "collusion":
+            for u in members:
+                state.wealth[u.user_id] = u.initial_wealth
+        profits, n_t_list, gini_ts = [], [], []
+        collusion_actions_hist = [] if label == "collusion" else None
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            if collusion_actions_hist is not None:
+                collusion_actions_hist.append(actions)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            profits.append(sum(logs["profit"]))
+            n_t_list.append(sum(1 for a in actions if a.participate))
+            gini_ts.append(logs["Gini"])
+        n_actions = len(actions) if actions else 1
+        results.append({"scenario": label, "total_profit": sum(profits), "mean_profit": float(np.mean(profits)),
+                        "final_gini": logs["Gini"], "participation_rate": float(np.mean(n_t_list)) / n_actions})
+        if collusion_actions_hist is not None:
+            try:
+                from onlinev2.behaviour.detection.detectors import run_all_detectors
+                scores = run_all_detectors(collusion_actions_hist, list(range(len(collusion_actions_hist))))
+                det_rows = [{"detector": k, "score": v} for k, v in scores.items()]
+                _write_csv(ep.data("detection_metrics.csv"), ["detector", "score"], det_rows)
+            except Exception:
+                pass
+    _write_csv(ep.data("collusion_stress.csv"), ["scenario", "total_profit", "mean_profit", "final_gini", "participation_rate"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "collusion_stress", "T": T, "block": block}, {"final_gini": results[-1]["final_gini"] if results else None})
+        except Exception as e:
+            print(f"Warning: summary failed: {e}")
+
+
+def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare no insider vs insider; measure insider profit advantage."""
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.adversaries.privileged_information import PrivilegedInformationBehaviour
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "insider_advantage", block)
+    T, n_benign = 150, 8
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    insider_traits = UserTraits(user_id="insider_0", initial_wealth=10.0, noise_level=0.02, stake_fraction=0.4, insider_bonus=0.5)
+    results = []
+    for label, use_insider in [("no_insider", False), ("insider", True)]:
+        pop = build_population(n_benign, seed=seed)
+        if use_insider:
+            adv = PrivilegedInformationBehaviour(insider_traits, y_sequence=y, scoring_mode="point_mae")
+            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"insider_0": adv}, scoring_mode="point_mae")
+        else:
+            behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        if use_insider:
+            state.wealth["insider_0"] = insider_traits.initial_wealth
+        insider_profit = 0.0
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            for i, aid in enumerate(logs["ids"]):
+                if "insider" in str(aid):
+                    insider_profit += logs["profit"][i]
+        results.append({"scenario": label, "insider_profit": insider_profit, "final_gini": logs["Gini"]})
+    _write_csv(ep.data("insider_advantage.csv"), ["scenario", "insider_profit", "final_gini"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "insider_advantage", "T": T, "block": block}, {})
+        except Exception:
+            pass
+
+
+def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare no wash vs wash trader; measure activity inflation."""
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.adversaries.wash_trader import WashTraderBehaviour
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "wash_activity_gaming", block)
+    T, n_benign = 150, 8
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    wash_traits = UserTraits(user_id="wash_0", initial_wealth=10.0, noise_level=0.05, stake_fraction=0.2)
+    results = []
+    for label, use_wash in [("no_wash", False), ("wash_trader", True)]:
+        pop = build_population(n_benign, seed=seed)
+        if use_wash:
+            adv = WashTraderBehaviour(wash_traits, k_accounts=3, scoring_mode="point_mae")
+            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"wash_0": adv}, scoring_mode="point_mae")
+        else:
+            behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        if use_wash:
+            state.wealth["wash_0"] = wash_traits.initial_wealth
+        activity_count = 0
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            activity_count += sum(1 for a in actions if a.participate)
+        results.append({"scenario": label, "total_activity": activity_count, "n_rounds": T})
+    _write_csv(ep.data("wash_activity_gaming.csv"), ["scenario", "total_activity", "n_rounds"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "wash_activity_gaming", "T": T, "block": block}, {})
+        except Exception:
+            pass
+
+
+def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare truthful vs strategic reporter; measure aggregate impact."""
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.adversaries.strategic_reporter import StrategicReporterBehaviour
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "strategic_reporting", block)
+    T, n_benign = 150, 8
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    strat_traits = UserTraits(user_id="strategic_0", initial_wealth=10.0, manipulation_strength=0.8)
+    results = []
+    for label, use_strat in [("truthful", False), ("strategic_reporter", True)]:
+        pop = build_population(n_benign, seed=seed)
+        if use_strat:
+            adv = StrategicReporterBehaviour(strat_traits, target=0.7, pull=0.8, scoring_mode="point_mae")
+            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"strategic_0": adv}, scoring_mode="point_mae")
+        else:
+            behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        if use_strat:
+            state.wealth["strategic_0"] = strat_traits.initial_wealth
+        agg_errors = []
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            agg_errors.append(abs(logs.get("r_hat", 0.5) - float(y[t])))
+        results.append({"scenario": label, "mean_agg_error": float(np.mean(agg_errors)), "final_gini": logs["Gini"]})
+    _write_csv(ep.data("strategic_reporting.csv"), ["scenario", "mean_agg_error", "final_gini"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "strategic_reporting", "T": T, "block": block}, {})
+        except Exception:
+            pass
+
+
+def run_identity_attack_matrix(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare single account vs sybil split vs reputation reset vs collusive multi-account."""
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.policies.identity import SingleAccountIdentity, SplitAccountIdentity, ReputationResetIdentity, CollusiveMultiAccountIdentity
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "identity_attack_matrix", block)
+    T, n_users = 150, 8
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    scenarios = [
+        ("single_account", SingleAccountIdentity()),
+        ("sybil_split_3", SplitAccountIdentity(k=3)),
+        ("reputation_reset", ReputationResetIdentity()),
+        ("collusive_multi_3", CollusiveMultiAccountIdentity(k=3)),
+    ]
+    results = []
+    for scenario_name, identity in scenarios:
+        pop = build_population(n_users, seed=seed, identity_policy=identity)
+        behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        profits, n_eff_ts = [], []
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            profits.append(sum(logs["profit"]))
+            n_eff_ts.append(logs["N_eff"])
+        results.append({"identity": scenario_name, "total_profit": sum(profits), "final_n_eff": logs["N_eff"], "final_gini": logs["Gini"]})
+    _write_csv(ep.data("identity_attack_matrix.csv"), ["identity", "total_profit", "final_n_eff", "final_gini"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "identity_attack_matrix", "T": T, "block": block}, {})
+        except Exception:
+            pass
+
+
+def run_drift_adaptation(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare fast vs slow adaptor to drift in y process."""
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.policies.belief import FastAdaptorBeliefModel, SlowAdaptorBeliefModel, GaussianBeliefModel
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "drift_adaptation", block)
+    T, n_users = 200, 8
+    rng = np.random.default_rng(seed)
+    y = np.concatenate([rng.uniform(0.3, 0.5, size=T // 2), rng.uniform(0.5, 0.7, size=T - T // 2)])
+    scenarios = [
+        ("baseline", GaussianBeliefModel()),
+        ("fast_adaptor", FastAdaptorBeliefModel()),
+        ("slow_adaptor", SlowAdaptorBeliefModel()),
+    ]
+    results = []
+    for scenario_name, belief in scenarios:
+        pop = build_population(n_users, seed=seed, belief_policy=belief)
+        behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        mae_list = []
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            if logs.get("r_hat") is not None:
+                r = logs["r_hat"] if isinstance(logs["r_hat"], (int, float)) else (np.mean(logs["r_hat"]) if hasattr(logs["r_hat"], "__len__") else 0.5)
+                mae_list.append(abs(float(r) - float(y[t])))
+        results.append({"belief": scenario_name, "mean_mae": float(np.mean(mae_list)) if mae_list else 0.0, "final_gini": logs["Gini"]})
+    _write_csv(ep.data("drift_adaptation.csv"), ["belief", "mean_mae", "final_gini"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "drift_adaptation", "T": T, "block": block}, {})
+        except Exception:
+            pass
+
+
+def run_stake_policy_matrix(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+    """Compare fixed fraction vs Kelly-like vs house-money vs lumpy vs break-even vs volatility-sensitive."""
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.policies.staking import (
+        FixedFractionStaking, KellyLikeStaking, HouseMoneyStaking,
+        LumpyTierStaking, BreakEvenStaking, VolatilitySensitiveStaking,
+    )
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+    from onlinev2.behaviour.protocol import RoundPublicState
+
+    ep = _exp_paths(outdir, "stake_policy_matrix", block)
+    T, n_users = 150, 8
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.0, 1.0, size=T)
+    scenarios = [
+        ("fixed_fraction", FixedFractionStaking()),
+        ("kelly_like", KellyLikeStaking()),
+        ("house_money", HouseMoneyStaking()),
+        ("lumpy_tier", LumpyTierStaking()),
+        ("break_even", BreakEvenStaking()),
+        ("volatility_sensitive", VolatilitySensitiveStaking()),
+    ]
+    results = []
+    for scenario_name, staking in scenarios:
+        pop = build_population(n_users, seed=seed, staking_policy=staking)
+        behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+        behaviour.reset(seed)
+        params = MechanismParams(scoring_mode="point_mae")
+        state = MechanismState()
+        for u in pop:
+            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        profits, deposits_sum = [], []
+        for t in range(T):
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            actions = behaviour.act(pub)
+            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            profits.append(sum(logs["profit"]))
+            deposits_sum.append(sum(logs["deposits"]))
+        results.append({"staking": scenario_name, "total_profit": sum(profits), "mean_deposit": float(np.mean(deposits_sum)), "final_gini": logs["Gini"]})
+    _write_csv(ep.data("stake_policy_matrix.csv"), ["staking", "total_profit", "mean_deposit", "final_gini"], results)
+    if write_summary:
+        try:
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(ep, {"experiment_name": "stake_policy_matrix", "T": T, "block": block}, {})
+        except Exception:
+            pass
 
 
 # ===================================================================

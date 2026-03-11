@@ -29,6 +29,13 @@ EXPERIMENT_DESCRIPTIONS: Dict[str, str] = {
         "Compares a fixed manipulator with an adaptive evader that balances manipulation "
         "with detector evasion."
     ),
+    "collusion_stress": "Compares no collusion vs collusion group; measures within-group synchrony and impact.",
+    "insider_advantage": "Compares no insider vs insider; measures insider profit advantage from privileged information.",
+    "wash_activity_gaming": "Compares no wash vs wash trader; measures activity inflation from fake interactions.",
+    "strategic_reporting": "Compares truthful vs strategic reporter; measures aggregate forecast impact.",
+    "identity_attack_matrix": "Compares single account vs sybil split vs reputation reset vs collusive multi-account.",
+    "drift_adaptation": "Compares fast vs slow adaptor to drift in the outcome process.",
+    "stake_policy_matrix": "Compares fixed fraction vs Kelly-like vs house-money vs lumpy vs break-even vs volatility-sensitive staking.",
     "settlement_sanity": "Random wagers and scores — verify budget balance, non-negativity, equal-score zero profit.",
     "skill_wager": "How skill and wager evolve with intermittent participation.",
     "forecast_aggregation": "Mechanism | Bankroll-Confidence vs baselines.",

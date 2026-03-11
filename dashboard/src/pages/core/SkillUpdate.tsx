@@ -25,7 +25,7 @@ export default function SkillUpdate() {
         <div>
           <MathBlock label="Loss to skill (next round’s σ)" accent latex="\sigma_{i,t+1} = \sigma_{\min} + (1 - \sigma_{\min}) \, e^{-\gamma L_{i,t}}" />
           <p className="text-xs text-slate-500 mt-2">
-            Slow rise, fast drop; floor σ_min. This is the only skill update on the main page. Variants (e.g. different mappings) in appendix or secondary panel.
+            Slow rise, fast drop; floor <MathBlock inline latex="\sigma_{\min}" />. This is the only skill update on the main page. Variants (e.g. different mappings) in appendix or secondary panel.
           </p>
         </div>
       </div>

@@ -22,7 +22,7 @@ export default function Aggregation() {
         <div>
           <MathBlock label="Point forecast aggregation" latex="\hat{r}_t = \sum_i \hat{m}_{i,t} \, r_{i,t}" />
           <p className="text-xs text-slate-500 mt-2">
-            For quantile mode: same weights applied per quantile, q̂(tau) = Σ_i m̂_i · q_i(tau). Missing agents (α_i = 1) have m_i = 0 and do not contribute.
+            For quantile mode: same weights applied per quantile, <MathBlock inline latex="\hat{q}(\tau) = \sum_i \hat{m}_i \, q_i(\tau)" />. Missing agents (<MathBlock inline latex="\alpha_i = 1" />) have <MathBlock inline latex="m_i = 0" /> and do not contribute.
           </p>
         </div>
       </div>

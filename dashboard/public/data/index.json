@@ -143,6 +143,94 @@
     "dataFiles": { "detection_adaptation": "detection_adaptation.csv" }
   },
   {
+    "name": "preference_stress_test",
+    "displayName": "Preference Stress",
+    "description": "Compares truthful vs hedged risk-averse reporting to evaluate bias and welfare.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 10,
+    "rounds": 200,
+    "dataFiles": { "preference_stress": "preference_stress.csv" }
+  },
+  {
+    "name": "collusion_stress",
+    "displayName": "Collusion Stress",
+    "description": "Compares no collusion vs collusion group; measures within-group synchrony and impact.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 11,
+    "rounds": 150,
+    "dataFiles": { "collusion_stress": "collusion_stress.csv", "detection_metrics": "detection_metrics.csv" }
+  },
+  {
+    "name": "insider_advantage",
+    "displayName": "Insider Advantage",
+    "description": "Compares no insider vs insider; measures insider profit advantage from privileged information.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 9,
+    "rounds": 150,
+    "dataFiles": { "insider_advantage": "insider_advantage.csv" }
+  },
+  {
+    "name": "wash_activity_gaming",
+    "displayName": "Wash Activity Gaming",
+    "description": "Compares no wash vs wash trader; measures activity inflation from fake interactions.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 9,
+    "rounds": 150,
+    "dataFiles": { "wash_activity_gaming": "wash_activity_gaming.csv" }
+  },
+  {
+    "name": "strategic_reporting",
+    "displayName": "Strategic Reporting",
+    "description": "Compares truthful vs strategic reporter; measures aggregate forecast impact.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 9,
+    "rounds": 150,
+    "dataFiles": { "strategic_reporting": "strategic_reporting.csv" }
+  },
+  {
+    "name": "identity_attack_matrix",
+    "displayName": "Identity Attack Matrix",
+    "description": "Compares single account vs sybil split vs reputation reset vs collusive multi-account.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 8,
+    "rounds": 150,
+    "dataFiles": { "identity_attack_matrix": "identity_attack_matrix.csv" }
+  },
+  {
+    "name": "drift_adaptation",
+    "displayName": "Drift Adaptation",
+    "description": "Compares fast vs slow adaptor to drift in the outcome process.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 8,
+    "rounds": 200,
+    "dataFiles": { "drift_adaptation": "drift_adaptation.csv" }
+  },
+  {
+    "name": "stake_policy_matrix",
+    "displayName": "Stake Policy Matrix",
+    "description": "Compares fixed fraction vs Kelly-like vs house-money vs lumpy vs break-even vs volatility-sensitive staking.",
+    "block": "behaviour",
+    "dgp": "baseline",
+    "scoringMode": "CRPS",
+    "nAgents": 8,
+    "rounds": 150,
+    "dataFiles": { "stake_policy_matrix": "stake_policy_matrix.csv" }
+  },
+  {
     "name": "deposit_policy_comparison",
     "displayName": "Deposit Policy Comparison",
     "description": "Compares deposit policies to understand their effect on market concentration and forecast quality.",

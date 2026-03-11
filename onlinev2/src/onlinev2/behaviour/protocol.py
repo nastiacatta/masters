@@ -1,9 +1,3 @@
-"""
-Behaviour–mechanism interface.
-
-The core mechanism never calls any "choose deposit" or "participation" code.
-The simulator loop only ever gets per-round inputs via BehaviourModel.act.
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,13 +5,17 @@ from typing import Any, Dict, List, Optional, Protocol, Sequence
 
 import numpy as np
 
-Report = Any  # point float or (K,) quantile array
+Report = Any
 
 
 @dataclass(frozen=True)
 class RoundPublicState:
-    """Observable state broadcast to every behaviour model at the start of a round."""
+    """
+    Observable state at the start of round t.
 
+    This is intentionally lagged information only.
+    The realised current-round outcome y_t must never appear here.
+    """
     t: int
     y_history: Sequence[float]
     agg_history: Sequence[Report]
@@ -29,8 +27,9 @@ class RoundPublicState:
 
 @dataclass(frozen=True)
 class AgentAction:
-    """Single-account action submitted by a behaviour model for one round."""
-
+    """
+    One account-level submission to the mechanism.
+    """
     account_id: str
     participate: bool
     report: Optional[Report] = None
@@ -39,18 +38,15 @@ class AgentAction:
 
 
 class BehaviourModel(Protocol):
-    """Protocol that every behaviour implementation must satisfy."""
-
     def reset(self, seed: int) -> None:
-        """Re-initialise all internal RNG state."""
         ...
 
     def act(self, state: RoundPublicState) -> List[AgentAction]:
-        """Return one AgentAction per account for this round."""
         ...
 
-    def observe_round_result(
-        self, *, t: int, y_t: float, logs_t: Dict[str, Any]
-    ) -> None:
-        """Receive outcome and settlement logs after the round."""
+    def observe_round_result(self, *, t: int, y_t: float, logs_t: Dict[str, Any]) -> None:
         ...
+
+
+def clamp01(x: float) -> float:
+    return float(np.clip(float(x), 0.0, 1.0))

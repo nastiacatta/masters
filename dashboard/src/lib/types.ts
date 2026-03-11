@@ -8,6 +8,7 @@ export interface ExperimentMeta {
   nAgents?: number;
   rounds?: number;
   config?: Record<string, unknown>;
+  dataFiles?: Record<string, string>;
 }
 
 export interface RunSummary {
@@ -18,7 +19,7 @@ export interface RunSummary {
   meanHHI?: number;
   meanNt?: number;
   finalRuinRate?: number;
-  headlineResults: Record<string, number>;
+  headlineResults: Record<string, unknown>;
 }
 
 export interface RoundRecord {
@@ -118,6 +119,84 @@ export interface FixedDepositPoint {
   mOverB: number;
 }
 
+export interface PreferenceStressRow {
+  scenario: string;
+  totalProfit: number;
+  meanProfit: number;
+  finalGini: number;
+}
+
+export interface IntermittencyStressRow {
+  mode: string;
+  totalProfit: number;
+  participationRate: number;
+  finalNEff: number;
+}
+
+export interface ArbitrageScanRow {
+  lam: number;
+  arbTotalProfit: number;
+  arbFinalWealth: number;
+  arbitrageFoundRounds: number;
+}
+
+export interface DetectionAdaptationRow {
+  attacker: string;
+  totalProfit: number;
+  finalWealth: number;
+}
+
+export interface CollusionStressRow {
+  scenario: string;
+  totalProfit: number;
+  meanProfit: number;
+  finalGini: number;
+  participationRate: number;
+}
+
+export interface InsiderAdvantageRow {
+  scenario: string;
+  insiderProfit: number;
+  finalGini: number;
+}
+
+export interface WashActivityRow {
+  scenario: string;
+  totalActivity: number;
+  nRounds: number;
+}
+
+export interface StrategicReportingRow {
+  scenario: string;
+  meanAggError: number;
+  finalGini: number;
+}
+
+export interface IdentityAttackRow {
+  identity: string;
+  totalProfit: number;
+  finalNEff: number;
+  finalGini: number;
+}
+
+export interface DriftAdaptationRow {
+  belief: string;
+  meanMae: number;
+  finalGini: number;
+}
+
+export interface StakePolicyRow {
+  staking: string;
+  totalProfit: number;
+  meanDeposit: number;
+  finalGini: number;
+}
+
+export interface DetectionMetricsRow {
+  detector: string;
+  score: number;
+}
+
 export interface ExperimentData {
   meta: ExperimentMeta;
   summary?: RunSummary;
@@ -128,6 +207,18 @@ export interface ExperimentData {
   sweepData?: SweepPoint[];
   settlementSeries?: RoundSeries[];
   fixedDeposit?: FixedDepositPoint[];
+  preferenceStress?: PreferenceStressRow[];
+  intermittencyStress?: IntermittencyStressRow[];
+  arbitrageScan?: ArbitrageScanRow[];
+  detectionAdaptation?: DetectionAdaptationRow[];
+  collusionStress?: CollusionStressRow[];
+  insiderAdvantage?: InsiderAdvantageRow[];
+  washActivity?: WashActivityRow[];
+  strategicReporting?: StrategicReportingRow[];
+  identityAttack?: IdentityAttackRow[];
+  driftAdaptation?: DriftAdaptationRow[];
+  stakePolicy?: StakePolicyRow[];
+  detectionMetrics?: DetectionMetricsRow[];
 }
 
 export type PageId = 'overview' | 'replay' | 'behaviour' | 'diagnostics' | 'compare';

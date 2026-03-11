@@ -28,17 +28,19 @@ Outputs are split by **block**:
 - **Core experiments** write to: `outputs/core/experiments/<exp_name>/`
 - **Behaviour experiments** write to: `outputs/behaviour/experiments/<exp_name>/`
 
-**Core only** (16 mechanism/DGP experiments):
+**Core only** (17 mechanism/DGP experiments):
 
 ```bash
 PYTHONPATH=src python experiments.py --block core
 ```
 
-**Behaviour only** (5 user-behaviour experiments):
+**Behaviour only** (12 user-behaviour experiments):
 
 ```bash
-PYTHONPATH=src python experiments.py --block behaviour
+PYTHONPATH=src python experiments.py --block behaviour --exp all
 ```
+
+Experiments: behaviour_matrix, preference_stress, intermittency_stress, arbitrage_scan, detection_adaptation, collusion_stress, insider_advantage, wash_activity_gaming, strategic_reporting, identity_attack_matrix, drift_adaptation, stake_policy_matrix.
 
 **Both** (default):
 
@@ -144,7 +146,7 @@ PYTHONPATH=src python mvp.py
 onlinev2/
 │
 ├── mvp.py                          # Simulation engine + 29 unit tests
-├── experiments.py                  # 16 experiment drivers (see table below)
+├── experiments.py                  # 17 core + 5 behaviour experiment drivers (see table below)
 │
 ├── payoff/                         # Settlement and scoring
 │   ├── payoff.py                   #   settle_round, skill_payoff, utility_payoff,
@@ -161,10 +163,13 @@ onlinev2/
 │
 ├── src/onlinev2/                   # Installable package (pip install -e .)
 │   │
-│   ├── core/                       # —— MECHANISM ONLY (no behaviour) ——
+│   ├── mechanism/                  # —— SOURCE OF TRUTH: scoring, settlement, aggregation, runner, models ——
+│   │   #   Use onlinev2.mechanism.runner, onlinev2.mechanism.models, etc.
+│   │
+│   ├── core/                       # —— Compatibility layer (re-exports mechanism); boundary: no behaviour ——
 │   │   ├── README.md               #   Boundary: core never imports behaviour
-│   │   ├── types.py                #   MechanismParams, MechanismState, AgentInput
-│   │   ├── runner.py               #   run_round(state, params, actions, y_t)
+│   │   ├── types.py                #   → onlinev2.mechanism.models
+│   │   ├── runner.py               #   → onlinev2.mechanism.runner (run_round)
 │   │   └── metrics.py              #   PIT, sharpness, HHI, N_eff, Gini
 │   │
 │   ├── behaviour/                  # —— USER & ADVERSARY BEHAVIOUR ——
@@ -265,8 +270,9 @@ Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` 
 | 12 | `aggregation_dgp` | Aggregation DGP diagnostic (methods 1 & 3) | Truth vs reports, scatter, MAE |
 | 13 | `dgp_comparison` | Side-by-side comparison of all 4 DGPs | Time series, distributions, scatter |
 | 14 | `weight_comparison` | Weight learning: exogenous vs endogenous DGPs | Convergence, target vs learned |
-| 15 | `aggregation_skill` | **4 deposit regimes × 5 aggregation methods** (5 seeds) | CRPS by method + regime, warm-start |
-| 16 | `selective_participation` | Strategic missingness: κ=0 (freeze) vs κ>0 (decay) | Skill and profit under selective absence |
+| 15 | `weight_rules` | Five weight rules (uniform, deposit, skill, mechanism, best-single) under two deposit policies | CRPS by method, warm-start |
+| 16 | `deposit_policies` | Four deposit policies under Mechanism weight rule (IID-Exp, Fixed-Unit, Oracle-Precision, Bankroll-Confidence) | CRPS by regime |
+| 17 | `selective_participation` | Strategic missingness: κ=0 (freeze) vs κ>0 (decay) | Skill and profit under selective absence |
 
 ---
 

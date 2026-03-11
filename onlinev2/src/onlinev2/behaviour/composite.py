@@ -1,161 +1,135 @@
-"""
-Composite behaviour model: combines population traits, policies,
-and adversaries into a single BehaviourModel implementation.
-
-This is the main entry point for behaviour-driven simulations.
-"""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
 from onlinev2.behaviour.protocol import AgentAction, BehaviourModel, RoundPublicState
-from onlinev2.behaviour.traits import UserTraits
 from onlinev2.behaviour.population import UserConfig
-from onlinev2.behaviour.policies.participation import ParticipationPolicy
-from onlinev2.behaviour.policies.belief import BeliefPolicy, PrivateSignalBelief
-from onlinev2.behaviour.policies.reporting import ReportingPolicy
-from onlinev2.behaviour.policies.staking import StakingPolicy
-from onlinev2.behaviour.policies.identity import IdentityPolicy
 
 
-class CompositeBehaviourModel:
+@dataclass
+class CompositeBehaviourModel(BehaviourModel):
     """
-    Full-featured behaviour model that orchestrates per-user policies.
-
-    Combines:
-      - Participation policies (baseline, bursty, edge-threshold, avoid-decay)
-      - Belief formation (private signals with correlated errors + drift)
-      - Reporting policies (truthful, miscalibrated, hedged, strategic)
-      - Staking policies (fixed, Kelly, house-money, lumpy)
-      - Identity policies (single, sybil split, reputation reset)
-
-    Also supports plug-in adversary behaviours that override specific users.
-
-    Implements BehaviourModel protocol.
+    Combines a population of baseline participants with optional
+    strategic participant types (e.g. arbitrage-seeking, coordinated group).
     """
-
-    def __init__(
-        self,
-        users: List[UserConfig],
-        *,
-        adversary_behaviours: Optional[Dict[str, Any]] = None,
-        scoring_mode: str = "point_mae",
-        taus: Optional[np.ndarray] = None,
-        b_max: float = 10.0,
-    ) -> None:
-        self.users = users
-        self.adversary_behaviours = adversary_behaviours or {}
-        self.scoring_mode = scoring_mode
-        if taus is None:
-            self.taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9], dtype=np.float64).ravel().copy()
-        else:
-            self.taus = np.asarray(taus, dtype=np.float64).ravel().copy()
-        self.b_max = b_max
-        self._rng: Optional[np.random.Generator] = None
-        self._belief_engine: Optional[PrivateSignalBelief] = None
+    population: Sequence[UserConfig]
+    adversary_behaviours: Optional[Dict[str, BehaviourModel]] = None
+    scoring_mode: str = "point_mae"
+    taus: Optional[Sequence[float]] = None
+    b_max: float = 10.0
+    _user_rngs: Dict[str, np.random.Generator] = field(default_factory=dict, init=False)
 
     def reset(self, seed: int) -> None:
-        self._rng = np.random.default_rng(seed)
+        self._seed = int(seed)
+        self._user_rngs = {}
+        for idx, user in enumerate(self.population):
+            local_seed = seed + 1009 * (idx + 1)
+            self._user_rngs[user.traits.user_id] = np.random.default_rng(local_seed)
+            for policy in (
+                user.participation_policy,
+                user.belief_policy,
+                user.reporting_policy,
+                user.staking_policy,
+                user.identity_policy,
+            ):
+                if hasattr(policy, "reset"):
+                    policy.reset(local_seed)
 
-        for user_cfg in self.users:
-            belief = user_cfg.belief
-            if isinstance(belief, PrivateSignalBelief):
-                belief.reset(seed)
-                self._belief_engine = belief
-                break
-
-        if self._belief_engine is None:
-            self._belief_engine = PrivateSignalBelief(taus=self.taus)
-            self._belief_engine.reset(seed)
-
-        for adv in self.adversary_behaviours.values():
+        for idx, adv in enumerate((self.adversary_behaviours or {}).values()):
             if hasattr(adv, "reset"):
-                adv.reset(seed)
+                adv.reset(seed + 100_000 + idx)
+
+    def _actions_for_user(self, user: UserConfig, state: RoundPublicState) -> List[AgentAction]:
+        rng = self._user_rngs[user.traits.user_id]
+
+        belief_mean = user.belief_policy.belief_mean(user.traits, state, rng)
+        participate = bool(user.participation_policy.should_participate(user.traits, state, belief_mean, rng))
+
+        if not participate:
+            return user.identity_policy.map_user_action(
+                user_id=user.traits.user_id,
+                participate=False,
+                report=None,
+                deposit=0.0,
+                meta={"user_id": user.traits.user_id, "agent_type": "benign"},
+            )
+
+        ref = 0.5
+        if state.agg_history:
+            try:
+                ref = float(np.asarray(state.agg_history[-1]).mean())
+            except Exception:
+                pass
+        report = user.reporting_policy.report(
+            belief_mean,
+            user.traits,
+            rng,
+            scoring_mode=self.scoring_mode,
+            taus=self.taus,
+            target=ref,
+            state=state,
+        )
+
+        deposit = user.staking_policy.choose_deposit(
+            user.traits,
+            state,
+            belief_mean,
+            report,
+            rng,
+            b_max=self.b_max,
+        )
+
+        if deposit <= 0.0:
+            return user.identity_policy.map_user_action(
+                user_id=user.traits.user_id,
+                participate=False,
+                report=None,
+                deposit=0.0,
+                meta={"user_id": user.traits.user_id, "agent_type": "benign"},
+            )
+
+        return user.identity_policy.map_user_action(
+            user_id=user.traits.user_id,
+            participate=True,
+            report=report,
+            deposit=float(deposit),
+            meta={
+                "user_id": user.traits.user_id,
+                "belief_mean": float(belief_mean),
+                "agent_type": "benign",
+            },
+        )
 
     def act(self, state: RoundPublicState) -> List[AgentAction]:
-        assert self._rng is not None
+        actions: List[AgentAction] = []
+        for user in self.population:
+            actions.extend(self._actions_for_user(user, state))
+        for adv in (self.adversary_behaviours or {}).values():
+            actions.extend(adv.act(state))
+        actions.sort(key=lambda a: a.account_id)
+        return actions
 
-        if self._belief_engine is not None:
-            self._belief_engine.update_drift(self._rng)
-            self._belief_engine.generate_group_shocks(self._rng)
-
-        all_actions: List[AgentAction] = []
-
-        for user_cfg in self.users:
-            user = user_cfg.traits
-
-            if user.user_id in self.adversary_behaviours:
-                adv = self.adversary_behaviours[user.user_id]
-                adv_actions = adv.act(state)
-                all_actions.extend(adv_actions)
-                continue
-
-            if self.scoring_mode == "quantiles_crps":
-                belief = user_cfg.belief.form_belief(
-                    user, state.t, list(state.y_history), self._rng, {}
-                )
-                user_median = float(belief[len(belief) // 2])
-            else:
-                if isinstance(user_cfg.belief, PrivateSignalBelief):
-                    user_median = user_cfg.belief.form_point_belief(
-                        user, state.t, list(state.y_history), self._rng, {}
-                    )
-                    belief = user_median
-                else:
-                    belief = user_cfg.belief.form_belief(
-                        user, state.t, list(state.y_history), self._rng, {}
-                    )
-                    user_median = float(np.median(belief))
-
-            context = {"user_median": user_median, "taus": self.taus}
-
-            participate = user_cfg.participation.should_participate(
-                user, state, self._rng, context
-            )
-
-            if not participate:
-                identity_actions = user_cfg.identity.map_user_action(
-                    user_id=user.user_id,
-                    participate=False,
-                    report=None,
-                    deposit=0.0,
-                    meta={"real_user_id": user.user_id},
-                )
-                all_actions.extend(identity_actions)
-                continue
-
-            if self.scoring_mode == "quantiles_crps":
-                report = user_cfg.reporting.transform_report(
-                    belief, user, self._rng, context
-                )
-            else:
-                # Point mode: always route through the reporting policy (no bypass).
-                belief_arr = np.asarray([float(user_median)], dtype=np.float64)
-                report_arr = user_cfg.reporting.transform_report(
-                    belief_arr, user, self._rng, context
-                )
-                report = float(np.clip(np.asarray(report_arr).ravel()[0], 0.0, 1.0))
-
-            deposit = user_cfg.staking.choose_stake(
-                user, state, self._rng, context, b_max=self.b_max
-            )
-
-            identity_actions = user_cfg.identity.map_user_action(
-                user_id=user.user_id,
-                participate=True,
-                report=report,
-                deposit=deposit,
-                meta={"real_user_id": user.user_id},
-            )
-            all_actions.extend(identity_actions)
-
-        return all_actions
-
-    def observe_round_result(
-        self, *, t: int, y_t: float, logs_t: Dict[str, Any]
-    ) -> None:
-        for adv in self.adversary_behaviours.values():
-            if hasattr(adv, "observe_round_result"):
-                adv.observe_round_result(t=t, y_t=y_t, logs_t=logs_t)
+    def observe_round_result(self, *, t: int, y_t: float, logs_t: Dict[str, Any]) -> None:
+        for adv in (self.adversary_behaviours or {}).values():
+            adv.observe_round_result(t=t, y_t=y_t, logs_t=logs_t)
+        profit_by_account = {}
+        if "ids" in logs_t and "profit" in logs_t:
+            profit_by_account = dict(zip(logs_t["ids"], logs_t["profit"]))
+        enriched = {**logs_t, "profit_by_account": profit_by_account}
+        for user in self.population:
+            user_id = user.traits.user_id
+            for policy in (
+                user.participation_policy,
+                user.belief_policy,
+                user.reporting_policy,
+                user.staking_policy,
+                user.identity_policy,
+            ):
+                if hasattr(policy, "observe_round_result"):
+                    try:
+                        policy.observe_round_result(t=t, y_t=y_t, logs_t=enriched, user_id=user_id)
+                    except TypeError:
+                        policy.observe_round_result(t=t, y_t=y_t, logs_t=enriched)

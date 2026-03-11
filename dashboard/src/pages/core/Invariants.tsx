@@ -1,12 +1,13 @@
 import PageHeader from '@/components/dashboard/PageHeader';
 import SectionLabel from '@/components/dashboard/SectionLabel';
+import MathBlock from '@/components/dashboard/MathBlock';
 
 const CHECKS = [
   { title: 'Budget balance', desc: 'Total payouts equal total effective wagers in the skill pool.' },
-  { title: 'Zero-sum profit', desc: 'Σ_i π_i = 0 (skill component).' },
-  { title: 'Bounds on m/b', desc: 'm_i / b_i ∈ [λ, 1]; refund = b_i − m_i ≥ 0.' },
-  { title: 'Missing agents excluded', desc: 'α_i = 1 ⇒ m_i = 0, no report, no payoff.' },
-  { title: 'Timing of σ', desc: 'σ_{i,t} is fixed before reports in round t (no double-counting).' },
+  { title: 'Zero-sum profit', desc: <><MathBlock inline latex="\sum_i \pi_i = 0" /> (skill component).</> },
+  { title: 'Bounds on m/b', desc: <><MathBlock inline latex="m_i / b_i \in [\lambda, 1]" />; refund <MathBlock inline latex="= b_i - m_i \geq 0" />.</> },
+  { title: 'Missing agents excluded', desc: <><MathBlock inline latex="\alpha_i = 1 \Rightarrow m_i = 0" />, no report, no payoff.</> },
+  { title: 'Timing of σ', desc: <><MathBlock inline latex="\sigma_{i,t}" /> is fixed before reports in round <MathBlock inline latex="t" /> (no double-counting).</> },
 ];
 
 export default function Invariants() {

@@ -9,6 +9,18 @@ import type {
   SweepPoint,
   RoundSeries,
   FixedDepositPoint,
+  PreferenceStressRow,
+  IntermittencyStressRow,
+  ArbitrageScanRow,
+  DetectionAdaptationRow,
+  CollusionStressRow,
+  InsiderAdvantageRow,
+  WashActivityRow,
+  StrategicReportingRow,
+  IdentityAttackRow,
+  DriftAdaptationRow,
+  StakePolicyRow,
+  DetectionMetricsRow,
 } from './types';
 import {
   loadSummary,
@@ -16,6 +28,18 @@ import {
   loadForecastSeries,
   loadCalibration,
   loadBehaviourMatrix,
+  loadPreferenceStress,
+  loadIntermittencyStress,
+  loadArbitrageScan,
+  loadDetectionAdaptation,
+  loadCollusionStress,
+  loadInsiderAdvantage,
+  loadWashActivity,
+  loadStrategicReporting,
+  loadIdentityAttack,
+  loadDriftAdaptation,
+  loadStakePolicy,
+  loadDetectionMetrics,
   loadSweepData,
   loadSettlementSeries,
   loadFixedDeposit,
@@ -40,11 +64,25 @@ interface ExperimentDataResult {
   sweepData: SweepPoint[];
   settlementSeries: RoundSeries[];
   fixedDepositData: FixedDepositPoint[];
+  preferenceStressData: PreferenceStressRow[];
+  intermittencyStressData: IntermittencyStressRow[];
+  arbitrageScanData: ArbitrageScanRow[];
+  detectionAdaptationData: DetectionAdaptationRow[];
+  collusionStressData: CollusionStressRow[];
+  insiderAdvantageData: InsiderAdvantageRow[];
+  washActivityData: WashActivityRow[];
+  strategicReportingData: StrategicReportingRow[];
+  identityAttackData: IdentityAttackRow[];
+  driftAdaptationData: DriftAdaptationRow[];
+  stakePolicyData: StakePolicyRow[];
+  detectionMetricsData: DetectionMetricsRow[];
   loading: boolean;
+  error: Error | null;
 }
 
 export function useExperimentData(): ExperimentDataResult {
   const { selectedExperiment, dataMode } = useStore();
+
   const [state, setState] = useState<ExperimentDataResult>({
     summary: null,
     skillWagerData: [],
@@ -54,8 +92,22 @@ export function useExperimentData(): ExperimentDataResult {
     sweepData: [],
     settlementSeries: [],
     fixedDepositData: [],
+    preferenceStressData: [],
+    intermittencyStressData: [],
+    arbitrageScanData: [],
+    detectionAdaptationData: [],
+    collusionStressData: [],
+    insiderAdvantageData: [],
+    washActivityData: [],
+    strategicReportingData: [],
+    identityAttackData: [],
+    driftAdaptationData: [],
+    stakePolicyData: [],
+    detectionMetricsData: [],
     loading: true,
+    error: null,
   });
+
   const reqId = useRef(0);
 
   useEffect(() => {
@@ -63,12 +115,10 @@ export function useExperimentData(): ExperimentDataResult {
 
     const thisReq = ++reqId.current;
     const exp = selectedExperiment;
-    const name = exp.name;
-    const block = exp.block;
     const nAgents = exp.nAgents ?? 6;
     const T = exp.rounds ?? 100;
 
-    const mockFallback = () => ({
+    const mockFallback = (): ExperimentDataResult => ({
       summary: generateMockSummary(exp),
       skillWagerData: generateMockSkillWager(nAgents, Math.min(T, 50)),
       forecastSeries: generateMockForecastSeries(Math.min(T, 200)),
@@ -77,7 +127,20 @@ export function useExperimentData(): ExperimentDataResult {
       sweepData: generateMockSweep(),
       settlementSeries: generateMockSettlementSeries(Math.min(T, 200)),
       fixedDepositData: generateMockFixedDeposit(nAgents, Math.min(T, 200)),
+      preferenceStressData: [],
+      intermittencyStressData: [],
+      arbitrageScanData: [],
+      detectionAdaptationData: [],
+      collusionStressData: [],
+      insiderAdvantageData: [],
+      washActivityData: [],
+      strategicReportingData: [],
+      identityAttackData: [],
+      driftAdaptationData: [],
+      stakePolicyData: [],
+      detectionMetricsData: [],
       loading: false,
+      error: null,
     });
 
     if (dataMode === 'mock') {
@@ -85,39 +148,99 @@ export function useExperimentData(): ExperimentDataResult {
       return;
     }
 
-    setState(prev => ({ ...prev, loading: true }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     (async () => {
       try {
-        const [realSummary, realSkill, realForecast, realCalib, realBehaviour, realSweep, realSettlement, realFixed] =
-          await Promise.all([
-            loadSummary(block, name),
-            loadSkillWagerData(block, name, 'timeseries.csv'),
-            loadForecastSeries(block, name, 'crps_timeseries.csv'),
-            loadCalibration('experiments', 'calibration'),
-            loadBehaviourMatrix('behaviour', 'behaviour_matrix'),
-            loadSweepData('experiments', 'parameter_sweep'),
-            loadSettlementSeries('core', 'settlement_sanity'),
-            loadFixedDeposit('experiments', 'fixed_deposit'),
-          ]);
+        const loadTimeseries =
+          exp.dataFiles?.timeseries
+            ? loadSkillWagerData(exp, exp.dataFiles.timeseries)
+            : (exp.block === 'core' || exp.block === 'experiments')
+              ? loadSkillWagerData(exp, 'timeseries.csv')
+              : Promise.resolve([]);
+        const loadCrps =
+          exp.dataFiles?.crps_timeseries
+            ? loadForecastSeries(exp, exp.dataFiles.crps_timeseries)
+            : (exp.block === 'core' || exp.block === 'experiments')
+              ? loadForecastSeries(exp, 'crps_timeseries.csv')
+              : Promise.resolve([]);
+
+        const [
+          summary,
+          skillWagerData,
+          forecastSeries,
+          calibrationData,
+          behaviourScenarios,
+          preferenceStressData,
+          intermittencyStressData,
+          arbitrageScanData,
+          detectionAdaptationData,
+          collusionStressData,
+          insiderAdvantageData,
+          washActivityData,
+          strategicReportingData,
+          identityAttackData,
+          driftAdaptationData,
+          stakePolicyData,
+          detectionMetricsData,
+          sweepData,
+          settlementSeries,
+          fixedDepositData,
+        ] = await Promise.all([
+          loadSummary(exp),
+          loadTimeseries,
+          loadCrps,
+          exp.name === 'calibration' ? loadCalibration(exp) : Promise.resolve([]),
+          exp.name === 'behaviour_matrix' ? loadBehaviourMatrix(exp) : Promise.resolve([]),
+          exp.name === 'preference_stress_test' ? loadPreferenceStress(exp) : Promise.resolve([]),
+          exp.name === 'intermittency_stress_test' ? loadIntermittencyStress(exp) : Promise.resolve([]),
+          exp.name === 'arbitrage_scan' ? loadArbitrageScan(exp) : Promise.resolve([]),
+          exp.name === 'detection_adaptation' ? loadDetectionAdaptation(exp) : Promise.resolve([]),
+          exp.name === 'collusion_stress' ? loadCollusionStress(exp) : Promise.resolve([]),
+          exp.name === 'insider_advantage' ? loadInsiderAdvantage(exp) : Promise.resolve([]),
+          exp.name === 'wash_activity_gaming' ? loadWashActivity(exp) : Promise.resolve([]),
+          exp.name === 'strategic_reporting' ? loadStrategicReporting(exp) : Promise.resolve([]),
+          exp.name === 'identity_attack_matrix' ? loadIdentityAttack(exp) : Promise.resolve([]),
+          exp.name === 'drift_adaptation' ? loadDriftAdaptation(exp) : Promise.resolve([]),
+          exp.name === 'stake_policy_matrix' ? loadStakePolicy(exp) : Promise.resolve([]),
+          exp.name === 'collusion_stress' ? loadDetectionMetrics(exp) : Promise.resolve([]),
+          exp.name === 'parameter_sweep' ? loadSweepData(exp) : Promise.resolve([]),
+          exp.name === 'settlement_sanity' ? loadSettlementSeries(exp) : Promise.resolve([]),
+          exp.name === 'fixed_deposit' ? loadFixedDeposit(exp) : Promise.resolve([]),
+        ]);
 
         if (reqId.current !== thisReq) return;
 
-        const mock = mockFallback();
         setState({
-          summary: realSummary || mock.summary,
-          skillWagerData: realSkill.length > 0 ? realSkill : mock.skillWagerData,
-          forecastSeries: realForecast.length > 0 ? realForecast : mock.forecastSeries,
-          calibrationData: realCalib.length > 0 ? realCalib : mock.calibrationData,
-          behaviourScenarios: realBehaviour.length > 0 ? realBehaviour : mock.behaviourScenarios,
-          sweepData: realSweep.length > 0 ? realSweep : mock.sweepData,
-          settlementSeries: realSettlement.length > 0 ? realSettlement : mock.settlementSeries,
-          fixedDepositData: realFixed.length > 0 ? realFixed : mock.fixedDepositData,
+          summary,
+          skillWagerData,
+          forecastSeries,
+          calibrationData,
+          behaviourScenarios,
+          preferenceStressData,
+          intermittencyStressData,
+          arbitrageScanData,
+          detectionAdaptationData,
+          collusionStressData,
+          insiderAdvantageData,
+          washActivityData,
+          strategicReportingData,
+          identityAttackData,
+          driftAdaptationData,
+          stakePolicyData,
+          detectionMetricsData,
+          sweepData,
+          settlementSeries,
+          fixedDepositData,
           loading: false,
+          error: null,
         });
-      } catch {
+      } catch (err) {
         if (reqId.current !== thisReq) return;
-        setState(mockFallback());
+        setState({
+          ...mockFallback(),
+          error: err instanceof Error ? err : new Error('Failed to load experiment data'),
+        });
       }
     })();
   }, [selectedExperiment, dataMode]);

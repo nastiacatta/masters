@@ -42,7 +42,7 @@ run-onlinev2-experiments --exp <name> [--block ...] [--outdir ...] [--write_summ
 **`--exp` choices** (default: `all`):
 
 - **Core**: `settlement`, `skill_wager`, `aggregation`, `calibration`, `parameter_sweep`, `sybil`, `scoring`, `fixed_deposit`, `skill_recovery`, `baseline_dgp`, `latent_fixed_dgp`, `aggregation_dgp`, `dgp_comparison`, `weight_comparison`, `weight_rules`, `deposit_policies`, `selective_participation`
-- **Behaviour**: `behaviour_matrix`, `preference_stress`, `intermittency_stress`, `arbitrage_scan`, `detection_adaptation`
+- **Behaviour**: `behaviour_matrix`, `preference_stress`, `intermittency_stress`, `arbitrage_scan`, `detection_adaptation`, `collusion_stress`, `insider_advantage`, `wash_activity_gaming`, `strategic_reporting`, `identity_attack_matrix`, `drift_adaptation`, `stake_policy_matrix`
 - **All**: `all`
 
 **`--block`**: `core` | `behaviour` | `all` (default: `all`). Outputs are under `outdir/core/experiments/` or `outdir/behaviour/experiments/`.
@@ -65,7 +65,7 @@ Tests cover: DGP registry and generation, weight-learning smoke, behaviour–mec
 
 ## Dashboard
 
-The **`dashboard/`** folder contains an optional React (Vite) frontend. It is **not** required to run or develop the Python package. It expects experiment outputs (e.g. CSVs and summaries under `outputs/`) and uses `public/data/index.json` and adapters to load them. To run it: `cd dashboard && npm install && npm run dev`. See `dashboard/README.md` for current status and usage.
+The **`dashboard/`** folder contains an optional React (Vite) frontend. It is **not** required to run or develop the Python package. It expects experiment outputs under `public/data/` (or `public/data/behaviour/experiments/<name>/data/` for behaviour experiments). To use real outputs: copy or symlink `outputs/behaviour` to `dashboard/public/data/behaviour` and `outputs/core` to `dashboard/public/data/core`. To run: `cd dashboard && npm install && npm run dev`. See `dashboard/README.md` for current status and usage.
 
 ## Import surface
 

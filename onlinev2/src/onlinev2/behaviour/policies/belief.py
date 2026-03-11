@@ -1,138 +1,306 @@
-"""
-Belief formation policies.
-
-Produces a private predictive distribution F_{u,t} for each user each round.
-
-Must include:
-  1. Private signal model with user-specific precision
-  2. Correlated errors via common shocks
-  3. Concept drift exposure with heterogeneous adaptation
-"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.protocol import clamp01, RoundPublicState
 from onlinev2.behaviour.traits import UserTraits
 
-
-class BeliefPolicy(ABC):
-    """Base class for belief formation."""
-
-    @abstractmethod
-    def form_belief(
-        self,
-        user: UserTraits,
-        t: int,
-        y_history: list,
-        rng: np.random.Generator,
-        context: Dict,
-    ) -> np.ndarray:
-        """
-        Return user's predictive distribution as quantile forecasts.
-
-        Returns (K,) array of quantile values at standard tau levels.
-        """
-        ...
+try:
+    from scipy.stats import norm as _norm
+except Exception:
+    _norm = None
 
 
-class PrivateSignalBelief(BeliefPolicy):
-    """
-    Private signal model: user observes y + noise with user-specific precision.
+def _normal_ppf(p: float) -> float:
+    if _norm is not None:
+        return float(_norm.ppf(p))
+    grid_p = np.array([0.001, 0.01, 0.05, 0.5, 0.95, 0.99, 0.999], dtype=float)
+    grid_z = np.array([-3.09, -2.33, -1.645, 0.0, 1.645, 2.33, 3.09], dtype=float)
+    return float(np.interp(float(p), grid_p, grid_z))
 
-    Supports:
-      - Correlated errors via common shocks:
-          epsilon_{u,t} = sqrt(rho) * xi_{g,t} + sqrt(1-rho) * nu_{u,t}
-      - Concept drift with heterogeneous adaptation
-    """
 
-    def __init__(
-        self,
-        *,
-        taus: Optional[np.ndarray] = None,
-        correlation_rho: float = 0.3,
-        n_info_groups: int = 3,
-        drift_phi: float = 0.95,
-        drift_sigma: float = 0.05,
-    ) -> None:
-        self.taus = (
-            taus
-            if taus is not None
-            else np.array([0.1, 0.25, 0.5, 0.75, 0.9])
-        )
-        self.correlation_rho = correlation_rho
-        self.n_info_groups = n_info_groups
-        self.drift_phi = drift_phi
-        self.drift_sigma = drift_sigma
+def _anchor_from_history(state: RoundPublicState, window: int) -> float:
+    if len(state.y_history) == 0:
+        return 0.5
+    y = np.asarray(state.y_history[-window:], dtype=float)
+    return float(np.mean(y))
 
-        self._group_shocks: Dict[str, float] = {}
-        self._latent_mean: float = 0.5
-        self._user_estimates: Dict[str, float] = {}
+
+@dataclass
+class GaussianBeliefModel:
+    """Truthful signal: belief anchored to public y history with trait noise and bias."""
+    history_window: int = 20
 
     def reset(self, seed: int) -> None:
-        self._group_shocks.clear()
-        self._latent_mean = 0.5
-        self._user_estimates.clear()
+        return None
 
-    def update_drift(self, rng: np.random.Generator) -> None:
-        """Advance the drifting latent mean: mu_{t+1} = phi * mu_t + zeta_t."""
-        zeta = rng.normal(0.0, self.drift_sigma)
-        self._latent_mean = np.clip(
-            self.drift_phi * self._latent_mean + zeta, 0.0, 1.0
-        )
-
-    def generate_group_shocks(self, rng: np.random.Generator) -> None:
-        """Generate common shocks xi_{g,t} for each information group."""
-        for g in range(self.n_info_groups):
-            self._group_shocks[f"group_{g}"] = float(rng.normal(0.0, 1.0))
-
-    def form_belief(
+    def belief_mean(
         self,
-        user: UserTraits,
-        t: int,
-        y_history: list,
+        traits: UserTraits,
+        state: RoundPublicState,
         rng: np.random.Generator,
-        context: Dict,
-    ) -> np.ndarray:
-        if user.user_id not in self._user_estimates:
-            self._user_estimates[user.user_id] = self._latent_mean
-
-        prev_est = self._user_estimates[user.user_id]
-        self._user_estimates[user.user_id] = (
-            (1.0 - user.adaptation_rate) * prev_est
-            + user.adaptation_rate * self._latent_mean
-        )
-
-        group_shock = self._group_shocks.get(user.info_group_id, 0.0)
-        rho = self.correlation_rho
-
-        common_part = np.sqrt(rho) * group_shock
-        idio_part = np.sqrt(1.0 - rho) * rng.normal(0.0, 1.0)
-        epsilon = common_part + idio_part
-
-        signal = self._user_estimates[user.user_id] + user.noise_level * epsilon + user.bias
-
-        from scipy.stats import norm
-
-        signal = np.clip(signal, 0.001, 0.999)
-        user_sigma = user.noise_level * (1.0 + abs(user.miscalibration))
-
-        quantiles = norm.ppf(self.taus, loc=signal, scale=max(user_sigma, 1e-6))
-        quantiles = np.clip(quantiles, 0.0, 1.0)
-
-        return quantiles
-
-    def form_point_belief(
-        self,
-        user: UserTraits,
-        t: int,
-        y_history: list,
-        rng: np.random.Generator,
-        context: Dict,
     ) -> float:
-        """Return a single point forecast (median of the distribution)."""
-        quantiles = self.form_belief(user, t, y_history, rng, context)
-        median_idx = np.searchsorted(self.taus, 0.5)
-        return float(quantiles[min(median_idx, len(self.taus) - 1)])
+        anchor = _anchor_from_history(state, self.history_window)
+        noisy = anchor + traits.bias + rng.normal(0.0, traits.noise_level)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.03, traits.noise_level * (1.0 - 0.5 * traits.overconfidence))
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class BiasedBeliefModel:
+    """Biased signal: adds systematic bias to the anchor."""
+    history_window: int = 20
+    bias_shift: float = 0.1
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        biased = anchor + traits.bias + self.bias_shift + rng.normal(0.0, traits.noise_level)
+        return clamp01(biased)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.03, traits.noise_level)
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class OverconfidentBeliefModel:
+    """Overconfident signal: narrower belief distribution than warranted."""
+    history_window: int = 20
+    narrow_factor: float = 0.5
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        noise_scale = max(0.02, traits.noise_level * (1.0 - self.narrow_factor * (0.5 + traits.overconfidence)))
+        noisy = anchor + traits.bias + rng.normal(0.0, noise_scale)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.02, traits.noise_level * (1.0 - 0.6 * traits.overconfidence))
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class UnderconfidentBeliefModel:
+    """Underconfident signal: wider belief distribution than warranted."""
+    history_window: int = 20
+    widen_factor: float = 1.5
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        noise_scale = traits.noise_level * self.widen_factor
+        noisy = anchor + traits.bias + rng.normal(0.0, noise_scale)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.05, traits.noise_level * self.widen_factor)
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class CorrelatedBeliefModel:
+    """Correlated signal source: beliefs share a common factor (deterministic per round)."""
+    history_window: int = 20
+    common_weight: float = 0.6
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        common = self.common_weight * 0.15 * (np.sin(state.t * 0.7) + np.cos(state.t * 0.3))
+        idiosyncratic = (1.0 - self.common_weight) * rng.normal(0.0, traits.noise_level)
+        noisy = anchor + traits.bias + common + idiosyncratic
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.03, traits.noise_level)
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class FastAdaptorBeliefModel:
+    """Fast adaptor to drift: short history window, quick to react to regime changes."""
+    history_window: int = 5
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        noisy = anchor + rng.normal(0.0, traits.noise_level)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.03, traits.noise_level)
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class SlowAdaptorBeliefModel:
+    """Slow adaptor to drift: long history window, slow to react to regime changes."""
+    history_window: int = 50
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, min(self.history_window, len(state.y_history) or 1))
+        noisy = anchor + rng.normal(0.0, traits.noise_level)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.03, traits.noise_level)
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class InsiderBeliefModel:
+    """Insider signal: higher precision and earlier access (lower effective noise)."""
+    history_window: int = 20
+    precision_bonus: float = 0.5
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        noise = max(0.02, traits.noise_level * (1.0 - self.precision_bonus) * (1.0 - 0.3 * traits.insider_bonus))
+        noisy = anchor + traits.bias + rng.normal(0.0, noise)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.02, traits.noise_level * (1.0 - 0.5 * traits.insider_bonus))
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)
+
+
+@dataclass
+class ConceptDriftExposedBeliefModel:
+    """Concept drift exposed: signal degrades under regime shift (higher noise when recent variance is high)."""
+    history_window: int = 20
+    drift_window: int = 10
+    degradation: float = 0.5
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def belief_mean(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        rng: np.random.Generator,
+    ) -> float:
+        anchor = _anchor_from_history(state, self.history_window)
+        recent = state.y_history[-self.drift_window:] if len(state.y_history) >= self.drift_window else state.y_history
+        var_recent = float(np.var(recent)) if len(recent) > 1 else 0.0
+        extra_noise = self.degradation * min(1.0, var_recent * 4.0)
+        noise_scale = traits.noise_level * (1.0 + extra_noise)
+        noisy = anchor + traits.bias + rng.normal(0.0, noise_scale)
+        return clamp01(noisy)
+
+    def belief_quantiles(
+        self,
+        mean: float,
+        traits: UserTraits,
+        taus: Sequence[float],
+    ) -> np.ndarray:
+        scale = max(0.03, traits.noise_level)
+        qs = [clamp01(mean + scale * _normal_ppf(float(tau))) for tau in taus]
+        return np.asarray(qs, dtype=float)

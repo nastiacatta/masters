@@ -1,5 +1,6 @@
 import type { SweepPoint } from '@/lib/types';
 import ChartCard from '../dashboard/ChartCard';
+import MathBlock from '../dashboard/MathBlock';
 import { useState } from 'react';
 import TabGroup from '../dashboard/TabGroup';
 import { fmtNum } from '@/lib/formatters';
@@ -37,7 +38,7 @@ export default function SweepHeatmap({ data }: Props) {
   const cellH = 36;
 
   return (
-    <ChartCard title="Parameter Sweep" subtitle="λ vs σ_min — explore the quality–concentration trade-off">
+    <ChartCard title="Parameter Sweep" subtitle={<><MathBlock inline latex="\lambda" /> vs <MathBlock inline latex="\sigma_{\min}" /> — explore the quality–concentration trade-off</>}>
       <TabGroup
         tabs={[
           { id: 'meanCrps', label: 'Mean CRPS' },
@@ -50,7 +51,7 @@ export default function SweepHeatmap({ data }: Props) {
         <table className="border-collapse">
           <thead>
             <tr>
-              <th className="text-[9px] text-slate-400 p-1">λ \ σ_min</th>
+              <th className="text-[9px] text-slate-400 p-1"><MathBlock inline latex="\lambda \setminus \sigma_{\min}" /></th>
               {sigmaMins.map(s => (
                 <th key={s} className="text-[9px] text-slate-500 p-1 text-center" style={{ width: cellW }}>{s}</th>
               ))}

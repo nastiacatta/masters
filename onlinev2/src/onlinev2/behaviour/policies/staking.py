@@ -1,18 +1,7 @@
-"""
-Staking policies: how much wealth to deposit each round.
-
-Generic stake constraint: b_{u,t} = min(W_{u,t}, b_max, W_{u,t} * f_{u,t})
-
-Provides four f_{u,t} options:
-  1. Fixed fraction: f = f_u (constant)
-  2. Kelly-like edge proportional: f = clip(k_u * Edge, f_min, f_max)
-  3. House-money: f = f_u * (1 + delta * 1[pi_{u,t-1} > 0])
-  4. Lumpy tiers: round b to a ladder {0.5, 1, 2, 5, 10, ...}
-"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from dataclasses import dataclass
+from typing import Sequence
 
 import numpy as np
 
@@ -20,157 +9,199 @@ from onlinev2.behaviour.protocol import RoundPublicState
 from onlinev2.behaviour.traits import UserTraits
 
 
-class StakingPolicy(ABC):
-    """Base class for staking decisions."""
+def _current_wealth(traits: UserTraits, state: RoundPublicState) -> float:
+    return max(0.0, float(state.wealth_prev.get(traits.user_id, traits.initial_wealth)))
 
-    @abstractmethod
-    def choose_stake(
+
+def _clip_deposit(value: float, wealth: float, b_max: float) -> float:
+    return float(np.clip(value, 0.0, min(max(wealth, 0.0), b_max)))
+
+
+@dataclass
+class FixedFractionStaking:
+    floor: float = 0.0
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def choose_deposit(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
+        report,
         rng: np.random.Generator,
-        context: Dict,
         *,
         b_max: float = 10.0,
     ) -> float:
-        """Return the deposit amount."""
-        ...
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        return _clip_deposit(max(self.floor, traits.stake_fraction * wealth), wealth, b_max)
 
 
-def _apply_constraint(
-    wealth: float, fraction: float, b_max: float
-) -> float:
-    """Generic stake constraint: b = min(W, b_max, W * f)."""
-    raw = wealth * fraction
-    return max(0.0, min(wealth, b_max, raw))
+@dataclass
+class KellyLikeStaking:
+    multiplier: float = 1.35
 
+    def reset(self, seed: int) -> None:
+        return None
 
-class FixedFractionStaking(StakingPolicy):
-    """f_{u,t} = f_u (constant fraction of wealth)."""
-
-    def choose_stake(
+    def choose_deposit(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
+        report,
         rng: np.random.Generator,
-        context: Dict,
         *,
         b_max: float = 10.0,
     ) -> float:
-        wealth = state.wealth_prev.get(user.user_id, user.initial_wealth)
-        return _apply_constraint(wealth, user.stake_fraction, b_max)
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        ref = 0.5
+        if state.agg_history:
+            try:
+                ref = float(np.asarray(state.agg_history[-1]).mean())
+            except Exception:
+                ref = 0.5
+        edge = abs(float(belief_mean) - ref)
+        frac = min(0.75, self.multiplier * traits.stake_fraction * (0.25 + 2.5 * edge))
+        return _clip_deposit(frac * wealth, wealth, b_max)
 
 
-class KellyLikeStaking(StakingPolicy):
-    """
-    Edge-proportional staking:
-      f_{u,t} = clip(k_u * Edge_{u,t}, f_min, f_max)
+@dataclass
+class HouseMoneyStaking:
+    gain_boost: float = 0.35
 
-    where Edge is the absolute distance between user's median forecast
-    and the aggregate median.
-    """
+    def reset(self, seed: int) -> None:
+        return None
 
-    def __init__(
+    def choose_deposit(
         self,
-        *,
-        f_min: float = 0.05,
-        f_max: float = 0.5,
-    ) -> None:
-        self.f_min = f_min
-        self.f_max = f_max
-
-    def choose_stake(
-        self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
+        report,
         rng: np.random.Generator,
-        context: Dict,
         *,
         b_max: float = 10.0,
     ) -> float:
-        wealth = state.wealth_prev.get(user.user_id, user.initial_wealth)
-
-        user_median = context.get("user_median", 0.5)
-        if len(state.agg_history) > 0:
-            last_agg = state.agg_history[-1]
-            if isinstance(last_agg, (int, float)):
-                agg_median = float(last_agg)
-            elif hasattr(last_agg, '__len__') and len(last_agg) > 0:
-                agg_median = float(np.median(last_agg))
-            else:
-                agg_median = 0.5
-        else:
-            agg_median = 0.5
-
-        edge = abs(user_median - agg_median)
-        f = np.clip(user.kelly_coefficient * edge, self.f_min, self.f_max)
-        return _apply_constraint(wealth, float(f), b_max)
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        prev_profit = float(state.profit_prev.get(traits.user_id, 0.0))
+        boost = 1.0 + self.gain_boost * (1.0 if prev_profit > 0.0 else 0.0)
+        frac = min(0.8, traits.stake_fraction * boost)
+        return _clip_deposit(frac * wealth, wealth, b_max)
 
 
-class HouseMoneyStaking(StakingPolicy):
-    """
-    House-money effect: stake more after winning.
+@dataclass
+class LumpyTierStaking:
+    """Tiered staking: deposit must be one of the predefined tiers."""
+    tiers: Sequence[float] = (0.5, 1.0, 2.0, 5.0, 10.0)
 
-    f_{u,t} = f_u * (1 + delta * 1[pi_{u,t-1} > 0])
+    def reset(self, seed: int) -> None:
+        return None
 
-    Users bet more aggressively with "house money" (recent gains).
-    """
-
-    def __init__(self, delta: float = 0.5) -> None:
-        self.delta = delta
-
-    def choose_stake(
+    def choose_deposit(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
+        report,
         rng: np.random.Generator,
-        context: Dict,
         *,
         b_max: float = 10.0,
     ) -> float:
-        wealth = state.wealth_prev.get(user.user_id, user.initial_wealth)
-        prev_profit = state.profit_prev.get(user.user_id, 0.0)
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        raw = traits.stake_fraction * wealth
+        feasible = [float(t) for t in self.tiers if float(t) <= min(wealth, b_max)]
+        if not feasible:
+            return 0.0
+        idx = int(np.argmin(np.abs(np.asarray(feasible, dtype=float) - raw)))
+        return float(feasible[idx])
 
-        multiplier = 1.0 + self.delta * float(prev_profit > 0)
-        f = user.stake_fraction * multiplier
-        return _apply_constraint(wealth, f, b_max)
 
+@dataclass
+class BreakEvenStaking:
+    """Break-even staking: reduce stake when cumulative profit is negative."""
+    base_fraction: float = 0.15
+    cutback: float = 0.5
 
-class LumpyTierStaking(StakingPolicy):
-    """
-    Lumpy tiers: round deposit to a discrete ladder.
+    def reset(self, seed: int) -> None:
+        return None
 
-    Default ladder: {0, 0.5, 1, 2, 5, 10, 20, 50, 100}
-
-    Models users who don't stake arbitrary amounts.
-    """
-
-    def __init__(
+    def choose_deposit(
         self,
-        tiers: Optional[list] = None,
-    ) -> None:
-        self.tiers = (
-            sorted(tiers)
-            if tiers is not None
-            else [0.0, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0]
-        )
-
-    def choose_stake(
-        self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
+        report,
         rng: np.random.Generator,
-        context: Dict,
         *,
         b_max: float = 10.0,
     ) -> float:
-        wealth = state.wealth_prev.get(user.user_id, user.initial_wealth)
-        raw = _apply_constraint(wealth, user.stake_fraction, b_max)
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        prev_profit = float(state.profit_prev.get(traits.user_id, 0.0))
+        frac = self.base_fraction if prev_profit >= 0 else self.base_fraction * self.cutback
+        return _clip_deposit(frac * wealth, wealth, b_max)
 
-        best = 0.0
-        for tier in self.tiers:
-            if tier <= raw:
-                best = tier
-            else:
-                break
-        return best
+
+@dataclass
+class AffordabilityCappedStaking:
+    """Affordability-capped staking: cap at a fraction of wealth."""
+    cap_fraction: float = 0.3
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def choose_deposit(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        belief_mean: float,
+        report,
+        rng: np.random.Generator,
+        *,
+        b_max: float = 10.0,
+    ) -> float:
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        raw = traits.stake_fraction * wealth
+        capped = min(raw, self.cap_fraction * wealth)
+        return _clip_deposit(capped, wealth, b_max)
+
+
+@dataclass
+class VolatilitySensitiveStaking:
+    """Reduces stake when uncertainty (sigma) is high."""
+    base_fraction: float = 0.15
+    volatility_penalty: float = 0.6
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def choose_deposit(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        belief_mean: float,
+        report,
+        rng: np.random.Generator,
+        *,
+        b_max: float = 10.0,
+    ) -> float:
+        wealth = _current_wealth(traits, state)
+        if wealth <= 0.0:
+            return 0.0
+        sigma = float(state.sigma_prev.get(traits.user_id, 1.0))
+        damp = 1.0 - self.volatility_penalty * (1.0 - sigma)
+        frac = max(0.03, self.base_fraction * damp)
+        return _clip_deposit(frac * wealth, wealth, b_max)

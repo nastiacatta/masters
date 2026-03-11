@@ -3,26 +3,41 @@ import { useExperimentData } from '@/lib/useExperimentData';
 import { fmtNum } from '@/lib/formatters';
 import PageHeader from '@/components/dashboard/PageHeader';
 import MetricCard from '@/components/dashboard/MetricCard';
+import ExperimentContext from '@/components/dashboard/ExperimentContext';
+import { LoadingState, EmptyState, ErrorState } from '@/components/dashboard/DataStates';
 import ForecastQualityChart from '@/components/charts/ForecastQualityChart';
 import SkillTrajectoryChart from '@/components/charts/SkillTrajectoryChart';
 import BehaviourComparisonChart from '@/components/charts/BehaviourComparisonChart';
 
 export default function Overview() {
   const { selectedExperiment } = useStore();
-  const { summary, forecastSeries, skillWagerData, behaviourScenarios, loading } = useExperimentData();
+  const { summary, forecastSeries, skillWagerData, behaviourScenarios, loading, error } = useExperimentData();
 
   if (!selectedExperiment) {
     return (
-      <div className="p-8">
-        <p className="text-slate-400">Select an experiment from the sidebar.</p>
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Overview" description="Snapshot of the selected experiment." />
+        <EmptyState message="Select an experiment from the sidebar." />
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="p-8">
-        <p className="text-slate-400">Loading experiment data…</p>
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Overview" description="Snapshot of the selected experiment." />
+        <LoadingState message="Loading experiment data…" />
+      </div>
+    );
+  }
+
+  const hasData = summary != null || forecastSeries.length > 0 || skillWagerData.length > 0;
+  if (!hasData) {
+    return (
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Overview" description="Snapshot of the selected experiment." />
+        <ExperimentContext experiment={selectedExperiment} className="mb-4" />
+        <EmptyState message="No overview data available for this experiment." />
       </div>
     );
   }
@@ -33,6 +48,8 @@ export default function Overview() {
         title="Overview"
         description="Snapshot of the selected experiment — what it tests, how the aggregate forecast performs, and whether market concentration is controlled."
       />
+      {error && <ErrorState message="Some data failed to load; showing available data." error={error} />}
+      <ExperimentContext experiment={selectedExperiment} className="mb-4" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
         <MetricCard label="Experiment" value={selectedExperiment.displayName} subtitle={selectedExperiment.block} />

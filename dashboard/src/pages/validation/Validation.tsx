@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useStore } from '@/lib/store';
 import Overview from '@/pages/Overview';
 import RoundReplay from '@/pages/RoundReplay';
 import Behaviour from '@/pages/Behaviour';
@@ -9,14 +10,21 @@ const TABS = [
   { id: 'replay', label: 'Round Replay' },
   { id: 'behaviour', label: 'Behaviour' },
   { id: 'diagnostics', label: 'Diagnostics' },
-];
+] as const;
 
 export default function Validation() {
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState<(typeof TABS)[number]['id']>('overview');
+  const { selectedExperiment } = useStore();
+
+  useEffect(() => {
+    if (selectedExperiment?.block === 'behaviour') {
+      setTab('behaviour');
+    }
+  }, [selectedExperiment?.name, selectedExperiment?.block]);
 
   return (
-    <div className="p-6 max-w-7xl">
-      <div className="flex gap-1 bg-slate-100 rounded-lg p-1 mb-4 w-fit">
+    <div className="space-y-4 p-6">
+      <div className="inline-flex rounded-xl bg-slate-100 p-1">
         {TABS.map((t) => (
           <button
             key={t.id}

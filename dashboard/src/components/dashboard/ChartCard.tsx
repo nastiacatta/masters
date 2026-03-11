@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 interface ChartCardProps {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   children: ReactNode;
   className?: string;
 }

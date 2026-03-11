@@ -1,13 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { useExperimentData } from '@/lib/useExperimentData';
+import { getActivePerRound } from '@/lib/selectors';
 import PageHeader from '@/components/dashboard/PageHeader';
 import TabGroup from '@/components/dashboard/TabGroup';
+import ExperimentContext, { ReferenceDatasetLabel } from '@/components/dashboard/ExperimentContext';
+import { LoadingState, EmptyState, ErrorState } from '@/components/dashboard/DataStates';
 import ForecastQualityChart from '@/components/charts/ForecastQualityChart';
 import CalibrationChart from '@/components/charts/CalibrationChart';
 import SweepHeatmap from '@/components/charts/SweepHeatmap';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MetricCard from '@/components/dashboard/MetricCard';
+import MathBlock from '@/components/dashboard/MathBlock';
 import { fmtNum, fmtPct } from '@/lib/formatters';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -23,27 +27,18 @@ const diagTabs = [
 
 export default function Diagnostics() {
   const { selectedExperiment } = useStore();
-  const { forecastSeries, calibrationData, skillWagerData, sweepData, loading } = useExperimentData();
+  const { forecastSeries, calibrationData, skillWagerData, sweepData, loading, error } = useExperimentData();
   const [activeTab, setActiveTab] = useState('forecast');
   const nAgents = selectedExperiment?.nAgents ?? 6;
 
-  const activePerRound = useMemo(() => {
-    const rounds: Record<number, { total: number; active: number }> = {};
-    for (const d of skillWagerData) {
-      if (!rounds[d.t]) rounds[d.t] = { total: 0, active: 0 };
-      rounds[d.t].total++;
-      if (!d.missing) rounds[d.t].active++;
-    }
-    return Object.entries(rounds).map(([t, v]) => ({
-      t: Number(t),
-      activeRate: v.active / v.total,
-      activeCount: v.active,
-    }));
-  }, [skillWagerData]);
-
-  const sampled = activePerRound.length > 200
-    ? activePerRound.filter((_, i) => i % Math.ceil(activePerRound.length / 200) === 0)
-    : activePerRound;
+  const activePerRound = getActivePerRound(skillWagerData);
+  const sampled = useMemo(
+    () =>
+      activePerRound.length > 200
+        ? activePerRound.filter((_, i) => i % Math.ceil(activePerRound.length / 200) === 0)
+        : activePerRound,
+    [activePerRound],
+  );
 
   const avgCalError = calibrationData.length > 0
     ? calibrationData.reduce((s, d) => s + Math.abs(d.pHat - d.tau), 0) / calibrationData.length
@@ -52,7 +47,21 @@ export default function Diagnostics() {
   const lastForecast = forecastSeries[forecastSeries.length - 1];
 
   if (loading) {
-    return <div className="p-8"><p className="text-slate-400">Loading…</p></div>;
+    return (
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Diagnostics" description="Detailed diagnostic panels." />
+        <LoadingState message="Loading diagnostics…" />
+      </div>
+    );
+  }
+
+  if (!selectedExperiment) {
+    return (
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Diagnostics" description="Detailed diagnostic panels." />
+        <EmptyState message="Select an experiment from the sidebar." />
+      </div>
+    );
   }
 
   return (
@@ -60,6 +69,12 @@ export default function Diagnostics() {
       <PageHeader
         title="Diagnostics"
         description="Detailed diagnostic panels supporting the thesis claims: forecast quality, calibration, intermittency, and robustness to strategic behaviour."
+      />
+      {error && <ErrorState message="Some data failed to load; showing available data." error={error} />}
+      <ExperimentContext
+        experiment={selectedExperiment}
+        dataSource="forecast series, calibration (ref), timeseries, parameter sweep (ref)"
+        className="mb-4"
       />
 
       <TabGroup tabs={diagTabs} active={activeTab} onChange={setActiveTab} />
@@ -81,6 +96,9 @@ export default function Diagnostics() {
 
       {activeTab === 'calibration' && (
         <div>
+          <div className="flex items-center gap-2 mb-3">
+            <ReferenceDatasetLabel label="Calibration (shared)" />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
             <MetricCard label="Avg Calibration Error" value={fmtNum(avgCalError, 4)} />
             <MetricCard label="Quantiles Tested" value={String(calibrationData.length)} />
@@ -150,12 +168,15 @@ export default function Diagnostics() {
 
       {activeTab === 'robustness' && (
         <div>
+          <div className="flex items-center gap-2 mb-3">
+            <ReferenceDatasetLabel label="Parameter sweep (shared)" />
+          </div>
           <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
             <h3 className="text-sm font-semibold text-slate-800 mb-2">Robustness to Strategic Behaviour</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
               This panel examines whether the mechanism is robust to adversarial agents: sybil splits,
               arbitrageurs, colluders, and manipulators. The parameter sweep below maps the trade-off
-              between forecast quality (CRPS) and market concentration (Gini) across λ and σ_min.
+              between forecast quality (CRPS) and market concentration (Gini) across <MathBlock inline latex="\lambda" /> and <MathBlock inline latex="\sigma_{\min}" />.
             </p>
           </div>
 
@@ -176,7 +197,7 @@ export default function Diagnostics() {
               </div>
               <div>
                 <span className="font-medium text-slate-700">Concentration:</span>{' '}
-                Higher λ increases skill learning speed but can increase Gini. The σ_min floor
+                Higher <MathBlock inline latex="\lambda" /> increases skill learning speed but can increase Gini. The <MathBlock inline latex="\sigma_{\min}" /> floor
                 prevents any agent from being completely silenced.
               </div>
             </div>

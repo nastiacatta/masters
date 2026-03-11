@@ -1,17 +1,7 @@
-"""
-Participation policies: decide whether a user participates in a given round.
-
-Four required policies plus a logistic variant:
-  1. Baseline availability: Bernoulli(p_u)
-  2. Bursty sessions: 2-state Markov chain
-  3. Edge-threshold entry: participate when perceived edge > epsilon
-  4. Avoid skill decay: participate when expected score >= s_min
-  5. Logistic variant: combines edge + wealth shock in logit model
-"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict
 
 import numpy as np
 
@@ -19,186 +9,188 @@ from onlinev2.behaviour.protocol import RoundPublicState
 from onlinev2.behaviour.traits import UserTraits
 
 
-class ParticipationPolicy(ABC):
-    """Base class for participation decisions."""
-
-    @abstractmethod
-    def should_participate(
-        self,
-        user: UserTraits,
-        state: RoundPublicState,
-        rng: np.random.Generator,
-        context: Dict,
-    ) -> bool:
-        ...
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + float(np.exp(-x)))
 
 
-class BaselineParticipation(ParticipationPolicy):
-    """
-    a_{u,t} ~ Bernoulli(p_u)
+@dataclass
+class BaselineParticipation:
+    base_shift: float = 0.0
 
-    Simple IID participation with user-specific probability.
-    """
+    def reset(self, seed: int) -> None:
+        return None
 
     def should_participate(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
         rng: np.random.Generator,
-        context: Dict,
     ) -> bool:
-        return bool(rng.random() < user.participation_prob)
+        wealth = float(state.wealth_prev.get(traits.user_id, traits.initial_wealth))
+        if wealth <= 0.0:
+            return False
+        p = _sigmoid(traits.participation_logit + self.base_shift)
+        return bool(rng.random() < p)
 
 
-class BurstyParticipation(ParticipationPolicy):
-    """
-    2-state Markov chain: Active <-> Inactive.
+@dataclass
+class BurstyParticipation:
+    p_enter: float = 0.22
+    p_stay: float = 0.82
+    active: Dict[str, bool] = field(default_factory=dict)
 
-    P(A -> A) = alpha,  P(I -> A) = beta.
-
-    Models users who participate in bursts rather than uniformly.
-    """
-
-    def __init__(self) -> None:
-        self._user_states: Dict[str, bool] = {}
+    def reset(self, seed: int) -> None:
+        self.active = {}
 
     def should_participate(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
         rng: np.random.Generator,
-        context: Dict,
     ) -> bool:
-        was_active = self._user_states.get(user.user_id, True)
-
+        wealth = float(state.wealth_prev.get(traits.user_id, traits.initial_wealth))
+        if wealth <= 0.0:
+            self.active[traits.user_id] = False
+            return False
+        was_active = self.active.get(traits.user_id, False)
         if was_active:
-            active = bool(rng.random() < user.burst_alpha)
+            is_active = bool(rng.random() < max(self.p_stay, traits.burstiness))
         else:
-            active = bool(rng.random() < user.burst_beta)
+            enter_p = max(self.p_enter, 0.15 * (1.0 + traits.burstiness))
+            is_active = bool(rng.random() < min(0.95, enter_p))
+        self.active[traits.user_id] = is_active
+        return is_active
 
-        self._user_states[user.user_id] = active
-        return active
 
+@dataclass
+class EdgeThresholdParticipation:
+    min_edge: float = 0.06
 
-class EdgeThresholdParticipation(ParticipationPolicy):
-    """
-    a_{u,t} = 1[Edge_{u,t} > epsilon_u]
-
-    Edge_{u,t} = |median(F_{u,t}) - median(F_hat_t)|
-
-    User participates only when they believe they have informational edge
-    over the current aggregate.
-    """
+    def reset(self, seed: int) -> None:
+        return None
 
     def should_participate(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
         rng: np.random.Generator,
-        context: Dict,
     ) -> bool:
-        user_median = context.get("user_median", 0.5)
-
-        if len(state.agg_history) > 0:
-            last_agg = state.agg_history[-1]
-            if isinstance(last_agg, (int, float)):
-                agg_median = float(last_agg)
-            elif hasattr(last_agg, '__len__') and len(last_agg) > 0:
-                agg_median = float(np.median(last_agg))
-            else:
-                agg_median = 0.5
-        else:
-            agg_median = 0.5
-
-        edge = abs(user_median - agg_median)
-        return edge > user.edge_threshold
+        wealth = float(state.wealth_prev.get(traits.user_id, traits.initial_wealth))
+        if wealth <= 0.0:
+            return False
+        ref = 0.5
+        if state.agg_history:
+            try:
+                ref = float(np.asarray(state.agg_history[-1]).mean())
+            except Exception:
+                ref = 0.5
+        edge = abs(float(belief_mean) - ref)
+        threshold = max(0.0, min(0.5, 0.5 * self.min_edge + 0.5 * traits.edge_threshold))
+        return bool(edge >= threshold)
 
 
-class AvoidSkillDecayParticipation(ParticipationPolicy):
-    """
-    a_{u,t} = 1[E_hat(s_{u,t} | state) >= s_min_u]
+@dataclass
+class AvoidSkillDecayParticipation:
+    """Participate only when edge is large and skill estimate is not too decayed."""
+    min_edge: float = 0.04
+    sigma_floor: float = 0.2
 
-    Cheap proxy for expected score: inverse distance to aggregate
-    adjusted by the user's noise level.
-    Selective participation to avoid rounds where score would be low.
-    """
-
-    def __init__(self, s_min: float = 0.5) -> None:
-        self.s_min = s_min
+    def reset(self, seed: int) -> None:
+        return None
 
     def should_participate(
         self,
-        user: UserTraits,
+        traits: UserTraits,
         state: RoundPublicState,
+        belief_mean: float,
         rng: np.random.Generator,
-        context: Dict,
     ) -> bool:
-        user_median = context.get("user_median", 0.5)
-
-        if len(state.agg_history) > 0:
-            last_agg = state.agg_history[-1]
-            if isinstance(last_agg, (int, float)):
-                agg_median = float(last_agg)
-            elif hasattr(last_agg, '__len__') and len(last_agg) > 0:
-                agg_median = float(np.median(last_agg))
-            else:
-                agg_median = 0.5
-        else:
-            agg_median = 0.5
-
-        expected_error = abs(user_median - agg_median) + user.noise_level
-        expected_score = max(0.0, 1.0 - expected_error)
-        return expected_score >= self.s_min
+        wealth = float(state.wealth_prev.get(traits.user_id, traits.initial_wealth))
+        if wealth <= 0.0:
+            return False
+        sigma = float(state.sigma_prev.get(traits.user_id, 1.0))
+        ref = 0.5
+        if state.agg_history:
+            try:
+                ref = float(np.asarray(state.agg_history[-1]).mean())
+            except Exception:
+                ref = 0.5
+        edge = abs(float(belief_mean) - ref)
+        return bool((edge >= self.min_edge) and (sigma >= self.sigma_floor))
 
 
-class LogisticParticipation(ParticipationPolicy):
-    """
-    Logistic participation model combining edge and wealth shock:
+@dataclass
+class WealthShockSensitiveParticipation:
+    """Reduce participation when recent profit is negative (wealth shock)."""
+    shock_threshold: float = -0.5
 
-    log(p/(1-p)) = alpha_u + beta_u * Edge_{u,t} + gamma_u * WealthShock_{u,t}
+    def reset(self, seed: int) -> None:
+        return None
 
-    WealthShock = (W_t - W_{t-1}) / W_{t-1}
-    """
-
-    def __init__(
+    def should_participate(
         self,
-        *,
-        alpha_base: float = 0.5,
-        beta_edge: float = 5.0,
-        gamma_wealth: float = 1.0,
+        traits: UserTraits,
+        state: RoundPublicState,
+        belief_mean: float,
+        rng: np.random.Generator,
+    ) -> bool:
+        wealth = float(state.wealth_prev.get(traits.user_id, traits.initial_wealth))
+        if wealth <= 0.0:
+            return False
+        prev_profit = float(state.profit_prev.get(traits.user_id, 0.0))
+        if prev_profit < self.shock_threshold:
+            damp = 1.0 - traits.wealth_shock_sensitivity * min(1.0, 2.0 * abs(prev_profit))
+            if rng.random() >= damp:
+                return False
+        p = _sigmoid(traits.participation_logit)
+        return bool(rng.random() < p)
+
+
+@dataclass
+class AdaptiveParticipation:
+    """Update entry propensity based on recent profit and recent score via observe_round_result."""
+    base_logit: float = 0.25
+    profit_decay: float = 0.9
+    active: Dict[str, bool] = field(default_factory=dict)
+    _propensity: Dict[str, float] = field(default_factory=dict)
+
+
+    def reset(self, seed: int) -> None:
+        self.active = {}
+        self._propensity = {}
+
+    def should_participate(
+        self,
+        traits: UserTraits,
+        state: RoundPublicState,
+        belief_mean: float,
+        rng: np.random.Generator,
+    ) -> bool:
+        wealth = float(state.wealth_prev.get(traits.user_id, traits.initial_wealth))
+        if wealth <= 0.0:
+            self.active[traits.user_id] = False
+            return False
+        prop = self._propensity.get(traits.user_id, self.base_logit)
+        p = _sigmoid(prop)
+        is_active = bool(rng.random() < p)
+        self.active[traits.user_id] = is_active
+        return is_active
+
+    def observe_round_result(
+        self, *, t: int, y_t: float, logs_t: Dict[str, Any], user_id: str = None, **kwargs: Any
     ) -> None:
-        self.alpha_base = alpha_base
-        self.beta_edge = beta_edge
-        self.gamma_wealth = gamma_wealth
-        self._prev_wealth: Dict[str, float] = {}
-
-    def should_participate(
-        self,
-        user: UserTraits,
-        state: RoundPublicState,
-        rng: np.random.Generator,
-        context: Dict,
-    ) -> bool:
-        user_median = context.get("user_median", 0.5)
-
-        if len(state.agg_history) > 0:
-            last_agg = state.agg_history[-1]
-            if isinstance(last_agg, (int, float)):
-                agg_median = float(last_agg)
-            elif hasattr(last_agg, '__len__') and len(last_agg) > 0:
-                agg_median = float(np.median(last_agg))
-            else:
-                agg_median = 0.5
-        else:
-            agg_median = 0.5
-
-        edge = abs(user_median - agg_median)
-
-        current_wealth = state.wealth_prev.get(user.user_id, user.initial_wealth)
-        prev_w = self._prev_wealth.get(user.user_id, user.initial_wealth)
-        wealth_shock = (current_wealth - prev_w) / max(prev_w, 1e-12)
-        self._prev_wealth[user.user_id] = current_wealth
-
-        logit = self.alpha_base + self.beta_edge * edge + self.gamma_wealth * wealth_shock
-        prob = 1.0 / (1.0 + np.exp(-logit))
-        return bool(rng.random() < prob)
+        if user_id is None:
+            return
+        pba = logs_t.get("profit_by_account", {})
+        profit_for_user = 0.0
+        for aid, prof in pba.items():
+            if aid == user_id or (isinstance(aid, str) and aid.startswith(user_id + "__")):
+                profit_for_user += float(prof)
+        if user_id not in self._propensity:
+            self._propensity[user_id] = self.base_logit
+        decay = self.profit_decay
+        update = 2.0 * (profit_for_user if profit_for_user > 0 else -0.5)
+        self._propensity[user_id] = decay * self._propensity[user_id] + (1.0 - decay) * update

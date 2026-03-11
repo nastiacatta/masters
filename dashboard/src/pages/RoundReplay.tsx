@@ -2,28 +2,31 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useStore } from '@/lib/store';
 import { useExperimentData } from '@/lib/useExperimentData';
 import { fmtNum, AGENT_COLORS, ACCENT } from '@/lib/formatters';
+import {
+  getRoundData,
+  getMaxRound,
+  getRoundMetrics,
+} from '@/lib/selectors';
 import PageHeader from '@/components/dashboard/PageHeader';
 import MetricCard from '@/components/dashboard/MetricCard';
 import ChartCard from '@/components/dashboard/ChartCard';
+import ExperimentContext from '@/components/dashboard/ExperimentContext';
+import { LoadingState, EmptyState, ErrorState } from '@/components/dashboard/DataStates';
 import AgentStateTable from '@/components/tables/AgentStateTable';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 
 export default function RoundReplay() {
   const { selectedExperiment, currentRound, setCurrentRound, isPlaying, setIsPlaying } = useStore();
-  const { skillWagerData, loading } = useExperimentData();
+  const { skillWagerData, loading, error } = useExperimentData();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const nAgents = selectedExperiment?.nAgents ?? 3;
-  const maxRound = skillWagerData.length > 0
-    ? Math.max(...skillWagerData.map(d => d.t))
-    : (selectedExperiment?.rounds ?? 50) - 1;
-
-  const roundData = skillWagerData.filter(d => d.t === currentRound);
-  const activeCount = roundData.filter(d => !d.missing).length;
-  const totalWager = roundData.reduce((s, d) => s + (d.missing ? 0 : d.wager), 0);
-  const avgProfit = roundData.length > 0
-    ? roundData.reduce((s, d) => s + d.profit, 0) / roundData.length
-    : 0;
+  const maxRound = getMaxRound(skillWagerData, selectedExperiment?.rounds ?? 50);
+  const roundData = getRoundData(skillWagerData, currentRound);
+  const { activeCount, totalWager, avgProfit, participationPct } = getRoundMetrics(
+    roundData,
+    nAgents,
+  );
 
   const wagerChartData = roundData.map((d, i) => ({
     name: `A${d.agent}`,
@@ -59,14 +62,44 @@ export default function RoundReplay() {
   ];
 
   if (loading) {
-    return <div className="p-8"><p className="text-slate-400">Loading…</p></div>;
+    return (
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Round Replay" description="Step through the mechanism round by round." />
+        <LoadingState message="Loading timeseries data…" />
+      </div>
+    );
+  }
+
+  if (!selectedExperiment) {
+    return (
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Round Replay" description="Step through the mechanism round by round." />
+        <EmptyState message="Select an experiment from the sidebar." />
+      </div>
+    );
+  }
+
+  if (skillWagerData.length === 0) {
+    return (
+      <div className="p-6 max-w-7xl">
+        <PageHeader title="Round Replay" description="Step through the mechanism round by round." />
+        <ExperimentContext experiment={selectedExperiment} dataSource="timeseries" />
+        <EmptyState message="No timeseries data for this experiment. Round-by-round view requires timeseries.csv." />
+      </div>
+    );
   }
 
   return (
     <div className="p-6 max-w-7xl">
       <PageHeader
         title="Round Replay"
-        description="Step through the mechanism round by round. Observe how agents participate, wager, and how the settlement updates skills."
+        description="Round-by-round view reconstructed from timeseries data. Step through participation, wagers, and settlement-driven skill updates."
+      />
+      {error && <ErrorState message="Data load failed; showing fallback." error={error} />}
+      <ExperimentContext
+        experiment={selectedExperiment}
+        dataSource="timeseries (reconstructed by round)"
+        className="mb-4"
       />
 
       <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
@@ -103,7 +136,7 @@ export default function RoundReplay() {
         <MetricCard label="Active Agents" value={`${activeCount} / ${nAgents}`} />
         <MetricCard label="Total Wagers" value={fmtNum(totalWager, 2)} />
         <MetricCard label="Avg Profit" value={fmtNum(avgProfit)} />
-        <MetricCard label="Participation" value={`${nAgents > 0 ? ((activeCount / nAgents) * 100).toFixed(0) : 0}%`} />
+        <MetricCard label="Participation" value={`${participationPct.toFixed(0)}%`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -155,7 +188,7 @@ export default function RoundReplay() {
         <div className="text-xs text-slate-600 space-y-1 leading-relaxed">
           <p>
             <span className="font-medium text-slate-700">{activeCount} of {nAgents} agents</span> participated this round
-            ({nAgents > 0 ? ((activeCount / nAgents) * 100).toFixed(0) : 0}% participation rate).
+            ({participationPct.toFixed(0)}% participation rate).
           </p>
           {roundData.filter(d => d.profit > 0.001).length > 0 && (
             <p>

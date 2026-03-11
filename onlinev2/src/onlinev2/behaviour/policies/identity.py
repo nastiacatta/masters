@@ -1,226 +1,181 @@
-"""
-Hidden mapping from real users to accounts (sybils).
-
-All identity logic lives in behaviour; core only sees accounts.
-"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Dict, List, Optional
-
-import numpy as np
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 from onlinev2.behaviour.protocol import AgentAction
 
 
-class IdentityPolicy(ABC):
-    """Base class for identity-to-account mappings."""
-
-    @abstractmethod
-    def map_user_action(
-        self,
-        *,
-        user_id: str,
-        participate: bool,
-        report: Optional[np.ndarray],
-        deposit: float,
-        meta: Dict,
-    ) -> List[AgentAction]:
-        """Map a single user's intended action to one or more account actions."""
-        ...
-
-
-class SingleAccountIdentity(IdentityPolicy):
-    """One user, one account. The default honest mapping."""
+@dataclass
+class SingleAccountIdentity:
+    """Single account identity: one user maps to one account."""
+    def reset(self, seed: int) -> None:
+        return None
 
     def map_user_action(
         self,
         *,
         user_id: str,
         participate: bool,
-        report: Optional[np.ndarray],
+        report,
         deposit: float,
-        meta: Dict,
-    ) -> List[AgentAction]:
-        return [
-            AgentAction(
-                account_id=user_id,
-                participate=participate,
-                report=report,
-                deposit=deposit,
-                meta={**meta, "real_user_id": user_id},
-            )
-        ]
-
-
-class SplitAccountIdentity(IdentityPolicy):
-    """
-    Stake splitting to bypass per-account caps.
-
-    Splits deposit across k accounts, each submitting the same report.
-    sum of deposits across accounts == intended user deposit.
-    """
-
-    def __init__(self, k: int = 2) -> None:
-        if k < 1:
-            raise ValueError("k must be >= 1")
-        self.k = k
-
-    def map_user_action(
-        self,
-        *,
-        user_id: str,
-        participate: bool,
-        report: Optional[np.ndarray],
-        deposit: float,
-        meta: Dict,
-    ) -> List[AgentAction]:
-        if not participate or self.k == 1:
-            return [
-                AgentAction(
-                    account_id=f"{user_id}_0",
-                    participate=participate,
-                    report=report,
-                    deposit=deposit,
-                    meta={**meta, "real_user_id": user_id, "sybil_index": 0},
-                )
-            ]
-
-        split_deposit = deposit / self.k
-        actions = []
-        for j in range(self.k):
-            actions.append(
-                AgentAction(
-                    account_id=f"{user_id}_{j}",
-                    participate=True,
-                    report=report,
-                    deposit=split_deposit,
-                    meta={
-                        **meta,
-                        "real_user_id": user_id,
-                        "sybil_index": j,
-                        "sybil_total": self.k,
-                    },
-                )
-            )
-        return actions
-
-
-class ReputationResetIdentity(IdentityPolicy):
-    """
-    Discard identity after losses to reset reputation.
-
-    When cumulative losses exceed a threshold, creates a new account.
-    """
-
-    def __init__(self, loss_threshold: float = -5.0) -> None:
-        self.loss_threshold = loss_threshold
-        self._cumulative_profit: Dict[str, float] = {}
-        self._generation: Dict[str, int] = {}
-
-    def map_user_action(
-        self,
-        *,
-        user_id: str,
-        participate: bool,
-        report: Optional[np.ndarray],
-        deposit: float,
-        meta: Dict,
-    ) -> List[AgentAction]:
-        if user_id not in self._generation:
-            self._generation[user_id] = 0
-            self._cumulative_profit[user_id] = 0.0
-
-        gen = self._generation[user_id]
-        account_id = f"{user_id}_gen{gen}"
-
-        return [
-            AgentAction(
-                account_id=account_id,
-                participate=participate,
-                report=report,
-                deposit=deposit,
-                meta={
-                    **meta,
-                    "real_user_id": user_id,
-                    "generation": gen,
-                    "reputation_reset": True,
-                },
-            )
-        ]
-
-    def update_profit(self, user_id: str, profit: float) -> None:
-        """Call after each round to track cumulative profit."""
-        self._cumulative_profit[user_id] = (
-            self._cumulative_profit.get(user_id, 0.0) + profit
-        )
-        if self._cumulative_profit[user_id] < self.loss_threshold:
-            self._generation[user_id] = self._generation.get(user_id, 0) + 1
-            self._cumulative_profit[user_id] = 0.0
-
-
-class SybilFarmingIdentity(IdentityPolicy):
-    """
-    Sybil farming for side rewards from participation/volume.
-
-    Creates multiple accounts with minimal economic exposure.
-    Scaffolding only — disabled by default.
-    """
-
-    def __init__(self, n_sybils: int = 5, min_deposit: float = 0.01) -> None:
-        self.n_sybils = n_sybils
-        self.min_deposit = min_deposit
-
-    def map_user_action(
-        self,
-        *,
-        user_id: str,
-        participate: bool,
-        report: Optional[np.ndarray],
-        deposit: float,
-        meta: Dict,
+        meta: Dict[str, Any],
     ) -> List[AgentAction]:
         if not participate:
+            return [AgentAction(account_id=user_id, participate=False, report=None, deposit=0.0, meta=dict(meta))]
+        return [AgentAction(account_id=user_id, participate=True, report=report, deposit=float(deposit), meta=dict(meta))]
+
+
+@dataclass
+class SplitAccountIdentity:
+    """Multi-account identity splitting: one logical participant maps to k accounts."""
+    k: int = 3
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def map_user_action(
+        self,
+        *,
+        user_id: str,
+        participate: bool,
+        report,
+        deposit: float,
+        meta: Dict[str, Any],
+    ) -> List[AgentAction]:
+        if (not participate) or self.k <= 1 or deposit <= 0.0:
             return [
                 AgentAction(
-                    account_id=f"{user_id}_farm_0",
-                    participate=False,
-                    report=None,
-                    deposit=0.0,
-                    meta={**meta, "real_user_id": user_id, "farming": True},
+                    account_id=user_id,
+                    participate=bool(participate),
+                    report=report if participate else None,
+                    deposit=float(deposit if participate else 0.0),
+                    meta=dict(meta),
                 )
             ]
-
-        actions = []
-        real_deposit = max(deposit - self.n_sybils * self.min_deposit, 0.0)
-        actions.append(
-            AgentAction(
-                account_id=f"{user_id}_farm_0",
-                participate=True,
-                report=report,
-                deposit=real_deposit,
-                meta={
-                    **meta,
-                    "real_user_id": user_id,
-                    "farming": True,
-                    "farm_primary": True,
-                },
-            )
-        )
-        for j in range(1, self.n_sybils + 1):
-            actions.append(
+        per = float(deposit) / float(self.k)
+        out: List[AgentAction] = []
+        for j in range(self.k):
+            out.append(
                 AgentAction(
-                    account_id=f"{user_id}_farm_{j}",
+                    account_id=f"{user_id}__linked_{j}",
                     participate=True,
                     report=report,
-                    deposit=self.min_deposit,
-                    meta={
-                        **meta,
-                        "real_user_id": user_id,
-                        "farming": True,
-                        "farm_primary": False,
-                    },
+                    deposit=per,
+                    meta={**dict(meta), "linked_parent_id": user_id, "linked_account_count": self.k},
                 )
             )
-        return actions
+        return out
+
+
+@dataclass
+class ReputationResetIdentity:
+    """Reputation reset identity: creates new account id when resetting reputation."""
+    counters: Dict[str, int] = field(default_factory=dict)
+
+    def reset(self, seed: int) -> None:
+        self.counters = {}
+
+    def map_user_action(
+        self,
+        *,
+        user_id: str,
+        participate: bool,
+        report,
+        deposit: float,
+        meta: Dict[str, Any],
+    ) -> List[AgentAction]:
+        count = self.counters.get(user_id, 0)
+        if bool(meta.get("reputation_reset", False)):
+            count += 1
+        self.counters[user_id] = count
+        account_id = f"{user_id}__reset_{count}" if count > 0 else user_id
+        if not participate:
+            return [AgentAction(account_id=account_id, participate=False, report=None, deposit=0.0, meta=dict(meta))]
+        return [AgentAction(account_id=account_id, participate=True, report=report, deposit=float(deposit), meta=dict(meta))]
+
+
+@dataclass
+class CollusiveMultiAccountIdentity:
+    """Collusive multi-account: k accounts share the same report and coordinate (for collusion experiments)."""
+    k: int = 3
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def map_user_action(
+        self,
+        *,
+        user_id: str,
+        participate: bool,
+        report,
+        deposit: float,
+        meta: Dict[str, Any],
+    ) -> List[AgentAction]:
+        if (not participate) or self.k <= 1 or deposit <= 0.0:
+            return [
+                AgentAction(
+                    account_id=user_id,
+                    participate=bool(participate),
+                    report=report if participate else None,
+                    deposit=float(deposit if participate else 0.0),
+                    meta={**dict(meta), "collusive": True},
+                )
+            ]
+        per = float(deposit) / float(self.k)
+        out: List[AgentAction] = []
+        for j in range(self.k):
+            out.append(
+                AgentAction(
+                    account_id=f"{user_id}__collusive_{j}",
+                    participate=True,
+                    report=report,
+                    deposit=per,
+                    meta={**dict(meta), "collusive": True, "collusive_parent": user_id},
+                )
+            )
+        return out
+
+
+@dataclass
+class FakeActivityIdentity:
+    """Fake activity identity: wash-style activity gaming with self-contained interaction patterns."""
+    k: int = 2
+    activity_boost: float = 0.3
+
+    def reset(self, seed: int) -> None:
+        return None
+
+    def map_user_action(
+        self,
+        *,
+        user_id: str,
+        participate: bool,
+        report,
+        deposit: float,
+        meta: Dict[str, Any],
+    ) -> List[AgentAction]:
+        if not participate or deposit <= 0.0:
+            return [
+                AgentAction(
+                    account_id=user_id,
+                    participate=bool(participate),
+                    report=report if participate else None,
+                    deposit=0.0,
+                    meta={**dict(meta), "fake_activity": False},
+                )
+            ]
+        split = max(1, self.k)
+        per = float(deposit) / float(split)
+        out: List[AgentAction] = []
+        for j in range(split):
+            out.append(
+                AgentAction(
+                    account_id=f"{user_id}__wash_{j}",
+                    participate=True,
+                    report=report,
+                    deposit=per,
+                    meta={**dict(meta), "fake_activity": True, "wash_parent": user_id},
+                )
+            )
+        return out
