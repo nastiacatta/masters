@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
   title: string;
+  /** One-line subtitle (e.g. thesis or page purpose) */
+  subtitle?: string;
   description?: string;
   /** One-line research question or framing */
   question?: string;
@@ -12,15 +14,19 @@ interface PageHeaderProps {
   controls?: ReactNode;
   /** Breadcrumb trail */
   breadcrumbs?: { label: string; to?: string }[];
+  /** When true, title uses larger hero styling */
+  hero?: boolean;
 }
 
 export default function PageHeader({
   title,
+  subtitle,
   description,
   question,
   takeaway,
   controls,
   breadcrumbs,
+  hero = false,
 }: PageHeaderProps) {
   return (
     <div className="mb-6">
@@ -40,7 +46,14 @@ export default function PageHeader({
           ))}
         </nav>
       )}
-      <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+      <h2 className={hero ? 'text-2xl font-semibold text-slate-900' : 'text-xl font-semibold text-slate-900'}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="text-sm text-slate-600 mt-1 max-w-2xl">
+          {subtitle}
+        </p>
+      )}
       {description && (
         <p className="text-sm text-slate-500 mt-1 max-w-2xl">{description}</p>
       )}

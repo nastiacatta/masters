@@ -1,27 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
-const DGP_ROUTES = [
-  { to: '/dgp', label: 'Overview', end: true },
-  { to: '/dgp/experiments', label: 'Experiments', end: false },
-];
-
-const CORE_ROUTES = [
-  { to: '/core', label: 'Overview', end: true },
-  { to: '/core/timeline', label: 'Round timeline', end: false },
-  { to: '/core/effective-wager', label: 'Effective wager', end: false },
-  { to: '/core/aggregation', label: 'Aggregation', end: false },
-  { to: '/core/settlement', label: 'Settlement', end: false },
-  { to: '/core/skill', label: 'Skill update', end: false },
-  { to: '/core/invariants', label: 'Invariants', end: false },
-  { to: '/core/experiments', label: 'Experiments', end: false },
-];
-
-const BEHAVIOUR_ROUTES = [
-  { to: '/behaviours', label: 'Overview', end: true },
-  { to: '/behaviours/families', label: 'Families', end: false },
-  { to: '/behaviours/experiments', label: 'Experiments', end: false },
-];
+const TOP_LEVEL_ROUTES = [
+  { to: '/', label: 'Research question', end: true },
+  { to: '/pipeline', label: 'Time-step pipeline', end: true },
+  { to: '/mechanism', label: 'Mechanism', end: true },
+  { to: '/experiments', label: 'Experiments', end: true },
+  { to: '/findings', label: 'Findings', end: true },
+  { to: '/appendix', label: 'Appendix', end: false },
+] as const;
 
 export default function Sidebar() {
   return (
@@ -35,88 +22,22 @@ export default function Sidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 px-2 py-4 space-y-6 overflow-y-auto">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            clsx(
-              'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'
-            )
-          }
-        >
-          Pipeline overview
-        </NavLink>
-
-        <div>
-          <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-            DGP
-          </p>
-          <div className="space-y-0.5">
-            {DGP_ROUTES.map(({ to, label, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
-                    isActive ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-50'
-                  )
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-            Core
-          </p>
-          <div className="space-y-0.5">
-            {CORE_ROUTES.map(({ to, label, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
-                    isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-600 hover:bg-slate-50'
-                  )
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-            Behaviours
-          </p>
-          <div className="space-y-0.5">
-            {BEHAVIOUR_ROUTES.map(({ to, label, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
-                    isActive ? 'bg-teal-50 text-teal-700 font-medium' : 'text-slate-600 hover:bg-slate-50'
-                  )
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {TOP_LEVEL_ROUTES.map(({ to, label, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+              clsx(
+                'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'
+              )
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
       </nav>
 
       <div className="px-4 py-3 border-t border-slate-200 text-[10px] text-slate-400">

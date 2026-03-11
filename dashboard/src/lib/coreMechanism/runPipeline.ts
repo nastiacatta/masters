@@ -27,6 +27,7 @@ export interface PipelineResult {
     meanParticipation: number;
     meanNEff: number;
     finalRounds: number;
+    finalGini: number;
   };
 }
 
@@ -39,6 +40,18 @@ const DEPOSIT_BASELINE = 1;
 function mean(arr: number[]): number {
   if (arr.length === 0) return 0;
   return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function gini(wealths: number[]): number {
+  if (wealths.length === 0) return 0;
+  const sorted = [...wealths].sort((a, b) => a - b);
+  const total = sorted.reduce((a, b) => a + b, 0);
+  if (total <= 0) return 0;
+  let w = 0;
+  sorted.forEach((x, i) => {
+    w += (i + 1) * x;
+  });
+  return (2 * w - (sorted.length + 1) * total) / (sorted.length * total);
 }
 
 /**
@@ -119,6 +132,8 @@ export function runPipeline(options: {
     }));
   }
 
+  const finalWealths = state.map((s) => s.wealth);
+
   return {
     dgpId,
     weighting,
@@ -129,6 +144,7 @@ export function runPipeline(options: {
       meanParticipation: mean(results.map((r) => r.participation)),
       meanNEff: mean(results.map((r) => r.nEff)),
       finalRounds: results.length,
+      finalGini: gini(finalWealths),
     },
   };
 }
