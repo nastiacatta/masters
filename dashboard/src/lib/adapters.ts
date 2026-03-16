@@ -28,29 +28,29 @@ import type {
 type RawRow = Record<string, unknown>;
 
 async function fetchCSV<T extends RawRow>(url: string): Promise<T[]> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const text = await res.text();
-    const parsed = Papa.parse<T>(text, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-    });
-    return parsed.data ?? [];
-  } catch {
-    return [];
+  const res = await fetch(url);
+  if (!res.ok) {
+    const msg = `Failed to fetch ${url}: ${res.status}`;
+    if (import.meta.env.DEV) console.error(msg);
+    throw new Error(msg);
   }
+  const text = await res.text();
+  const parsed = Papa.parse<T>(text, {
+    header: true,
+    dynamicTyping: true,
+    skipEmptyLines: true,
+  });
+  return parsed.data ?? [];
 }
 
-async function fetchJSON<T>(url: string): Promise<T | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
+async function fetchJSON<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const msg = `Failed to fetch ${url}: ${res.status}`;
+    if (import.meta.env.DEV) console.error(msg);
+    throw new Error(msg);
   }
+  return (await res.json()) as T;
 }
 
 const DATA_BASE = `${import.meta.env.BASE_URL}data`;

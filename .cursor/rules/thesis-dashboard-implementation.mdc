@@ -1,61 +1,77 @@
 ---
-description: Implementation instructions for the thesis time-step pipeline dashboard
+description: Implementation instructions for the thesis dashboard — "Adaptive skill and stake in forecast markets"
 globs: dashboard/**/*.tsx, dashboard/**/*.ts
 alwaysApply: false
 ---
 
-# Thesis Dashboard Implementation
+# Thesis Dashboard — Information Architecture
 
-## Goal
+## Structure
 
-Build a **time-step pipeline dashboard** for the masters thesis: "Adaptive skill and stake in forecast markets". The dashboard must show a coherent, step-by-step flow: **Inputs → DGP → Core (with sub-components) → Behaviour → Results**, plus **Experiments** in separate tabs.
+Four primary routes, one thesis per page:
 
-## Reference
+| Route         | Page            | Thesis question                                                   |
+|---------------|-----------------|-------------------------------------------------------------------|
+| `/`           | HomePage        | What is the research about? (Two claim cards)                     |
+| `/mechanism`  | MechanismPage   | How does one round work, and why is the mechanism well-defined?   |
+| `/results`    | ResultsPage     | What changes when skill enters the weighting?                     |
+| `/robustness` | RobustnessPage  | Does it hold up under missingness, sybil, and parameter changes?  |
 
-- Plan: `dashboard/docs/THESIS_DASHBOARD_PLAN.md`
-- Thesis repo: https://github.com/nastiacatta/masters
-- Core: Lambert (2008) + Raja–Pinson; online skill learning from `onlinev2/core/`
+Legacy interactive tools live at `/appendix` (LabPage) and `/appendix/experiments`.
 
-## Architecture
+## Claims
 
-### Step order (must be preserved)
+**Claim 1** — The mechanism is coherent: deposits, effective wagers, aggregation, refunds, and payouts are jointly defined and satisfy core accounting checks.
 
-1. **Inputs** – rounds, n agents, seed, scoring mode (MAE/CRPS)
-2. **DGP** – baseline, latent_fixed, aggregation_method1, aggregation_method3
-3. **Core** – weighting rule + sub-components: Scoring, Effective Wager, Aggregation, Settlement, Skill Update
-4. **Behaviour** – presets (baseline, bursty, risk_averse, manipulator, etc.)
-5. **Results** – run pipeline, show metrics + charts
-6. **Experiments** – tab bar or sidebar for pre-run experiments
+**Claim 2** — Online skill weighting reduces the damage from noisy stake and improves over stake-only weighting, but equal weighting remains a strong benchmark. Present results honestly.
 
-### Core sub-components (from onlinev2/core README)
+## Semantic tokens (`lib/tokens.ts`)
 
-- **Scoring** – `s_i = 1 − |y − r_i|`, CRPS/MAE
-- **Effective wager** – `m_i = b_i × (λ + (1−λ)σ_i^η)`
-- **Aggregation** – quantile averaging by effective wager weights
-- **Settlement** – Lambert skill pool + utility payoff
-- **Skill update** – EWMA loss → σ mapping
+Use the `SEM` colour map everywhere for consistency:
 
-### Behaviour categories
+- deposit (b) — sky blue `#0ea5e9`
+- skill (σ) — violet `#8b5cf6`
+- effective wager (m) — indigo `#6366f1`
+- aggregate (r̂) — teal `#0d9488`
+- score (s) — amber `#f59e0b`
+- payoff (Π) — emerald `#10b981`
+- outcome (y) — red `#ef4444`
+- wealth (W) — pink `#ec4899`
 
-From `BEHAVIOUR_COVERAGE.md`: deposit, missingness, reporting, adversarial.
+## Terminology (use one term per object)
 
-## Implementation checklist
+- **deposit** (b) — not "stake" or "wager"
+- **skill** (σ) — not "weight" or "ability"
+- **effective wager** (m) — not "influence"
+- **score** (s) — not "accuracy"
+- **payoff** (Π) — total payout
+- **profit** (π) — payoff minus deposit
 
-1. **Create `PipelineStepper.tsx`** – Main page with vertical stepper (6 steps). Each step is a collapsible card with selection controls.
-2. **Create `StepCard.tsx`** – Reusable component: title, description, options (dropdown/cards), optional expandable content.
-3. **Create `CoreSubComponents.tsx`** – Accordion or expandable list for Scoring, Effective Wager, Aggregation, Settlement, Skill Update. Each shows formula + brief description.
-4. **Create `ExperimentsTabBar.tsx`** – Tab bar for Validation, Experiments, Behaviour experiments. Each tab loads content from `data/experiments/` or existing experiment pages.
-5. **Wire routing** – Use `/pipeline` as primary route; add "Pipeline" to Sidebar.
-6. **Reuse existing** – `runPipeline`, `DGP_OPTIONS`, `PRESET_META`, `runRoundExtended` from `@/lib/coreMechanism` and `@/lib/behaviour`.
+## Copy rules
 
-## UI patterns
+- Every page: one question, one answer, one takeaway
+- No intro paragraph longer than 2 sentences
+- Every chart: title, what is being compared, one-line conclusion
+- Notation defined once in `GLOSSARY_ENTRIES` and reused via `StickyGlossary`
 
-- Use existing `PageHeader`, `ChartCard`, `MetricCard`, `FormulaCard`, `MathBlock` from `@/components/dashboard/`
-- Keep thesis framing visible: "Can adaptive skill updates improve aggregate forecasts without letting wealthy or strategic agents dominate?"
-- Stepper: numbered steps (1–6), with optional progress indicator
-- Results: same metrics as current PipelineOverview (mean error, participation, N_eff, Gini, round-by-round)
+## Key files
+
+- `src/lib/tokens.ts` — semantic colours, method colours, glossary
+- `src/components/dashboard/StickyGlossary.tsx` — floating glossary button
+- `src/components/lab/shared.ts` — chart constants, formatters, agent palette
+- `src/lib/coreMechanism/runPipeline.ts` — core simulation engine
+- `src/lib/store.tsx` — app state (experiment, round, DGP, behaviour)
+
+## Core equations
+
+```
+m_{i,t} = b_{i,t}(λ + (1−λ)σ_{i,t})
+Π^{skill}_{i,t} = m_{i,t}(1 + s_{i,t} − s̄_t)
+```
 
 ## Do not
 
-- Break existing routes (`/core`, `/behaviours`, `/experiments`, etc.)
-- Remove or overwrite `PipelineOverview.tsx` until migration is complete
+- Add thesis prose or literature review text to the UI
+- Alternate between "stake", "wager", "deposit" without explicit distinction
+- Overclaim that skill weighting always beats baselines
+- Add routes to the primary sidebar beyond the four listed above

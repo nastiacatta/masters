@@ -36,9 +36,13 @@ def compute_pit(
     taus: np.ndarray,
 ) -> float:
     """
-    Probability Integral Transform: PIT_t = F_t(y_t).
-    Linearly interpolates between quantile levels.
-    Assumes quantiles are ordered (use validate_quantile_monotonicity first).
+    Truncated PIT diagnostic from interpolated quantiles.
+
+    When y_t is outside the reported quantile range, returns the first or last
+    reported tau (e.g. with default taus, PIT values are truncated to [0.1, 0.9],
+    not the full [0, 1]). So this is an approximate/truncated PIT, not the
+    classical PIT (predictive CDF at the observation). Use for approximate PIT
+    histograms only. Assumes quantiles are ordered (validate_quantile_monotonicity).
     """
     quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
     taus = np.asarray(taus, dtype=np.float64).ravel()
@@ -100,10 +104,21 @@ def compute_hhi(weights: np.ndarray) -> float:
 
 
 def compute_n_eff(weights: np.ndarray) -> float:
-    """Effective number of participants: N_eff = 1 / H_t."""
-    hhi = compute_hhi(weights)
+    """
+    Effective number of participants: N_eff = 1 / H for normalised weights.
+
+    With tilde{w}_i = w_i / sum_j w_j, N_eff = 1 / sum_i tilde{w}_i^2.
+    If sum_i w_i = 0 (no active mass), returns 0.0 so zero-weight is not
+    reported as full participation.
+    """
+    w = np.asarray(weights, dtype=np.float64).ravel()
+    total = float(w.sum())
+    if total < 1e-15:
+        return 0.0
+    w_norm = w / total
+    hhi = float(np.sum(w_norm ** 2))
     if hhi < 1e-15:
-        return float(len(weights))
+        return 0.0
     return 1.0 / hhi
 
 

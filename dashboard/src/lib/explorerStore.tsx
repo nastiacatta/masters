@@ -2,6 +2,7 @@
  * Explorer context: re-exposes the single app store for walkthrough/mechanism UI.
  * Use useStore() or useExplorer() — both read from the same source of truth.
  */
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, type ReactNode } from 'react';
 import { useStore } from './store';
 

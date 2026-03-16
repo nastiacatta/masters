@@ -21,11 +21,12 @@ def confidence_from_quantiles(
     eps: float = 1e-6,
     beta_c: float = 1.0,
     c_min: float = 0.8,
-    c_max: float = 1.3,
+    c_max: float = 1.0,
 ) -> np.ndarray:
     """
     Bounded confidence multiplier c_i from quantile width in probit space.
-    Narrower spread => higher confidence. Returns (n,) in [c_min, c_max].
+    c_i = exp(-beta_c * Delta z_i) with Delta z_i >= 0, so values are in (0, 1].
+    Returns (n,) in [c_min, c_max]. c_max=1.0 is consistent with the formula.
     """
     q_t = np.asarray(q_t, dtype=np.float64)
     taus = np.asarray(taus, dtype=np.float64).ravel()
@@ -126,8 +127,14 @@ def cap_weight_shares(
     eps: float = 1e-12,
 ) -> np.ndarray:
     """
-    Project weight shares onto simplex with upper bound omega_max.
-    Returns m_cap with sum(m_cap)==sum(m_t), each share <= omega_max.
+    Project onto the capped simplex: same total mass, each share in [0, omega_max].
+
+    Uses water-filling (capped-simplex projection). Invariants:
+      sum_i m_i^cap = sum_i m_i,
+      0 <= m_i^cap / sum_j m_j^cap <= omega_max,
+      m_i^cap >= 0.
+
+    Returns m_cap (same shape as input, non-negative, mass-preserving).
     """
     m_t = np.asarray(m_t, dtype=np.float64).ravel().copy()
     if np.any(m_t < -eps):
@@ -135,41 +142,56 @@ def cap_weight_shares(
     m_t = np.maximum(m_t, 0.0)
     M = float(m_t.sum())
     if M <= eps:
-        return m_t
+        out = m_t.copy()
+        assert abs(out.sum() - M) <= eps, "mass preservation (zero total)"
+        return out
 
     n = m_t.size
     om = float(omega_max)
     if om >= 1.0:
-        return m_t
+        out = m_t.copy()
+        assert abs(out.sum() - M) <= eps, "mass preservation (no cap)"
+        return out
     if om < 1.0 / n - eps:
         raise ValueError(
             f"omega_max={om} must be >= 1/n={1.0/n} for feasible capped simplex"
         )
 
-    shares = m_t / M
-    max_iter = n + 5
-    for _ in range(max_iter):
-        over = shares > om + eps
-        if not np.any(over):
-            break
-        shares[over] = om
-        remainder = 1.0 - np.sum(shares)
-        free = ~over
-        n_free = int(np.sum(free))
-        if n_free <= 0:
-            break
-        fill = remainder / n_free
-        if fill <= om + eps:
-            shares[free] = fill
-            break
-        shares[free] = om
-    else:
-        shares = np.minimum(shares, om)
-        s = float(shares.sum())
-        if s > eps:
-            shares = shares / s
+    # Water-filling: sort descending; k largest get cap, rest share remainder equally.
+    order = np.argsort(-m_t)
+    m_sorted = m_t[order]
+    r_k = (1.0 - om * np.arange(n, dtype=np.float64)) / (
+        n - np.arange(n, dtype=np.float64)
+    )
+    r_k[-1] = 0.0
+    k = 0
+    for k in range(n):
+        fill = r_k[k] * M
+        if m_sorted[k] <= fill + eps:
+            if k == 0 or m_sorted[k - 1] >= om * M - eps:
+                break
+    # k = number of coordinates at cap; rest get fill = (1 - k*om)/(n-k) * M
+    fill_val = (1.0 - k * om) / (n - k) * M if k < n else 0.0
+    m_cap_sorted = np.where(
+        np.arange(n) < k,
+        om * M,
+        fill_val,
+    )
+    m_cap = np.empty_like(m_t)
+    m_cap[order] = m_cap_sorted
 
-    return shares * M
+    # Assertions
+    out_sum = float(m_cap.sum())
+    assert abs(out_sum - M) <= eps, (
+        f"mass preservation: sum(m_cap)={out_sum} != sum(m)={M}"
+    )
+    shares_out = m_cap / out_sum
+    assert np.all(shares_out <= om + eps), (
+        f"cap condition: max share {float(np.max(shares_out))} > omega_max={om}"
+    )
+    assert np.all(m_cap >= -eps), "non-negativity"
+
+    return m_cap
 
 
 def update_wealth(

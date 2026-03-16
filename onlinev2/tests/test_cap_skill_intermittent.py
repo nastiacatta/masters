@@ -167,8 +167,8 @@ def test_default_mode_unchanged_when_new_flags_off():
 
 
 def test_michael_split_allocation_uses_theta():
-    """With allocation_mode='michael_split' and aggregation_mode='michael_robust_lr',
-    settlement uses Michael's theta for allocation, not wager weights."""
+    """With allocation_mode='michael_split', allocation is true Michael utility split
+    (Shapley + oos), not Raja. Run completes and with U=0 profits sum to zero."""
     from onlinev2.core.runner import run_round
     from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
 

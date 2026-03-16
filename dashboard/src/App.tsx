@@ -2,12 +2,15 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { StoreProvider } from '@/lib/store';
 import { ExplorerProvider } from '@/lib/explorerStore';
 import Sidebar from '@/components/dashboard/Sidebar';
+import StickyGlossary from '@/components/dashboard/StickyGlossary';
+
+import HomePage from '@/pages/HomePage';
+import MechanismPage from '@/pages/MechanismPage';
+import ResultsPage from '@/pages/ResultsPage';
+import RobustnessPage from '@/pages/RobustnessPage';
 
 import LabPage from '@/pages/LabPage';
-import MechanismExplorer from '@/pages/MechanismExplorer';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
-import Validation from '@/pages/validation/Validation';
-import ExperimentTopBar from '@/components/dashboard/ExperimentTopBar';
 
 export default function App() {
   return (
@@ -18,27 +21,30 @@ export default function App() {
             <Sidebar />
             <main className="flex-1 overflow-hidden bg-slate-50 flex flex-col">
               <Routes>
-                <Route path="/" element={<Navigate to="/lab" replace />} />
-                <Route path="/lab" element={<LabPage />} />
-                <Route path="/walkthrough" element={<MechanismExplorer />} />
-                <Route path="/experiments" element={<ExperimentsPage />} />
-                <Route path="/validation" element={
-                  <>
-                    <ExperimentTopBar />
-                    <div className="flex-1 overflow-y-auto">
-                      <Validation />
-                    </div>
-                  </>
-                } />
-                <Route path="/overview" element={<Navigate to="/lab" replace />} />
-                <Route path="/mechanism-explorer" element={<Navigate to="/lab" replace />} />
-                <Route path="/pipeline" element={<Navigate to="/lab" replace />} />
-                <Route path="/comparison" element={<Navigate to="/lab" replace />} />
-                <Route path="/appendix" element={<Navigate to="/lab" replace />} />
-                <Route path="/appendix/*" element={<Navigate to="/lab" replace />} />
+                {/* Primary routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/mechanism" element={<MechanismPage />} />
+                <Route path="/results" element={<ResultsPage />} />
+                <Route path="/robustness" element={<RobustnessPage />} />
+
+                {/* Appendix: legacy interactive tools */}
+                <Route path="/appendix" element={<LabPage />} />
+                <Route path="/appendix/experiments" element={<ExperimentsPage />} />
+
+                {/* Legacy redirects */}
+                <Route path="/lab" element={<Navigate to="/appendix" replace />} />
+                <Route path="/walkthrough" element={<Navigate to="/mechanism" replace />} />
+                <Route path="/experiments" element={<Navigate to="/appendix/experiments" replace />} />
+                <Route path="/validation" element={<Navigate to="/robustness" replace />} />
+                <Route path="/overview" element={<Navigate to="/" replace />} />
+                <Route path="/pipeline" element={<Navigate to="/mechanism" replace />} />
+                <Route path="/comparison" element={<Navigate to="/results" replace />} />
+                <Route path="/mechanism-explorer" element={<Navigate to="/mechanism" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
           </div>
+          <StickyGlossary />
         </HashRouter>
       </ExplorerProvider>
     </StoreProvider>

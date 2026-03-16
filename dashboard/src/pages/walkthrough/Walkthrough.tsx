@@ -70,7 +70,7 @@ export default function Walkthrough() {
     loadSkillWagerData(selectedExperiment).then((data) => {
       setRoundRecords(data.length ? data : null);
     });
-  }, [selectedExperiment?.name]);
+  }, [selectedExperiment]);
 
   const maxRound = useMemo(() => {
     if (!roundRecords?.length) return 0;

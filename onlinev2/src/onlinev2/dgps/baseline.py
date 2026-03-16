@@ -1,7 +1,10 @@
 """
-DGP: Baseline. Truth y ~ Uniform[0,1]; reports = y + forecaster noise.
+DGP: Baseline (legacy / sanity only).
 
-Simple IID setup for sanity checks.
+Truth y ~ Uniform[0,1]; reports = clip(y + forecaster noise, 0, 1).
+Acceptable for sanity checks, but clipping distorts loss geometry near the
+boundaries. Do not use for strong claims about recovering intrinsic skill;
+use the latent Bayes-consistent generator for main evaluation.
 """
 from __future__ import annotations
 
@@ -20,7 +23,7 @@ class _DGPBaseline:
         support="[0,1]",
         link="identity",
         truth_source="exogenous",
-        description="y ~ U(0,1); reports_i = clip(y + noise_i, 0, 1).",
+        description="[Legacy/sanity only] y ~ U(0,1); reports_i = clip(y + noise_i, 0, 1).",
     )
 
     def generate(

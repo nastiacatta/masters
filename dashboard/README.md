@@ -25,12 +25,14 @@ It makes clear:
 
 | Route | Purpose |
 |-------|--------|
-| `/overview` | Thesis overview: research question, why static stake-only is not enough, Raja vs online extension, how to use the dashboard. Default landing. |
-| `/walkthrough` | **Main page.** Step-by-step round walkthrough with stepper: Inputs → DGP → Core → Behaviour → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; right-hand explanation panel; summary metrics. |
-| `/experiments` | Cross-scenario comparison with tabs: Core, Behaviour, DGP comparison, Robustness / adversaries, Ablations. For evidence, not the main narrative. |
-| `/validation` | Invariants, tests, sanity checks, assumptions. Experiment selector and tabs (Main result, Round replay, Behaviour, Robustness checks). |
+| `/` | **Default landing.** Thesis overview: research question, why static stake-only is not enough, Raja vs online extension, how to use the dashboard. |
+| `/mechanism` | **Main walkthrough.** Step-by-step round walkthrough: Inputs → DGP → Core → Behaviour → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; explanation panel; summary metrics. |
+| `/results` | Cross-scenario comparison and main result views. |
+| `/robustness` | Invariants, tests, sanity checks, assumptions. Experiment selector and tabs (Main result, Round replay, Behaviour, Robustness checks). |
+| `/appendix` | Legacy interactive lab / pipeline tools. |
+| `/appendix/experiments` | Cross-scenario comparison with tabs: Core, Behaviour, DGP comparison, Robustness / adversaries, Ablations. |
 
-Legacy routes (e.g. `/core`, `/behaviours`, `/pipeline`, `/mechanism`) remain for backward compatibility.
+Legacy redirects (so old links still work): `/overview` → `/`, `/walkthrough` → `/mechanism`, `/experiments` → `/appendix/experiments`, `/validation` → `/robustness`, `/lab` → `/appendix`, `/pipeline` → `/mechanism`, `/comparison` → `/results`, `/mechanism-explorer` → `/mechanism`.
 
 ## Data loading
 

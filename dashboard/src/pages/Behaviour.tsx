@@ -409,11 +409,11 @@ export default function Behaviour() {
     );
   }
 
-  const genericBarData = (data: { scenario?: string; identity?: string; belief?: string; staking?: string; finalGini?: number; totalProfit?: number }[], _labelKey: string) =>
+  const genericBarData = (data: { scenario?: string; identity?: string; belief?: string; staking?: string; finalGini?: number; totalProfit?: number }[]) =>
     data.map((row) => ({ ...row, label: scenarioLabel(row.scenario ?? row.identity ?? row.belief ?? row.staking ?? '') }));
 
   if (expName === 'collusion_stress') {
-    const data = genericBarData(collusionStressData, 'scenario');
+    const data = genericBarData(collusionStressData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No collusion stress data." /></div>;
     return (
       <div className="space-y-6 p-6">
@@ -432,7 +432,7 @@ export default function Behaviour() {
   }
 
   if (expName === 'insider_advantage') {
-    const data = genericBarData(insiderAdvantageData, 'scenario');
+    const data = genericBarData(insiderAdvantageData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No insider advantage data." /></div>;
     return (
       <div className="space-y-6 p-6">
@@ -447,7 +447,7 @@ export default function Behaviour() {
   }
 
   if (expName === 'wash_activity_gaming') {
-    const data = genericBarData(washActivityData, 'scenario');
+    const data = genericBarData(washActivityData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No wash activity data." /></div>;
     return (
       <div className="space-y-6 p-6">
@@ -462,7 +462,7 @@ export default function Behaviour() {
   }
 
   if (expName === 'strategic_reporting') {
-    const data = genericBarData(strategicReportingData, 'scenario');
+    const data = genericBarData(strategicReportingData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No strategic reporting data." /></div>;
     return (
       <div className="space-y-6 p-6">
@@ -477,7 +477,7 @@ export default function Behaviour() {
   }
 
   if (expName === 'identity_attack_matrix') {
-    const data = genericBarData(identityAttackData, 'identity');
+    const data = genericBarData(identityAttackData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No identity attack data." /></div>;
     return (
       <div className="space-y-6 p-6">
@@ -492,7 +492,7 @@ export default function Behaviour() {
   }
 
   if (expName === 'drift_adaptation') {
-    const data = genericBarData(driftAdaptationData, 'belief');
+    const data = genericBarData(driftAdaptationData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No drift adaptation data." /></div>;
     return (
       <div className="space-y-6 p-6">
@@ -507,7 +507,7 @@ export default function Behaviour() {
   }
 
   if (expName === 'stake_policy_matrix') {
-    const data = genericBarData(stakePolicyData, 'staking');
+    const data = genericBarData(stakePolicyData);
     if (data.length === 0) return <div className="space-y-6 p-6">{header}<EmptyState message="No stake policy data." /></div>;
     return (
       <div className="space-y-6 p-6">

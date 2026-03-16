@@ -54,7 +54,7 @@ export default function RoundReplay() {
       seed: 42,
       n: nAgents,
     });
-  }, [selectedExperiment?.name, selectedExperiment?.dgp, nAgents, pipelineRounds]);
+  }, [selectedExperiment, nAgents, pipelineRounds]);
 
   const traceIndex = pipeline?.traces.length
     ? Math.min(currentRound, pipeline.traces.length - 1)

@@ -115,14 +115,16 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
   }, [pipeline.rounds]);
 
   const cumulativeErrorData = useMemo(() => {
-    let cum = 0;
-    return downsample(
-      pipeline.rounds.map((r, i) => {
-        cum += r.error;
-        return { round: r.round, cumError: cum / (i + 1) };
-      }),
-      400,
+    const series = pipeline.rounds.reduce(
+      (acc: { round: number; cumError: number }[], r, i) => {
+        const prevSum = acc.length > 0 ? acc[acc.length - 1].cumError * i : 0;
+        const cum = prevSum + r.error;
+        acc.push({ round: r.round, cumError: cum / (i + 1) });
+        return acc;
+      },
+      [],
     );
+    return downsample(series, 400);
   }, [pipeline.rounds]);
 
   const meanError = pipeline.summary.meanError;

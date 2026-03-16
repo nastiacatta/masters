@@ -33,6 +33,13 @@ from onlinev2.core.staking import (
     effective_wager_capped,
 )
 from onlinev2.core.intermittent import michael_predict, michael_update
+from onlinev2.core.michael_allocation import (
+    michael_oos_allocation,
+    update_phi_c,
+    normalise_present,
+    michael_rewards,
+)
+from onlinev2.core.shapley import shapley_mc
 from onlinev2.core.metrics import (
     compute_gini,
     compute_pit,
@@ -40,6 +47,30 @@ from onlinev2.core.metrics import (
     compute_n_eff,
     validate_quantile_monotonicity,
 )
+
+
+def _resolve_michael_tau(params: MechanismParams) -> float:
+    """Resolve Michael quantile level (τ). point_mae uses median (0.5) or michael_tau; quantiles_crps uses per-tau in loop."""
+    if params.scoring_mode == "point_mae":
+        return 0.5 if params.michael_tau is None else float(params.michael_tau)
+    raise ValueError(
+        "A single michael_tau is not valid for quantiles_crps. "
+        "Use one Michael state per quantile level."
+    )
+
+
+def _get_tau_state(per_tau_state: dict, agg_flat: dict, k: int, n: int):
+    """Get (w, D) for quantile index k; fallback to flat agg state when per_tau missing (e.g. point_mae)."""
+    key = str(k)
+    if key in per_tau_state:
+        st = per_tau_state[key]
+        return np.asarray(st["w"], dtype=float), np.asarray(st["D"], dtype=float)
+    if k == 0 and agg_flat.get("w") is not None and agg_flat.get("D") is not None:
+        w = np.asarray(agg_flat["w"], dtype=float).ravel()
+        D = np.asarray(agg_flat["D"], dtype=float)
+        if w.size == n and D.shape == (n, n):
+            return w, D
+    return np.full(n, 1.0 / n), np.zeros((n, n))
 
 
 def _validate_actions(actions: List[AgentInput]) -> None:
@@ -186,73 +217,143 @@ def run_round(
         theta_for_settle = aux.get("theta")
         w_new, D_new, _ = michael_update(
             x_t, y_t, alpha, w, D,
-            tau=params.delta_is,
+            tau=_resolve_michael_tau(params),
             lr=params.michael_lr,
         )
         new_state.agg_state = {"w": w_new, "D": D_new}
 
-    # quantiles_crps + michael_robust_lr: run Michael on median proxy for theta
-    # (michael_split allocation) and agg_state; r_hat stays wager-based above.
+    # quantiles_crps + michael_robust_lr: per-tau Michael aggregation
     if (
         params.aggregation_mode == "michael_robust_lr"
         and params.scoring_mode == "quantiles_crps"
     ):
-        agg = state.agg_state
-        if "w" not in agg or "D" not in agg:
-            w = np.ones(n, dtype=np.float64) / n
-            D = np.zeros((n, n), dtype=np.float64)
-        else:
-            w = np.asarray(agg["w"], dtype=np.float64).ravel()
-            D = np.asarray(agg["D"], dtype=np.float64)
-            if w.size != n or D.shape != (n, n):
-                w = np.ones(n, dtype=np.float64) / n
-                D = np.zeros((n, n), dtype=np.float64)
-        idx_mid = int(np.argmin(np.abs(params.taus - 0.5)))
-        x_t = np.array(
-            [reports_for_agg[i, idx_mid] if alpha[i] == 0 else 0.0 for i in range(n)],
-            dtype=np.float64,
-        )
-        _, aux = michael_predict(x_t, alpha, w, D)
-        theta_for_settle = aux.get("theta")
-        w_new, D_new, _ = michael_update(
-            x_t, y_t, alpha, w, D,
-            tau=params.delta_is,
-            lr=params.michael_lr,
-        )
-        new_state.agg_state = {"w": w_new, "D": D_new}
+        taus = np.asarray(params.taus, dtype=float)
+        K = len(taus)
+        per_tau_state = state.agg_state.get("per_tau", {})
+        new_per_tau_state = {}
+        r_hat = np.zeros(K, dtype=float)
 
-    # Settlement: use Michael theta for allocation when michael_split + michael_robust_lr
-    M_t = float(np.sum(m_used))
-    if (
-        params.allocation_mode == "michael_split"
-        and theta_for_settle is not None
-        and M_t > params.eps
-    ):
-        theta = np.asarray(theta_for_settle, dtype=np.float64).ravel()
-        if theta.size == n and np.all(theta >= -params.eps):
-            theta = np.maximum(theta, 0.0)
-            s = float(theta.sum())
-            if s > params.eps:
-                m_for_settle = (theta / s) * M_t
+        for k, tau_k in enumerate(taus):
+            w_k, D_k = _get_tau_state(per_tau_state, state.agg_state, k, n)
+            x_k = reports_for_agg[:, k].copy()
+            x_k[alpha == 1] = 0.0
+
+            y_hat_k, _ = michael_predict(x_k, alpha, w_k, D_k)
+            w_k_new, D_k_new, _ = michael_update(
+                x_k,
+                y_t,
+                alpha,
+                w_k,
+                D_k,
+                tau=float(tau_k),
+                lr=params.michael_lr,
+            )
+            r_hat[k] = y_hat_k
+            new_per_tau_state[str(k)] = {"w": w_k_new, "D": D_k_new}
+
+        new_state.agg_state = {"per_tau": new_per_tau_state}
+
+    # True Michael allocation: utility split from Shapley + oos (bypass Raja)
+    if params.allocation_mode == "michael_split":
+        U_t = float(params.U)
+        taus = (
+            np.asarray(params.taus, dtype=float)
+            if params.scoring_mode == "quantiles_crps"
+            else np.array([0.5], dtype=float)
+        )
+        K = len(taus)
+        per_tau_state = new_state.agg_state.get("per_tau", {})
+        phi_c_state = state.allocation_state.get("phi_c", {})
+        new_phi_c_state = {}
+        rewards_total = np.zeros(n, dtype=float)
+
+        for k, tau_k in enumerate(taus):
+            w_k, D_k = _get_tau_state(per_tau_state, new_state.agg_state, k, n)
+            if params.scoring_mode == "quantiles_crps":
+                x_k = reports_for_agg[:, k].copy()
             else:
-                m_for_settle = m_used.copy()
-        else:
-            m_for_settle = m_used.copy()
+                x_k = np.asarray(reports_for_agg, dtype=float).ravel().copy()
+            x_k[alpha == 1] = 0.0
+
+            # Per-agent pinball loss for oos allocation
+            present = alpha == 0
+            if params.scoring_mode == "quantiles_crps":
+                losses_k = np.zeros(n, dtype=float)
+                err = y_t - x_k
+                losses_k[present] = np.where(
+                    err[present] >= 0,
+                    tau_k * err[present],
+                    (tau_k - 1.0) * err[present],
+                )
+            else:
+                losses_k = np.abs(y_t - x_k) * tau_k + np.abs(x_k - y_t) * (1.0 - tau_k)
+
+            r_oos_k = michael_oos_allocation(losses_k, alpha, eps=params.eps)
+
+            phi_prev_k = np.asarray(
+                phi_c_state.get(str(k), np.zeros(n)), dtype=float
+            ).ravel()
+            if phi_prev_k.size != n:
+                phi_prev_k = np.zeros(n, dtype=float)
+
+            def coalition_value(coalition):
+                if len(coalition) == 0:
+                    return 0.0
+                idx = np.array(coalition, dtype=int)
+                x_sub = x_k[idx]
+                y_hat_sub = float(np.mean(x_sub))
+                err = y_t - y_hat_sub
+                if err >= 0:
+                    loss = tau_k * err
+                else:
+                    loss = (1.0 - tau_k) * (-err)
+                return -loss
+
+            present_idx = np.where(alpha == 0)[0]
+            phi_s_k = shapley_mc(
+                present_idx,
+                coalition_value,
+                n_perm=params.michael_shapley_mc,
+            )
+            phi_s_k = np.asarray(phi_s_k, dtype=float).ravel()
+            if phi_s_k.size != n:
+                phi_s_k = np.resize(phi_s_k, n)
+            phi_s_k[alpha == 1] = 0.0
+
+            phi_c_k = update_phi_c(phi_prev_k, phi_s_k, params.michael_lambda)
+            r_is_k = normalise_present(phi_c_k, alpha, eps=params.eps)
+
+            U_tau = U_t / K
+            rewards_k = michael_rewards(
+                U_tau, params.delta_is, r_is_k, r_oos_k
+            )
+            rewards_total += rewards_k
+            new_phi_c_state[str(k)] = phi_c_k
+
+        new_state.allocation_state = {"phi_c": new_phi_c_state}
+        prof = np.asarray(rewards_total, dtype=float)
+        m_settle = m_used.copy()  # no separate settlement weights in michael_split
+        sett = {
+            "profit": prof,
+            "total_payoff": prof,
+            "cashout": prof,
+            "refund": np.zeros(n, dtype=float),
+        }
     else:
         m_for_settle = m_used.copy()
-
-    sett = settle_round(
-        b=b,
-        sigma=sigma_t,
-        lam=params.lam,
-        scores=scores,
-        alpha=alpha,
-        s_client=s_client,
-        U=params.U,
-        eps=params.eps,
-        eta=params.eta,
-        m_pre=m_for_settle,
-    )
+        m_settle = m_for_settle
+        sett = settle_round(
+            b=b,
+            sigma=sigma_t,
+            lam=params.lam,
+            scores=scores,
+            alpha=alpha,
+            s_client=s_client,
+            U=params.U,
+            eps=params.eps,
+            eta=params.eta,
+            m_pre=m_for_settle,
+        )
 
     prof = sett["profit"]
 
@@ -315,8 +416,9 @@ def run_round(
         "deposits": b.tolist(),
         "sigma": sigma_t.tolist(),
         "m_raw": m_raw.tolist(),
-        "m": m_used.tolist(),
         "m_agg": m_used.tolist(),
+        "m_settle": m_settle.tolist(),
+        "m": m_used.tolist(),  # backward compat; prefer m_agg / m_settle for analysis
         "scores": scores.tolist(),
         "losses": losses.tolist(),
         "alpha": alpha.tolist(),

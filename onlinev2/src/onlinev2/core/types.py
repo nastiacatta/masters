@@ -56,8 +56,16 @@ class MechanismParams:
 
     aggregation_mode: str = "wager"  # "wager" | "michael_robust_lr"
     allocation_mode: str = "raja"   # "raja" | "michael_split"
+    # Michael allocation: in-sample vs out-of-sample reward split (\delta)
     delta_is: float = 0.5
+    # Michael online learning rate
     michael_lr: float = 0.01
+    # Quantile level for Michael when scoring_mode == "point_mae" (single-tau); unused in quantiles_crps
+    michael_tau: Optional[float] = None
+    # Michael historical Shapley forgetting factor (\lambda): phi_c = lambda*phi_c_prev + (1-lambda)*phi_s
+    michael_lambda: float = 0.95
+    # Number of Monte Carlo permutations for approximate Shapley
+    michael_shapley_mc: int = 128
 
 
 @dataclass

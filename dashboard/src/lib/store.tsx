@@ -2,6 +2,7 @@
  * Single app store: experiment, round, stage, view mode, and pipeline/walkthrough state.
  * One source of truth for the mechanism walkthrough and evidence pages.
  */
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { ExperimentMeta } from './types';
 import type { DGPId } from './coreMechanism/dgpSimulator';

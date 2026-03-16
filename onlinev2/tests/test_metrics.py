@@ -52,6 +52,12 @@ class TestNEff:
         n_eff = compute_n_eff(w)
         assert abs(n_eff - 2.0) < 1e-8
 
+    def test_zero_weights(self):
+        """All-zero weights => N_eff = 0 (no active mass, not full participation)."""
+        w = np.zeros(5)
+        n_eff = compute_n_eff(w)
+        assert n_eff == 0.0
+
 
 class TestGini:
     def test_perfect_equality(self):

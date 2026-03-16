@@ -144,11 +144,11 @@ export function useExperimentData(): ExperimentDataResult {
     });
 
     if (dataMode === 'mock') {
-      setState(mockFallback());
+      queueMicrotask(() => setState(mockFallback()));
       return;
     }
 
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    queueMicrotask(() => setState((prev) => ({ ...prev, loading: true, error: null })));
 
     (async () => {
       try {

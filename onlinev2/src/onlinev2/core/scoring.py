@@ -4,10 +4,13 @@ Point mode (`point_mae`) uses absolute loss, so it elicits a median-type point
 forecast. Absolute loss is proper for the median, and strictly proper only when
 the predictive median is unique.
 
-Quantile mode (`quantiles_crps`) uses a finite-grid quantile surrogate
+Quantile mode (`quantiles_crps`) uses a finite-grid quantile score (CRPS-hat):
     C_hat = (2 / K) * sum_k L^{tau_k}(y, q_k),
-where L^{tau_k} is the pinball loss at quantile level tau_k.
-This is a quantile-grid approximation to CRPS, not exact CRPS.
+i.e. average pinball loss over reported quantiles. This is a quantile-grid
+approximation to CRPS, not exact CRPS. The standard CRPS approximation argument
+assumes an equidistant probability grid; the default grid (0.1, 0.25, 0.5, 0.75, 0.9)
+is not equidistant, so describe this as "finite quantile score" or "CRPS-hat"
+rather than exact CRPS.
 
 Settlement uses bounded affine score maps that land in [0, 1]:
     score_mae      = 1 - |y - r|
@@ -69,11 +72,13 @@ def pinball_loss(y, q, tau):
 
 
 def crps_hat_from_quantiles(y, q_matrix, taus):
-    """Finite-grid quantile approximation to CRPS.
+    """Finite-grid CRPS surrogate: average pinball loss over reported quantiles.
 
-    C_hat = (2 / K) * sum_k pinball(y, q_k, tau_k)
+    C_hat = (2 / K) * sum_k pinball(y, q_k, tau_k).
 
-    Returns a per-agent loss array. With y, q in [0, 1], C_hat lies in [0, 2].
+    This is a quantile-grid approximation to CRPS, not exact CRPS (equidistant
+    tau would give a closer approximation). Returns per-agent loss; with y, q
+    in [0, 1], C_hat lies in [0, 2].
     """
     y = np.asarray(y, dtype=np.float64)
     q_matrix = np.asarray(q_matrix, dtype=np.float64)
@@ -90,12 +95,10 @@ def crps_hat_from_quantiles(y, q_matrix, taus):
 
 
 def score_crps_hat(y, q_matrix, taus):
-    """Bounded score induced by the finite-grid CRPS surrogate.
+    """Bounded score induced by the finite-grid CRPS surrogate (CRPS-hat).
 
-    s = 1 - C_hat / 2, where C_hat is computed by `crps_hat_from_quantiles`.
-
-    This is the score actually used by settlement. It should be described as a
-    quantile-grid CRPS approximation rather than exact CRPS.
+    s = 1 - C_hat / 2, where C_hat is the average pinball loss over quantiles.
+    Used by settlement; describe as CRPS-hat or finite quantile score, not exact CRPS.
     """
     crps = crps_hat_from_quantiles(y, q_matrix, taus)
     s = 1.0 - crps / 2.0
