@@ -1,29 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import Overview from '@/pages/Overview';
 import RoundReplay from '@/pages/RoundReplay';
-import Behaviour from '@/pages/Behaviour';
 import Diagnostics from '@/pages/Diagnostics';
 import Invariants from '@/pages/core/Invariants';
 import ExperimentContext from '@/components/dashboard/ExperimentContext';
 
 const TABS = [
   { id: 'overview', label: 'Main result' },
-  { id: 'replay', label: 'What happens in one round' },
-  { id: 'behaviour', label: 'What changes when users behave strategically' },
-  { id: 'diagnostics', label: 'Robustness checks' },
-  { id: 'invariants', label: 'Invariants & assumptions' },
+  { id: 'replay', label: 'One round' },
+  { id: 'robustness', label: 'Robustness' },
 ] as const;
 
 export default function Validation() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('overview');
   const { selectedExperiment } = useStore();
-
-  useEffect(() => {
-    if (selectedExperiment?.block === 'behaviour') {
-      setTab('behaviour');
-    }
-  }, [selectedExperiment?.name, selectedExperiment?.block]);
 
   return (
     <div className="space-y-4 p-6">
@@ -46,9 +37,12 @@ export default function Validation() {
 
       {tab === 'overview' && <Overview />}
       {tab === 'replay' && <RoundReplay />}
-      {tab === 'behaviour' && <Behaviour />}
-      {tab === 'diagnostics' && <Diagnostics />}
-      {tab === 'invariants' && <Invariants />}
+      {tab === 'robustness' && (
+        <div className="space-y-6">
+          <Diagnostics />
+          <Invariants />
+        </div>
+      )}
     </div>
   );
 }
