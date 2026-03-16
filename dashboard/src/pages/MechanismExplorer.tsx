@@ -16,16 +16,14 @@ import PageHeader from '@/components/dashboard/PageHeader';
 import MechanismBuilderTab from '@/components/mechanismExplorer/MechanismBuilderTab';
 import RoundInspectorTab from '@/components/mechanismExplorer/RoundInspectorTab';
 import OutcomeStudioTab from '@/components/mechanismExplorer/OutcomeStudioTab';
-import CodeSnippetsTab from '@/components/mechanismExplorer/CodeSnippetsTab';
 import type { MechanismConfig, SimParams } from '@/lib/mechanismExplorer/types';
 
-type TabId = 'builder' | 'inspector' | 'outcome' | 'code';
+type TabId = 'builder' | 'inspector' | 'outcome';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'builder', label: '⬡ Pipeline' },
   { id: 'inspector', label: '⊙ Round inspector' },
   { id: 'outcome', label: '◎ Outcome studio' },
-  { id: 'code', label: '</> Code snippets' },
 ];
 
 /** Map composable builder + behaviour preset to the 6-block config used by MechanismBuilderTab (HTML-style labels). */
@@ -294,8 +292,6 @@ export default function MechanismExplorer() {
           onRoundChange={setSelectedRound}
         />
       )}
-
-      {activeTab === 'code' && <CodeSnippetsTab />}
     </div>
   );
 }
