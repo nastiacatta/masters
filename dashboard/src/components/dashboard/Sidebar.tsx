@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
 const ROUTES: { to: string; label: string; end: boolean; badge?: string }[] = [
-  { to: '/lab', label: 'Lab', badge: 'new', end: true },
+  { to: '/lab', label: 'Lab', end: true },
   { to: '/walkthrough', label: 'Walkthrough', end: true },
   { to: '/experiments', label: 'Experiments', end: true },
   { to: '/validation', label: 'Validation', end: true },
