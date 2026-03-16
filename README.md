@@ -30,7 +30,7 @@ pytest tests/
   - **`mvp.py`** — Short demo; delegates to `onlinev2.simulation`.
   - **`scripts/`** — `run_weight_learning.py`, and `r/` for optional R plotting scripts.
   - **`tests/`** — Pytest tests (smoke, behaviour boundary, metrics, arbitrageur, refactor regression).
-- **`dashboard/`** — Optional React frontend; isolated from the research package.
+- **`dashboard/`** — Optional React frontend; isolated from the research package. Deployed to GitHub Pages via the workflow in `.github/workflows/pages.yml`. If you get a 404 at the Pages URL, see [docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md).
 
 ## Running experiments
 
