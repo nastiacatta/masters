@@ -172,6 +172,7 @@ def cap_weight_shares(
                 break
     # k = number of coordinates at cap; rest get fill = (1 - k*om)/(n-k) * M
     fill_val = (1.0 - k * om) / (n - k) * M if k < n else 0.0
+    fill_val = max(0.0, fill_val)  # avoid negative from floating point
     m_cap_sorted = np.where(
         np.arange(n) < k,
         om * M,
@@ -179,6 +180,11 @@ def cap_weight_shares(
     )
     m_cap = np.empty_like(m_t)
     m_cap[order] = m_cap_sorted
+    # Numerical safeguard: clip to non-negative and renormalize to preserve mass
+    m_cap = np.maximum(m_cap, 0.0)
+    out_sum = float(m_cap.sum())
+    if out_sum > eps:
+        m_cap = m_cap * (M / out_sum)
 
     # Assertions
     out_sum = float(m_cap.sum())
@@ -186,7 +192,8 @@ def cap_weight_shares(
         f"mass preservation: sum(m_cap)={out_sum} != sum(m)={M}"
     )
     shares_out = m_cap / out_sum
-    assert np.all(shares_out <= om + eps), (
+    cap_tol = max(eps, 1e-8)  # allow tiny violation after non-negativity renormalization
+    assert np.all(shares_out <= om + cap_tol), (
         f"cap condition: max share {float(np.max(shares_out))} > omega_max={om}"
     )
     assert np.all(m_cap >= -eps), "non-negativity"

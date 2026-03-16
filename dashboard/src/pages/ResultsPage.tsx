@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend, Cell,
+  Tooltip, ResponsiveContainer, Legend, Cell, Brush, ReferenceArea,
 } from 'recharts';
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import { METHOD, SEM } from '@/lib/tokens';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
 import {
-  CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, fmt, downsample,
+  CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample,
 } from '@/components/lab/shared';
+import { useChartZoom } from '@/hooks/useChartZoom';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
 
 const DGP_ID = 'baseline' as const;
@@ -64,10 +65,25 @@ function HeadlineMetric({ label, value, sub, better }: { label: string; value: s
   );
 }
 
+function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
+  if (!isZoomed) return null;
+  return (
+    <button
+      onClick={onReset}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors"
+    >
+      <span>⟲</span> Reset zoom
+    </button>
+  );
+}
+
 export default function ResultsPage() {
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({
     equal: true, skill_only: true, blended: true, stake_only: true,
   });
+
+  const cumErrorZoom = useChartZoom();
+  const skillLeverZoom = useChartZoom();
 
   const methods: MethodResult[] = useMemo(() => {
     const entries: { key: string; label: string; color: string; influenceRule: InfluenceRule }[] = [
@@ -79,11 +95,7 @@ export default function ResultsPage() {
     return entries.map(e => ({
       ...e,
       pipeline: runPipeline({
-        dgpId: DGP_ID,
-        behaviourPreset: 'baseline',
-        rounds: ROUNDS,
-        seed: SEED,
-        n: N_AGENTS,
+        dgpId: DGP_ID, behaviourPreset: 'baseline', rounds: ROUNDS, seed: SEED, n: N_AGENTS,
         builder: { influenceRule: e.influenceRule },
       }),
     }));
@@ -91,18 +103,14 @@ export default function ResultsPage() {
 
   const deposits: DepositResult[] = useMemo(() => {
     const entries: { key: string; label: string; depositPolicy: DepositPolicy }[] = [
-      { key: 'fixed',     label: 'Fixed unit',         depositPolicy: 'fixed_unit' },
-      { key: 'bankroll',  label: 'Bankroll × conf',    depositPolicy: 'wealth_fraction' },
-      { key: 'oracle',    label: 'Oracle precision',    depositPolicy: 'sigma_scaled' },
+      { key: 'fixed',    label: 'Fixed unit',       depositPolicy: 'fixed_unit' },
+      { key: 'bankroll', label: 'Bankroll × conf',  depositPolicy: 'wealth_fraction' },
+      { key: 'oracle',   label: 'Oracle precision',  depositPolicy: 'sigma_scaled' },
     ];
     return entries.map(e => ({
       ...e,
       pipeline: runPipeline({
-        dgpId: DGP_ID,
-        behaviourPreset: 'baseline',
-        rounds: ROUNDS,
-        seed: SEED,
-        n: N_AGENTS,
+        dgpId: DGP_ID, behaviourPreset: 'baseline', rounds: ROUNDS, seed: SEED, n: N_AGENTS,
         builder: { depositPolicy: e.depositPolicy, influenceRule: 'skill_stake' },
       }),
     }));
@@ -113,7 +121,6 @@ export default function ResultsPage() {
     [methods],
   );
 
-  // Chart 1: Cumulative error comparison
   const cumErrorData = useMemo(() => {
     const maxLen = Math.max(...methods.map(m => m.pipeline.rounds.length));
     const raw = Array.from({ length: maxLen }, (_, i) => {
@@ -127,14 +134,9 @@ export default function ResultsPage() {
     return downsample(raw, 300);
   }, [methods]);
 
-  // Chart 2: Fixed-deposit skill lever (m/b vs σ)
   const fixedDepPipeline = useMemo(() => {
     return runPipeline({
-      dgpId: DGP_ID,
-      behaviourPreset: 'baseline',
-      rounds: ROUNDS,
-      seed: SEED,
-      n: N_AGENTS,
+      dgpId: DGP_ID, behaviourPreset: 'baseline', rounds: ROUNDS, seed: SEED, n: N_AGENTS,
       builder: { depositPolicy: 'fixed_unit', influenceRule: 'skill_stake' },
     });
   }, []);
@@ -152,7 +154,6 @@ export default function ResultsPage() {
     );
   }, [fixedDepPipeline]);
 
-  // Chart 3: Deposit policy comparison
   const depositBarData = useMemo(() => {
     return deposits.map(d => ({
       name: d.label,
@@ -213,15 +214,26 @@ export default function ResultsPage() {
       </div>
 
       {/* Chart 1: Forecast quality comparison */}
-      <ChartCard
-        title="Forecast quality comparison"
-        subtitle={<>Cumulative mean error across weighting rules. {bestMethod.label} is best ({fmt(bestMethod.pipeline.summary.meanError, 4)}); {worstMethod.label} is worst ({fmt(worstMethod.pipeline.summary.meanError, 4)}).</>}
-        className="mb-6"
-      >
-        <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={cumErrorData} margin={CHART_MARGIN}>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-sm font-semibold text-slate-800">Forecast quality comparison</h3>
+          <span className="text-[11px] text-slate-400 italic">Drag to zoom</span>
+          <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
+        </div>
+        <p className="text-[11px] text-slate-400 mb-3">
+          Cumulative mean error. {bestMethod.label} is best ({fmt(bestMethod.pipeline.summary.meanError, 4)}); {worstMethod.label} is worst ({fmt(worstMethod.pipeline.summary.meanError, 4)}).
+        </p>
+        <ResponsiveContainer width="100%" height={340}>
+          <LineChart
+            data={cumErrorData}
+            margin={CHART_MARGIN}
+            onMouseDown={cumErrorZoom.onMouseDown}
+            onMouseMove={cumErrorZoom.onMouseMove}
+            onMouseUp={cumErrorZoom.onMouseUp}
+          >
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+              domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]} />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
@@ -237,31 +249,48 @@ export default function ResultsPage() {
                 strokeOpacity={m.key === 'blended' ? 1 : 0.7}
               />
             ))}
+            {cumErrorZoom.state.refLeft && cumErrorZoom.state.refRight && (
+              <ReferenceArea x1={cumErrorZoom.state.refLeft} x2={cumErrorZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+            )}
+            <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
-      </ChartCard>
+      </div>
 
       {/* Charts 2 & 3 */}
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
-        {/* Chart 2: Skill lever in isolation */}
-        <ChartCard
-          title="Skill lever in isolation"
-          subtitle="Fixed deposit: m/b tracks σ when stake noise is removed."
-        >
+        {/* Chart 2: Skill lever */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-sm font-semibold text-slate-800">Skill lever in isolation</h3>
+            <ZoomBadge isZoomed={skillLeverZoom.state.isZoomed} onReset={skillLeverZoom.reset} />
+          </div>
+          <p className="text-[11px] text-slate-400 mb-3">Fixed deposit: m/b tracks σ when stake noise is removed.</p>
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={skillLeverData} margin={CHART_MARGIN}>
+            <LineChart
+              data={skillLeverData}
+              margin={CHART_MARGIN}
+              onMouseDown={skillLeverZoom.onMouseDown}
+              onMouseMove={skillLeverZoom.onMouseMove}
+              onMouseUp={skillLeverZoom.onMouseUp}
+            >
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                domain={[skillLeverZoom.state.left, skillLeverZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
               <Line type="monotone" dataKey="mOverB" name="m/b ratio" stroke={SEM.wager.main} strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="sigma" name="Avg σ" stroke={SEM.skill.main} strokeWidth={2} dot={false} strokeDasharray="4 4" />
+              {skillLeverZoom.state.refLeft && skillLeverZoom.state.refRight && (
+                <ReferenceArea x1={skillLeverZoom.state.refLeft} x2={skillLeverZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+              )}
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </div>
 
-        {/* Chart 3: Deposit policy comparison */}
+        {/* Chart 3: Deposit policy */}
         <ChartCard
           title="Deposit policy comparison"
           subtitle="Mean error by deposit rule. Noisy stake hurts; meaningful deposits help."
@@ -309,7 +338,7 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Key equation reminder */}
+      {/* Key equation */}
       <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
         <MathBlock
           inline

@@ -47,6 +47,13 @@ export function downsample<T>(data: T[], maxPoints: number): T[] {
   return result;
 }
 
+export const BRUSH_PROPS = {
+  height: 22,
+  stroke: '#cbd5e1',
+  fill: '#f8fafc',
+  travellerWidth: 8,
+} as const;
+
 export function movingAvg(values: number[], window: number): number[] {
   const result: number[] = [];
   for (let i = 0; i < values.length; i++) {

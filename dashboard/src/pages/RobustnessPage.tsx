@@ -2,14 +2,16 @@ import { useMemo, useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, ReferenceLine, Cell, Label,
+  Brush, ReferenceArea,
 } from 'recharts';
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
 import {
   AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
-  TOOLTIP_STYLE, fmt, downsample, agentName,
+  TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
 } from '@/components/lab/shared';
+import { useChartZoom } from '@/hooks/useChartZoom';
 
 const DGP_ID = 'baseline' as const;
 const SEED = 42;
@@ -54,63 +56,44 @@ function SectionHeader({ title, question, takeaway }: { title: string; question:
   );
 }
 
+function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
+  if (!isZoomed) return null;
+  return (
+    <button
+      onClick={onReset}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors ml-1"
+    >
+      <span>⟲</span> Reset zoom
+    </button>
+  );
+}
+
 export default function RobustnessPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('intermittency');
 
-  // Intermittency pipeline (bursty behaviour)
   const burstyPipeline = useMemo<PipelineResult>(() => {
-    return runPipeline({
-      dgpId: DGP_ID,
-      behaviourPreset: 'bursty',
-      rounds: ROUNDS,
-      seed: SEED,
-      n: N_AGENTS,
-    });
+    return runPipeline({ dgpId: DGP_ID, behaviourPreset: 'bursty', rounds: ROUNDS, seed: SEED, n: N_AGENTS });
   }, []);
 
   const baselinePipeline = useMemo<PipelineResult>(() => {
-    return runPipeline({
-      dgpId: DGP_ID,
-      behaviourPreset: 'baseline',
-      rounds: ROUNDS,
-      seed: SEED,
-      n: N_AGENTS,
-    });
+    return runPipeline({ dgpId: DGP_ID, behaviourPreset: 'baseline', rounds: ROUNDS, seed: SEED, n: N_AGENTS });
   }, []);
 
-  // Sybil pipeline
   const sybilPipeline = useMemo<PipelineResult>(() => {
-    return runPipeline({
-      dgpId: DGP_ID,
-      behaviourPreset: 'sybil',
-      rounds: ROUNDS,
-      seed: SEED,
-      n: N_AGENTS,
-    });
+    return runPipeline({ dgpId: DGP_ID, behaviourPreset: 'sybil', rounds: ROUNDS, seed: SEED, n: N_AGENTS });
   }, []);
 
-  // Sensitivity: sweep over λ and σ_min
   const sweepData = useMemo(() => {
     const lambdas = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0];
     const sigMins = [0.05, 0.1, 0.2, 0.3, 0.5];
     const results: { lam: number; sigmaMin: number; meanError: number; gini: number }[] = [];
-
     for (const lam of lambdas) {
       for (const sigMin of sigMins) {
         const p = runPipeline({
-          dgpId: DGP_ID,
-          behaviourPreset: 'baseline',
-          rounds: 100,
-          seed: SEED,
-          n: N_AGENTS,
+          dgpId: DGP_ID, behaviourPreset: 'baseline', rounds: 100, seed: SEED, n: N_AGENTS,
           mechanism: { lam, sigma_min: sigMin } as Record<string, number>,
         });
-        results.push({
-          lam,
-          sigmaMin: sigMin,
-          meanError: p.summary.meanError,
-          gini: p.summary.finalGini,
-        });
+        results.push({ lam, sigmaMin: sigMin, meanError: p.summary.meanError, gini: p.summary.finalGini });
       }
     }
     return results;
@@ -119,7 +102,6 @@ export default function RobustnessPage() {
   return (
     <div className="flex-1 overflow-y-auto">
     <div className="max-w-6xl mx-auto px-6 py-8">
-      {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900">Robustness</h2>
         <p className="text-sm font-medium text-slate-700 mt-2">
@@ -127,7 +109,6 @@ export default function RobustnessPage() {
         </p>
       </div>
 
-      {/* Section tabs */}
       <div className="flex gap-1 mb-6">
         {SECTIONS.map(s => (
           <button
@@ -147,11 +128,9 @@ export default function RobustnessPage() {
       {activeSection === 'intermittency' && (
         <IntermittencySection bursty={burstyPipeline} baseline={baselinePipeline} />
       )}
-
       {activeSection === 'sybil' && (
         <SybilSection sybil={sybilPipeline} baseline={baselinePipeline} />
       )}
-
       {activeSection === 'sensitivity' && (
         <SensitivitySection data={sweepData} />
       )}
@@ -160,47 +139,36 @@ export default function RobustnessPage() {
   );
 }
 
-/* ---------- Intermittency ---------- */
+/* ── Intermittency ── */
 
 function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; baseline: PipelineResult }) {
   const N = bursty.traces[0]?.participated.length ?? 6;
+  const skillZoom = useChartZoom();
+  const mOverBZoom = useChartZoom();
 
   const skillData = useMemo(() => {
-    return downsample(
-      bursty.traces.map((t, i) => {
-        const point: Record<string, number> = { round: i + 1 };
-        for (let j = 0; j < N; j++) {
-          point[`F${j + 1}`] = t.sigma_t[j];
-        }
-        return point;
-      }),
-      300,
-    );
+    return downsample(bursty.traces.map((t, i) => {
+      const point: Record<string, number> = { round: i + 1 };
+      for (let j = 0; j < N; j++) point[`F${j + 1}`] = t.sigma_t[j];
+      return point;
+    }), 300);
   }, [bursty.traces, N]);
 
   const mOverBData = useMemo(() => {
-    return downsample(
-      bursty.traces.map((t, i) => {
-        const vals: Record<string, number> = { round: i + 1 };
-        for (let j = 0; j < N; j++) {
-          const b = t.deposits[j];
-          vals[`F${j + 1}`] = b > 0.001 ? t.influence[j] / b : 0;
-        }
-        return vals;
-      }),
-      300,
-    );
+    return downsample(bursty.traces.map((t, i) => {
+      const vals: Record<string, number> = { round: i + 1 };
+      for (let j = 0; j < N; j++) {
+        const b = t.deposits[j];
+        vals[`F${j + 1}`] = b > 0.001 ? t.influence[j] / b : 0;
+      }
+      return vals;
+    }), 300);
   }, [bursty.traces, N]);
 
   const participationData = useMemo(() => {
-    return downsample(
-      bursty.rounds.map(r => ({
-        round: r.round,
-        active: r.participation,
-        rate: r.participation / N,
-      })),
-      300,
-    );
+    return downsample(bursty.rounds.map(r => ({
+      round: r.round, active: r.participation, rate: r.participation / N,
+    })), 300);
   }, [bursty.rounds, N]);
 
   return (
@@ -219,7 +187,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        <ChartCard title="Participation under intermittency" subtitle="Number of active agents per round with bursty behaviour.">
+        <ChartCard title="Participation under intermittency" subtitle="Number of active agents per round.">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={participationData} margin={CHART_MARGIN}>
               <CartesianGrid {...GRID_PROPS} />
@@ -234,15 +202,28 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
               <ReferenceLine y={N} stroke="#94a3b8" strokeDasharray="4 4">
                 <Label value="N" position="right" fill="#94a3b8" fontSize={9} />
               </ReferenceLine>
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Skill trajectories under intermittency" subtitle="σᵢ over time — skill remains stable despite intermittent participation.">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-sm font-semibold text-slate-800">Skill trajectories</h3>
+            <ZoomBadge isZoomed={skillZoom.state.isZoomed} onReset={skillZoom.reset} />
+          </div>
+          <p className="text-[11px] text-slate-400 mb-2">σᵢ over time. Drag to zoom.</p>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={skillData} margin={CHART_MARGIN}>
+            <LineChart
+              data={skillData}
+              margin={CHART_MARGIN}
+              onMouseDown={skillZoom.onMouseDown}
+              onMouseMove={skillZoom.onMouseMove}
+              onMouseUp={skillZoom.onMouseUp}
+            >
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                domain={[skillZoom.state.left, skillZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
@@ -250,16 +231,32 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
                 <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                   stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
               ))}
+              {skillZoom.state.refLeft && skillZoom.state.refRight && (
+                <ReferenceArea x1={skillZoom.state.refLeft} x2={skillZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+              )}
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </div>
       </div>
 
-      <ChartCard title="m/b ratio under intermittency" subtitle="Effective wager / deposit stays within [λ, 1] bounds even with gaps.">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-sm font-semibold text-slate-800">m/b ratio under intermittency</h3>
+          <ZoomBadge isZoomed={mOverBZoom.state.isZoomed} onReset={mOverBZoom.reset} />
+        </div>
+        <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ, 1] bounds. Drag to zoom.</p>
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={mOverBData} margin={CHART_MARGIN}>
+          <LineChart
+            data={mOverBData}
+            margin={CHART_MARGIN}
+            onMouseDown={mOverBZoom.onMouseDown}
+            onMouseMove={mOverBZoom.onMouseMove}
+            onMouseUp={mOverBZoom.onMouseUp}
+          >
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+              domain={[mOverBZoom.state.left, mOverBZoom.state.right]} />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
@@ -271,32 +268,32 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
               <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
             ))}
+            {mOverBZoom.state.refLeft && mOverBZoom.state.refRight && (
+              <ReferenceArea x1={mOverBZoom.state.refLeft} x2={mOverBZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+            )}
+            <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
-      </ChartCard>
+      </div>
     </div>
   );
 }
 
-/* ---------- Sybil ---------- */
+/* ── Sybil ── */
 
 function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: PipelineResult }) {
   const sybilProfit = sybil.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const baselineProfit = baseline.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const profitRatio = baselineProfit > 0 ? sybilProfit / baselineProfit : 1;
+  const wealthZoom = useChartZoom();
 
   const wealthData = useMemo(() => {
     const N = sybil.traces[0]?.participated.length ?? 6;
-    return downsample(
-      sybil.traces.map((t, i) => {
-        const point: Record<string, number> = { round: i + 1 };
-        for (let j = 0; j < N; j++) {
-          point[`F${j + 1}`] = t.wealth_after[j];
-        }
-        return point;
-      }),
-      300,
-    );
+    return downsample(sybil.traces.map((t, i) => {
+      const point: Record<string, number> = { round: i + 1 };
+      for (let j = 0; j < N; j++) point[`F${j + 1}`] = t.wealth_after[j];
+      return point;
+    }), 300);
   }, [sybil.traces]);
 
   const N = sybil.traces[0]?.participated.length ?? 6;
@@ -306,7 +303,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
       <SectionHeader
         title="Sybil resistance"
         question="Can an agent gain by splitting into multiple identities?"
-        takeaway="No measurable advantage from identity splitting in the tested setup. The effective wager scales with skill, neutralising fragmentation."
+        takeaway="No measurable advantage from identity splitting in the tested setup."
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -317,11 +314,23 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        <ChartCard title="Wealth under sybil attack" subtitle="Agents F1–F2 are sybil clones. No sustained wealth divergence from splitting.">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-sm font-semibold text-slate-800">Wealth under sybil attack</h3>
+            <ZoomBadge isZoomed={wealthZoom.state.isZoomed} onReset={wealthZoom.reset} />
+          </div>
+          <p className="text-[11px] text-slate-400 mb-2">Agents F1–F2 are sybil clones. Drag to zoom.</p>
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={wealthData} margin={CHART_MARGIN}>
+            <LineChart
+              data={wealthData}
+              margin={CHART_MARGIN}
+              onMouseDown={wealthZoom.onMouseDown}
+              onMouseMove={wealthZoom.onMouseMove}
+              onMouseUp={wealthZoom.onMouseUp}
+            >
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                domain={[wealthZoom.state.left, wealthZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
@@ -335,9 +344,13 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
                   strokeOpacity={i < 2 ? 1 : 0.5}
                   dot={false} />
               ))}
+              {wealthZoom.state.refLeft && wealthZoom.state.refRight && (
+                <ReferenceArea x1={wealthZoom.state.refLeft} x2={wealthZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+              )}
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h4 className="text-sm font-semibold text-slate-800 mb-3">Why sybil fails</h4>
@@ -348,7 +361,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
             </p>
             <p>
               The effective wager <MathBlock inline latex="m_i = b_i(\lambda + (1-\lambda)\sigma_i)" /> scales
-              with skill, which the clones must individually earn. Splitting doesn't create skill.
+              with skill, which the clones must individually earn.
             </p>
             <p>
               In the tested configuration, the profit ratio is approximately{' '}
@@ -362,11 +375,12 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
   );
 }
 
-/* ---------- Sensitivity ---------- */
+/* ── Sensitivity ── */
 
 function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; meanError: number; gini: number }[] }) {
   const lambdas = [...new Set(data.map(d => d.lam))].sort((a, b) => a - b);
   const sigMins = [...new Set(data.map(d => d.sigmaMin))].sort((a, b) => a - b);
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
 
   const best = data.reduce((a, b) => a.meanError < b.meanError ? a : b);
   const worst = data.reduce((a, b) => a.meanError > b.meanError ? a : b);
@@ -387,7 +401,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
       <SectionHeader
         title="Parameter sensitivity"
         question="How do λ and σ_min affect accuracy and inequality?"
-        takeaway="Lower λ and lower σ_min slightly improve accuracy but can increase inequality. The mechanism is not brittle to parameter choice."
+        takeaway="Lower λ and lower σ_min slightly improve accuracy but can increase inequality. The mechanism is not brittle."
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -407,20 +421,16 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
               {sigMins.map((sig, i) => (
-                <Bar
-                  key={sig}
-                  dataKey={`σ_min=${sig}`}
-                  name={`σ_min=${sig}`}
-                  fill={sigColors[i % sigColors.length]}
-                  radius={[3, 3, 0, 0]}
-                  maxBarSize={20}
-                />
+                <Bar key={sig} dataKey={`σ_min=${sig}`} name={`σ_min=${sig}`}
+                  fill={sigColors[i % sigColors.length]} radius={[3, 3, 0, 0]} maxBarSize={20} />
               ))}
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Accuracy vs inequality trade-off" subtitle="Each dot is one (λ, σ_min) configuration.">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h3 className="text-sm font-semibold text-slate-800 mb-1">Accuracy vs inequality</h3>
+          <p className="text-[11px] text-slate-400 mb-3">Each dot is one (λ, σ_min) config. Hover for details.</p>
           <div className="h-[300px] relative">
             <svg viewBox="0 0 400 300" className="w-full h-full">
               {data.map((d, i) => {
@@ -428,10 +438,30 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
                 const giniRange = Math.max(...data.map(p => p.gini)) - Math.min(...data.map(p => p.gini));
                 const y = 280 - (d.gini - Math.min(...data.map(p => p.gini))) / (giniRange + 0.001) * 260;
                 const sigIdx = sigMins.indexOf(d.sigmaMin);
+                const isHovered = hoveredPoint === i;
                 return (
-                  <g key={i}>
-                    <circle cx={x} cy={y} r={6} fill={sigColors[sigIdx % sigColors.length]} opacity={0.7} />
-                    <title>{`λ=${d.lam} σ_min=${d.sigmaMin}\nerror=${fmt(d.meanError, 4)} gini=${fmt(d.gini, 3)}`}</title>
+                  <g key={i}
+                    onMouseEnter={() => setHoveredPoint(i)}
+                    onMouseLeave={() => setHoveredPoint(null)}
+                    className="cursor-pointer"
+                  >
+                    <circle cx={x} cy={y} r={isHovered ? 9 : 6}
+                      fill={sigColors[sigIdx % sigColors.length]}
+                      opacity={isHovered ? 1 : 0.7}
+                      stroke={isHovered ? '#1e293b' : 'none'}
+                      strokeWidth={2}
+                    />
+                    {isHovered && (
+                      <g>
+                        <rect x={x + 12} y={y - 28} width={120} height={42} rx={6} fill="white" stroke="#e2e8f0" />
+                        <text x={x + 18} y={y - 12} fontSize="10" fill="#334155" fontWeight="600">
+                          λ={d.lam} σ_min={d.sigmaMin}
+                        </text>
+                        <text x={x + 18} y={y + 2} fontSize="10" fill="#64748b">
+                          err={fmt(d.meanError, 4)} gini={fmt(d.gini, 3)}
+                        </text>
+                      </g>
+                    )}
                   </g>
                 );
               })}
@@ -439,22 +469,22 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
               <text x="12" y="150" textAnchor="middle" fontSize="10" fill="#94a3b8" transform="rotate(-90, 12, 150)">Gini →</text>
             </svg>
           </div>
-        </ChartCard>
+        </div>
       </div>
 
       <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
         <p className="text-xs text-slate-600 leading-relaxed">
           The mechanism is not brittle: mean error varies by {fmt(worst.meanError - best.meanError, 4)} across
-          the full grid. Lower <MathBlock inline latex="\lambda" /> gives skill more control over influence,
-          while lower <MathBlock inline latex="\sigma_{\min}" /> allows the mechanism to more aggressively
-          downweight poorly-calibrated agents — at the cost of higher concentration (Gini).
+          the full grid. Lower <MathBlock inline latex="\lambda" /> gives skill more control,
+          while lower <MathBlock inline latex="\sigma_{\min}" /> allows more aggressive
+          downweighting — at the cost of higher concentration (Gini).
         </p>
       </div>
     </div>
   );
 }
 
-/* ---------- Shared ---------- */
+/* ── Shared ── */
 
 function HeadlineCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
