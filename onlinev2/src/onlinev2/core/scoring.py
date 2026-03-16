@@ -1,15 +1,20 @@
-"""
-Scoring rules: loss functions and loss-to-score mappings.
+"""Scoring rules used by the mechanism.
 
-Point mode (point_mae): elicits a point forecast. MAE is strictly proper for
-the median; the score s = 1 - |y - r| is in [0,1] and satisfies Lambert's
-requirement for median-type forecasts (absolute-loss style).
+Point mode (`point_mae`) uses absolute loss, so it elicits a median-type point
+forecast. Absolute loss is proper for the median, and strictly proper only when
+the predictive median is unique.
 
-Quantile mode (quantiles_crps): elicits full probabilistic forecasts. Pinball
-loss and CRPS-hat are strictly proper for (quantiles / full distribution).
-Score mappings use affine bounded transforms guaranteed to land in [0,1].
+Quantile mode (`quantiles_crps`) uses a finite-grid quantile surrogate
+    C_hat = (2 / K) * sum_k L^{tau_k}(y, q_k),
+where L^{tau_k} is the pinball loss at quantile level tau_k.
+This is a quantile-grid approximation to CRPS, not exact CRPS.
 
-This module is pure: no I/O, no plotting, no subprocess. Used only by core.runner.
+Settlement uses bounded affine score maps that land in [0, 1]:
+    score_mae      = 1 - |y - r|
+    score_crps_hat = 1 - C_hat / 2
+
+This module is pure: no I/O, no plotting, no subprocess.
+Used only by core.runner.
 """
 
 import numpy as np
@@ -25,9 +30,12 @@ def mae_loss(outcome, report):
 
 
 def score_mae(outcome, report):
-    """
-    Strictly proper score for the median (MAE) with y, r in [0,1].
-    s = 1 - |y - r|. In [0,1] by construction.
+    """Bounded score induced by absolute loss on [0, 1].
+
+    s = 1 - |y - r|.
+
+    This is proper for median-type point forecasts. Use stricter wording only
+    when the predictive median is known to be unique.
     """
     outcome = np.asarray(outcome, dtype=np.float64)
     report = np.asarray(report, dtype=np.float64)
@@ -61,9 +69,11 @@ def pinball_loss(y, q, tau):
 
 
 def crps_hat_from_quantiles(y, q_matrix, taus):
-    """
-    CRPS approximation: C_hat = (2/K) * sum_k pinball(y, q_k, tau_k).
-    Returns per-agent loss array. With y, q in [0,1], C_hat in [0, 2].
+    """Finite-grid quantile approximation to CRPS.
+
+    C_hat = (2 / K) * sum_k pinball(y, q_k, tau_k)
+
+    Returns a per-agent loss array. With y, q in [0, 1], C_hat lies in [0, 2].
     """
     y = np.asarray(y, dtype=np.float64)
     q_matrix = np.asarray(q_matrix, dtype=np.float64)
@@ -80,9 +90,12 @@ def crps_hat_from_quantiles(y, q_matrix, taus):
 
 
 def score_crps_hat(y, q_matrix, taus):
-    """
-    Strictly proper score for CRPS-hat with y, q in [0,1].
-    s = 1 - C_hat / 2. In [0,1] by construction. Returns per-agent scores.
+    """Bounded score induced by the finite-grid CRPS surrogate.
+
+    s = 1 - C_hat / 2, where C_hat is computed by `crps_hat_from_quantiles`.
+
+    This is the score actually used by settlement. It should be described as a
+    quantile-grid CRPS approximation rather than exact CRPS.
     """
     crps = crps_hat_from_quantiles(y, q_matrix, taus)
     s = 1.0 - crps / 2.0

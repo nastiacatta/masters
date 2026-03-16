@@ -18,6 +18,16 @@ const rng = (seed: number) => {
   };
 };
 
+/** Thesis question groups for experiment selector (README: aggregation, intermittency, sybil, arbitrage, adaptation). */
+export type ThesisGroup =
+  | 'aggregation'
+  | 'intermittency'
+  | 'sybil'
+  | 'arbitrage'
+  | 'adaptation'
+  | 'core'
+  | 'other';
+
 export const mockExperiments: ExperimentMeta[] = [
   {
     name: 'skill_wager',
@@ -28,6 +38,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 3,
     rounds: 10000,
+    family: 'adaptation',
+    thesisTags: ['skill', 'stake'],
   },
   {
     name: 'forecast_aggregation',
@@ -38,6 +50,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 6,
     rounds: 10000,
+    family: 'aggregation',
+    thesisTags: ['aggregation', 'weighting'],
   },
   {
     name: 'behaviour_matrix',
@@ -48,6 +62,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 10,
     rounds: 10000,
+    family: 'other',
+    thesisTags: ['behaviour'],
   },
   {
     name: 'parameter_sweep',
@@ -58,6 +74,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 6,
     rounds: 10000,
+    family: 'adaptation',
+    thesisTags: ['skill', 'sensitivity'],
   },
   {
     name: 'calibration',
@@ -68,6 +86,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 6,
     rounds: 10000,
+    family: 'aggregation',
+    thesisTags: ['calibration'],
   },
   {
     name: 'settlement_sanity',
@@ -78,6 +98,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 10,
     rounds: 10000,
+    family: 'core',
+    thesisTags: ['settlement', 'invariants'],
   },
   {
     name: 'fixed_deposit',
@@ -88,6 +110,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 4,
     rounds: 10000,
+    family: 'adaptation',
+    thesisTags: ['deposit', 'skill'],
   },
   {
     name: 'intermittency_stress_test',
@@ -98,6 +122,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 10,
     rounds: 10000,
+    family: 'intermittency',
+    thesisTags: ['participation', 'missingness'],
   },
   {
     name: 'sybil',
@@ -108,6 +134,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 6,
     rounds: 10000,
+    family: 'sybil',
+    thesisTags: ['identity', 'attack'],
   },
   {
     name: 'arbitrage_scan',
@@ -118,6 +146,8 @@ export const mockExperiments: ExperimentMeta[] = [
     scoringMode: 'CRPS',
     nAgents: 10,
     rounds: 10000,
+    family: 'arbitrage',
+    thesisTags: ['arbitrage', 'strategic'],
   },
 ];
 

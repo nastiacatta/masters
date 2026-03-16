@@ -1,7 +1,7 @@
 """
 Latent Bayes-consistent data generators (truth fixed first).
 
-Formulas (tau_true = true observation noise; platform uses sigma for learned skill):
+Formulas (tau_true = true observation noise; platform uses sigma for learned performance score):
   Z_t ~ N(0, sigma_Z^2),  y_t = Phi(Z_t)
   X_{i,t} = Z_t + beta_i + eps_{i,t},  eps_{i,t} ~ N(0, tau_true_i^2)
   k = sigma_Z^2 / (sigma_Z^2 + tau_true_i^2)
@@ -13,7 +13,7 @@ Formulas (tau_true = true observation noise; platform uses sigma for learned ski
 Symbol hygiene vs mechanism code:
   beta_i = forecaster bias (DGP)      vs  b_i = deposit (mechanism)
   mu_{i,t} = posterior mean (DGP)      vs  m_i = effective wager (mechanism)
-  tau_i = observation noise (DGP)      vs  sigma_i = learned skill (mechanism)
+  tau_i = observation noise (DGP)      vs  sigma_i = learned performance score (mechanism)
 """
 from __future__ import annotations
 

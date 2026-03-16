@@ -16,20 +16,25 @@ import PageHeader from '@/components/dashboard/PageHeader';
 import MechanismBuilderTab from '@/components/mechanismExplorer/MechanismBuilderTab';
 import RoundInspectorTab from '@/components/mechanismExplorer/RoundInspectorTab';
 import OutcomeStudioTab from '@/components/mechanismExplorer/OutcomeStudioTab';
-import type { MechanismConfig, SimParams } from '@/lib/mechanismExplorer/types';
+import type {
+  MechanismConfig,
+  SimParams,
+  SkillVariant,
+} from '@/lib/mechanismExplorer/types';
 
 type TabId = 'builder' | 'inspector' | 'outcome';
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'builder', label: '⬡ Pipeline' },
+  { id: 'builder', label: '⬡ Mechanism builder' },
   { id: 'inspector', label: '⊙ Round inspector' },
   { id: 'outcome', label: '◎ Outcome studio' },
 ];
 
-/** Map composable builder + behaviour preset to the 6-block config used by MechanismBuilderTab (HTML-style labels). */
+/** Map composable builder + behaviour preset + skill to the 6-block config. Uses precise labels (no semantic compression). */
 function builderToConfig(
   builder: BuilderSelections,
   behaviourPreset: BehaviourPresetId,
+  skillVariant: SkillVariant,
 ): MechanismConfig {
   const depositLabels: Record<DepositPolicy, MechanismConfig['deposit']> = {
     fixed_unit: 'Fixed unit',
@@ -44,7 +49,7 @@ function builderToConfig(
   };
   const aggregationLabels: Record<AggregationRule, MechanismConfig['aggregation']> = {
     linear: 'Linear pool',
-    sqrt: 'Equal pool',
+    sqrt: '√-weight pool',
     softmax: 'Log pool',
   };
   const settlementLabels: Record<SettlementRule, MechanismConfig['settlement']> = {
@@ -54,14 +59,14 @@ function builderToConfig(
   const behaviourLabels: Record<BehaviourPresetId, MechanismConfig['behaviour']> = {
     baseline: 'Benign',
     bursty: 'Bursty',
-    risk_averse: 'Benign',
-    manipulator: 'Arbitrageur',
+    risk_averse: 'Risk-averse',
+    manipulator: 'Manipulator',
     sybil: 'Sybil',
-    evader: 'Arbitrageur',
+    evader: 'Evader',
     arbitrageur: 'Arbitrageur',
   };
   return {
-    skill: 'Fast adapt',
+    skill: skillVariant,
     deposit: depositLabels[builder.depositPolicy],
     influence: influenceLabels[builder.influenceRule],
     aggregation: aggregationLabels[builder.aggregationRule],
@@ -70,10 +75,14 @@ function builderToConfig(
   };
 }
 
-/** Map config block selection back to composable builder or behaviour preset. */
+/** Map config block selection back to composable builder, behaviour preset, and skill. */
 function configToBuilderAndPreset(
   config: MechanismConfig,
-): { builder: Partial<BuilderSelections>; preset?: BehaviourPresetId } {
+): {
+  builder: Partial<BuilderSelections>;
+  preset?: BehaviourPresetId;
+  skill?: SkillVariant;
+} {
   const depositFromLabel: Record<string, DepositPolicy> = {
     'Fixed unit': 'fixed_unit',
     'Bankroll×conf': 'wealth_fraction',
@@ -87,8 +96,9 @@ function configToBuilderAndPreset(
   };
   const aggregationFromLabel: Record<string, AggregationRule> = {
     'Linear pool': 'linear',
-    'Equal pool': 'sqrt',
+    '√-weight pool': 'sqrt',
     'Log pool': 'softmax',
+    'Equal pool': 'linear',
   };
   const settlementFromLabel: Record<string, SettlementRule> = {
     'Skill-only': 'skill_only',
@@ -97,6 +107,9 @@ function configToBuilderAndPreset(
   const presetFromLabel: Record<string, BehaviourPresetId> = {
     Benign: 'baseline',
     Bursty: 'bursty',
+    'Risk-averse': 'risk_averse',
+    Manipulator: 'manipulator',
+    Evader: 'evader',
     Sybil: 'sybil',
     Arbitrageur: 'arbitrageur',
   };
@@ -108,6 +121,7 @@ function configToBuilderAndPreset(
       settlementRule: settlementFromLabel[config.settlement] ?? 'skill_only',
     },
     preset: presetFromLabel[config.behaviour],
+    skill: config.skill,
   };
 }
 
@@ -145,6 +159,12 @@ export default function MechanismExplorer() {
 
   const [builder, setBuilder] =
     useState<BuilderSelections>(DEFAULT_BUILDER_SELECTIONS);
+  const [selectedSkill, setSelectedSkill] = useState<SkillVariant>('Fast adapt');
+  const [appliedBuilder, setAppliedBuilder] =
+    useState<BuilderSelections>(DEFAULT_BUILDER_SELECTIONS);
+  const [appliedSimParams, setAppliedSimParams] = useState<SimParams>(() =>
+    initialParamsFromDefs(rounds, nAgents),
+  );
   const [activeTab, setActiveTab] = useState<TabId>('builder');
   const [ribbonStep, setRibbonStep] = useState(0);
   const [selectedForecaster, setSelectedForecaster] = useState<number | null>(
@@ -162,13 +182,13 @@ export default function MechanismExplorer() {
       rounds,
       seed,
       n: nAgents,
-      builder,
+      builder: appliedBuilder,
       mechanism: {
-        gamma: simParams.gamma,
-        lam: simParams.lambda,
-        eta: simParams.eta,
-        baseDepositFraction: simParams.f,
-        utilityPool: simParams.U,
+        gamma: appliedSimParams.gamma,
+        lam: appliedSimParams.lambda,
+        eta: appliedSimParams.eta,
+        baseDepositFraction: appliedSimParams.f,
+        utilityPool: appliedSimParams.U,
       },
     });
   }, [
@@ -178,12 +198,12 @@ export default function MechanismExplorer() {
     rounds,
     seed,
     nAgents,
-    builder,
-    simParams.gamma,
-    simParams.lambda,
-    simParams.eta,
-    simParams.f,
-    simParams.U,
+    appliedBuilder,
+    appliedSimParams.gamma,
+    appliedSimParams.lambda,
+    appliedSimParams.eta,
+    appliedSimParams.f,
+    appliedSimParams.U,
   ]);
 
   useEffect(() => {
@@ -200,8 +220,8 @@ export default function MechanismExplorer() {
   }, [pipeline.traces, nAgents, pipeline.params.utilityPool]);
 
   const config = useMemo(
-    () => builderToConfig(builder, selectedBehaviourPreset),
-    [builder, selectedBehaviourPreset],
+    () => builderToConfig(builder, selectedBehaviourPreset, selectedSkill),
+    [builder, selectedBehaviourPreset, selectedSkill],
   );
 
   const params: SimParams = useMemo(
@@ -210,12 +230,13 @@ export default function MechanismExplorer() {
   );
 
   const setConfig = (next: MechanismConfig) => {
-    const { builder: nextBuilder, preset } =
+    const { builder: nextBuilder, preset, skill: nextSkill } =
       configToBuilderAndPreset(next);
     if (Object.keys(nextBuilder).length) {
       setBuilder((prev) => ({ ...prev, ...nextBuilder }));
     }
     if (preset != null) setSelectedBehaviourPreset(preset);
+    if (nextSkill != null) setSelectedSkill(nextSkill);
   };
 
   const setParams = (next: SimParams) => {
@@ -224,10 +245,20 @@ export default function MechanismExplorer() {
     setSimParams(next);
   };
 
-  const runMessage =
-    pipeline.traces.length > 0
-      ? `✓ Pipeline ready — ${pipeline.traces.length} rounds, ${nAgents} forecasters.`
-      : 'Configure blocks above. Pipeline recomputed on change.';
+  const hasPendingChanges =
+    JSON.stringify(builder) !== JSON.stringify(appliedBuilder) ||
+    JSON.stringify(simParams) !== JSON.stringify(appliedSimParams);
+
+  const handleApply = () => {
+    setAppliedBuilder(builder);
+    setAppliedSimParams(simParams);
+  };
+
+  const runMessage = hasPendingChanges
+    ? 'Change blocks or params, then click Apply to recompute pipeline.'
+    : pipeline.traces.length > 0
+      ? `✓ Pipeline ready — ${pipeline.traces.length} rounds, ${nAgents} forecasters. (Live counterfactual preview.)`
+      : 'Configure blocks above and click Apply to run the pipeline.';
 
   const currentRound = Math.max(
     0,
@@ -237,10 +268,13 @@ export default function MechanismExplorer() {
   return (
     <div className="p-6 max-w-7xl">
       <PageHeader
-        title="Mechanism explorer"
-        description="Interactive mechanism design: swap blocks, rerun pipeline from round 0, then step through rounds and inspect pre-event forecast and post-event settlement."
+        title="Walkthrough"
+        description="Step-by-step round flow: Inputs → DGP → Core → Behaviour → Results → Next state. The tabs below are subsections of this narrative. Pre-run evidence lives in Experiments and Validation; this page runs a live counterfactual pipeline when you Apply."
         question="How does one round move from forecast → influence → payout?"
       />
+      <p className="text-xs text-slate-500 mb-4">
+        This view recomputes the pipeline in the browser when you click Apply. For static experiment outputs from <code className="bg-slate-100 px-1 rounded">public/data/</code>, use Experiments and Validation.
+      </p>
 
       <div className="flex gap-1 border-b border-slate-200 mb-6">
         {TABS.map(({ id, label }) => (
@@ -268,8 +302,9 @@ export default function MechanismExplorer() {
           setConfig={setConfig}
           params={params}
           setParams={setParams}
-          onRun={() => {}}
+          onRun={handleApply}
           runMessage={runMessage}
+          hasPendingChanges={hasPendingChanges}
         />
       )}
 

@@ -92,9 +92,13 @@ export const AGGREGATION_BLOCK: BlockDef = {
       formula: 'q̂ = Σ w̃_i q_i',
       desc: 'Wager-weighted pool (default)',
     },
+    '√-weight pool': {
+      formula: 'w̃_i ∝ √m_i',
+      desc: 'Square-root of effective wager for weights',
+    },
     'Log pool': {
       formula: 'q̂ ∝ exp(Σ w̃_i log q_i)',
-      desc: 'Geometric pool by wager weight',
+      desc: 'Geometric (softmax) pool by wager weight',
     },
   },
 };
@@ -134,13 +138,25 @@ export const BEHAVIOUR_BLOCK: BlockDef = {
       formula: 'active ~ Bernoulli(p_on)',
       desc: 'Intermittent participation',
     },
+    'Risk-averse': {
+      formula: 'Conservative reports, lower stake',
+      desc: 'Hedgers: reports closer to centre',
+    },
+    Manipulator: {
+      formula: 'Biased report, higher deposits',
+      desc: 'One agent pushes away from consensus',
+    },
+    Evader: {
+      formula: 'State-dependent bias, stealth',
+      desc: 'Adaptive evader when manipulation obvious',
+    },
     Sybil: {
       formula: 'N_extra clones, split wealth',
       desc: 'Identity-splitting attack',
     },
     Arbitrageur: {
-      formula: 'q = E[y] + ε if m > mean(m)',
-      desc: 'Exploit wager imbalance',
+      formula: 'Participate when disagreement large',
+      desc: 'Opportunistic staking',
     },
     Insider: {
       formula: 'q ~ N(y, 0.1σ) with prob p_ins',

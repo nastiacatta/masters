@@ -53,7 +53,7 @@ async function fetchJSON<T>(url: string): Promise<T | null> {
   }
 }
 
-const DATA_BASE = '/data';
+const DATA_BASE = `${import.meta.env.BASE_URL}data`;
 
 function expPath(exp: Pick<ExperimentMeta, 'block' | 'name'>): string {
   if (exp.block === 'experiments') {

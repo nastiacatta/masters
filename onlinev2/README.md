@@ -6,7 +6,7 @@ Based on Lambert's (2008) self-financed weighted-score wagering mechanism, exten
 
 ## What this project extends
 
-- **Core settlement** uses Lambert's weighted-score wagering with `s ∈ [0,1]` strictly proper (affine bounded, no clipping in settlement).
+- **Core settlement** uses Lambert-style weighted-score wagering with bounded affine scores `s ∈ [0,1]`. In point mode the score is induced by absolute loss; in quantile mode it is induced by a finite-grid CRPS surrogate.
 - The **online skill state** makes the overall interaction repeated; conditional truthfulness is per-round given fixed `m_t`.
 - This directly targets Raja–Pinson's stated next step of adding **online learning and reputation** to their history-free, one-shot mechanism.
 
@@ -150,7 +150,7 @@ onlinev2/
 │
 ├── payoff/                         # Settlement and scoring
 │   ├── payoff.py                   #   settle_round, skill_payoff, utility_payoff,
-│   │                               #   aggregate_forecast (quantile averaging)
+│   │                               #   aggregate_forecast (weighted quantile avg)
 │   └── scoring.py                  #   score_mae, score_crps_hat, pinball_loss,
 │                                   #   normalised_loss
 │
@@ -208,7 +208,7 @@ onlinev2/
 | Symbol | Name | Definition |
 |--------|------|------------|
 | `b_i` | **deposit** (stake) | money put up by agent i |
-| `σ_i` | **learned skill** | in [σ_min, 1], from EWMA loss mapping |
+| `σ_i` | **learned performance score** | in [σ_min, 1], a monotone transform of EWMA loss |
 | `m_i` | **effective wager** | `b_i · g(σ_i)` where `g(σ) = λ + (1-λ)·σ^η`, the portion at risk |
 | `Π_i` | **payout** | total returned from settlement pool (≥ 0 for active agents) |
 | `π_i` | **profit** | `Π_i - m_i`, can be negative (you can lose up to your wager) |
@@ -220,7 +220,7 @@ onlinev2/
 > **Symbol hygiene**: To avoid collisions between mechanism and DGP variables:
 > - `b_i` = deposit (mechanism), `β_i` = forecaster bias (latent DGP)
 > - `m_i` = effective wager (mechanism), `μ_{i,t}` = posterior mean (latent DGP)
-> - `σ_i` = learned skill (mechanism), `τ_i` = observation noise (DGP)
+> - `σ_i` = learned performance score (mechanism), `τ_i` = observation noise (DGP)
 
 ---
 
@@ -276,15 +276,22 @@ Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` 
 
 ### Scoring rules
 
-- **Point/MAE** (`point_mae`): elicits a **median-type** point forecast. `s = 1 - |y - r|`, bounded in [0,1] for y, r ∈ [0,1]. MAE is strictly proper for the median (Lambert-style absolute-loss); use for point reports, not probability forecasts.
-- **Quantiles/CRPS-hat** (`quantiles_crps`): elicits **probabilistic** forecasts. `s = 1 - Ĉ/2`, where `Ĉ = (2/K) Σ_k L^{τ_k}`. Bounded in [0,1] since Ĉ ∈ [0,2]. CRPS is strictly proper for probabilistic forecasts; Brier and log score are standard for probability forecasts.
-- Both modes satisfy Lambert's `s ∈ [0,1]` requirement.
+- **Point/MAE** (`point_mae`): elicits a **median-type** point forecast.
+  `s = 1 - |y - r|`, bounded in [0,1] for `y, r ∈ [0,1]`.
+  Absolute loss is proper for the median, and strictly proper only when the predictive median is unique.
+- **Quantiles/CRPS-hat** (`quantiles_crps`): elicits a **grid of predictive quantiles**.
+  `s = 1 - Ĉ/2`, where `Ĉ = (2/K) Σ_k L^{τ_k}`.
+  This is a finite-grid quantile approximation to CRPS, not exact CRPS.
+- Both modes satisfy the bounded-score requirement `s ∈ [0,1]`.
 
-### Quantile averaging (QA)
+### Weighted quantile averaging
 
-The aggregate forecast is per-quantile weighted average:
-`q̂_t(τ) = Σ_i w_i · q_{i,t}(τ)`, `w_i = m_i / Σ_j m_j`.
-This is QA (not LOP over CDFs), avoiding the sharpness loss of linear opinion pools.
+The aggregate forecast is the pointwise wager-weighted average:
+`q̂_t(τ_k) = Σ_i w_i · q_{i,t}(τ_k)`, `w_i = m_i / Σ_j m_j`.
+
+For point reports this reduces to a weighted arithmetic mean.
+For quantile reports this is pointwise weighted quantile averaging.
+It should not be described as quasi-arithmetic pooling unless that operator is actually implemented.
 
 ### ROI bounds
 
@@ -307,6 +314,9 @@ Sybilproofness holds for identity splits/merges with identical reports and conse
 | Name | Truth source | Description |
 |------|-------------|-------------|
 | `baseline` | Exogenous | y ~ U(0,1); reports = y + noise (τ_i) |
+
+Note: the baseline DGP is a diagnostic toy design. Because reports are built from the realised `y_t` plus clipping, boundary effects can distort MAE and CRPS comparisons near 0 and 1. Use the latent-fixed DGP for cleaner skill-recovery claims.
+
 | `latent_fixed` | Exogenous | Z ~ N(0,σ_z²), y = Φ(Z); Bayes-consistent reports |
 | `aggregation_method1` | Endogenous | y = w @ x_latent + noise; shared AR(1) mean |
 | `aggregation_method3` | Endogenous | Adds per-forecaster mean shocks η |

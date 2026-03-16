@@ -53,7 +53,7 @@ export default function CoreStep() {
       {subtab === 'aggregation' && (
         <div className="space-y-3">
           <p className="text-sm text-slate-700">
-            Individual forecasts are combined into the aggregate using weights that blend <strong>stake</strong> and <strong>learned skill</strong>.
+            Individual forecasts are combined into the aggregate using weights that blend <strong>stake</strong> and <strong>learned performance score</strong>.
           </p>
           <MathBlock
             accent
@@ -70,7 +70,7 @@ export default function CoreStep() {
       {subtab === 'scoring' && (
         <div className="space-y-3">
           <p className="text-sm text-slate-700">
-            The scoring rule determines how well each report is rewarded; it must be strictly proper to elicit truthful beliefs.
+            The scoring rule determines how well each report is rewarded; proper scoring encourages truthful reporting.
           </p>
           <MathBlock accent label="Point score" latex="s_{i,t} = 1 - |y_t - r_{i,t}|" />
           <p className="text-xs text-slate-500">

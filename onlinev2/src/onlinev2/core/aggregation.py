@@ -1,19 +1,39 @@
-"""
-Forecast aggregation: quantile averaging (QA) by effective wager weights.
+"""Forecast aggregation by wager weights.
 
-Single canonical function: aggregate_forecast. Pure computation only; no I/O.
-Used by core.runner to produce the round aggregate from reports and weights.
+For point reports this is a weighted arithmetic mean.
+
+For quantile reports this is pointwise weighted quantile averaging:
+    q_hat(tau_k) = sum_i w_i * q_i(tau_k),
+    w_i = m_i / sum_j m_j.
+
+This is not quasi-arithmetic pooling and not a linear opinion pool over CDFs.
+It is simply the weighted averaging rule implemented by the mechanism.
 """
 
 import numpy as np
 
 
 def aggregate_forecast(reports, m, alpha=None, eps=1e-12, fallback=None):
-    """
-    Quantile averaging (QA): q_hat(tau) = sum_i w_i * q_i(tau), w_i = m_i / sum_j m_j.
+    """Aggregate reports using normalised wager weights.
 
-    For point mode: reports (n,); for quantile mode: reports (n, K).
-    Returns r_hat. Falls back to `fallback` when no market (sum m ~ 0).
+    Parameters
+    ----------
+    reports : array-like
+        Shape (n,) for point reports or (n, K) for quantile reports.
+    m : array-like
+        Effective wager weights.
+    alpha : array-like, optional
+        Missingness indicator, where alpha_i = 1 excludes forecaster i.
+    eps : float
+        Near-zero threshold for no-market fallback.
+    fallback : scalar or array-like, optional
+        Returned when sum(m) <= eps.
+
+    Returns
+    -------
+    float or np.ndarray
+        Weighted arithmetic mean in point mode, or pointwise weighted quantile
+        average in quantile mode.
     """
     m = np.asarray(m, dtype=np.float64).flatten().copy()
     reports = np.asarray(reports, dtype=np.float64)
@@ -39,7 +59,7 @@ def aggregate_forecast(reports, m, alpha=None, eps=1e-12, fallback=None):
             return float(out) if out.size == 1 else out
         return np.zeros_like(reports[0]) if reports.ndim > 1 else 0.0
 
-    m_hat = m / M
+    w = m / M
     if reports.ndim == 1:
-        return float(np.sum(m_hat * reports))
-    return np.sum(m_hat[:, None] * reports, axis=0)
+        return float(np.sum(w * reports))
+    return np.sum(w[:, None] * reports, axis=0)

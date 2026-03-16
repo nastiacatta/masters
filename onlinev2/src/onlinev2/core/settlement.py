@@ -1,8 +1,8 @@
-"""
-Lambert self-financed weighted-score wagering (2008).
+"""Lambert-style self-financed weighted-score wagering core, with optional
+utility redistribution.
 
-Two-part payoff: skill pool + utility. Zero element for absent forecasters.
-Pure mechanism logic only; no plotting or file I/O.
+The skill pool is self-financed. The utility pool is an added extension used by
+this project. Pure mechanism logic only; no plotting or file I/O.
 """
 
 import numpy as np

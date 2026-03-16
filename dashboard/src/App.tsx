@@ -3,6 +3,7 @@ import { StoreProvider } from '@/lib/store';
 import { ExplorerProvider } from '@/lib/explorerStore';
 import Sidebar from '@/components/dashboard/Sidebar';
 
+import LabPage from '@/pages/LabPage';
 import MechanismExplorer from '@/pages/MechanismExplorer';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
 import Validation from '@/pages/validation/Validation';
@@ -12,12 +13,13 @@ export default function App() {
   return (
     <StoreProvider>
       <ExplorerProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/masters">
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-slate-50 flex flex-col">
+            <main className="flex-1 overflow-hidden bg-slate-50 flex flex-col">
               <Routes>
-                <Route path="/" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/" element={<Navigate to="/lab" replace />} />
+                <Route path="/lab" element={<LabPage />} />
                 <Route path="/walkthrough" element={<MechanismExplorer />} />
                 <Route path="/experiments" element={<ExperimentsPage />} />
                 <Route path="/validation" element={
@@ -28,12 +30,12 @@ export default function App() {
                     </div>
                   </>
                 } />
-                <Route path="/overview" element={<Navigate to="/walkthrough" replace />} />
-                <Route path="/mechanism-explorer" element={<Navigate to="/walkthrough" replace />} />
-                <Route path="/pipeline" element={<Navigate to="/walkthrough" replace />} />
-                <Route path="/comparison" element={<Navigate to="/walkthrough" replace />} />
-                <Route path="/appendix" element={<Navigate to="/walkthrough" replace />} />
-                <Route path="/appendix/*" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/overview" element={<Navigate to="/lab" replace />} />
+                <Route path="/mechanism-explorer" element={<Navigate to="/lab" replace />} />
+                <Route path="/pipeline" element={<Navigate to="/lab" replace />} />
+                <Route path="/comparison" element={<Navigate to="/lab" replace />} />
+                <Route path="/appendix" element={<Navigate to="/lab" replace />} />
+                <Route path="/appendix/*" element={<Navigate to="/lab" replace />} />
               </Routes>
             </main>
           </div>

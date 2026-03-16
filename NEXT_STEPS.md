@@ -47,7 +47,7 @@ Every core comparison must include:
 |--------|-------------|
 | **Equal weights** | Uniform w_i = 1/n |
 | **Stake-only** | w_i ∝ m_i, no skill gate |
-| **Skill-only** | w_i ∝ σ_i (or learned skill), no stake |
+| **Skill-only** | w_i ∝ σ_i (or learned performance score), no stake |
 | **Blended skill+stake** | Full mechanism: m_i = b_i · g(σ_i) |
 | **Bankroll pipeline** | Full five-step pipeline (A→B→C→D→E) |
 | **Quantile averaging vs linear pooling** | Where relevant (Raja et al. argue QA is sharper) |

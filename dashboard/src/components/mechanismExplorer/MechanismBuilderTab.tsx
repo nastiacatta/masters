@@ -22,6 +22,8 @@ interface MechanismBuilderTabProps {
   setParams: (p: SimParams) => void;
   onRun: () => void;
   runMessage: string | null;
+  /** When true, changes are staged; clicking onRun applies them and recomputes the pipeline. */
+  hasPendingChanges?: boolean;
 }
 
 function PipelineBlock({
@@ -129,6 +131,7 @@ export default function MechanismBuilderTab({
   setParams,
   onRun,
   runMessage,
+  hasPendingChanges = false,
 }: MechanismBuilderTabProps) {
   const [blockOrder, setBlockOrder] = useState<number[]>(() =>
     BLOCK_DEFS.map((_, i) => i),
@@ -252,16 +255,20 @@ export default function MechanismBuilderTab({
         <button
           type="button"
           onClick={onRun}
-          className="flex-1 max-w-[240px] py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-opacity"
+          className={`flex-1 max-w-[240px] py-2 text-white text-sm font-medium rounded-lg transition-opacity ${
+            hasPendingChanges
+              ? 'bg-amber-600 hover:bg-amber-700'
+              : 'bg-teal-600 hover:bg-teal-700'
+          }`}
         >
-          ▶ Run simulation
+          {hasPendingChanges ? 'Apply' : 'Apply'}
         </button>
         <span
           className={`flex-1 text-xs ${
             runMessage?.startsWith('✓') ? 'text-teal-700' : 'text-slate-500'
           }`}
         >
-          {runMessage ?? 'Configure blocks above then run.'}
+          {runMessage ?? 'Configure blocks above and click Apply to run the pipeline.'}
         </span>
       </div>
     </div>

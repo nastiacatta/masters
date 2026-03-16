@@ -901,7 +901,7 @@ def run_skill_recovery_benchmark_latent(T=2000, T0=500, tau_i=None, seed=42,
         for i in range(n): ax.annotate(f"  F{i}", (tau_true[i], ms[i]), fontsize=9, color=COLORS["slate"])
         verdict_color = COLORS["green"] if passes else COLORS["red"]
         ax.set(xlabel="True noise $\\tau_i$", ylabel="Mean tail $\\sigma$",
-               title=f"$\\tau$ vs learned skill (Spearman = {mc_s:.3f})")
+               title=f"$\\tau$ vs learned performance score (Spearman = {mc_s:.3f})")
         ax.text(0.02, 0.05, "PASS" if passes else "FAIL", transform=ax.transAxes,
                 fontsize=12, fontweight="bold", color=verdict_color)
 

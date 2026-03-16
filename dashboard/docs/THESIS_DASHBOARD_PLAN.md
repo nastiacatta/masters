@@ -41,7 +41,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │  STEP 3: CORE (Lambert / RAJA mechanism components)                                      │
 │                                                                                          │
-│  3a. SCORING         s_i = 1 − |y − r_i|  (strictly proper, bounded [0,1])               │
+│  3a. SCORING         s_i = 1 − |y − r_i|  (proper for median, bounded [0,1])             │
 │  3b. EFFECTIVE WAGER  m_i = b_i × (λ + (1−λ)σ_i^η)  (skill gate on deposit)               │
 │  3c. AGGREGATION     r̂ = Σ m̂_i r_i  (weighted by effective wager, cap ω_max)             │
 │  3d. SETTLEMENT      π_i = m_i(1 + s_i − s̄)  (skill pool, zero-sum)                      │
