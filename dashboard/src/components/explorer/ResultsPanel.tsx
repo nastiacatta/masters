@@ -20,7 +20,7 @@ import {
 import { useExplorer } from '@/lib/explorerStore';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
-import { fmtNum } from '@/lib/formatters';
+import { fmtNum, fmtPct, agentDisplayName } from '@/lib/formatters';
 
 export default function ResultsPanel() {
   const {
@@ -62,6 +62,10 @@ export default function ResultsPanel() {
     nEff: r.nEff,
   }));
 
+  const lastTrace = result.traces.length > 0 ? result.traces[result.traces.length - 1] : null;
+  const lastRound = result.rounds.length > 0 ? result.rounds[result.rounds.length - 1] : null;
+  const missingnessRate = nAgents > 0 ? 1 - result.summary.meanParticipation / nAgents : null;
+
   return (
     <div className="space-y-6">
       <p className="text-xs text-slate-500">
@@ -70,6 +74,58 @@ export default function ResultsPanel() {
       </p>
 
       <>
+          {/* Final round: building blocks */}
+          {lastTrace && lastRound && (
+            <section>
+              <h3 className="text-sm font-semibold text-slate-800 mb-3">Final round: building blocks</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500">Final aggregate r̂</p>
+                  <p className="text-lg font-semibold text-slate-800">{fmtNum(result.summary.finalAggregate, 4)}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500">Total distributed</p>
+                  <p className="text-lg font-semibold text-slate-800">{fmtNum(result.summary.finalDistributed, 2)}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500">Refunds</p>
+                  <p className="text-lg font-semibold text-slate-800">{fmtNum(lastTrace.refunds.reduce((s, v) => s + v, 0), 2)}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500">Concentration (HHI)</p>
+                  <p className="text-lg font-semibold text-slate-800">{fmtNum(lastRound.hhi, 4)}</p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500">Top share</p>
+                  <p className="text-lg font-semibold text-slate-800">{fmtPct(lastRound.topShare, 1)}</p>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500 mb-2">Contribution shares (weights)</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                    {lastTrace.weights.map((w, i) => (
+                      <span key={i}>{agentDisplayName(i)}: {fmtPct(w, 1)}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[10px] uppercase text-slate-500 mb-2">Top winners (payoff)</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                    {lastTrace.totalPayoff
+                      .map((v, i) => ({ i, v }))
+                      .sort((a, b) => b.v - a.v)
+                      .filter((x) => x.v > 0)
+                      .slice(0, 5)
+                      .map(({ i, v }) => (
+                        <span key={i}>{agentDisplayName(i)}: {fmtNum(v, 2)}</span>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* 1. Forecast quality */}
           <section>
             <h3 className="text-sm font-semibold text-slate-800 mb-3">1. Forecast quality</h3>
@@ -82,7 +138,7 @@ export default function ResultsPanel() {
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="text-[10px] uppercase text-slate-500">Calibration</p>
                 <p className="text-lg font-semibold text-slate-800">—</p>
-                <p className="text-xs text-slate-500">TODO: add if available</p>
+                <p className="text-xs text-slate-500">Add when available</p>
               </div>
             </div>
           </section>
@@ -116,13 +172,13 @@ export default function ResultsPanel() {
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="text-[10px] uppercase text-slate-500">Missingness rate</p>
-                <p className="text-lg font-semibold text-slate-800">—</p>
-                <p className="text-xs text-slate-500">TODO: add if available</p>
+                <p className="text-lg font-semibold text-slate-800">{missingnessRate != null ? fmtPct(missingnessRate, 1) : '—'}</p>
+                <p className="text-xs text-slate-500">1 − participation</p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="text-[10px] uppercase text-slate-500">Attack metrics</p>
                 <p className="text-lg font-semibold text-slate-800">—</p>
-                <p className="text-xs text-slate-500">TODO: add if available</p>
+                <p className="text-xs text-slate-500">Add when available</p>
               </div>
             </div>
           </section>

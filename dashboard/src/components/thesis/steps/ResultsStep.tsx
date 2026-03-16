@@ -1,5 +1,5 @@
 import type { WalkthroughRoundResult } from '@/lib/types';
-import { fmtNum, agentDisplayName } from '@/lib/formatters';
+import { fmtNum, fmtPct, agentDisplayName } from '@/lib/formatters';
 
 interface ResultsStepProps {
   result: WalkthroughRoundResult | null;
@@ -46,7 +46,45 @@ export default function ResultsStep({ result }: ResultsStepProps) {
                 <p className="text-lg font-semibold text-slate-800">{fmtNum(result.gini, 3)}</p>
               </div>
             )}
+            {result.totalDistributed != null && (
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-[10px] uppercase text-slate-500">Total distributed</p>
+                <p className="text-lg font-semibold text-slate-800">{fmtNum(result.totalDistributed, 2)}</p>
+              </div>
+            )}
+            {result.totalRefunds != null && (
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-[10px] uppercase text-slate-500">Refunds</p>
+                <p className="text-lg font-semibold text-slate-800">{fmtNum(result.totalRefunds, 2)}</p>
+              </div>
+            )}
+            {result.topShare != null && (
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-[10px] uppercase text-slate-500">Top share</p>
+                <p className="text-lg font-semibold text-slate-800">{fmtPct(result.topShare, 1)}</p>
+              </div>
+            )}
           </div>
+          {result.contributionShares && Object.keys(result.contributionShares).length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Contribution shares (weights)</h4>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {Object.entries(result.contributionShares).map(([agent, val]) => (
+                  <span key={agent}>{agentDisplayName(agent)}: {fmtPct(val, 1)}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.topWinners && result.topWinners.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Top winners</h4>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {result.topWinners.map(({ agentId, payoff }) => (
+                  <span key={agentId}>{agentDisplayName(agentId)}: {fmtNum(payoff, 2)}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {result.payoffs && Object.keys(result.payoffs).length > 0 && (
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Payoffs π_i</h4>

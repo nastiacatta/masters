@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '@/lib/store';
 import { useExperimentData } from '@/lib/useExperimentData';
 import { fmtNum, AGENT_COLORS, ACCENT, agentDisplayName } from '@/lib/formatters';
@@ -7,6 +7,8 @@ import {
   getMaxRound,
   getRoundMetrics,
 } from '@/lib/selectors';
+import { runPipeline } from '@/lib/coreMechanism/runPipeline';
+import type { DGPId } from '@/lib/coreMechanism/dgpSimulator';
 import PageHeader from '@/components/dashboard/PageHeader';
 import MetricCard from '@/components/dashboard/MetricCard';
 import ChartCard from '@/components/dashboard/ChartCard';
@@ -14,6 +16,17 @@ import ExperimentContext from '@/components/dashboard/ExperimentContext';
 import { LoadingState, EmptyState, ErrorState } from '@/components/dashboard/DataStates';
 import AgentStateTable from '@/components/tables/AgentStateTable';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
+
+const MECHANISM_STEP_LABELS = [
+  'Prior skill',
+  'Participation',
+  'Reports',
+  'Deposits',
+  'Aggregate',
+  'Outcome',
+  'Settlement',
+  'Skill update',
+] as const;
 
 export default function RoundReplay() {
   const { selectedExperiment, currentRound, setCurrentRound, isPlaying, setIsPlaying } = useStore();
@@ -27,6 +40,26 @@ export default function RoundReplay() {
     roundData,
     nAgents,
   );
+
+  const pipelineRounds = Math.min(selectedExperiment?.rounds ?? 500, 500);
+  const pipeline = useMemo(() => {
+    if (!selectedExperiment) return null;
+    const dgpId: DGPId = ['baseline', 'latent_fixed', 'aggregation_method1', 'aggregation_method3'].includes(selectedExperiment.dgp as DGPId)
+      ? (selectedExperiment.dgp as DGPId)
+      : 'baseline';
+    return runPipeline({
+      dgpId,
+      behaviourPreset: 'baseline',
+      rounds: pipelineRounds,
+      seed: 42,
+      n: nAgents,
+    });
+  }, [selectedExperiment?.name, selectedExperiment?.dgp, nAgents, pipelineRounds]);
+
+  const traceIndex = pipeline?.traces.length
+    ? Math.min(currentRound, pipeline.traces.length - 1)
+    : -1;
+  const trace = traceIndex >= 0 ? pipeline!.traces[traceIndex] : null;
 
   const wagerChartData = roundData.map((d, i) => ({
     name: agentDisplayName(d.agent),
@@ -56,10 +89,7 @@ export default function RoundReplay() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isPlaying, maxRound, setCurrentRound, setIsPlaying]);
 
-  const mechanismSteps = [
-    'Prior skill', 'Participation', 'Reports', 'Deposits',
-    'Aggregate', 'Outcome', 'Settlement', 'Skill update',
-  ];
+  const mechanismSteps = MECHANISM_STEP_LABELS;
 
   if (loading) {
     return (
@@ -181,6 +211,56 @@ export default function RoundReplay() {
             </div>
           ))}
         </div>
+        {trace && (
+          <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+            <p className="text-xs text-slate-500">Mechanism values for this round (report → influence → pooled output):</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Prior skill σ</p>
+                <p className="font-mono text-slate-800">{trace.sigma_t.map((s, i) => `${agentDisplayName(i)} ${fmtNum(s, 3)}`).join(', ')}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Participation</p>
+                <p className="font-mono text-slate-800">{trace.participated.map((p, i) => (p ? agentDisplayName(i) : null)).filter(Boolean).join(', ') || '—'}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Reports r_i</p>
+                <p className="font-mono text-slate-800">{trace.reports.map((r, i) => trace.participated[i] ? `${agentDisplayName(i)} ${fmtNum(r, 3)}` : null).filter(Boolean).join(', ') || '—'}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Deposits b_i</p>
+                <p className="font-mono text-slate-800">{trace.deposits.map((d, i) => `${agentDisplayName(i)} ${fmtNum(d, 2)}`).join(', ')}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Influence (effective)</p>
+                <p className="font-mono text-slate-800">{trace.influence.map((v, i) => `${agentDisplayName(i)} ${fmtNum(v, 2)}`).join(', ')}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Weights w_i</p>
+                <p className="font-mono text-slate-800">{trace.weights.map((w, i) => `${agentDisplayName(i)} ${(w * 100).toFixed(1)}%`).join(', ')}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Aggregate r̂</p>
+                <p className="font-mono text-slate-800">{fmtNum(trace.r_hat, 4)}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Outcome y</p>
+                <p className="font-mono text-slate-800">{fmtNum(trace.y, 4)}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Settlement π_i</p>
+                <p className="font-mono text-slate-800">{trace.profit.map((p, i) => `${agentDisplayName(i)} ${fmtNum(p, 2)}`).join(', ')}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2">
+                <p className="font-medium text-slate-600 mb-1">Skill update σ_new</p>
+                <p className="font-mono text-slate-800">{trace.sigma_new.map((s, i) => `${agentDisplayName(i)} ${fmtNum(s, 3)}`).join(', ')}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {!trace && selectedExperiment && (
+          <p className="mt-3 text-xs text-slate-500">Select a round within the pipeline range to see report → influence → pooled output.</p>
+        )}
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-4">

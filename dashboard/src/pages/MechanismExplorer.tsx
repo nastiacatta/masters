@@ -3,18 +3,141 @@ import { useExplorer } from '@/lib/explorerStore';
 import {
   DEFAULT_BUILDER_SELECTIONS,
   type BuilderSelections,
+  type DepositPolicy,
+  type InfluenceRule,
+  type AggregationRule,
+  type SettlementRule,
 } from '@/lib/coreMechanism/runRoundComposable';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
+import { pipelineToSimResult } from '@/lib/mechanismExplorer/composableAdapter';
+import { PARAM_DEFS } from '@/lib/mechanismExplorer/blockDefs';
+import type { BehaviourPresetId } from '@/lib/behaviour/scenarioSimulator';
 import PageHeader from '@/components/dashboard/PageHeader';
+import MechanismBuilderTab from '@/components/mechanismExplorer/MechanismBuilderTab';
+import RoundInspectorTab from '@/components/mechanismExplorer/RoundInspectorTab';
+import OutcomeStudioTab from '@/components/mechanismExplorer/OutcomeStudioTab';
+import type { MechanismConfig, SimParams } from '@/lib/mechanismExplorer/types';
+
+type TabId = 'builder' | 'inspector' | 'outcome';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'builder', label: 'Mechanism builder' },
+  { id: 'inspector', label: 'Round inspector' },
+  { id: 'outcome', label: 'Outcome studio' },
+];
+
+/** Map composable builder + behaviour preset to the 6-block config used by MechanismBuilderTab (HTML-style labels). */
+function builderToConfig(
+  builder: BuilderSelections,
+  behaviourPreset: BehaviourPresetId,
+): MechanismConfig {
+  const depositLabels: Record<DepositPolicy, MechanismConfig['deposit']> = {
+    fixed_unit: 'Fixed unit',
+    wealth_fraction: 'Bankroll×conf',
+    sigma_scaled: 'Oracle-style',
+  };
+  const influenceLabels: Record<InfluenceRule, MechanismConfig['influence']> = {
+    uniform: 'Equal',
+    deposit_only: 'Stake-only',
+    skill_only: 'Skill-only',
+    skill_stake: 'Blended',
+  };
+  const aggregationLabels: Record<AggregationRule, MechanismConfig['aggregation']> = {
+    linear: 'Linear pool',
+    sqrt: 'Equal pool',
+    softmax: 'Log pool',
+  };
+  const settlementLabels: Record<SettlementRule, MechanismConfig['settlement']> = {
+    skill_only: 'Skill-only',
+    skill_plus_utility: 'Skill+utility',
+  };
+  const behaviourLabels: Record<BehaviourPresetId, MechanismConfig['behaviour']> = {
+    baseline: 'Benign',
+    bursty: 'Bursty',
+    risk_averse: 'Benign',
+    manipulator: 'Arbitrageur',
+    sybil: 'Sybil',
+    evader: 'Arbitrageur',
+    arbitrageur: 'Arbitrageur',
+  };
+  return {
+    skill: 'Fast adapt',
+    deposit: depositLabels[builder.depositPolicy],
+    influence: influenceLabels[builder.influenceRule],
+    aggregation: aggregationLabels[builder.aggregationRule],
+    settlement: settlementLabels[builder.settlementRule],
+    behaviour: behaviourLabels[behaviourPreset],
+  };
+}
+
+/** Map config block selection back to composable builder or behaviour preset. */
+function configToBuilderAndPreset(
+  config: MechanismConfig,
+): { builder: Partial<BuilderSelections>; preset?: BehaviourPresetId } {
+  const depositFromLabel: Record<string, DepositPolicy> = {
+    'Fixed unit': 'fixed_unit',
+    'Bankroll×conf': 'wealth_fraction',
+    'Oracle-style': 'sigma_scaled',
+  };
+  const influenceFromLabel: Record<string, InfluenceRule> = {
+    Equal: 'uniform',
+    'Stake-only': 'deposit_only',
+    'Skill-only': 'skill_only',
+    Blended: 'skill_stake',
+  };
+  const aggregationFromLabel: Record<string, AggregationRule> = {
+    'Linear pool': 'linear',
+    'Equal pool': 'sqrt',
+    'Log pool': 'softmax',
+  };
+  const settlementFromLabel: Record<string, SettlementRule> = {
+    'Skill-only': 'skill_only',
+    'Skill+utility': 'skill_plus_utility',
+  };
+  const presetFromLabel: Record<string, BehaviourPresetId> = {
+    Benign: 'baseline',
+    Bursty: 'bursty',
+    Sybil: 'sybil',
+    Arbitrageur: 'arbitrageur',
+  };
+  return {
+    builder: {
+      depositPolicy: depositFromLabel[config.deposit] ?? 'wealth_fraction',
+      influenceRule: influenceFromLabel[config.influence] ?? 'skill_stake',
+      aggregationRule: aggregationFromLabel[config.aggregation] ?? 'linear',
+      settlementRule: settlementFromLabel[config.settlement] ?? 'skill_only',
+    },
+    preset: presetFromLabel[config.behaviour],
+  };
+}
+
+function initialParamsFromDefs(rounds: number, nAgents: number): SimParams {
+  const defaults: Record<string, number> = {};
+  PARAM_DEFS.forEach((def) => {
+    defaults[def.id] = def.val;
+  });
+  return {
+    T: rounds,
+    N: nAgents,
+    gamma: defaults.gamma ?? 1.5,
+    lambda: defaults.lambda ?? 0.3,
+    eta: defaults.eta ?? 1.0,
+    f: defaults.f ?? 0.4,
+    U: defaults.U ?? 50,
+  };
+}
 
 export default function MechanismExplorer() {
   const {
     selectedDGP,
     selectedWeightingMode,
     selectedBehaviourPreset,
+    setSelectedBehaviourPreset,
     rounds,
     seed,
     nAgents,
+    setRounds,
+    setNAgents,
     selectedRound,
     setSelectedRound,
     setLastPipelineResult,
@@ -22,6 +145,14 @@ export default function MechanismExplorer() {
 
   const [builder, setBuilder] =
     useState<BuilderSelections>(DEFAULT_BUILDER_SELECTIONS);
+  const [activeTab, setActiveTab] = useState<TabId>('builder');
+  const [ribbonStep, setRibbonStep] = useState(0);
+  const [selectedForecaster, setSelectedForecaster] = useState<number | null>(
+    null,
+  );
+  const [simParams, setSimParams] = useState<SimParams>(() =>
+    initialParamsFromDefs(rounds, nAgents),
+  );
 
   const pipeline = useMemo(() => {
     return runPipeline({
@@ -32,6 +163,13 @@ export default function MechanismExplorer() {
       seed,
       n: nAgents,
       builder,
+      mechanism: {
+        gamma: simParams.gamma,
+        lam: simParams.lambda,
+        eta: simParams.eta,
+        baseDepositFraction: simParams.f,
+        utilityPool: simParams.U,
+      },
     });
   }, [
     selectedDGP,
@@ -41,207 +179,119 @@ export default function MechanismExplorer() {
     seed,
     nAgents,
     builder,
+    simParams.gamma,
+    simParams.lambda,
+    simParams.eta,
+    simParams.f,
+    simParams.U,
   ]);
 
   useEffect(() => {
     setLastPipelineResult(pipeline);
   }, [pipeline, setLastPipelineResult]);
 
-  const traceIndex = Math.max(
+  const simData = useMemo(() => {
+    if (pipeline.traces.length === 0) return null;
+    return pipelineToSimResult(
+      pipeline.traces,
+      nAgents,
+      pipeline.params.utilityPool,
+    );
+  }, [pipeline.traces, nAgents, pipeline.params.utilityPool]);
+
+  const config = useMemo(
+    () => builderToConfig(builder, selectedBehaviourPreset),
+    [builder, selectedBehaviourPreset],
+  );
+
+  const params: SimParams = useMemo(
+    () => ({ ...simParams, T: rounds, N: nAgents }),
+    [simParams, rounds, nAgents],
+  );
+
+  const setConfig = (next: MechanismConfig) => {
+    const { builder: nextBuilder, preset } =
+      configToBuilderAndPreset(next);
+    if (Object.keys(nextBuilder).length) {
+      setBuilder((prev) => ({ ...prev, ...nextBuilder }));
+    }
+    if (preset != null) setSelectedBehaviourPreset(preset);
+  };
+
+  const setParams = (next: SimParams) => {
+    setRounds(next.T);
+    setNAgents(next.N);
+    setSimParams(next);
+  };
+
+  const runMessage =
+    pipeline.traces.length > 0
+      ? `✓ Pipeline ready — ${pipeline.traces.length} rounds, ${nAgents} forecasters.`
+      : 'Configure blocks above. Pipeline recomputed on change.';
+
+  const currentRound = Math.max(
     0,
     Math.min(selectedRound, pipeline.traces.length - 1),
-  );
-  const trace = pipeline.traces[traceIndex] ?? null;
-
-  if (!trace) {
-    return (
-      <div className="p-6 max-w-7xl">
-        <PageHeader
-          title="Mechanism explorer"
-          description="Interactive mechanism design: swap blocks, rerun pipeline from round 0, then inspect per-round traces."
-          question="How does one round move from forecast → influence → payout?"
-        />
-        <div className="p-6 text-sm text-slate-500">
-          No recomputed rounds. Adjust inputs (rounds, n agents) or run the pipeline from the Results step.
-        </div>
-      </div>
-    );
-  }
-
-  const totalDeposited = trace.deposits.reduce((sum, value) => sum + value, 0);
-  const totalInfluence = trace.influence.reduce((sum, value) => sum + value, 0);
-  const totalDistributed = trace.totalPayoff.reduce(
-    (sum, value) => sum + Math.max(0, value),
-    0,
   );
 
   return (
     <div className="p-6 max-w-7xl">
       <PageHeader
         title="Mechanism explorer"
-        description="Interactive mechanism design: swap blocks, rerun pipeline from round 0, then inspect per-round traces."
+        description="Interactive mechanism design: swap blocks, rerun pipeline from round 0, then step through rounds and inspect pre-event forecast and post-event settlement."
         question="How does one round move from forecast → influence → payout?"
       />
 
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          <select
-            value={builder.depositPolicy}
-            onChange={(e) =>
-              setBuilder((prev) => ({
-                ...prev,
-                depositPolicy: e.target.value as BuilderSelections['depositPolicy'],
-              }))
-            }
-            className="rounded-xl border border-slate-200 px-3 py-2"
+      <div className="flex gap-1 border-b border-slate-200 mb-6">
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveTab(id)}
+            className={`
+              px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors
+              ${
+                activeTab === id
+                  ? 'border-teal-600 text-teal-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }
+            `}
           >
-            <option value="fixed_unit">Fixed unit</option>
-            <option value="wealth_fraction">Wealth fraction</option>
-            <option value="sigma_scaled">Sigma scaled</option>
-          </select>
-
-          <select
-            value={builder.influenceRule}
-            onChange={(e) =>
-              setBuilder((prev) => ({
-                ...prev,
-                influenceRule: e.target.value as BuilderSelections['influenceRule'],
-              }))
-            }
-            className="rounded-xl border border-slate-200 px-3 py-2"
-          >
-            <option value="uniform">Uniform</option>
-            <option value="deposit_only">Deposit only</option>
-            <option value="skill_only">Skill only</option>
-            <option value="skill_stake">Skill × stake</option>
-          </select>
-
-          <select
-            value={builder.aggregationRule}
-            onChange={(e) =>
-              setBuilder((prev) => ({
-                ...prev,
-                aggregationRule: e.target.value as BuilderSelections['aggregationRule'],
-              }))
-            }
-            className="rounded-xl border border-slate-200 px-3 py-2"
-          >
-            <option value="linear">Linear pool</option>
-            <option value="sqrt">Square-root pool</option>
-            <option value="softmax">Softmax pool</option>
-          </select>
-
-          <select
-            value={builder.settlementRule}
-            onChange={(e) =>
-              setBuilder((prev) => ({
-                ...prev,
-                settlementRule: e.target.value as BuilderSelections['settlementRule'],
-              }))
-            }
-            className="rounded-xl border border-slate-200 px-3 py-2"
-          >
-            <option value="skill_only">Skill only</option>
-            <option value="skill_plus_utility">Skill + utility</option>
-          </select>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700">
-              Round {trace.round} / {pipeline.traces.length}
-            </span>
-            <span className="text-xs text-slate-500">true recomputation</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, pipeline.traces.length - 1)}
-            value={traceIndex}
-            onChange={(e) => setSelectedRound(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
-              Aggregate forecast
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-slate-900">
-              {trace.r_hat.toFixed(3)}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
-              Deposited
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-slate-900">
-              {totalDeposited.toFixed(2)}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
-              Effective influence
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-slate-900">
-              {totalInfluence.toFixed(2)}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
-              Distributed
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-slate-900">
-              {totalDistributed.toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-4">
-          <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-[0.14em] text-slate-500">
-              <tr>
-                <th className="px-3 py-2">Agent</th>
-                <th className="px-3 py-2">Active</th>
-                <th className="px-3 py-2">Report</th>
-                <th className="px-3 py-2">Sigma</th>
-                <th className="px-3 py-2">Deposit</th>
-                <th className="px-3 py-2">Influence</th>
-                <th className="px-3 py-2">Weight</th>
-                <th className="px-3 py-2">Profit</th>
-                <th className="px-3 py-2">Wealth after</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trace.reports.map((_, i) => (
-                <tr key={i} className="border-t border-slate-100">
-                  <td className="px-3 py-3 font-medium text-slate-900">
-                    Agent {i}
-                  </td>
-                  <td className="px-3 py-3">
-                    {trace.participated[i] ? 'Yes' : 'No'}
-                  </td>
-                  <td className="px-3 py-3">{trace.reports[i].toFixed(3)}</td>
-                  <td className="px-3 py-3">{trace.sigma_t[i].toFixed(3)}</td>
-                  <td className="px-3 py-3">{trace.deposits[i].toFixed(3)}</td>
-                  <td className="px-3 py-3">{trace.influence[i].toFixed(3)}</td>
-                  <td className="px-3 py-3">
-                    {(trace.weights[i] * 100).toFixed(1)}%
-                  </td>
-                  <td className="px-3 py-3">{trace.profit[i].toFixed(3)}</td>
-                  <td className="px-3 py-3">
-                    {trace.wealth_after[i].toFixed(3)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            {label}
+          </button>
+        ))}
       </div>
+
+      {activeTab === 'builder' && (
+        <MechanismBuilderTab
+          config={config}
+          setConfig={setConfig}
+          params={params}
+          setParams={setParams}
+          onRun={() => {}}
+          runMessage={runMessage}
+        />
+      )}
+
+      {activeTab === 'inspector' && (
+        <RoundInspectorTab
+          simData={simData}
+          currentRound={currentRound}
+          setCurrentRound={setSelectedRound}
+          ribbonStep={ribbonStep}
+          setRibbonStep={setRibbonStep}
+          selectedForecaster={selectedForecaster}
+          setSelectedForecaster={setSelectedForecaster}
+        />
+      )}
+
+      {activeTab === 'outcome' && (
+        <OutcomeStudioTab
+          simData={simData}
+          currentRound={currentRound}
+          onRoundChange={setSelectedRound}
+        />
+      )}
     </div>
   );
 }

@@ -287,6 +287,12 @@ export interface WalkthroughRoundResult {
   payoffs?: Record<number, number>;
   wealthChanges?: Record<number, number>;
   skillWeightChanges?: Record<number, number>;
+  contributionShares?: Record<number, number>;
+  totalDistributed?: number;
+  totalRefunds?: number;
+  concentrationHHI?: number;
+  topShare?: number;
+  topWinners?: { agentId: number; payoff: number }[];
   nEff?: number;
   gini?: number;
   calibrationMetric?: number;
