@@ -14,6 +14,7 @@ from onlinev2.core.metrics import (
     compute_hhi,
     compute_n_eff,
     compute_gini,
+    validate_quantile_monotonicity,
     RoundMetricsLogger,
     NetworkExporter as _NetworkExporter,
 )

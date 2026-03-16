@@ -72,6 +72,10 @@ def settle_round(b, sigma, lam, scores, alpha=None, s_client=None, U=0.0, eps=1e
     m_i = b_i * (lam + (1-lam)*sigma_i^eta). refund_i = b_i - m_i.
     cashout_i = refund_i + total_payoff_i. profit_i = cashout_i - b_i = total_payoff_i - m_i.
     """
+    lam = float(lam)
+    if not (0.0 <= lam <= 1.0):
+        raise ValueError(f"lam must be in [0, 1], got {lam}")
+
     b = np.asarray(b, dtype=np.float64).flatten().copy()
     sigma = np.asarray(sigma, dtype=np.float64).flatten()
     s = np.asarray(scores, dtype=np.float64).flatten()
@@ -82,8 +86,16 @@ def settle_round(b, sigma, lam, scores, alpha=None, s_client=None, U=0.0, eps=1e
 
     if m_pre is not None:
         m = np.asarray(m_pre, dtype=np.float64).flatten().copy()
+        if np.any(m < -eps):
+            raise ValueError("m_pre must be non-negative")
+        m = np.maximum(m, 0.0)
         if alpha is not None:
             m[alpha == 1] = 0.0
+        # Enforce m_i <= b_i for participating agents
+        for i in range(len(b)):
+            if alpha is None or alpha[i] == 0:
+                if m[i] > b[i] + eps:
+                    m[i] = float(b[i])
     else:
         g = float(lam) + (1.0 - float(lam)) * np.power(np.clip(sigma, 0.0, 1.0), float(eta))
         m = b * g

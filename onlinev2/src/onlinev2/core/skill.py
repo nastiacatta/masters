@@ -61,8 +61,13 @@ def update_ewma_loss(
         if use_exposure_weighting:
             if m_t is None:
                 raise ValueError("m_t must be provided when use_exposure_weighting=True")
+            m_ref_val = float(m_ref)
+            if m_ref_val <= 0.0:
+                raise ValueError(
+                    f"m_ref must be > 0 when use_exposure_weighting=True, got {m_ref_val}"
+                )
             m_t = np.asarray(m_t, dtype=np.float64)
-            exposure = np.minimum(1.0, np.maximum(m_t, 0.0) / float(m_ref))
+            exposure = np.minimum(1.0, np.maximum(m_t, 0.0) / m_ref_val)
             rho_eff[present] = rho_eff[present] * exposure[present]
 
         L[present] = (

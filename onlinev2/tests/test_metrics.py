@@ -10,6 +10,7 @@ from onlinev2.mechanism.metrics import (
     compute_gini,
     compute_pit,
     compute_sharpness,
+    validate_quantile_monotonicity,
 )
 
 
@@ -105,6 +106,21 @@ class TestPIT:
         quantiles = np.array([0.2, 0.5, 0.8])
         pit = compute_pit(0.35, quantiles, taus)
         assert 0.1 < pit < 0.5
+
+
+class TestQuantileMonotonicity:
+    def test_valid_ordered(self):
+        q = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+        taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+        assert validate_quantile_monotonicity(q, taus) is True
+
+    def test_crossing_quantiles(self):
+        q = np.array([0.3, 0.2, 0.5, 0.7, 0.9])  # 0.3 > 0.2
+        taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+        assert validate_quantile_monotonicity(q, taus) is False
+
+    def test_single_quantile(self):
+        assert validate_quantile_monotonicity(np.array([0.5]), np.array([0.5])) is True
 
 
 class TestSharpness:

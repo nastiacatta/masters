@@ -13,6 +13,23 @@ from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 
 
+def validate_quantile_monotonicity(
+    quantiles: np.ndarray,
+    taus: np.ndarray,
+    eps: float = 1e-12,
+) -> bool:
+    """
+    Check that quantiles are non-decreasing in tau.
+    Returns True if valid, False if crossing.
+    """
+    quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
+    taus = np.asarray(taus, dtype=np.float64).ravel()
+    if quantiles.size < 2:
+        return True
+    diffs = np.diff(quantiles)
+    return bool(np.all(diffs >= -eps))
+
+
 def compute_pit(
     y_t: float,
     quantiles: np.ndarray,
@@ -21,6 +38,7 @@ def compute_pit(
     """
     Probability Integral Transform: PIT_t = F_t(y_t).
     Linearly interpolates between quantile levels.
+    Assumes quantiles are ordered (use validate_quantile_monotonicity first).
     """
     quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
     taus = np.asarray(taus, dtype=np.float64).ravel()

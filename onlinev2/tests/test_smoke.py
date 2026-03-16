@@ -6,11 +6,10 @@ import tempfile
 
 
 def test_cli_settlement_smoke():
-    """Documented CLI path: run settlement experiment and check output dir and unit test file exist."""
+    """Documented CLI path: run settlement experiment and check output dir and unit test file exist.
+    Requires package installed (pip install -e .); no PYTHONPATH needed when installed."""
     root = os.path.join(os.path.dirname(__file__), "..")
-    src = os.path.abspath(os.path.join(root, "src"))
     env = os.environ.copy()
-    env["PYTHONPATH"] = src + os.pathsep + env.get("PYTHONPATH", "")
     with tempfile.TemporaryDirectory() as tmp:
         outdir = os.path.join(tmp, "out")
         result = subprocess.run(

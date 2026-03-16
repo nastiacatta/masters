@@ -73,9 +73,12 @@ def choose_deposits(
 
 
 def skill_gate(sigma: np.ndarray, lam: float, eta: float = 1.0) -> np.ndarray:
-    """g(sigma) = lam + (1 - lam) * sigma^eta. Returns (n,) in [lam, 1]."""
+    """g(sigma) = lam + (1 - lam) * sigma^eta. Returns (n,) in [lam, 1]. lam must be in [0, 1]."""
+    lam = float(lam)
+    if not (0.0 <= lam <= 1.0):
+        raise ValueError(f"lam must be in [0, 1], got {lam}")
     sigma = np.asarray(sigma, dtype=np.float64)
-    return float(lam) + (1.0 - float(lam)) * np.power(np.clip(sigma, 0.0, 1.0), float(eta))
+    return lam + (1.0 - lam) * np.power(np.clip(sigma, 0.0, 1.0), float(eta))
 
 
 def effective_wager_bankroll(

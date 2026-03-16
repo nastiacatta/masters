@@ -253,7 +253,7 @@ export interface ExperimentData {
 
 export type PageId = 'overview' | 'replay' | 'behaviour' | 'diagnostics' | 'compare';
 
-/** Walkthrough: inputs entering round t */
+/** Walkthrough: inputs entering round t. When isProxy is true, wagers/previousWealth are placeholders. */
 export interface WalkthroughInputs {
   taskType?: string;
   scoringRule?: string;
@@ -264,6 +264,8 @@ export interface WalkthroughInputs {
   previousWealth?: Record<number, number>;
   roundIndex?: number;
   nRounds?: number;
+  /** True when derived from roundRecords only (no trace); values are approximate. */
+  isProxy?: true;
 }
 
 /** Walkthrough: DGP metadata for current scenario */
@@ -278,7 +280,7 @@ export interface WalkthroughDGPMeta {
   formula?: string;
 }
 
-/** Walkthrough: round result metrics */
+/** Walkthrough: round result metrics. When isProxy is true, aggregateForecast is undefined. */
 export interface WalkthroughRoundResult {
   aggregateForecast?: number;
   realisedOutcome?: number;
@@ -296,6 +298,8 @@ export interface WalkthroughRoundResult {
   nEff?: number;
   gini?: number;
   calibrationMetric?: number;
+  /** True when no trace (roundRecords only); aggregate and some metrics are placeholder. */
+  isProxy?: true;
 }
 
 /** Walkthrough: state carried to t+1 */

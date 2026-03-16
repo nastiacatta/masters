@@ -3,18 +3,10 @@ import { StoreProvider } from '@/lib/store';
 import { ExplorerProvider } from '@/lib/explorerStore';
 import Sidebar from '@/components/dashboard/Sidebar';
 
-import Overview from '@/pages/Overview';
 import MechanismExplorer from '@/pages/MechanismExplorer';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
-import Comparison from '@/pages/Comparison';
-import Appendix from '@/pages/Appendix';
-
 import Validation from '@/pages/validation/Validation';
 import ExperimentTopBar from '@/components/dashboard/ExperimentTopBar';
-
-import DGPOverview from '@/pages/dgp/DGPOverview';
-import CoreOverview from '@/pages/core/CoreOverview';
-import BehaviourOverview from '@/pages/behaviour/BehaviourOverview';
 
 export default function App() {
   return (
@@ -25,22 +17,9 @@ export default function App() {
             <Sidebar />
             <main className="flex-1 overflow-y-auto bg-slate-50 flex flex-col">
               <Routes>
-                {/* Thesis-first routes */}
-                <Route path="/" element={<Navigate to="/overview" replace />} />
-                <Route path="/overview" element={<Overview />} />
-                <Route path="/mechanism-explorer" element={<MechanismExplorer />} />
+                <Route path="/" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/walkthrough" element={<MechanismExplorer />} />
                 <Route path="/experiments" element={<ExperimentsPage />} />
-                <Route path="/comparison" element={<Comparison />} />
-                <Route path="/appendix" element={<Appendix />} />
-                <Route path="/appendix/dgp" element={<DGPOverview />} />
-                <Route path="/appendix/core" element={<CoreOverview />} />
-                <Route path="/appendix/behaviours" element={<BehaviourOverview />} />
-
-                {/* Redirects for legacy routes */}
-                <Route path="/walkthrough" element={<Navigate to="/mechanism-explorer" replace />} />
-                <Route path="/pipeline" element={<Navigate to="/mechanism-explorer" replace />} />
-
-                {/* Validation (experiments sub-page) */}
                 <Route path="/validation" element={
                   <>
                     <ExperimentTopBar />
@@ -49,6 +28,12 @@ export default function App() {
                     </div>
                   </>
                 } />
+                <Route path="/overview" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/mechanism-explorer" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/pipeline" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/comparison" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/appendix" element={<Navigate to="/walkthrough" replace />} />
+                <Route path="/appendix/*" element={<Navigate to="/walkthrough" replace />} />
               </Routes>
             </main>
           </div>

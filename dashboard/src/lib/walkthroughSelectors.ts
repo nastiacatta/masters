@@ -1,8 +1,9 @@
 /**
  * Derived selectors for walkthrough: build round-level inputs, DGP meta, results, next state
  * from experiment meta and loaded data, or from mechanism trace when available.
- * When trace is provided, round objects are real (reports → influence → r_hat); otherwise
- * derived from roundRecords only (no placeholder aggregate from average wager).
+ * When trace is provided, round objects are real (reports → influence → r_hat).
+ * When only roundRecords exist (no trace): values are PROXY — wager/wealth/sigma are
+ * approximated from roundRecords; aggregate forecast is undefined. UI should label or hide these.
  */
 import type { ExperimentMeta, SkillWagerPoint, WalkthroughInputs, WalkthroughDGPMeta, WalkthroughRoundResult, WalkthroughNextState } from './types';
 import { DGP_OPTIONS } from './coreMechanism/dgpSimulator';
@@ -53,14 +54,15 @@ export function getInputsFromExperiment(
     };
   }
 
+  // PROXY: no trace — wager/skill/wealth from roundRecords are approximate placeholders
   const roundRecordsAtT = roundRecords?.filter((r) => r.t === roundIndex) ?? [];
   const wagers: Record<number, number> = {};
   const previousSkill: Record<number, number> = {};
   const previousWealth: Record<number, number> = {};
   roundRecordsAtT.forEach((r) => {
-    wagers[r.agent] = r.wager;
+    wagers[r.agent] = r.wager;       // proxy: using wager as placeholder
     previousSkill[r.agent] = r.sigma;
-    previousWealth[r.agent] = r.cumProfit;
+    previousWealth[r.agent] = r.cumProfit; // proxy: cumProfit as wealth placeholder
   });
   const activeAgentIds = [...new Set(roundRecordsAtT.filter((r) => !r.missing).map((r) => r.agent))];
   return {
@@ -73,6 +75,7 @@ export function getInputsFromExperiment(
     previousWealth: Object.keys(previousWealth).length ? previousWealth : undefined,
     roundIndex,
     nRounds: exp?.rounds,
+    isProxy: true as const,
   };
 }
 
@@ -115,6 +118,7 @@ export function getResultFromRoundRecords(
     };
   }
 
+  // PROXY: no trace — aggregate undefined; payoffs/wealth from roundRecords
   const atT = roundRecords?.filter((r) => r.t === roundIndex) ?? [];
   const payoffs: Record<number, number> = {};
   const wealthChanges: Record<number, number> = {};
@@ -130,6 +134,7 @@ export function getResultFromRoundRecords(
     payoffs: Object.keys(payoffs).length ? payoffs : undefined,
     wealthChanges: Object.keys(wealthChanges).length ? wealthChanges : undefined,
     skillWeightChanges: Object.keys(skillWeightChanges).length ? skillWeightChanges : undefined,
+    isProxy: true as const,
   };
 }
 
