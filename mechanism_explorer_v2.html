@@ -1,0 +1,896 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,system-ui,sans-serif);font-size:13px;color:var(--color-text-primary);background:transparent}
+
+/* ── Tabs ── */
+.app{padding:0}
+.top-bar{display:flex;align-items:center;gap:0;border-bottom:0.5px solid var(--color-border-tertiary);padding:0 12px;background:var(--color-background-primary)}
+.tab-btn{padding:10px 16px;border:none;background:none;font-size:12.5px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-0.5px;transition:all .15s;white-space:nowrap}
+.tab-btn.active{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary)}
+.tab-btn:hover:not(.active){color:var(--color-text-primary)}
+.tab-body{padding:14px 12px;display:none}.tab-body.active{display:block}
+
+/* ── Pipeline canvas ── */
+.pipeline-wrap{background:var(--color-background-secondary);border-radius:10px;padding:16px 12px 12px;margin-bottom:14px;border:0.5px solid var(--color-border-tertiary);overflow:hidden}
+.pipeline-label{font-size:10px;font-weight:500;letter-spacing:.07em;color:var(--color-text-tertiary);text-transform:uppercase;margin-bottom:10px}
+.pipeline{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px}
+.pipe-arrow{display:flex;align-items:center;padding:0 3px;color:var(--color-text-tertiary);font-size:14px;flex-shrink:0}
+
+/* ── Pipeline Block ── */
+.pblock{position:relative;min-width:114px;max-width:134px;flex:1;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 10px 8px;cursor:grab;transition:box-shadow .15s,transform .15s,border-color .15s;user-select:none}
+.pblock:active{cursor:grabbing}
+.pblock.drag-over{border-color:#1D9E75;background:var(--color-background-info,#f0faf6)}
+.pblock.dragging{opacity:.45;transform:scale(.97)}
+.pblock.pulse{animation:pulse-block .35s ease}
+@keyframes pulse-block{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.pblock-num{font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--color-text-tertiary);text-transform:uppercase}
+.pblock-name{font-size:11.5px;font-weight:500;margin:3px 0 5px;color:var(--color-text-primary)}
+.pblock-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.pblock-formula{font-family:var(--font-mono,monospace);font-size:9.5px;color:var(--color-text-secondary);margin-top:5px;line-height:1.5;min-height:28px}
+.pblock-swap{position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;font-size:14px;color:var(--color-text-tertiary);padding:2px;line-height:1;border-radius:4px;transition:background .1s}
+.pblock-swap:hover{background:var(--color-background-secondary)}
+.pblock-hint{font-size:9px;color:var(--color-text-tertiary);margin-top:4px;font-style:italic}
+
+/* Variant chooser popover */
+.variant-pop{position:absolute;top:100%;left:0;z-index:99;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:6px;min-width:180px;display:none}
+.variant-pop.open{display:block}
+.variant-opt{padding:6px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:background .1s}
+.variant-opt:hover{background:var(--color-background-secondary)}
+.variant-opt.selected{font-weight:500;color:var(--c-teal)}
+
+/* ── Params grid ── */
+.params-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.param-card{background:var(--color-background-secondary);border-radius:8px;padding:10px 12px}
+.param-card label{font-size:10.5px;color:var(--color-text-secondary);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.param-card label span{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.param-card input[type=range]{width:100%}
+
+/* ── Run button ── */
+.run-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.run-btn{flex:1;max-width:240px;padding:9px 0;background:#1D9E75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.run-btn:hover{opacity:.87}
+.run-status{font-size:12px;color:var(--color-text-secondary);flex:1}
+.run-status.ok{color:#085041}
+
+/* Inline code snippet */
+.snippet-wrap{margin-top:10px}
+.snippet-toggle{font-size:11px;color:var(--color-text-secondary);background:none;border:0.5px solid var(--color-border-tertiary);border-radius:5px;padding:3px 9px;cursor:pointer;transition:background .1s}
+.snippet-toggle:hover{background:var(--color-background-secondary)}
+.snippet-box{display:none;margin-top:8px;background:#1c1c1e;border-radius:8px;padding:12px 14px;overflow-x:auto}
+.snippet-box.open{display:block}
+.snippet-box pre{font-family:var(--font-mono,monospace);font-size:11px;color:#e0e0e0;line-height:1.6;white-space:pre}
+.snippet-box .kw{color:#ff7b72}.snippet-box .fn{color:#79c0ff}.snippet-box .str{color:#a5d6ff}.snippet-box .cm{color:#8b949e}.snippet-box .nm{color:#ffa657}
+
+/* ── Inspector ── */
+.round-nav{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.nav-btn{padding:5px 11px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);border-radius:6px;cursor:pointer;font-size:12px;transition:background .1s}
+.nav-btn:hover{background:var(--color-background-secondary)}
+.round-badge{font-size:13px;font-weight:500}
+.outcome-chip{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary);margin-left:auto}
+
+.ribbon{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.r-step{padding:5px 10px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:1px}
+.r-step .rsym{font-family:var(--font-mono,monospace);font-size:10px;opacity:.7}
+.r-step:hover{border-color:var(--color-border-secondary);background:var(--color-background-secondary)}
+.r-step.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.r-step.active .rsym{opacity:.8}
+.step-desc-bar{font-size:11.5px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-radius:6px;padding:7px 10px;margin-bottom:10px;line-height:1.5}
+
+/* inspector table */
+.itbl-wrap{overflow-x:auto}
+table.itbl{width:100%;border-collapse:collapse;font-size:11.5px}
+table.itbl th{padding:5px 8px;text-align:right;font-size:10px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);white-space:nowrap}
+table.itbl th:first-child{text-align:left}
+table.itbl td{padding:5px 8px;text-align:right;border-bottom:0.5px solid var(--color-border-tertiary)}
+table.itbl td:first-child{text-align:left;font-weight:500}
+table.itbl tr.hl td{background:rgba(250,200,100,.12)}
+table.itbl tr:hover td{background:var(--color-background-secondary);cursor:pointer}
+.wbar-cell{position:relative;min-width:70px}
+.wbar-bg{position:absolute;left:0;top:20%;height:60%;border-radius:2px;background:#E1F5EE;transition:width .3s}
+.wbar-val{position:relative;z-index:1}
+
+/* ── Outcome ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
+.mc{background:var(--color-background-secondary);border-radius:8px;padding:9px 12px}
+.mc-lbl{font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-secondary)}
+.mc-val{font-size:20px;font-weight:500;margin-top:2px}
+.mc-sub{font-size:10px;color:var(--color-text-tertiary);margin-top:1px}
+
+.fbar-wrap{margin:10px 0}
+.fbar-lbl{font-size:11px;color:var(--color-text-secondary);margin-bottom:5px}
+.fbar-track{position:relative;height:24px;background:var(--color-background-secondary);border-radius:6px;overflow:visible}
+.fbar-90{position:absolute;top:0;height:100%;border-radius:6px;background:#B5D4F4}
+.fbar-80{position:absolute;top:0;height:100%;border-radius:6px;background:#85B7EB}
+.fbar-med{position:absolute;top:5%;height:90%;width:3px;background:#185FA5;border-radius:2px}
+.fbar-y{position:absolute;top:5%;height:90%;width:3px;background:#D85A30;border-radius:2px}
+.fbar-axis{position:relative;height:16px;margin-top:2px}
+.fbar-tick{position:absolute;font-size:9px;color:var(--color-text-tertiary);transform:translateX(-50%)}
+
+.section-hd{font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--color-text-tertiary);margin:14px 0 7px}
+.contrib-list{list-style:none}
+.contrib-list li{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:11.5px}
+.cbar{flex:1;height:5px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden}
+.cbar-fill{height:100%;border-radius:3px;background:#1D9E75;transition:width .4s}
+.plist{list-style:none}
+.plist li{display:flex;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.pos{color:#085041;font-weight:500}.neg{color:#993C1D;font-weight:500}
+
+.wchart-wrap{position:relative;height:130px;margin:6px 0 0}
+
+/* No data */
+.no-data{text-align:center;padding:32px;color:var(--color-text-tertiary);font-size:12px}
+
+/* color tokens */
+:root{--c-teal:#1D9E75;--c-teal-lt:#E1F5EE;--c-teal-dk:#085041;--c-amber:#BA7517;--c-amber-lt:#FAEEDA;--c-blue:#185FA5;--c-blue-lt:#E6F1FB;--c-coral:#993C1D;--c-purple:#534AB7;--c-gray:#5F5E5A}
+</style>
+
+<div class="app">
+<div class="top-bar">
+  <button class="tab-btn active" onclick="switchTab('builder',this)">⬡ Pipeline</button>
+  <button class="tab-btn" onclick="switchTab('inspector',this)">⊙ Round inspector</button>
+  <button class="tab-btn" onclick="switchTab('outcome',this)">◎ Outcome studio</button>
+  <button class="tab-btn" onclick="switchTab('code',this)">&lt;/&gt; Code snippets</button>
+</div>
+
+<!-- ══ TAB 1 · PIPELINE BUILDER ══════════════════════════════════════════ -->
+<div id="tab-builder" class="tab-body active">
+  <div class="pipeline-wrap">
+    <div class="pipeline-label">Drag to reorder · click ⇄ to swap variant</div>
+    <div class="pipeline" id="pipeline"></div>
+  </div>
+  <div class="params-grid" id="params-grid"></div>
+  <div class="run-row">
+    <button class="run-btn" onclick="runSim()">▶ Run simulation</button>
+    <span class="run-status" id="run-status">Configure blocks above then run.</span>
+  </div>
+  <div class="snippet-wrap">
+    <button class="snippet-toggle" onclick="toggleSnippet('snip-sim')">Show simulation.py changes ↓</button>
+    <div class="snippet-box" id="snip-sim"><pre><span class="cm"># onlinev2/src/onlinev2/simulation.py
+# Add structured per-round trace output</span>
+
+<span class="kw">def</span> <span class="fn">run_simulation</span>(mechanism, behaviour, T, seed=<span class="nm">42</span>):
+    rng = np.random.default_rng(seed)
+    traces = []
+
+    <span class="kw">for</span> t <span class="kw">in</span> range(T):
+        reports   = behaviour.get_reports(t, rng)
+        sigma     = mechanism.skill.update(t)
+        deposits  = mechanism.deposit.compute(sigma, wealth)
+        wagers    = mechanism.influence.compute(deposits, sigma)
+        weights   = wagers / wagers.sum()
+        aggregate = mechanism.aggregation.pool(reports, weights)
+        y_t       = dgp.realise(rng)
+        scores    = mechanism.scoring.crps(reports, y_t)
+        payouts   = mechanism.settlement.pay(deposits, wagers, scores)
+        profits   = payouts - deposits
+        wealth   += profits
+
+        <span class="cm"># ← NEW: structured trace per round</span>
+        traces.append({
+            <span class="str">"t"</span>: t, <span class="str">"y_t"</span>: y_t,
+            <span class="str">"sigma"</span>: sigma.tolist(),
+            <span class="str">"deposits"</span>: deposits.tolist(),
+            <span class="str">"wagers"</span>: wagers.tolist(),
+            <span class="str">"weights"</span>: weights.tolist(),
+            <span class="str">"aggregate"</span>: aggregate,
+            <span class="str">"scores"</span>: scores.tolist(),
+            <span class="str">"profits"</span>: profits.tolist(),
+            <span class="str">"wealth"</span>: wealth.tolist(),
+            <span class="str">"hhi"</span>: float((weights**<span class="nm">2</span>).sum()),
+            <span class="str">"n_eff"</span>: float(<span class="nm">1</span> / (weights**<span class="nm">2</span>).sum()),
+        })
+
+    <span class="kw">return</span> traces</pre></div>
+  </div>
+</div>
+
+<!-- ══ TAB 2 · ROUND INSPECTOR ═══════════════════════════════════════════ -->
+<div id="tab-inspector" class="tab-body">
+  <div id="insp-nodata" class="no-data">Run the simulation first → Pipeline tab → ▶ Run.</div>
+  <div id="insp-content" style="display:none">
+    <div class="round-nav">
+      <button class="nav-btn" onclick="prevRound()">← prev</button>
+      <span class="round-badge" id="round-badge">Round 1</span>
+      <button class="nav-btn" onclick="nextRound()">next →</button>
+      <span class="outcome-chip" id="outcome-chip"></span>
+    </div>
+    <div class="ribbon" id="ribbon"></div>
+    <div class="step-desc-bar" id="step-desc"></div>
+    <div class="itbl-wrap">
+      <table class="itbl">
+        <thead id="itbl-head"></thead>
+        <tbody id="itbl-body"></tbody>
+      </table>
+    </div>
+    <div class="snippet-wrap" style="margin-top:10px">
+      <button class="snippet-toggle" onclick="toggleSnippet('snip-inspector')">Show RoundInspector.tsx ↓</button>
+      <div class="snippet-box" id="snip-inspector"><pre><span class="cm">// dashboard/src/components/RoundInspector.tsx</span>
+<span class="kw">import</span> { useState } from <span class="str">'react'</span>
+<span class="kw">import type</span> { RoundTrace } <span class="kw">from</span> <span class="str">'../types'</span>
+
+<span class="kw">const</span> STEPS = [
+  { key: <span class="str">'reports'</span>,    sym: <span class="str">'q_i'</span>,  label: <span class="str">'Report'</span>    },
+  { key: <span class="str">'sigma'</span>,      sym: <span class="str">'σ_i'</span>,  label: <span class="str">'Skill'</span>     },
+  { key: <span class="str">'deposits'</span>,   sym: <span class="str">'b_i'</span>,  label: <span class="str">'Deposit'</span>   },
+  { key: <span class="str">'wagers'</span>,     sym: <span class="str">'m_i'</span>,  label: <span class="str">'Wager'</span>     },
+  { key: <span class="str">'weights'</span>,    sym: <span class="str">'w̃_i'</span>,  label: <span class="str">'Weight'</span>    },
+  { key: <span class="str">'aggregate'</span>,  sym: <span class="str">'q̂'</span>,    label: <span class="str">'Aggregate'</span> },
+  { key: <span class="str">'scores'</span>,     sym: <span class="str">'s_i'</span>,  label: <span class="str">'Score'</span>     },
+  { key: <span class="str">'profits'</span>,    sym: <span class="str">'π_i'</span>,  label: <span class="str">'Profit'</span>    },
+] <span class="kw">as const</span>
+
+<span class="kw">export function</span> <span class="fn">RoundInspector</span>({ trace }: { trace: RoundTrace }) {
+  <span class="kw">const</span> [step, setStep] = useState(<span class="nm">0</span>)
+  <span class="kw">const</span> [pinned, setPinned] = useState&lt;<span class="nm">number</span> | <span class="kw">null</span>&gt;(<span class="kw">null</span>)
+  <span class="kw">const</span> active = STEPS[step]
+
+  <span class="kw">return</span> (
+    &lt;div&gt;
+      &lt;<span class="fn">Ribbon</span> steps={STEPS} active={step} onSelect={setStep} /&gt;
+      &lt;<span class="fn">ForecasterTable</span>
+        trace={trace}
+        highlightKey={active.key}
+        pinnedRow={pinned}
+        onRowClick={setPinned}
+      /&gt;
+    &lt;/div&gt;
+  )
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 3 · OUTCOME STUDIO ════════════════════════════════════════════ -->
+<div id="tab-outcome" class="tab-body">
+  <div id="out-nodata" class="no-data">Run the simulation first → Pipeline tab → ▶ Run.</div>
+  <div id="out-content" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="nav-btn" onclick="prevRound();renderOutcome()">← round</button>
+      <span class="round-badge" id="out-round-badge">Round 1</span>
+      <button class="nav-btn" onclick="nextRound();renderOutcome()">round →</button>
+    </div>
+    <div id="pre-event"></div>
+    <div id="post-event"></div>
+    <div class="snippet-wrap" style="margin-top:12px">
+      <button class="snippet-toggle" onclick="toggleSnippet('snip-outcome')">Show OutcomeStudio.tsx ↓</button>
+      <div class="snippet-box" id="snip-outcome"><pre><span class="cm">// dashboard/src/components/OutcomeStudio.tsx</span>
+<span class="kw">export function</span> <span class="fn">PreEventPanel</span>({ trace }: { trace: RoundTrace }) {
+  <span class="kw">const</span> { aggregate, y_t, n_eff, hhi, active_count } = trace
+
+  <span class="kw">return</span> (
+    &lt;section&gt;
+      &lt;<span class="fn">MetricGrid</span> metrics={[
+        { label: <span class="str">'Aggregate median'</span>, value: aggregate.q50.toFixed(<span class="nm">3</span>) },
+        { label: <span class="str">'Active forecasters'</span>, value: active_count },
+        { label: <span class="str">'N_eff (1/HHI)'</span>, value: n_eff.toFixed(<span class="nm">1</span>) },
+        { label: <span class="str">'HHI concentration'</span>, value: hhi.toFixed(<span class="nm">3</span>) },
+      ]} /&gt;
+      &lt;<span class="fn">ForecastBar</span>
+        q10={aggregate.q10} q50={aggregate.q50} q90={aggregate.q90}
+        yTrue={y_t}
+      /&gt;
+      &lt;<span class="fn">ContributorShares</span> weights={trace.weights} active={trace.active} /&gt;
+    &lt;/section&gt;
+  )
+}
+
+<span class="kw">export function</span> <span class="fn">PostEventPanel</span>({ trace }: { trace: RoundTrace }) {
+  <span class="kw">const</span> sorted = trace.profits
+    .map((p, i) =&gt; ({ i, p }))
+    .sort((a, b) =&gt; b.p - a.p)
+
+  <span class="kw">return</span> (
+    &lt;section&gt;
+      &lt;<span class="fn">SettlementSummary</span> trace={trace} /&gt;
+      &lt;<span class="fn">WinnerLoserList</span> sorted={sorted} /&gt;
+      &lt;<span class="fn">WealthChart</span> allRounds={allRounds} N={trace.weights.length} /&gt;
+    &lt;/section&gt;
+  )
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 4 · CODE SNIPPETS ═════════════════════════════════════════════ -->
+<div id="tab-code" class="tab-body">
+  <div style="display:flex;flex-direction:column;gap:10px">
+
+    <div>
+      <div class="section-hd">1 · Replace flat CLI experiment list with grouped sidebar</div>
+      <div class="snippet-box open"><pre><span class="cm">// dashboard/src/components/ExperimentSidebar.tsx
+// Groups the 30+ CLI experiments into 4 categories</span>
+
+<span class="kw">const</span> GROUPS = {
+  <span class="str">'Mechanism'</span>: [<span class="str">'settlement'</span>,<span class="str">'skill_wager'</span>,<span class="str">'aggregation'</span>,
+                 <span class="str">'deposit_policies'</span>,<span class="str">'weight_rules'</span>,<span class="str">'scoring'</span>],
+  <span class="str">'Behaviour'</span>: [<span class="str">'behaviour_matrix'</span>,<span class="str">'intermittency_stress'</span>,
+                <span class="str">'strategic_reporting'</span>,<span class="str">'preference_stress'</span>],
+  <span class="str">'Attacks'</span>:   [<span class="str">'sybil'</span>,<span class="str">'arbitrage_scan'</span>,<span class="str">'collusion_stress'</span>,
+                <span class="str">'insider_advantage'</span>,<span class="str">'wash_activity_gaming'</span>,
+                <span class="str">'identity_attack_matrix'</span>],
+  <span class="str">'Diagnostics'</span>:[<span class="str">'calibration'</span>,<span class="str">'parameter_sweep'</span>,<span class="str">'dgp_comparison'</span>,
+                 <span class="str">'weight_comparison'</span>,<span class="str">'skill_recovery'</span>],
+}
+
+<span class="kw">export function</span> <span class="fn">ExperimentSidebar</span>({ active, onSelect }) {
+  <span class="kw">return</span> (
+    &lt;nav style={{ width: <span class="nm">220</span>, borderRight: <span class="str">'0.5px solid var(--border)'</span> }}&gt;
+      {Object.entries(GROUPS).map(([group, exps]) =&gt; (
+        &lt;div key={group}&gt;
+          &lt;p className=<span class="str">"group-label"</span>&gt;{group}&lt;/p&gt;
+          {exps.map(exp =&gt; (
+            &lt;button key={exp}
+              className={active === exp ? <span class="str">'active'</span> : <span class="str">''</span>}
+              onClick={() =&gt; onSelect(exp)}&gt;
+              {exp.replace(/_/g, <span class="str">' '</span>)}
+            &lt;/button&gt;
+          ))}
+        &lt;/div&gt;
+      ))}
+    &lt;/nav&gt;
+  )
+}</pre></div>
+    </div>
+
+    <div>
+      <div class="section-hd">2 · Forecast quality vs money flow — two-tab split</div>
+      <div class="snippet-box open"><pre><span class="cm">// dashboard/src/pages/ExperimentView.tsx
+// Separates CRPS / calibration from stake / payout panels</span>
+
+<span class="kw">export function</span> <span class="fn">ExperimentView</span>({ data }) {
+  <span class="kw">const</span> [panel, setPanel] = useState&lt;<span class="str">'quality'</span> | <span class="str">'money'</span>&gt;(<span class="str">'quality'</span>)
+
+  <span class="kw">return</span> (
+    &lt;div&gt;
+      &lt;<span class="fn">TabBar</span>
+        tabs={[<span class="str">'Forecast quality'</span>, <span class="str">'Money flow'</span>]}
+        active={panel === <span class="str">'quality'</span> ? <span class="nm">0</span> : <span class="nm">1</span>}
+        onChange={i =&gt; setPanel(i === <span class="nm">0</span> ? <span class="str">'quality'</span> : <span class="str">'money'</span>)}
+      /&gt;
+
+      {panel === <span class="str">'quality'</span> &amp;&amp; (
+        &lt;div&gt;
+          &lt;<span class="fn">CRPSChart</span>     rounds={data.rounds} /&gt;
+          &lt;<span class="fn">CalibrationPIT</span> rounds={data.rounds} /&gt;
+          &lt;<span class="fn">WeightEvolution</span> rounds={data.rounds} /&gt;
+        &lt;/div&gt;
+      )}
+
+      {panel === <span class="str">'money'</span> &amp;&amp; (
+        &lt;div&gt;
+          &lt;<span class="fn">WealthChart</span>   rounds={data.rounds} /&gt;
+          &lt;<span class="fn">StakeHeatmap</span>  rounds={data.rounds} /&gt;
+          &lt;<span class="fn">UtilityFlowBar</span> rounds={data.rounds} /&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  )
+}</pre></div>
+    </div>
+
+    <div>
+      <div class="section-hd">3 · Compare mode — delta view when swapping one block</div>
+      <div class="snippet-box open"><pre><span class="cm">// dashboard/src/hooks/useCompare.ts
+// Returns delta metrics between two mechanism configs</span>
+
+<span class="kw">export function</span> <span class="fn">useCompare</span>(baseRuns, altRuns) {
+  <span class="kw">return</span> useMemo(() =&gt; {
+    <span class="kw">const</span> last = (arr) =&gt; arr[arr.length - <span class="nm">1</span>]
+
+    <span class="kw">return</span> {
+      dCRPS:      <span class="fn">meanCRPS</span>(altRuns) - <span class="fn">meanCRPS</span>(baseRuns),
+      dNeff:      <span class="fn">meanNeff</span>(altRuns) - <span class="fn">meanNeff</span>(baseRuns),
+      dHHI:       <span class="fn">meanHHI</span>(altRuns)  - <span class="fn">meanHHI</span>(baseRuns),
+      dUtility:   <span class="fn">meanUtility</span>(altRuns) - <span class="fn">meanUtility</span>(baseRuns),
+      dWealthGini:<span class="fn">gini</span>(last(altRuns).wealth) - <span class="fn">gini</span>(last(baseRuns).wealth),
+    }
+  }, [baseRuns, altRuns])
+}
+
+<span class="cm">// Usage in DeltaBadge component:</span>
+<span class="kw">function</span> <span class="fn">DeltaBadge</span>({ label, delta, lowerIsBetter = false }) {
+  <span class="kw">const</span> good = lowerIsBetter ? delta &lt; <span class="nm">0</span> : delta &gt; <span class="nm">0</span>
+  <span class="kw">return</span> (
+    &lt;span style={{ color: good ? <span class="str">'#085041'</span> : <span class="str">'#993C1D'</span> }}&gt;
+      {label}: {delta &gt; <span class="nm">0</span> ? <span class="str">'+'</span> : <span class="str">''</span>}{delta.toFixed(<span class="nm">3</span>)}
+    &lt;/span&gt;
+  )
+}</pre></div>
+    </div>
+
+    <div>
+      <div class="section-hd">4 · Structured trace type for TypeScript dashboard</div>
+      <div class="snippet-box open"><pre><span class="cm">// dashboard/src/types.ts</span>
+<span class="kw">export interface</span> RoundTrace {
+  t:          number
+  y_t:        number
+  active:     boolean[]
+  reports:    (number | null)[]    <span class="cm">// median per forecaster</span>
+  q10s:       (number | null)[]
+  q90s:       (number | null)[]
+  sigma:      number[]             <span class="cm">// skill σ_i</span>
+  deposits:   number[]             <span class="cm">// b_i</span>
+  wagers:     number[]             <span class="cm">// m_i</span>
+  weights:    number[]             <span class="cm">// w̃_i</span>
+  aggregate:  { q10: number; q50: number; q90: number }
+  scores:     number[]             <span class="cm">// CRPS per forecaster</span>
+  refunds:    number[]
+  payouts:    number[]
+  profits:    number[]
+  wealth:     number[]
+  hhi:        number
+  n_eff:      number
+  total_deposit: number
+  total_wager:   number
+  total_payout:  number
+  U:          number
+}
+
+<span class="kw">export interface</span> SimResult {
+  rounds:  RoundTrace[]
+  config:  MechanismConfig
+  N:       number
+  T:       number
+  seed:    number
+}</pre></div>
+    </div>
+
+  </div>
+</div>
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+
+const BLOCKS = [
+  { id:'skill', label:'Skill update', num:'01',
+    color:'#1D9E75', colorLt:'#E1F5EE', colorDk:'#085041',
+    variants:{
+      'Fast adapt':  { formula:'σ=σ_min+(1-σ_min)e^{-γL}', badge:'default' },
+      'EWMA':        { formula:'σ=α·σ+(1-α)·L̄', badge:'alt' },
+      'Fixed':       { formula:'σ=σ_min (constant)', badge:'alt' },
+      'Slow adapt':  { formula:'σ=σ_min+(1-σ_min)e^{-0.2L}', badge:'alt' },
+    }, selected:'Fast adapt' },
+  { id:'deposit', label:'Deposit policy', num:'02',
+    color:'#185FA5', colorLt:'#E6F1FB', colorDk:'#0C447C',
+    variants:{
+      'Bankroll×conf':{ formula:'b=min(W,f·W·c,b_max)', badge:'default' },
+      'Fixed unit':  { formula:'b=min(W,b_max)', badge:'alt' },
+      'Random':      { formula:'b~U(0,W·f)', badge:'alt' },
+      'Oracle':      { formula:'b=W·f if skilled else ε', badge:'alt' },
+    }, selected:'Bankroll×conf' },
+  { id:'influence', label:'Influence rule', num:'03',
+    color:'#BA7517', colorLt:'#FAEEDA', colorDk:'#412402',
+    variants:{
+      'Blended':     { formula:'m=b(λ+(1-λ)σ^η)', badge:'default' },
+      'Equal':       { formula:'m=b', badge:'alt' },
+      'Stake-only':  { formula:'m=b·λ', badge:'alt' },
+      'Skill-only':  { formula:'m=b·σ^η', badge:'alt' },
+      'Capped':      { formula:'m=min(b(λ+(1-λ)σ^η),cap)', badge:'alt' },
+    }, selected:'Blended' },
+  { id:'aggregation', label:'Aggregation', num:'04',
+    color:'#534AB7', colorLt:'#EEEDFE', colorDk:'#26215C',
+    variants:{
+      'Linear pool': { formula:'q̂=Σw̃_i·q_i', badge:'default' },
+      'Equal pool':  { formula:'q̂=(1/N)Σq_i', badge:'alt' },
+      'Log pool':    { formula:'q̂∝exp(Σw̃_i log q_i)', badge:'alt' },
+    }, selected:'Linear pool' },
+  { id:'settlement', label:'Settlement', num:'05',
+    color:'#993C1D', colorLt:'#FAECE7', colorDk:'#4A1B0C',
+    variants:{
+      'Skill+utility':{ formula:'pay=refund+U·score/Σs', badge:'default' },
+      'Skill-only':  { formula:'pay=U·score/Σscore', badge:'alt' },
+      'No-arbitrage':{ formula:'pay=b+ΔWealth_mkt', badge:'alt' },
+    }, selected:'Skill+utility' },
+  { id:'behaviour', label:'Behaviour', num:'06',
+    color:'#5F5E5A', colorLt:'#F1EFE8', colorDk:'#2C2C2A',
+    variants:{
+      'Benign':      { formula:'q~N(y,σ_i)', badge:'default' },
+      'Bursty':      { formula:'active~Bernoulli(p)', badge:'alt' },
+      'Sybil':       { formula:'N clones, split wealth', badge:'alt' },
+      'Insider':     { formula:'q~N(y,0.1σ) w.p. p_ins', badge:'alt' },
+      'Arbitrageur': { formula:'q=E[y]+ε if m>mean', badge:'alt' },
+    }, selected:'Benign' },
+];
+
+const PARAMS = [
+  { id:'T', label:'Rounds (T)', min:10, max:80, step:5, val:40 },
+  { id:'N', label:'Forecasters (N)', min:3, max:12, step:1, val:6 },
+  { id:'gamma', label:'γ — skill decay', min:0.1, max:5, step:0.1, val:1.5 },
+  { id:'lambda', label:'λ — stake weight', min:0, max:1, step:0.05, val:0.3 },
+  { id:'eta', label:'η — skill exponent', min:0.5, max:3, step:0.1, val:1.0 },
+  { id:'f', label:'f — max fraction', min:0.05, max:0.9, step:0.05, val:0.4 },
+  { id:'U', label:'U — utility/round', min:10, max:200, step:10, val:50 },
+];
+let P = {}; PARAMS.forEach(p => P[p.id] = p.val);
+let simData = null, curR = 0, ribbonIdx = 0, pinnedF = null;
+
+const STEPS = [
+  { key:'reports',    sym:'q_i',  label:'Report',    desc:'Each forecaster submits a predictive distribution. Median shown here.' },
+  { key:'sigma',      sym:'σ_i',  label:'Skill',     desc:'σ_i ∈ [σ_min,1] — skill from past CRPS loss. High σ → more influence.' },
+  { key:'deposits',   sym:'b_i',  label:'Deposit',   desc:'b_i = min(W_i, f·W_i·c_i, b_max). Wealth staked this round.' },
+  { key:'wagers',     sym:'m_i',  label:'Wager',     desc:'m_i = b_i(λ + (1−λ)σ_i^η). Effective wager amplified by skill.' },
+  { key:'weights',    sym:'w̃_i',  label:'Weight',    desc:'w̃_i = m_i / Σm_j. Normalised market share driving the aggregate.' },
+  { key:'aggregate',  sym:'q̂',   label:'Aggregate', desc:'q̂ = Σw̃_i·q_i — wager-weighted pooled forecast for this round.' },
+  { key:'scores',     sym:'s_i',  label:'Score',     desc:'CRPS score per forecaster — measures calibration and sharpness.' },
+  { key:'profits',    sym:'π_i',  label:'Profit',    desc:'π_i = payout − deposit. Positive = gain, negative = loss.' },
+  { key:'wealth',     sym:'W_i',  label:'Wealth',    desc:'W_i ← W_i + π_i. Persistent wealth carried forward.' },
+];
+
+// ── Drag-and-drop ───────────────────────────────────────────────────────────
+
+let dragIdx = null;
+
+function renderPipeline() {
+  const wrap = document.getElementById('pipeline');
+  wrap.innerHTML = '';
+  BLOCKS.forEach((b, i) => {
+    const v = b.variants[b.selected];
+    const el = document.createElement('div');
+    if (i > 0) {
+      const arr = document.createElement('div');
+      arr.className = 'pipe-arrow'; arr.textContent = '›';
+      wrap.appendChild(arr);
+    }
+    el.className = 'pblock';
+    el.draggable = true;
+    el.dataset.idx = i;
+    el.innerHTML = `
+      <div class="pblock-num">${b.num}</div>
+      <div class="pblock-name">${b.label}</div>
+      <span class="pblock-badge" style="background:${b.colorLt};color:${b.colorDk}">${b.selected}</span>
+      <div class="pblock-formula">${v.formula}</div>
+      <div class="pblock-hint">drag to reorder</div>
+      <button class="pblock-swap" title="Swap variant" onclick="openVariant(event,${i})">⇄</button>
+      <div class="variant-pop" id="vpop-${i}">
+        ${Object.keys(b.variants).map(k =>
+          `<div class="variant-opt${k===b.selected?' selected':''}" onclick="setVariant(${i},'${k}')">${k}</div>`
+        ).join('')}
+      </div>`;
+    el.addEventListener('dragstart', e => { dragIdx = i; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    el.addEventListener('dragend',   () => { dragIdx = null; el.classList.remove('dragging'); document.querySelectorAll('.pblock').forEach(b=>b.classList.remove('drag-over')); });
+    el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragIdx !== null && dragIdx !== i) {
+        const tmp = BLOCKS[dragIdx]; BLOCKS[dragIdx] = BLOCKS[i]; BLOCKS[i] = tmp;
+        renderPipeline();
+      }
+    });
+    wrap.appendChild(el);
+  });
+}
+
+function openVariant(e, idx) {
+  e.stopPropagation();
+  const pop = document.getElementById('vpop-'+idx);
+  const wasOpen = pop.classList.contains('open');
+  document.querySelectorAll('.variant-pop').forEach(p => p.classList.remove('open'));
+  if (!wasOpen) pop.classList.add('open');
+}
+document.addEventListener('click', () => document.querySelectorAll('.variant-pop').forEach(p => p.classList.remove('open')));
+
+function setVariant(idx, key) {
+  BLOCKS[idx].selected = key;
+  renderPipeline();
+}
+
+// ── Params ──────────────────────────────────────────────────────────────────
+
+function renderParams() {
+  const grid = document.getElementById('params-grid');
+  grid.innerHTML = '';
+  PARAMS.forEach(p => {
+    const d = document.createElement('div'); d.className = 'param-card';
+    d.innerHTML = `<label>${p.label}: <span id="pv-${p.id}">${P[p.id]}</span></label>
+      <input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${P[p.id]}"
+        oninput="P['${p.id}']=+this.value;document.getElementById('pv-${p.id}').textContent=this.value">`;
+    grid.appendChild(d);
+  });
+}
+
+// ── Simulation ───────────────────────────────────────────────────────────────
+
+function getCfg(id) { return BLOCKS.find(b=>b.id===id)?.selected; }
+
+function rng(seed) { let s=seed||1; return ()=>{ s^=s<<13;s^=s>>17;s^=s<<5;return(s>>>0)/4294967296}; }
+function norm(r,mu,s){ const u=1-r(),v=r(); return mu+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+function runSim() {
+  const r=rng(42), T=P.T, N=P.N;
+  const gamma=P.gamma, lambda=P.lambda, eta=P.eta, f=P.f, U=P.U;
+  const W0=100, b_max=40, sm=0.1, cm=0.1, cx=1, bc=2;
+  const wealth=Array.from({length:N},()=>W0);
+  const cumL=Array.from({length:N},()=>0);
+  const rounds=[];
+
+  for(let t=0;t<T;t++){
+    const yt=0.3+0.5*r();
+    let active=Array.from({length:N},()=>true);
+    if(getCfg('behaviour')==='Bursty') active=active.map(()=>r()>0.35);
+    if(active.every(a=>!a)) active[0]=true;
+
+    const sigma=Array.from({length:N},(_,i)=>{
+      if(getCfg('skill')==='Fixed') return sm+0.3*(i/N);
+      if(getCfg('skill')==='EWMA') return Math.max(sm,1-0.5*(cumL[i]/Math.max(1,t)));
+      if(getCfg('skill')==='Slow adapt') return sm+(1-sm)*Math.exp(-0.2*cumL[i]);
+      return sm+(1-sm)*Math.exp(-gamma*cumL[i]);
+    });
+
+    const reports=Array.from({length:N},(_,i)=>{
+      if(!active[i]) return null;
+      const ins=getCfg('behaviour')==='Insider'&&r()<0.3;
+      const noise=ins?0.04:(0.04+(1-sigma[i])*0.3);
+      const med=norm(r,yt,noise);
+      const hw=Math.abs(norm(r,0.08+(1-sigma[i])*0.22,0.02));
+      return{q10:med-hw,q50:med,q90:med+hw};
+    });
+
+    const widths=reports.map(rp=>rp?rp.q90-rp.q10:null);
+    const confidence=widths.map(w=>w===null?null:Math.min(cx,Math.max(cm,Math.exp(-bc*w))));
+
+    const deposits=Array.from({length:N},(_,i)=>{
+      if(!active[i]) return 0;
+      const W=wealth[i];
+      if(getCfg('deposit')==='Fixed unit') return Math.min(W,b_max);
+      if(getCfg('deposit')==='Random') return Math.min(W,W*f*r());
+      if(getCfg('deposit')==='Oracle') return confidence[i]>0.5?Math.min(W,f*W,b_max):0.1;
+      return Math.min(W,f*W*confidence[i],b_max);
+    });
+
+    const wagers=Array.from({length:N},(_,i)=>{
+      if(!active[i]) return 0;
+      const b=deposits[i];
+      if(getCfg('influence')==='Equal') return b;
+      if(getCfg('influence')==='Stake-only') return b*lambda;
+      if(getCfg('influence')==='Skill-only') return b*Math.pow(sigma[i],eta);
+      const raw=b*(lambda+(1-lambda)*Math.pow(sigma[i],eta));
+      return getCfg('influence')==='Capped'?Math.min(raw,b_max*0.5):raw;
+    });
+
+    const tw=wagers.reduce((a,b)=>a+b,0)||1;
+    const weights=wagers.map(m=>m/tw);
+
+    let aggM=0,agg10=0,agg90=0;
+    if(getCfg('aggregation')==='Equal pool'){
+      const ar=reports.filter(r=>r!==null); const na=ar.length||1;
+      aggM=ar.reduce((s,r)=>s+r.q50,0)/na;
+      agg10=ar.reduce((s,r)=>s+r.q10,0)/na;
+      agg90=ar.reduce((s,r)=>s+r.q90,0)/na;
+    } else if(getCfg('aggregation')==='Log pool'){
+      const vi=reports.map((r,i)=>r?i:-1).filter(i=>i>=0);
+      aggM=vi.length?Math.exp(vi.reduce((s,i)=>s+weights[i]*Math.log(Math.max(.01,reports[i].q50)),0)):.5;
+      agg10=vi.length?Math.exp(vi.reduce((s,i)=>s+weights[i]*Math.log(Math.max(.01,reports[i].q10)),0)):.3;
+      agg90=vi.length?Math.exp(vi.reduce((s,i)=>s+weights[i]*Math.log(Math.max(.01,reports[i].q90)),0)):.7;
+    } else {
+      aggM=reports.reduce((s,r,i)=>s+(r?weights[i]*r.q50:0),0);
+      agg10=reports.reduce((s,r,i)=>s+(r?weights[i]*r.q10:0),0);
+      agg90=reports.reduce((s,r,i)=>s+(r?weights[i]*r.q90:0),0);
+    }
+
+    const scores=reports.map((rp,i)=>!rp?0:-(Math.abs(rp.q50-yt)+(rp.q90-rp.q10)*0.5));
+    const posSumS=scores.reduce((a,s)=>a+Math.max(0,s),0)||1;
+    const scoreShares=scores.map(s=>Math.max(0,s)/posSumS);
+    const refunds=Array.from({length:N},(_,i)=>active[i]?Math.max(0,deposits[i]-wagers[i]):0);
+
+    const payouts=Array.from({length:N},(_,i)=>{
+      if(!active[i]) return 0;
+      if(getCfg('settlement')==='Skill-only') return U*scoreShares[i];
+      if(getCfg('settlement')==='No-arbitrage') return deposits[i]+(tw>0?U*weights[i]:0);
+      return refunds[i]+U*scoreShares[i];
+    });
+    const profits=payouts.map((p,i)=>p-deposits[i]);
+    profits.forEach((pi,i)=>{ wealth[i]=Math.max(1,wealth[i]+pi); });
+    scores.forEach((s,i)=>{ if(active[i]) cumL[i]+=Math.max(0,-s); });
+
+    const hhi=weights.reduce((s,w)=>s+w*w,0);
+    rounds.push({
+      t,y_true:yt,active,
+      reports:reports.map(r=>r?r.q50:null),
+      q10s:reports.map(r=>r?r.q10:null),
+      q90s:reports.map(r=>r?r.q90:null),
+      sigma:[...sigma],deposits:[...deposits],wagers,weights,
+      aggregate:{q50:aggM,q10:agg10,q90:agg90},
+      scores,scoreShares,refunds,payouts,profits,
+      wealth:[...wealth],hhi,nEff:1/hhi,
+      totalDeposit:deposits.reduce((a,b)=>a+b,0),
+      totalWager:tw,totalRefund:refunds.reduce((a,b)=>a+b,0),
+      totalPayout:payouts.reduce((a,b)=>a+b,0),U,
+    });
+  }
+
+  simData={rounds,N,T};
+  curR=0; ribbonIdx=0; pinnedF=null;
+  const s=document.getElementById('run-status');
+  s.textContent=`✓ Done — ${T} rounds, ${N} forecasters.`;
+  s.className='run-status ok';
+  renderInspector(); renderOutcome();
+}
+
+// ── Tab switch ───────────────────────────────────────────────────────────────
+
+function switchTab(name,btn) {
+  document.querySelectorAll('.tab-body').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='inspector'&&simData) renderInspectorRound();
+  if(name==='outcome'&&simData) renderOutcome();
+}
+
+// ── Inspector ────────────────────────────────────────────────────────────────
+
+function renderInspector(){
+  if(!simData)return;
+  document.getElementById('insp-nodata').style.display='none';
+  document.getElementById('insp-content').style.display='block';
+  renderInspectorRound();
+}
+
+function renderInspectorRound(){
+  if(!simData)return;
+  const rd=simData.rounds[curR], N=simData.N;
+  document.getElementById('round-badge').textContent=`Round ${curR+1} / ${simData.T}`;
+  document.getElementById('outcome-chip').textContent=`y = ${rd.y_true.toFixed(3)}`;
+
+  // ribbon
+  document.getElementById('ribbon').innerHTML=STEPS.map((s,i)=>`
+    <div class="r-step${i===ribbonIdx?' active':''}" onclick="setRibbon(${i})">
+      <span>${s.label}</span><span class="rsym">${s.sym}</span>
+    </div>`).join('');
+
+  document.getElementById('step-desc').textContent=STEPS[ribbonIdx].desc;
+
+  const step=STEPS[ribbonIdx];
+  const maxW=Math.max(...rd.weights);
+  document.getElementById('itbl-head').innerHTML=`<tr>
+    <th>Forecaster</th><th>Active</th><th>Median q</th>
+    ${step.key!=='aggregate'?`<th>${step.sym}</th>`:''}
+    <th>Skill σ</th><th>Weight w̃</th><th>Profit π</th><th>Wealth W</th>
+  </tr>`;
+
+  const stepVals=rd[step.key];
+  document.getElementById('itbl-body').innerHTML=Array.from({length:N},(_,i)=>{
+    const hi=i===pinnedF;
+    const sv=Array.isArray(stepVals)?stepVals[i]:(stepVals&&stepVals.q50!==undefined?stepVals.q50:'–');
+    const fv=sv===null||sv===undefined?'–':(typeof sv==='number'?sv.toFixed(3):sv);
+    const wp=(rd.weights[i]/maxW*100).toFixed(1);
+    const profColor=rd.profits[i]>=0?'#085041':'#993C1D';
+    return`<tr class="${hi?'hl':''}" onclick="pinF(${i})">
+      <td>F${i+1}</td>
+      <td style="text-align:right">${rd.active[i]?'●':'○'}</td>
+      <td style="text-align:right">${rd.reports[i]!==null?rd.reports[i].toFixed(3):'–'}</td>
+      ${step.key!=='aggregate'?`<td style="text-align:right">${fv}</td>`:''}
+      <td style="text-align:right">${rd.sigma[i].toFixed(3)}</td>
+      <td class="wbar-cell">
+        <div class="wbar-bg" style="width:${wp}%"></div>
+        <span class="wbar-val">${rd.weights[i].toFixed(3)}</span>
+      </td>
+      <td style="text-align:right;color:${profColor}">${rd.profits[i]>=0?'+':''}${rd.profits[i].toFixed(2)}</td>
+      <td style="text-align:right">${rd.wealth[i].toFixed(1)}</td>
+    </tr>`;
+  }).join('')+
+  (step.key==='aggregate'?`<tr style="background:var(--c-blue-lt,#e6f1fb)">
+    <td colspan="2" style="font-weight:500">Aggregate q̂</td>
+    <td style="text-align:right;font-weight:500">${rd.aggregate.q50.toFixed(3)}</td>
+    <td style="text-align:right;font-size:11px;color:var(--color-text-secondary)">[${rd.aggregate.q10.toFixed(2)}, ${rd.aggregate.q90.toFixed(2)}]</td>
+    <td colspan="3"></td>
+  </tr>`:'');
+}
+
+function setRibbon(i){ribbonIdx=i;renderInspectorRound();}
+function pinF(i){pinnedF=i===pinnedF?null:i;renderInspectorRound();}
+function prevRound(){if(curR>0){curR--;renderInspectorRound();}}
+function nextRound(){if(simData&&curR<simData.T-1){curR++;renderInspectorRound();}}
+
+// ── Outcome ──────────────────────────────────────────────────────────────────
+
+let wChart=null;
+function renderOutcome(){
+  if(!simData)return;
+  document.getElementById('out-nodata').style.display='none';
+  document.getElementById('out-content').style.display='block';
+  document.getElementById('out-round-badge').textContent=`Round ${curR+1} / ${simData.T}`;
+
+  const rd=simData.rounds[curR], N=simData.N;
+  const err=Math.abs(rd.aggregate.q50-rd.y_true);
+
+  // pre-event
+  document.getElementById('pre-event').innerHTML=`
+    <div class="section-hd">Pre-event — forecast structure</div>
+    <div class="metrics-grid">
+      <div class="mc"><div class="mc-lbl">Aggregate median</div><div class="mc-val">${rd.aggregate.q50.toFixed(3)}</div><div class="mc-sub">outcome ${rd.y_true.toFixed(3)}</div></div>
+      <div class="mc"><div class="mc-lbl">Abs. error</div><div class="mc-val" style="color:${err<0.1?'#085041':'#993C1D'}">${err.toFixed(3)}</div></div>
+      <div class="mc"><div class="mc-lbl">Active N</div><div class="mc-val">${rd.active.filter(Boolean).length}</div><div class="mc-sub">of ${N} forecasters</div></div>
+      <div class="mc"><div class="mc-lbl">N_eff</div><div class="mc-val">${rd.nEff.toFixed(1)}</div><div class="mc-sub">effective market</div></div>
+      <div class="mc"><div class="mc-lbl">HHI</div><div class="mc-val">${rd.hhi.toFixed(3)}</div><div class="mc-sub">concentration</div></div>
+    </div>
+    <div class="fbar-wrap">
+      <div class="fbar-lbl">Forecast interval · blue=90% · darker=80% · orange tick=outcome</div>
+      <div class="fbar-track" id="fbt"></div>
+      <div class="fbar-axis" id="fba"></div>
+    </div>
+    <div class="section-hd">Contributor weight shares</div>
+    <ul class="contrib-list" id="contrib-list"></ul>`;
+
+  const scale=1.2;
+  const px=v=>((Math.min(1,Math.max(0,v/scale)))*100).toFixed(1)+'%';
+  const fbt=document.getElementById('fbt');
+  fbt.innerHTML=`
+    <div class="fbar-90" style="left:${px(rd.aggregate.q10)};width:${((rd.aggregate.q90-rd.aggregate.q10)/scale*100).toFixed(1)}%"></div>
+    <div class="fbar-80" style="left:${px(rd.aggregate.q10+0.05)};width:${(Math.max(0,rd.aggregate.q90-rd.aggregate.q10-0.1)/scale*100).toFixed(1)}%"></div>
+    <div class="fbar-med" style="left:${px(rd.aggregate.q50)}"></div>
+    <div class="fbar-y"   style="left:${px(rd.y_true)}"></div>`;
+
+  const fba=document.getElementById('fba');
+  fba.innerHTML=`
+    <span class="fbar-tick" style="left:${px(rd.aggregate.q50)};color:#185FA5">q̂</span>
+    <span class="fbar-tick" style="left:${px(rd.y_true)};color:#D85A30">y</span>`;
+
+  const cl=document.getElementById('contrib-list');
+  cl.innerHTML=[...rd.weights].map((w,i)=>`<li>
+    <span style="min-width:26px;font-size:11px">F${i+1}</span>
+    <div class="cbar"><div class="cbar-fill" style="width:${(w*100).toFixed(1)}%"></div></div>
+    <span style="min-width:38px;text-align:right;font-size:11px">${(w*100).toFixed(1)}%</span>
+    <span style="font-size:10px;color:var(--color-text-tertiary);min-width:36px">${rd.active[i]?'':'absent'}</span>
+  </li>`).join('');
+
+  // post-event
+  const top=([...rd.profits].map((p,i)=>({i,p})).sort((a,b)=>b.p-a.p));
+  document.getElementById('post-event').innerHTML=`
+    <div class="section-hd">Post-event — settlement</div>
+    <div class="metrics-grid">
+      <div class="mc"><div class="mc-lbl">Total deposited</div><div class="mc-val">${rd.totalDeposit.toFixed(1)}</div></div>
+      <div class="mc"><div class="mc-lbl">Total wager Σm</div><div class="mc-val">${rd.totalWager.toFixed(1)}</div></div>
+      <div class="mc"><div class="mc-lbl">Total refunded</div><div class="mc-val">${rd.totalRefund.toFixed(1)}</div></div>
+      <div class="mc"><div class="mc-lbl">Utility U</div><div class="mc-val">${rd.U}</div></div>
+      <div class="mc"><div class="mc-lbl">Total payout</div><div class="mc-val">${rd.totalPayout.toFixed(1)}</div></div>
+    </div>
+    <div class="section-hd">Winners / losers</div>
+    <ul class="plist">
+      ${top.slice(0,3).map(({i,p})=>`<li><span>F${i+1}</span><span class="${p>=0?'pos':'neg'}">${p>=0?'+':''}${p.toFixed(2)}</span></li>`).join('')}
+      <li style="color:var(--color-text-tertiary);border:none">···</li>
+      ${[...top].reverse().slice(0,2).map(({i,p})=>`<li><span>F${i+1}</span><span class="${p>=0?'pos':'neg'}">${p>=0?'+':''}${p.toFixed(2)}</span></li>`).join('')}
+    </ul>
+    <div class="section-hd">Wealth evolution</div>
+    <div class="wchart-wrap"><canvas id="wchart"></canvas></div>`;
+
+  const ctx=document.getElementById('wchart').getContext('2d');
+  if(wChart){wChart.destroy();wChart=null;}
+  const pal=['#1D9E75','#185FA5','#BA7517','#993C1D','#534AB7','#5F5E5A','#3B6D11','#D85A30'];
+  wChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:simData.rounds.map(r=>r.t+1),
+      datasets:Array.from({length:N},(_,i)=>({
+        label:`F${i+1}`,data:simData.rounds.map(r=>+r.wealth[i].toFixed(1)),
+        borderColor:pal[i%pal.length],borderWidth:1.5,pointRadius:0,tension:.3,
+      }))
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{maxTicksLimit:8,font:{size:10}},grid:{color:'rgba(100,100,100,.08)'}},
+        y:{ticks:{font:{size:10}},grid:{color:'rgba(100,100,100,.08)'}},
+      }
+    }
+  });
+}
+
+// ── Misc ─────────────────────────────────────────────────────────────────────
+
+function toggleSnippet(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+  el.previousElementSibling.textContent=el.classList.contains('open')
+    ?el.previousElementSibling.textContent.replace('↓','↑')
+    :el.previousElementSibling.textContent.replace('↑','↓');
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+renderPipeline();
+renderParams();
+</script>

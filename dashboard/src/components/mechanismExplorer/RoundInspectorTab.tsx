@@ -69,25 +69,29 @@ export default function RoundInspectorTab({
         </span>
       </div>
 
-      <div className="flex gap-0 overflow-x-auto pb-2 rounded-lg border border-slate-200 bg-slate-50">
+      <div className="flex gap-1 overflow-x-auto pb-2">
         {RIBBON_STEPS.map((s, i) => (
           <button
             key={s.key}
             type="button"
             onClick={() => setRibbonStep(i)}
             className={`
-              flex-1 min-w-[72px] py-2 px-2 text-center border-r border-slate-200 last:border-r-0
-              text-[10px] transition-colors
-              ${i === ribbonStep ? 'bg-teal-100 text-teal-800 font-medium' : 'text-slate-500 hover:bg-slate-100'}
+              shrink-0 py-1.5 px-2.5 rounded-full border text-[11px] transition-all
+              flex flex-col items-center gap-0.5 whitespace-nowrap
+              ${i === ribbonStep
+                ? 'bg-teal-600 text-white border-teal-600'
+                : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50'}
             `}
           >
-            <div className="font-mono text-xs">{s.sym}</div>
-            <div className="opacity-80">{s.label}</div>
+            <span>{s.label}</span>
+            <span className="font-mono text-[10px] opacity-80">{s.sym}</span>
           </button>
         ))}
       </div>
 
-      <p className="text-xs text-slate-500">{STEP_DESC[stepKey] ?? ''}</p>
+      <div className="text-[11.5px] text-slate-500 bg-slate-100 rounded-md py-2 px-2.5 mb-2.5 leading-snug">
+        {STEP_DESC[stepKey] ?? ''}
+      </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-xs border-collapse">
