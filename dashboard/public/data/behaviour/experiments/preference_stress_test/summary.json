@@ -1,0 +1,13 @@
+{
+  "experiment_name": "preference_stress_test",
+  "description": "Holds signal quality fixed and compares truthful reporting vs hedged risk-averse reporting to evaluate bias and welfare.",
+  "config": {
+    "experiment_name": "preference_stress_test",
+    "T": 200,
+    "n_users": 10,
+    "block": "behaviour"
+  },
+  "headline_results": {
+    "final_gini": 0.14756758277253984
+  }
+}

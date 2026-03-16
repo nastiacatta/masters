@@ -1,0 +1,10 @@
+{
+  "experiment_name": "insider_advantage",
+  "description": "Compares no insider vs insider; measures insider profit advantage from privileged information.",
+  "config": {
+    "experiment_name": "insider_advantage",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

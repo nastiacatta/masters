@@ -1,0 +1,12 @@
+{
+  "experiment_name": "collusion_stress",
+  "description": "Compares no collusion vs collusion group; measures within-group synchrony and impact.",
+  "config": {
+    "experiment_name": "collusion_stress",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {
+    "final_gini": 0.16794308343171951
+  }
+}

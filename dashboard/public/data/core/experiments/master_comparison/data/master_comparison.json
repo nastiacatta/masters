@@ -1,0 +1,194 @@
+{
+  "config": {
+    "T": 500,
+    "n_forecasters": 10,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "warm_start": 100
+  },
+  "rows": [
+    {
+      "experiment": "master_comparison",
+      "method": "uniform",
+      "seed": 42,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.05595451728121815,
+      "delta_crps_vs_equal": 0.0,
+      "mean_HHI": 0.23289975307211452,
+      "mean_N_eff": 4.7315926569038265,
+      "final_gini": 0.5863335019394099
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "deposit",
+      "seed": 42,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.03759565955488271,
+      "delta_crps_vs_equal": -0.018358857726335436,
+      "mean_HHI": 0.23289975307211452,
+      "mean_N_eff": 4.7315926569038265,
+      "final_gini": 0.5863335019394099
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "skill",
+      "seed": 42,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.05440805055184727,
+      "delta_crps_vs_equal": -0.0015464667293708795,
+      "mean_HHI": 0.23289975307211452,
+      "mean_N_eff": 4.7315926569038265,
+      "final_gini": 0.5863335019394099
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "mechanism",
+      "seed": 42,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.03169349111627117,
+      "delta_crps_vs_equal": -0.024261026164946978,
+      "mean_HHI": 0.23289975307211452,
+      "mean_N_eff": 4.7315926569038265,
+      "final_gini": 0.5863335019394099
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "best_single",
+      "seed": 42,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.022601373554078836,
+      "delta_crps_vs_equal": -0.03335314372713931,
+      "mean_HHI": 0.23289975307211452,
+      "mean_N_eff": 4.7315926569038265,
+      "final_gini": 0.5863335019394099
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "uniform",
+      "seed": 43,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.05408738909654321,
+      "delta_crps_vs_equal": 0.0,
+      "mean_HHI": 0.222118863810476,
+      "mean_N_eff": 4.899726814662814,
+      "final_gini": 0.5703424250791885
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "deposit",
+      "seed": 43,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.0371584019771363,
+      "delta_crps_vs_equal": -0.016928987119406907,
+      "mean_HHI": 0.222118863810476,
+      "mean_N_eff": 4.899726814662814,
+      "final_gini": 0.5703424250791885
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "skill",
+      "seed": 43,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.05268672166859036,
+      "delta_crps_vs_equal": -0.001400667427952848,
+      "mean_HHI": 0.222118863810476,
+      "mean_N_eff": 4.899726814662814,
+      "final_gini": 0.5703424250791885
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "mechanism",
+      "seed": 43,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.031202098527236856,
+      "delta_crps_vs_equal": -0.022885290569306355,
+      "mean_HHI": 0.222118863810476,
+      "mean_N_eff": 4.899726814662814,
+      "final_gini": 0.5703424250791885
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "best_single",
+      "seed": 43,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.023804903550124067,
+      "delta_crps_vs_equal": -0.030282485546419144,
+      "mean_HHI": 0.222118863810476,
+      "mean_N_eff": 4.899726814662814,
+      "final_gini": 0.5703424250791885
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "uniform",
+      "seed": 44,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.05678787426356422,
+      "delta_crps_vs_equal": 0.0,
+      "mean_HHI": 0.2448672555356058,
+      "mean_N_eff": 4.50613182258713,
+      "final_gini": 0.6008463459015723
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "deposit",
+      "seed": 44,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.037082222398876694,
+      "delta_crps_vs_equal": -0.019705651864687528,
+      "mean_HHI": 0.2448672555356058,
+      "mean_N_eff": 4.50613182258713,
+      "final_gini": 0.6008463459015723
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "skill",
+      "seed": 44,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.05528282154879368,
+      "delta_crps_vs_equal": -0.0015050527147705411,
+      "mean_HHI": 0.2448672555356058,
+      "mean_N_eff": 4.50613182258713,
+      "final_gini": 0.6008463459015723
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "mechanism",
+      "seed": 44,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.03178151503167288,
+      "delta_crps_vs_equal": -0.02500635923189134,
+      "mean_HHI": 0.2448672555356058,
+      "mean_N_eff": 4.50613182258713,
+      "final_gini": 0.6008463459015723
+    },
+    {
+      "experiment": "master_comparison",
+      "method": "best_single",
+      "seed": 44,
+      "DGP": "latent_fixed",
+      "preset": "bankroll",
+      "mean_crps": 0.023106482865923036,
+      "delta_crps_vs_equal": -0.03368139139764119,
+      "mean_HHI": 0.2448672555356058,
+      "mean_N_eff": 4.50613182258713,
+      "final_gini": 0.6008463459015723
+    }
+  ]
+}

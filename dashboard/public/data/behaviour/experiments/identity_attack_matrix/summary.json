@@ -1,0 +1,10 @@
+{
+  "experiment_name": "identity_attack_matrix",
+  "description": "Compares single account vs sybil split vs reputation reset vs collusive multi-account.",
+  "config": {
+    "experiment_name": "identity_attack_matrix",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

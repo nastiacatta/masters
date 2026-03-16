@@ -1,0 +1,10 @@
+{
+  "experiment_name": "strategic_reporting",
+  "description": "Compares truthful vs strategic reporter; measures aggregate forecast impact.",
+  "config": {
+    "experiment_name": "strategic_reporting",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

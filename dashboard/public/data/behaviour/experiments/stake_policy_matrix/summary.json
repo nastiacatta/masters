@@ -1,0 +1,10 @@
+{
+  "experiment_name": "stake_policy_matrix",
+  "description": "Compares fixed fraction vs Kelly-like vs house-money vs lumpy vs break-even vs volatility-sensitive staking.",
+  "config": {
+    "experiment_name": "stake_policy_matrix",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

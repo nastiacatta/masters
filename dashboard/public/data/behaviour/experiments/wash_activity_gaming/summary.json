@@ -1,0 +1,10 @@
+{
+  "experiment_name": "wash_activity_gaming",
+  "description": "Compares no wash vs wash trader; measures activity inflation from fake interactions.",
+  "config": {
+    "experiment_name": "wash_activity_gaming",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

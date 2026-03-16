@@ -1,0 +1,21 @@
+{
+  "experiment_name": "behaviour_matrix",
+  "description": "Holds the mechanism fixed and varies only behaviour modules: benign baselines, realistic frictions (bursty, wealth shocks, risk aversion, discrete staking), and adversaries (sybils, arbitrageur, collusion, manipulator, insider).",
+  "config": {
+    "experiment_name": "behaviour_matrix",
+    "T": 200,
+    "n_users": 10,
+    "block": "behaviour",
+    "lam": 0.3,
+    "eta": 1.0,
+    "sigma_min": 0.1,
+    "omega_max": 0.0
+  },
+  "headline_results": {
+    "mean_N_t": 5.77,
+    "mean_HHI": 0.2576553190116185,
+    "mean_N_eff": 4.268195779599437,
+    "final_gini": 0.14756758277253984,
+    "final_ruin_rate": 0.0
+  }
+}

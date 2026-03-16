@@ -1,0 +1,10 @@
+{
+  "experiment_name": "drift_adaptation",
+  "description": "Compares fast vs slow adaptor to drift in the outcome process.",
+  "config": {
+    "experiment_name": "drift_adaptation",
+    "T": 200,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

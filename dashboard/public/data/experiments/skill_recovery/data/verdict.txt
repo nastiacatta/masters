@@ -1,0 +1,12 @@
+Skill Recovery Benchmark
+T=200, T0=100, n=6, seeds=2
+
+[point_mae]
+  Spearman(tau, loss):  mean=1.0000, std=0.0000
+  Spearman(tau, sigma): mean=1.0000, std=0.0000
+  Pass: True
+
+[quantiles_crps]
+  Spearman(tau, loss):  mean=1.0000, std=0.0000
+  Spearman(tau, sigma): mean=1.0000, std=0.0000
+  Pass: True

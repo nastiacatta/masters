@@ -1,0 +1,11 @@
+deposit_policy,weight_rule,mean_crps_all,se_all,mean_crps_warmstart,se_ws
+fixed_unit,uniform,0.043417,0.000327,0.043413,0.000450
+fixed_unit,deposit,0.043417,0.000327,0.043413,0.000450
+fixed_unit,skill,0.041929,0.000312,0.041925,0.000419
+fixed_unit,mechanism,0.042407,0.000317,0.042404,0.000429
+fixed_unit,best_single,0.022983,0.000317,0.023263,0.000213
+bankroll_conf,uniform,0.043417,0.000327,0.043413,0.000450
+bankroll_conf,deposit,0.026586,0.000122,0.023171,0.000224
+bankroll_conf,skill,0.041929,0.000312,0.041925,0.000419
+bankroll_conf,mechanism,0.027856,0.000180,0.025136,0.000275
+bankroll_conf,best_single,0.022983,0.000317,0.023263,0.000213

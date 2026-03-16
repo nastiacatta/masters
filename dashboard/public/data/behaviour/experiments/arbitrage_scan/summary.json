@@ -1,0 +1,12 @@
+{
+  "experiment_name": "arbitrage_scan",
+  "description": "Runs arbitrageurs across a parameter grid to see when arbitrage appears and whether it dominates wealth.",
+  "config": {
+    "experiment_name": "arbitrage_scan",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": -9.310927395786882
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "experiment_name": "detection_adaptation",
+  "description": "Compares a fixed manipulator with an adaptive evader that balances manipulation with detector evasion.",
+  "config": {
+    "experiment_name": "detection_adaptation",
+    "T": 150,
+    "block": "behaviour"
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": -9.084666594066272
+  }
+}

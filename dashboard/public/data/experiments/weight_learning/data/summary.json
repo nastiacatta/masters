@@ -1,0 +1,52 @@
+{
+  "config": {
+    "name": "weight_learning",
+    "output_dir": "outputs",
+    "T": 20000,
+    "n_forecasters": 3,
+    "seed": 42,
+    "dgp": "aggregation_method1",
+    "true_w": [
+      0.8,
+      0.1,
+      0.5
+    ],
+    "normalise_w": false,
+    "sigma_mu_noise": 1.0,
+    "eta": 0.015,
+    "eta_decay": 2e-05,
+    "smooth_window": 800,
+    "methods": [
+      1,
+      2,
+      3
+    ],
+    "_version": {
+      "package_version": "0.1.0"
+    }
+  },
+  "result": {
+    "final_weights": [
+      [
+        0.7694322081692776,
+        0.1293899173021194,
+        0.5483885417426921
+      ],
+      [
+        0.7694322081692776,
+        0.1293899173021194,
+        0.5483885417426921
+      ],
+      [
+        0.5997321269220675,
+        0.161584722672401,
+        0.5098006809571276
+      ]
+    ],
+    "true_w": [
+      0.8,
+      0.1,
+      0.5
+    ]
+  }
+}
