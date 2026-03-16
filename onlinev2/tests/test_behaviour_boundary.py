@@ -250,7 +250,8 @@ class TestUnseenAccountInitialisation:
         assert params.sigma_min <= state2.sigma["agent_3"] <= 1.0
 
     def test_unseen_account_non_participating(self):
-        """Unseen account that does not participate still appears in state with zero exposure."""
+        """Unseen account that does not participate still appears in state with zero exposure.
+        Unseen accounts get conservative initial ewma_loss (sigma < 1), not 0.0."""
         from onlinev2.mechanism.runner import run_round
 
         params = MechanismParams(scoring_mode="point_mae")
@@ -265,7 +266,9 @@ class TestUnseenAccountInitialisation:
         state2, _ = run_round(state=state, params=params, actions=actions, y_t=0.5)
         assert "agent_new" in state2.wealth
         assert state2.wealth["agent_new"] == 0.0
-        assert state2.ewma_loss["agent_new"] == 0.0
+        # Conservative prior: unseen account gets default_initial_loss, not 0.0 (so sigma < 1)
+        assert state2.ewma_loss["agent_new"] > 0.0
+        assert state2.sigma["agent_new"] < 1.0
 
 
 class TestReproducibility:

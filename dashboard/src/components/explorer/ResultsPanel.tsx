@@ -3,8 +3,10 @@
  * 1. Forecast quality
  * 2. Market / payout outcomes
  * 3. Robustness / manipulation outcomes
+ *
+ * Pipeline is recomputed via useMemo on every option change; no Run button.
  */
-import { useCallback, useState } from 'react';
+import { useMemo, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -28,62 +30,46 @@ export default function ResultsPanel() {
     rounds,
     seed,
     nAgents,
-    lastPipelineResult,
     setLastPipelineResult,
   } = useExplorer();
 
-  const [running, setRunning] = useState(false);
+  const result = useMemo(() => {
+    return runPipeline({
+      dgpId: selectedDGP,
+      weighting: selectedWeightingMode,
+      behaviourPreset: selectedBehaviourPreset,
+      rounds,
+      seed,
+      n: nAgents,
+    });
+  }, [
+    selectedDGP,
+    selectedWeightingMode,
+    selectedBehaviourPreset,
+    rounds,
+    seed,
+    nAgents,
+  ]);
 
-  const handleRun = useCallback(() => {
-    setRunning(true);
-    setLastPipelineResult(null);
-    try {
-      const res = runPipeline({
-        dgpId: selectedDGP,
-        weighting: selectedWeightingMode,
-        behaviourPreset: selectedBehaviourPreset,
-        rounds,
-        seed,
-        n: nAgents,
-      });
-      setLastPipelineResult(res);
-    } finally {
-      setRunning(false);
-    }
-  }, [selectedDGP, selectedWeightingMode, selectedBehaviourPreset, rounds, seed, nAgents, setLastPipelineResult]);
+  useEffect(() => {
+    setLastPipelineResult(result);
+  }, [result, setLastPipelineResult]);
 
-  const result = lastPipelineResult;
-  const chartData = result?.rounds.map((r, i) => ({
+  const chartData = result.rounds.map((r, i) => ({
     round: i + 1,
     error: r.error,
     participation: r.participation,
     nEff: r.nEff,
-  })) ?? [];
+  }));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleRun}
-          disabled={running}
-          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {running ? 'Running…' : 'Run pipeline'}
-        </button>
-        <p className="text-xs text-slate-500">
-          Uses {selectedDGP}, {selectedWeightingMode}, {selectedBehaviourPreset}
-        </p>
-      </div>
+      <p className="text-xs text-slate-500">
+        Pipeline recomputed from round 0 on every change. Uses {selectedDGP},{' '}
+        {selectedWeightingMode}, {selectedBehaviourPreset}.
+      </p>
 
-      {!result && (
-        <p className="text-sm text-slate-500">
-          Run the pipeline to see results. Outputs are grouped into forecast quality, market/payout outcomes, and robustness.
-        </p>
-      )}
-
-      {result && (
-        <>
+      <>
           {/* 1. Forecast quality */}
           <section>
             <h3 className="text-sm font-semibold text-slate-800 mb-3">1. Forecast quality</h3>
@@ -157,8 +143,7 @@ export default function ResultsPanel() {
               </ResponsiveContainer>
             </ChartCard>
           )}
-        </>
-      )}
+      </>
     </div>
   );
 }
