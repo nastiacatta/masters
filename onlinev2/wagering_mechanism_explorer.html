@@ -1,0 +1,686 @@
+
+<style>
+:root {
+  --c-teal: #1D9E75; --c-teal-light: #E1F5EE; --c-teal-dark: #085041;
+  --c-amber: #BA7517; --c-amber-light: #FAEEDA; --c-amber-dark: #633806;
+  --c-blue: #185FA5; --c-blue-light: #E6F1FB; --c-blue-dark: #0C447C;
+  --c-coral: #993C1D; --c-coral-light: #FAECE7; --c-coral-dark: #4A1B0C;
+  --c-purple: #534AB7; --c-purple-light: #EEEDFE; --c-purple-dark: #26215C;
+  --c-gray: #5F5E5A; --c-gray-light: #F1EFE8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans, system-ui, sans-serif); color: var(--color-text-primary); font-size: 13px; }
+
+.app { padding: 12px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 0.5px solid var(--color-border-tertiary); padding-bottom: 0; }
+.tab-btn { padding: 6px 14px; border: none; background: none; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -0.5px; transition: all .15s; }
+.tab-btn.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab-btn:hover:not(.active) { color: var(--color-text-primary); }
+.tab-panel { display: none; } .tab-panel.active { display: block; }
+
+/* Mechanism Builder */
+.block-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+.block { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 10px; padding: 12px; min-width: 148px; flex: 1; cursor: pointer; transition: border-color .15s; }
+.block:hover { border-color: var(--color-border-primary); }
+.block.active { border-color: var(--c-teal); }
+.block-num { font-size: 10px; color: var(--color-text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
+.block-title { font-size: 12px; font-weight: 500; margin: 4px 0 6px; }
+.block-formula { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--c-blue); background: var(--c-blue-light); padding: 4px 6px; border-radius: 5px; word-break: break-all; line-height: 1.5; }
+.block-desc { font-size: 11px; color: var(--color-text-secondary); margin-top: 6px; line-height: 1.4; }
+.block-select { margin-top: 8px; width: 100%; font-size: 11px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 6px; padding: 4px 6px; color: var(--color-text-primary); }
+
+.params-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 16px 0; background: var(--color-background-secondary); border-radius: 10px; padding: 12px; }
+.param-item label { font-size: 11px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+.param-item input[type=range] { width: 100%; }
+.param-val { font-size: 12px; font-weight: 500; color: var(--c-teal-dark); }
+
+.run-btn { display: block; margin: 0 auto 16px; padding: 8px 28px; background: var(--c-teal); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+.run-btn:hover { opacity: .85; }
+
+/* Round Inspector */
+.round-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.round-nav button { padding: 5px 12px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--color-text-primary); }
+.round-nav button:hover { background: var(--color-background-secondary); }
+.round-label { font-size: 13px; font-weight: 500; }
+.round-outcome { font-size: 12px; color: var(--color-text-secondary); margin-left: auto; }
+
+.ribbon { display: flex; gap: 0; margin-bottom: 14px; overflow-x: auto; }
+.ribbon-step { flex: 1; min-width: 80px; padding: 7px 8px; background: var(--color-background-secondary); border-top: 0.5px solid var(--color-border-tertiary); border-bottom: 0.5px solid var(--color-border-tertiary); border-left: 0.5px solid var(--color-border-tertiary); text-align: center; font-size: 10px; color: var(--color-text-secondary); cursor: pointer; transition: background .1s; position: relative; }
+.ribbon-step:last-child { border-right: 0.5px solid var(--color-border-tertiary); border-radius: 0 6px 6px 0; }
+.ribbon-step:first-child { border-radius: 6px 0 0 6px; }
+.ribbon-step.active { background: var(--c-teal-light); color: var(--c-teal-dark); font-weight: 500; }
+.ribbon-step .r-label { font-size: 9px; opacity: .7; }
+.ribbon-step .r-sym { font-family: var(--font-mono, monospace); font-size: 11px; }
+
+.inspector-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.inspector-table th { text-align: right; padding: 5px 8px; color: var(--color-text-secondary); font-weight: 500; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 10px; }
+.inspector-table th:first-child { text-align: left; }
+.inspector-table td { text-align: right; padding: 5px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.inspector-table td:first-child { text-align: left; font-weight: 500; }
+.inspector-table tr.highlighted td { background: var(--c-amber-light); }
+.inspector-table tr:hover td { background: var(--color-background-secondary); cursor: pointer; }
+.bar-cell { position: relative; }
+.bar-bg { position: absolute; left: 0; top: 20%; height: 60%; background: var(--c-teal-light); border-radius: 2px; transition: width .3s; }
+.bar-val { position: relative; z-index: 1; }
+
+/* Outcome Studio */
+.outcome-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.metric-card { background: var(--color-background-secondary); border-radius: 8px; padding: 10px 12px; }
+.metric-label { font-size: 10px; color: var(--color-text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+.metric-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-top: 2px; }
+.metric-sub { font-size: 10px; color: var(--color-text-tertiary); margin-top: 1px; }
+
+.forecast-bar { margin: 12px 0; }
+.fb-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.fb-track { position: relative; height: 28px; background: var(--color-background-secondary); border-radius: 6px; overflow: hidden; }
+.fb-90 { position: absolute; top: 0; height: 100%; background: var(--c-blue-light); border-radius: 6px; }
+.fb-80 { position: absolute; top: 0; height: 100%; background: #B5D4F4; border-radius: 6px; }
+.fb-median { position: absolute; top: 10%; height: 80%; width: 3px; background: var(--c-blue); border-radius: 2px; }
+.fb-tick { position: absolute; top: 0; height: 100%; width: 1px; background: var(--color-border-secondary); }
+.fb-tick-lbl { position: absolute; top: 105%; font-size: 9px; color: var(--color-text-tertiary); transform: translateX(-50%); }
+
+.contrib-list { list-style: none; }
+.contrib-list li { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+.contrib-bar { flex: 1; height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; }
+.contrib-fill { height: 100%; border-radius: 3px; background: var(--c-teal); }
+
+.payout-list { list-style: none; }
+.payout-list li { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+.payout-pos { color: var(--c-teal-dark); font-weight: 500; }
+.payout-neg { color: var(--c-coral); font-weight: 500; }
+
+.section-title { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 8px; }
+
+.wealth-chart { position: relative; width: 100%; height: 120px; margin: 8px 0; }
+.wealth-chart canvas { display: block; }
+.no-data { color: var(--color-text-tertiary); font-size: 12px; text-align: center; padding: 24px; }
+</style>
+
+<div class="app">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('builder')">Mechanism builder</button>
+    <button class="tab-btn" onclick="switchTab('inspector')">Round inspector</button>
+    <button class="tab-btn" onclick="switchTab('outcome')">Outcome studio</button>
+  </div>
+
+  <!-- ── Tab 1: Mechanism builder ─────────────────────────────── -->
+  <div id="tab-builder" class="tab-panel active">
+    <div class="block-grid" id="blocks-row"></div>
+    <div class="params-bar" id="params-bar"></div>
+    <button class="run-btn" onclick="runSim()">Run simulation (T = 40 rounds)</button>
+    <div id="builder-msg" style="text-align:center;font-size:12px;color:var(--color-text-tertiary);">Configure blocks above, then run.</div>
+  </div>
+
+  <!-- ── Tab 2: Round inspector ───────────────────────────────── -->
+  <div id="tab-inspector" class="tab-panel">
+    <div id="no-sim-msg" class="no-data">Run the simulation first (Mechanism builder → Run).</div>
+    <div id="inspector-content" style="display:none">
+      <div class="round-nav">
+        <button onclick="prevRound()">← prev</button>
+        <span class="round-label" id="round-label">Round 1</span>
+        <button onclick="nextRound()">next →</button>
+        <span class="round-outcome" id="round-outcome"></span>
+      </div>
+      <div class="ribbon" id="ribbon"></div>
+      <div id="step-desc" style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;"></div>
+      <div style="overflow-x:auto">
+        <table class="inspector-table" id="inspector-table">
+          <thead id="inspector-head"></thead>
+          <tbody id="inspector-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab 3: Outcome studio ────────────────────────────────── -->
+  <div id="tab-outcome" class="tab-panel">
+    <div id="no-outcome-msg" class="no-data">Run the simulation first (Mechanism builder → Run).</div>
+    <div id="outcome-content" style="display:none">
+      <div id="pre-event"></div>
+      <div id="post-event"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ─── Mechanism configuration ───────────────────────────────────────────────
+
+const BLOCK_DEFS = [
+  {
+    id:'skill', label:'Skill update', num:'01',
+    variants:{
+      'Fixed': { formula:'σ = σ_min', desc:'Skill unchanged across rounds' },
+      'EWMA':  { formula:'σ = α·σ + (1-α)·L̄', desc:'Exponential smoothing of past loss' },
+      'Fast adapt': { formula:'σ = σ_min + (1-σ_min)e^{-γL}', desc:'Rapid skill recovery after loss (default)' },
+      'Slow adapt': { formula:'σ = σ_min + (1-σ_min)e^{-0.2L}', desc:'Conservative skill recovery' },
+    }, default:'Fast adapt'
+  },
+  {
+    id:'deposit', label:'Deposit policy', num:'02',
+    variants:{
+      'Fixed unit':    { formula:'b = min(W, b_max)', desc:'Always bet maximum allowed' },
+      'Random':        { formula:'b ~ U(0, W·f)', desc:'Random fraction of wealth' },
+      'Bankroll×conf': { formula:'b = min(W, f·W·c, b_max)', desc:'Confidence-scaled bankroll (default)' },
+      'Oracle-style':  { formula:'b = W·f if skilled else ε', desc:'High deposit only when confident' },
+    }, default:'Bankroll×conf'
+  },
+  {
+    id:'influence', label:'Influence rule', num:'03',
+    variants:{
+      'Equal':         { formula:'m = b', desc:'Raw deposit equals wager' },
+      'Stake-only':    { formula:'m = b·λ', desc:'Fixed stake fraction only' },
+      'Skill-only':    { formula:'m = b·σ^η', desc:'Wager scaled purely by skill' },
+      'Blended':       { formula:'m = b(λ + (1-λ)σ^η)', desc:'Stake-skill blend (default)' },
+      'Capped blend':  { formula:'m = min(b(λ + (1-λ)σ^η), cap)', desc:'Blended but capped at market share' },
+    }, default:'Blended'
+  },
+  {
+    id:'aggregation', label:'Aggregation', num:'04',
+    variants:{
+      'Equal pool':    { formula:'q̂ = (1/N)Σ q_i', desc:'Uniform weights over all forecasters' },
+      'Linear pool':   { formula:'q̂ = Σ w̃_i q_i', desc:'Wager-weighted pool (default)' },
+      'Log pool':      { formula:'q̂ ∝ exp(Σ w̃_i log q_i)', desc:'Geometric pool by wager weight' },
+    }, default:'Linear pool'
+  },
+  {
+    id:'settlement', label:'Settlement', num:'05',
+    variants:{
+      'Skill-only':    { formula:'pay = U·score_i/Σscore', desc:'Distribute by CRPS score' },
+      'Skill+utility': { formula:'pay = refund + U·score_i/Σscore', desc:'Refund unused deposit + skill reward (default)' },
+      'No-arbitrage':  { formula:'pay = b + ΔWealth_mkt', desc:'Market equilibrium payoff' },
+    }, default:'Skill+utility'
+  },
+  {
+    id:'behaviour', label:'Behaviour layer', num:'06',
+    variants:{
+      'Benign':        { formula:'q ~ N(y, σ_i)', desc:'Honest unbiased forecasters' },
+      'Bursty':        { formula:'active ~ Bernoulli(p_on)', desc:'Intermittent participation' },
+      'Sybil':         { formula:'N_extra clones, split wealth', desc:'Identity-splitting attack' },
+      'Arbitrageur':   { formula:'q = E[y] + ε if m > mean(m)', desc:'Exploit wager imbalance' },
+      'Insider':       { formula:'q ~ N(y, 0.1σ) with prob p_ins', desc:'Some forecasters see near-true outcome' },
+    }, default:'Benign'
+  }
+];
+
+// ─── Parameters ────────────────────────────────────────────────────────────
+
+const PARAM_DEFS = [
+  { id:'T', label:'Rounds (T)', min:10, max:80, step:5, val:40 },
+  { id:'N', label:'Forecasters (N)', min:3, max:12, step:1, val:6 },
+  { id:'gamma', label:'γ (skill decay)', min:0.1, max:5, step:0.1, val:1.5 },
+  { id:'lambda', label:'λ (stake weight)', min:0, max:1, step:0.05, val:0.3 },
+  { id:'eta', label:'η (skill exponent)', min:0.5, max:3, step:0.1, val:1.0 },
+  { id:'f', label:'f (max fraction)', min:0.1, max:0.9, step:0.05, val:0.4 },
+  { id:'U', label:'U (utility per round)', min:10, max:200, step:10, val:50 },
+];
+
+let cfg = {};
+BLOCK_DEFS.forEach(b => cfg[b.id] = b.default);
+let params = {};
+PARAM_DEFS.forEach(p => params[p.id] = p.val);
+
+let simData = null;
+let currentRound = 0;
+let ribbonStep = 0;
+let selectedForecaster = null;
+
+const RIBBON_STEPS = [
+  { key:'reports',    sym:'q_i',    label:'Report' },
+  { key:'widths',     sym:'Δ_i',    label:'Width' },
+  { key:'confidence', sym:'c_i',    label:'Conf.' },
+  { key:'sigma',      sym:'σ_i',    label:'Skill' },
+  { key:'deposits',   sym:'b_i',    label:'Deposit' },
+  { key:'wagers',     sym:'m_i',    label:'Wager' },
+  { key:'weights',    sym:'w̃_i',    label:'Weight' },
+  { key:'aggregate',  sym:'q̂',      label:'Aggregate' },
+  { key:'scores',     sym:'s_i',    label:'Score' },
+  { key:'profits',    sym:'π_i',    label:'Profit' },
+  { key:'wealth',     sym:'W_i',    label:'Wealth' },
+];
+
+const STEP_DESC = {
+  reports:    'Each forecaster submits a predictive distribution. The median is shown here.',
+  widths:     'Interval width Δ_i = q(0.9) − q(0.1) measures uncertainty. Narrower → more confident.',
+  confidence: 'c_i = clip(e^{−β·Δ_i}, c_min, c_max). High confidence means a tight forecast.',
+  sigma:      'σ_i ∈ [σ_min,1] tracks historical skill via past CRPS loss. Updates each round.',
+  deposits:   'b_i = min(W_i, f·W_i·c_i, b_max). Wealth staked this round.',
+  wagers:     'm_i = b_i(λ + (1−λ)σ_i^η). Effective wager amplified by skill–stake blend.',
+  weights:    'w̃_i = m_i / Σm_j. Normalised market share. Drives the pooled forecast.',
+  aggregate:  'q̂ = Σw̃_i·q_i. Wager-weighted mixture of forecaster distributions.',
+  scores:     'CRPS score: lower is better. Measures calibration + sharpness simultaneously.',
+  profits:    'π_i = payout − deposit. Negative if forecaster loses money this round.',
+  wealth:     'W_i ← W_i + π_i. Persistent wealth carries forward to next round.',
+};
+
+// ─── Simulation engine ─────────────────────────────────────────────────────
+
+function rng(seed) {
+  let s = seed || 1;
+  return () => { s ^= s<<13; s ^= s>>17; s ^= s<<5; return ((s >>> 0) / 4294967296); };
+}
+
+function normalSample(r, mu, sigma) {
+  const u = 1 - r(), v = r();
+  return mu + sigma * Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+}
+
+function runSim() {
+  const r = rng(42);
+  const T = params.T, N = params.N;
+  const gamma = params.gamma, lambda = params.lambda;
+  const eta = params.eta, f = params.f, U = params.U;
+  const W0 = 100, b_max = 40, sigma_min = 0.1, c_min = 0.1, c_max = 1.0;
+
+  const rounds = [];
+  const wealth = Array.from({length:N}, () => W0);
+  const cumLoss = Array.from({length:N}, () => 0);
+  const beta_c = 2.0;
+
+  for (let t = 0; t < T; t++) {
+    const y_true = 0.3 + 0.5*r(); // outcome in [0.3, 0.8]
+
+    // activity
+    let active = Array.from({length:N}, () => true);
+    if (cfg.behaviour === 'Bursty') active = active.map(() => r() > 0.35);
+    if (active.every(a => !a)) active[0] = true;
+
+    // skill update
+    let sigma = Array.from({length:N}, (_, i) => {
+      if (cfg.skill === 'Fixed') return sigma_min + 0.3*(i/N);
+      if (cfg.skill === 'EWMA')  return Math.max(sigma_min, 1 - 0.5*(cumLoss[i]/Math.max(1,t)));
+      if (cfg.skill === 'Slow adapt') return sigma_min + (1-sigma_min)*Math.exp(-0.2*cumLoss[i]);
+      return sigma_min + (1-sigma_min)*Math.exp(-gamma*cumLoss[i]); // fast adapt
+    });
+
+    // insider boost
+    if (cfg.behaviour === 'Insider') sigma = sigma.map((s,i) => r()<0.3 ? Math.min(1, s+0.4) : s);
+
+    // reports: (q10, q50, q90)
+    const reports = Array.from({length:N}, (_, i) => {
+      if (!active[i]) return null;
+      const skill = sigma[i];
+      const noise = (cfg.behaviour === 'Insider' && r()<0.3) ? 0.05 : (0.05 + (1-skill)*0.3);
+      const med = normalSample(r, y_true, noise);
+      const halfW = Math.abs(normalSample(r, 0.1 + (1-skill)*0.25, 0.03));
+      return { q10: med - halfW, q50: med, q90: med + halfW };
+    });
+
+    // widths
+    const widths = reports.map(rp => rp ? rp.q90 - rp.q10 : null);
+
+    // confidence
+    const confidence = widths.map(w => {
+      if (w === null) return null;
+      return Math.min(c_max, Math.max(c_min, Math.exp(-beta_c * w)));
+    });
+
+    // deposits
+    const deposits = Array.from({length:N}, (_, i) => {
+      if (!active[i]) return 0;
+      const W = wealth[i];
+      if (cfg.deposit === 'Fixed unit') return Math.min(W, b_max);
+      if (cfg.deposit === 'Random') return Math.min(W, W * f * r());
+      if (cfg.deposit === 'Oracle-style') return confidence[i] > 0.5 ? Math.min(W, f*W, b_max) : 0.1;
+      return Math.min(W, f * W * confidence[i], b_max); // bankroll×conf
+    });
+
+    // wagers (effective)
+    const wagers = Array.from({length:N}, (_, i) => {
+      if (!active[i]) return 0;
+      const b = deposits[i];
+      if (cfg.influence === 'Equal') return b;
+      if (cfg.influence === 'Stake-only') return b * lambda;
+      if (cfg.influence === 'Skill-only') return b * Math.pow(sigma[i], eta);
+      const raw = b * (lambda + (1-lambda)*Math.pow(sigma[i], eta));
+      if (cfg.influence === 'Capped blend') return Math.min(raw, b_max * 0.5);
+      return raw;
+    });
+
+    const totalWager = wagers.reduce((a,b) => a+b, 0) || 1;
+
+    // weights
+    const weights = wagers.map(m => m / totalWager);
+
+    // aggregate: weighted median approximation
+    let aggMed = 0, agg10 = 0, agg90 = 0;
+    if (cfg.aggregation === 'Equal pool') {
+      const actReports = reports.filter(r => r !== null);
+      const na = actReports.length || 1;
+      aggMed = actReports.reduce((s,r) => s + r.q50, 0) / na;
+      agg10  = actReports.reduce((s,r) => s + r.q10, 0) / na;
+      agg90  = actReports.reduce((s,r) => s + r.q90, 0) / na;
+    } else if (cfg.aggregation === 'Log pool') {
+      const validI = reports.map((r,i) => r ? i : -1).filter(i => i>=0);
+      aggMed = validI.length ? Math.exp(validI.reduce((s,i) => s + weights[i]*Math.log(Math.max(0.01, reports[i].q50)), 0)) : 0.5;
+      agg10  = validI.length ? Math.exp(validI.reduce((s,i) => s + weights[i]*Math.log(Math.max(0.01, reports[i].q10)), 0)) : 0.3;
+      agg90  = validI.length ? Math.exp(validI.reduce((s,i) => s + weights[i]*Math.log(Math.max(0.01, reports[i].q90)), 0)) : 0.7;
+    } else {
+      aggMed = reports.reduce((s,r,i) => s + (r ? weights[i]*r.q50 : 0), 0);
+      agg10  = reports.reduce((s,r,i) => s + (r ? weights[i]*r.q10 : 0), 0);
+      agg90  = reports.reduce((s,r,i) => s + (r ? weights[i]*r.q90 : 0), 0);
+    }
+
+    // CRPS scores (lower = better)
+    const scores = reports.map((rp, i) => {
+      if (!rp) return 0;
+      const err = Math.abs(rp.q50 - y_true);
+      const halfW = (rp.q90 - rp.q10) / 2;
+      return -(err + halfW * 0.5); // negated: higher = better for payoff
+    });
+
+    const totalScore = scores.reduce((a,b) => a+b, 0) || 1;
+    const scoreShares = scores.map(s => Math.max(0, s) / Math.max(0.001, scores.reduce((a,b) => a+Math.max(0,b), 0)));
+
+    // payouts & profits
+    const refunds = Array.from({length:N}, (_, i) => active[i] ? Math.max(0, deposits[i] - wagers[i]) : 0);
+    const payouts = Array.from({length:N}, (_, i) => {
+      if (!active[i]) return 0;
+      if (cfg.settlement === 'Skill-only')    return U * scoreShares[i];
+      if (cfg.settlement === 'No-arbitrage')  return deposits[i] + (totalWager > 0 ? U * weights[i] : 0);
+      return refunds[i] + U * scoreShares[i]; // skill+utility
+    });
+    const profits = payouts.map((p,i) => p - deposits[i]);
+
+    // update wealth and cumLoss
+    profits.forEach((pi, i) => {
+      wealth[i] = Math.max(1, wealth[i] + pi);
+    });
+    scores.forEach((s, i) => {
+      if (active[i]) cumLoss[i] += Math.max(0, -s);
+    });
+
+    // HHI & N_eff
+    const hhiVal = weights.reduce((s,w) => s + w*w, 0);
+    const nEff = 1 / hhiVal;
+
+    rounds.push({
+      t, y_true, active,
+      reports: reports.map(rp => rp ? rp.q50 : null),
+      q10s:    reports.map(rp => rp ? rp.q10 : null),
+      q90s:    reports.map(rp => rp ? rp.q90 : null),
+      widths, confidence,
+      sigma: [...sigma],
+      deposits: [...deposits],
+      wagers,
+      weights,
+      aggregate: { q50: aggMed, q10: agg10, q90: agg90 },
+      scores,
+      scoreShares,
+      refunds,
+      payouts,
+      profits,
+      wealth: [...wealth],
+      hhi: hhiVal,
+      nEff,
+      totalDeposit: deposits.reduce((a,b)=>a+b,0),
+      totalWager,
+      totalRefund: refunds.reduce((a,b)=>a+b,0),
+      totalPayout: payouts.reduce((a,b)=>a+b,0),
+      U,
+    });
+  }
+
+  simData = { rounds, N, T };
+  currentRound = 0;
+  ribbonStep = 0;
+  selectedForecaster = null;
+
+  document.getElementById('builder-msg').textContent = `✓ Simulation complete — ${T} rounds, ${N} forecasters.`;
+  document.getElementById('builder-msg').style.color = 'var(--c-teal)';
+  renderInspector();
+  renderOutcome();
+}
+
+// ─── Tab switching ─────────────────────────────────────────────────────────
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => { if (b.textContent.toLowerCase().startsWith(name.slice(0,3))) b.classList.add('active'); });
+  if (name === 'inspector' && simData) renderInspectorRound();
+  if (name === 'outcome' && simData) renderOutcome();
+}
+
+// ─── Block rendering ───────────────────────────────────────────────────────
+
+function renderBlocks() {
+  const row = document.getElementById('blocks-row');
+  row.innerHTML = '';
+  BLOCK_DEFS.forEach(def => {
+    const v = cfg[def.id];
+    const variant = def.variants[v];
+    const div = document.createElement('div');
+    div.className = 'block' + (cfg[def.id] === def.default ? '' : ' active');
+    div.innerHTML = `
+      <div class="block-num">${def.num} · ${def.label}</div>
+      <div class="block-formula">${variant.formula}</div>
+      <div class="block-desc">${variant.desc}</div>
+      <select class="block-select" onchange="setBlock('${def.id}', this.value)">
+        ${Object.keys(def.variants).map(k => `<option${k===v?' selected':''}>${k}</option>`).join('')}
+      </select>`;
+    row.appendChild(div);
+  });
+}
+
+function setBlock(id, val) {
+  cfg[id] = val;
+  renderBlocks();
+}
+
+function renderParams() {
+  const bar = document.getElementById('params-bar');
+  bar.innerHTML = '';
+  PARAM_DEFS.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'param-item';
+    div.innerHTML = `
+      <label>${p.label}: <span class="param-val" id="pv-${p.id}">${params[p.id]}</span></label>
+      <input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${params[p.id]}"
+        oninput="params['${p.id}']=+this.value; document.getElementById('pv-${p.id}').textContent=this.value;">`;
+    bar.appendChild(div);
+  });
+}
+
+// ─── Inspector ─────────────────────────────────────────────────────────────
+
+function renderInspector() {
+  if (!simData) return;
+  document.getElementById('no-sim-msg').style.display = 'none';
+  document.getElementById('inspector-content').style.display = 'block';
+  renderInspectorRound();
+}
+
+function renderInspectorRound() {
+  if (!simData) return;
+  const rd = simData.rounds[currentRound];
+  const N = simData.N;
+  document.getElementById('round-label').textContent = `Round ${currentRound+1} / ${simData.T}`;
+  document.getElementById('round-outcome').textContent = `Outcome y = ${rd.y_true.toFixed(3)}`;
+
+  // ribbon
+  const ribbonEl = document.getElementById('ribbon');
+  ribbonEl.innerHTML = RIBBON_STEPS.map((s,i) =>
+    `<div class="ribbon-step${i===ribbonStep?' active':''}" onclick="setRibbonStep(${i})">
+       <div class="r-sym">${s.sym}</div>
+       <div class="r-label">${s.label}</div>
+     </div>`
+  ).join('');
+
+  document.getElementById('step-desc').textContent = STEP_DESC[RIBBON_STEPS[ribbonStep].key];
+
+  const step = RIBBON_STEPS[ribbonStep];
+  let colKey = step.key;
+
+  // head
+  const thead = document.getElementById('inspector-head');
+  thead.innerHTML = `<tr>
+    <th>Forecaster</th>
+    <th>Active</th>
+    <th>Median q</th>
+    ${step.key === 'aggregate' ? '' : `<th>${step.sym}</th>`}
+    <th>Skill σ</th>
+    <th>Weight w̃</th>
+    <th>Profit π</th>
+    <th>Wealth W</th>
+  </tr>`;
+
+  // body
+  const tbody = document.getElementById('inspector-body');
+  const stepVals = rd[colKey];
+  const maxW = Math.max(...rd.weights);
+
+  tbody.innerHTML = Array.from({length:N}, (_,i) => {
+    const hi = i === selectedForecaster;
+    const active = rd.active[i];
+    const stepVal = Array.isArray(stepVals) ? stepVals[i] : (stepVals && stepVals.q50 !== undefined ? stepVals.q50 : '–');
+    const fmtStep = stepVal === null || stepVal === undefined ? '–' : (typeof stepVal === 'number' ? stepVal.toFixed(3) : stepVal);
+    const widthPct = rd.weights[i] / maxW * 100;
+    return `<tr class="${hi?'highlighted':''}" onclick="selectForecaster(${i})">
+      <td>F${i+1}</td>
+      <td style="text-align:right">${active ? '●' : '○'}</td>
+      <td style="text-align:right">${rd.reports[i] !== null ? rd.reports[i].toFixed(3) : '–'}</td>
+      ${step.key === 'aggregate' ? '' : `<td style="text-align:right">${fmtStep}</td>`}
+      <td style="text-align:right">${rd.sigma[i].toFixed(3)}</td>
+      <td class="bar-cell" style="min-width:80px">
+        <div class="bar-bg" style="width:${widthPct.toFixed(1)}%;max-width:95%"></div>
+        <span class="bar-val">${rd.weights[i].toFixed(3)}</span>
+      </td>
+      <td style="text-align:right;color:${rd.profits[i]>=0?'var(--c-teal-dark)':'var(--c-coral)'}">${rd.profits[i]>=0?'+':''}${rd.profits[i].toFixed(2)}</td>
+      <td style="text-align:right">${rd.wealth[i].toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+
+  if (step.key === 'aggregate') {
+    tbody.innerHTML += `<tr style="background:var(--c-blue-light)">
+      <td colspan="2" style="font-weight:500">Aggregate q̂</td>
+      <td style="text-align:right;font-weight:500">${rd.aggregate.q50.toFixed(3)}</td>
+      <td style="text-align:right;font-size:11px;color:var(--color-text-secondary)">[${rd.aggregate.q10.toFixed(2)}, ${rd.aggregate.q90.toFixed(2)}]</td>
+      <td colspan="3"></td>
+    </tr>`;
+  }
+}
+
+function setRibbonStep(i) { ribbonStep = i; renderInspectorRound(); }
+function selectForecaster(i) { selectedForecaster = i === selectedForecaster ? null : i; renderInspectorRound(); }
+function prevRound() { if (currentRound > 0) { currentRound--; renderInspectorRound(); } }
+function nextRound() { if (simData && currentRound < simData.T-1) { currentRound++; renderInspectorRound(); } }
+
+// ─── Outcome studio ────────────────────────────────────────────────────────
+
+let wealthChart = null;
+
+function renderOutcome() {
+  if (!simData) return;
+  document.getElementById('no-outcome-msg').style.display = 'none';
+  document.getElementById('outcome-content').style.display = 'block';
+
+  const rd = simData.rounds[currentRound];
+  const N = simData.N;
+
+  // Pre-event
+  const aggErr = Math.abs(rd.aggregate.q50 - rd.y_true);
+  const pre = document.getElementById('pre-event');
+  pre.innerHTML = `
+    <div class="section-title">Pre-event — round ${currentRound+1}</div>
+    <div class="outcome-grid">
+      <div class="metric-card"><div class="metric-label">Aggregate median</div><div class="metric-val">${rd.aggregate.q50.toFixed(3)}</div><div class="metric-sub">vs outcome ${rd.y_true.toFixed(3)}</div></div>
+      <div class="metric-card"><div class="metric-label">Active forecasters</div><div class="metric-val">${rd.active.filter(Boolean).length} / ${N}</div><div class="metric-sub">contributing this round</div></div>
+      <div class="metric-card"><div class="metric-label">N_eff (1/HHI)</div><div class="metric-val">${rd.nEff.toFixed(1)}</div><div class="metric-sub">effective market size</div></div>
+      <div class="metric-card"><div class="metric-label">HHI concentration</div><div class="metric-val">${rd.hhi.toFixed(3)}</div><div class="metric-sub">lower = more diverse</div></div>
+      <div class="metric-card"><div class="metric-label">80% interval</div><div class="metric-val" style="font-size:15px">[${rd.aggregate.q10.toFixed(2)}, ${rd.aggregate.q90.toFixed(2)}]</div></div>
+      <div class="metric-card"><div class="metric-label">Abs. error</div><div class="metric-val" style="color:${aggErr<0.1?'var(--c-teal-dark)':'var(--c-coral)'}">${aggErr.toFixed(3)}</div></div>
+    </div>
+    <div class="forecast-bar">
+      <div class="fb-label">Forecast distribution — round ${currentRound+1}</div>
+      <div class="fb-track" id="fb-track"></div>
+      <div style="position:relative;height:14px;margin-top:2px" id="fb-ticks"></div>
+    </div>
+    <div class="section-title">Contributor shares</div>
+    <ul class="contrib-list" id="contrib-list"></ul>`;
+
+  // forecast bar
+  const track = document.getElementById('fb-track');
+  const range = 1.2;
+  const toX = v => ((v / range) * 100).toFixed(1) + '%';
+  const q50x = (rd.aggregate.q50 / range * 100).toFixed(1);
+  const q10x = (rd.aggregate.q10 / range * 100).toFixed(1);
+  const q90x = (rd.aggregate.q90 / range * 100).toFixed(1);
+  const ytruex = (rd.y_true / range * 100).toFixed(1);
+  track.innerHTML = `
+    <div class="fb-90" style="left:${Math.max(0,q10x)}%;width:${Math.min(100,q90x-q10x).toFixed(1)}%"></div>
+    <div class="fb-median" style="left:${q50x}%"></div>
+    <div class="fb-tick" style="left:${ytruex}%;background:var(--c-coral)"></div>`;
+
+  const ticks = document.getElementById('fb-ticks');
+  ticks.innerHTML = `
+    <span class="fb-tick-lbl" style="left:${q50x}%;color:var(--c-blue)">q̂</span>
+    <span class="fb-tick-lbl" style="left:${ytruex}%;color:var(--c-coral)">y</span>`;
+
+  // contributors
+  const topW = [...rd.weights].sort((a,b)=>b-a);
+  const cl = document.getElementById('contrib-list');
+  cl.innerHTML = [...rd.weights].map((w,i) =>
+    `<li>
+      <span style="min-width:28px;font-size:11px">F${i+1}</span>
+      <div class="contrib-bar"><div class="contrib-fill" style="width:${(w*100).toFixed(1)}%"></div></div>
+      <span style="min-width:42px;text-align:right;font-size:11px">${(w*100).toFixed(1)}%</span>
+      <span style="font-size:10px;color:var(--color-text-tertiary);min-width:30px">${rd.active[i]?'':'absent'}</span>
+    </li>`).join('');
+
+  // Post-event
+  const top3 = [...rd.profits].map((p,i)=>({i,p})).sort((a,b)=>b.p-a.p);
+  const post = document.getElementById('post-event');
+  post.innerHTML = `
+    <div class="section-title">Post-event — settlement</div>
+    <div class="outcome-grid">
+      <div class="metric-card"><div class="metric-label">Total deposited</div><div class="metric-val">${rd.totalDeposit.toFixed(1)}</div></div>
+      <div class="metric-card"><div class="metric-label">Total wager Σm</div><div class="metric-val">${rd.totalWager.toFixed(1)}</div></div>
+      <div class="metric-card"><div class="metric-label">Total refunded</div><div class="metric-val">${rd.totalRefund.toFixed(1)}</div></div>
+      <div class="metric-card"><div class="metric-label">Utility U offered</div><div class="metric-val">${rd.U}</div></div>
+      <div class="metric-card"><div class="metric-label">Total payout</div><div class="metric-val">${rd.totalPayout.toFixed(1)}</div></div>
+    </div>
+    <div class="section-title">Top winners / losers — round ${currentRound+1}</div>
+    <ul class="payout-list">
+      ${top3.slice(0,3).map(({i,p}) => `<li><span>F${i+1}</span><span class="${p>=0?'payout-pos':'payout-neg'}">${p>=0?'+':''}${p.toFixed(2)}</span></li>`).join('')}
+      <li style="border-bottom:none"><span style="color:var(--color-text-tertiary)">…</span></li>
+      ${[...top3].reverse().slice(0,2).map(({i,p}) => `<li><span>F${i+1}</span><span class="${p>=0?'payout-pos':'payout-neg'}">${p>=0?'+':''}${p.toFixed(2)}</span></li>`).join('')}
+    </ul>
+    <div class="section-title">Wealth evolution (all rounds)</div>
+    <div class="wealth-chart"><canvas id="wealth-canvas"></canvas></div>`;
+
+  // wealth chart
+  const ctx = document.getElementById('wealth-canvas').getContext('2d');
+  if (wealthChart) { wealthChart.destroy(); wealthChart = null; }
+  const labels = simData.rounds.map(r => r.t+1);
+  const datasets = Array.from({length:N}, (_, i) => {
+    const palette = ['#1D9E75','#185FA5','#BA7517','#993C1D','#534AB7','#5F5E5A','#3B6D11','#D85A30'];
+    return {
+      label: `F${i+1}`,
+      data: simData.rounds.map(r => +r.wealth[i].toFixed(1)),
+      borderColor: palette[i % palette.length],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.3,
+    };
+  });
+  wealthChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { color: 'rgba(100,100,100,.1)' } },
+        y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(100,100,100,.1)' } }
+      }
+    }
+  });
+}
+
+// ─── Bootstrap ─────────────────────────────────────────────────────────────
+
+renderBlocks();
+renderParams();
+</script>

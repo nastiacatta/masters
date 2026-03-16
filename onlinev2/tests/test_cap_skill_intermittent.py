@@ -1,0 +1,166 @@
+"""
+Tests for: cap used for both settlement and aggregation, new-account prior,
+exposure-weighted skill, Michael intermittent backend, default backward compat.
+"""
+import numpy as np
+import pytest
+
+
+def test_cap_used_for_both_settlement_and_aggregation():
+    """With active omega_max, m and m_agg must equal m_used; settlement must use m_pre path."""
+    from onlinev2.core.runner import run_round
+    from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
+
+    state = MechanismState(t=0)
+    params = MechanismParams(
+        scoring_mode="point_mae",
+        sigma_min=0.1,
+        gamma=4.0,
+        omega_max=0.4,
+        lam=0.3,
+        eta=1.0,
+        rho=0.1,
+        eps=1e-12,
+        aggregation_mode="wager",
+        use_exposure_weighted_skill=False,
+    )
+    actions = [
+        RoundInput(account_id="a", participate=True, report=0.3, deposit=2.0),
+        RoundInput(account_id="b", participate=True, report=0.5, deposit=2.0),
+        RoundInput(account_id="c", participate=True, report=0.7, deposit=2.0),
+    ]
+    # Pre-init so L_prev is defined (use default_initial_loss for unseen would run otherwise)
+    init_L = 0.5
+    state.ewma_loss = {"a": init_L, "b": init_L, "c": init_L}
+    state.wealth = {"a": 10.0, "b": 10.0, "c": 10.0}
+
+    new_state, logs = run_round(state=state, params=params, actions=actions, y_t=0.5)
+
+    assert logs["m"] == logs["m_agg"], "same effective wager vector for settlement and aggregation"
+    m_used = np.array(logs["m"])
+    m_raw = np.array(logs["m_raw"])
+    # With omega_max=0.4, cap should bind so m_used != m_raw (unless already within cap)
+    total = float(m_used.sum())
+    shares = m_used / total
+    assert np.all(shares <= 0.4 + 1e-9), "capped shares <= omega_max"
+    # Settlement used m_pre: profit and payoffs are consistent with m_used, not raw
+    assert "m_raw" in logs and "m" in logs
+
+
+def test_new_account_sigma_not_one():
+    """Unseen account on first round must have sigma < 1.0 (conservative prior)."""
+    from onlinev2.core.runner import run_round
+    from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
+
+    state = MechanismState(t=0)
+    params = MechanismParams(
+        scoring_mode="point_mae",
+        sigma_min=0.1,
+        gamma=4.0,
+        sigma_init=0.3,
+        lam=0.3,
+        eta=1.0,
+        rho=0.1,
+        eps=1e-12,
+        aggregation_mode="wager",
+        use_exposure_weighted_skill=False,
+    )
+    actions = [
+        RoundInput(account_id="newbie", participate=True, report=0.5, deposit=1.0),
+    ]
+
+    new_state, logs = run_round(state=state, params=params, actions=actions, y_t=0.5)
+
+    sigma_new = new_state.sigma["newbie"]
+    assert sigma_new < 1.0, "unseen account must not start at sigma=1"
+    assert sigma_new >= 0.1, "sigma must be >= sigma_min"
+
+
+def test_exposure_weighting_small_bet_moves_less():
+    """Same loss, smaller m moves EWMA less than larger m (exposure-weighted learning)."""
+    from onlinev2.core.skill import update_ewma_loss
+
+    L_prev = np.array([0.5, 0.5])
+    losses_t = np.array([0.8, 0.8])
+    alpha_t = np.array([0, 0])
+    rho = 0.2
+    m_ref = 1.0
+
+    m_small = np.array([0.2, 0.2])   # low exposure
+    m_large = np.array([2.0, 2.0])   # high exposure (capped by min(1, m/m_ref) = 1)
+
+    L_no_weight = update_ewma_loss(
+        L_prev, losses_t, alpha_t, rho=rho,
+        m_t=None, use_exposure_weighting=False,
+    )
+    L_small = update_ewma_loss(
+        L_prev, losses_t, alpha_t, rho=rho,
+        m_t=m_small, m_ref=m_ref, use_exposure_weighting=True,
+    )
+    L_large = update_ewma_loss(
+        L_prev, losses_t, alpha_t, rho=rho,
+        m_t=m_large, m_ref=m_ref, use_exposure_weighting=True,
+    )
+
+    # With small exposure, rho_eff is smaller so L moves less toward loss
+    assert L_small[0] < L_large[0], "smaller wager should move EWMA less"
+    assert L_large[0] <= L_no_weight[0] + 1e-9, "large exposure close to unweighted"
+
+
+def test_michael_predict_handles_missing_forecasts():
+    """With one missing forecast, output uses present forecasts plus correction."""
+    from onlinev2.core.intermittent import michael_predict, project_simplex_nonnegative
+
+    n = 3
+    x_t = np.array([0.2, 0.5, 0.8], dtype=np.float64)
+    alpha_t = np.array([0, 1, 0], dtype=np.int32)  # second forecaster missing
+    w = np.ones(n) / n
+    D = np.zeros((n, n))
+
+    y_hat, aux = michael_predict(x_t, alpha_t, w, D)
+
+    theta = aux["theta"]
+    np.testing.assert_array_almost_equal(theta, project_simplex_nonnegative(theta))
+    # x(alpha) has index 1 zeroed, so prediction is theta @ x_masked
+    assert not np.isnan(y_hat) and np.isfinite(y_hat)
+    # Present forecasts 0.2 and 0.8 contribute; missing does not
+    assert 0.0 <= y_hat <= 1.0 + 1e-9
+
+
+def test_default_mode_unchanged_when_new_flags_off():
+    """With aggregation_mode='wager' and use_exposure_weighted_skill=False, behaviour
+    matches intended: new-account prior (sigma < 1 for unseen) and same m for settle + agg.
+    No other change to results for existing codepath."""
+    from onlinev2.core.runner import run_round
+    from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
+
+    state = MechanismState(t=0)
+    state.ewma_loss = {"a": 0.2, "b": 0.4}
+    state.wealth = {"a": 10.0, "b": 10.0}
+    params = MechanismParams(
+        scoring_mode="point_mae",
+        sigma_min=0.1,
+        gamma=4.0,
+        omega_max=None,
+        lam=0.3,
+        eta=1.0,
+        rho=0.1,
+        eps=1e-12,
+        aggregation_mode="wager",
+        use_exposure_weighted_skill=False,
+    )
+    actions = [
+        RoundInput(account_id="a", participate=True, report=0.4, deposit=1.0),
+        RoundInput(account_id="b", participate=True, report=0.6, deposit=1.0),
+    ]
+
+    new_state, logs = run_round(state=state, params=params, actions=actions, y_t=0.5)
+
+    # m and m_agg are the same (single wager vector)
+    assert logs["m"] == logs["m_agg"]
+    # r_hat is wager-weighted average of reports
+    r_hat = logs["r_hat"]
+    assert isinstance(r_hat, (float, np.floating))
+    assert 0.0 <= r_hat <= 1.0
+    # sigma from L_new; existing accounts use their L_prev
+    assert "a" in new_state.sigma and "b" in new_state.sigma

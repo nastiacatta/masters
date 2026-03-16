@@ -50,6 +50,15 @@ class MechanismParams:
     taus: Optional[np.ndarray] = None
     eps: float = 1e-12
 
+    sigma_init: Optional[float] = None
+    use_exposure_weighted_skill: bool = False
+    m_ref: float = 1.0
+
+    aggregation_mode: str = "wager"  # "wager" | "michael_robust_lr"
+    allocation_mode: str = "raja"   # "raja" | "michael_split"
+    delta_is: float = 0.5
+    michael_lr: float = 0.01
+
 
 @dataclass
 class MechanismState:
@@ -62,6 +71,9 @@ class MechanismState:
     weights_prev: Dict[str, float] = field(default_factory=dict)
     agg_prev: Optional[Report] = None
     profit_prev: Dict[str, float] = field(default_factory=dict)
+
+    agg_state: Dict[str, Any] = field(default_factory=dict)
+    allocation_state: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

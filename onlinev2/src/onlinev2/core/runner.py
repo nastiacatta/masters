@@ -23,8 +23,16 @@ from onlinev2.core.scoring import (
 )
 from onlinev2.core.settlement import settle_round
 from onlinev2.core.aggregation import aggregate_forecast
-from onlinev2.core.skill import update_ewma_loss, loss_to_skill
-from onlinev2.core.staking import cap_weight_shares
+from onlinev2.core.skill import (
+    update_ewma_loss,
+    loss_to_skill,
+    default_initial_loss,
+)
+from onlinev2.core.staking import (
+    effective_wager_bankroll,
+    effective_wager_capped,
+)
+from onlinev2.core.intermittent import michael_predict, michael_update
 from onlinev2.core.metrics import (
     compute_gini,
     compute_pit,
@@ -99,15 +107,21 @@ def run_round(
 
     new_state = copy.deepcopy(state)
 
+    init_L = default_initial_loss(
+        sigma_min=params.sigma_min,
+        gamma=params.gamma,
+        sigma_init=params.sigma_init,
+    )
+
     for a in actions:
         if a.account_id not in new_state.ewma_loss:
-            new_state.ewma_loss[a.account_id] = 0.0
+            new_state.ewma_loss[a.account_id] = float(init_L)
         if a.account_id not in new_state.wealth:
             new_state.wealth[a.account_id] = 0.0
 
     b = np.array([a.deposit for a in actions], dtype=np.float64)
     L_prev = np.array(
-        [state.ewma_loss.get(a.account_id, 0.0) for a in actions],
+        [new_state.ewma_loss[a.account_id] for a in actions],
         dtype=np.float64,
     )
 
@@ -117,6 +131,17 @@ def run_round(
     sigma_t = np.clip(sigma_t, params.sigma_min, 1.0)
 
     losses, scores, alpha = _score_actions(actions, y_t, params)
+
+    m_raw = effective_wager_bankroll(b, sigma_t, params.lam, params.eta)
+    m_used = effective_wager_capped(
+        b_t=b,
+        sigma_t=sigma_t,
+        lam=params.lam,
+        eta=params.eta,
+        alpha_t=alpha,
+        omega_max=params.omega_max,
+        eps=params.eps,
+    )
 
     sett = settle_round(
         b=b,
@@ -128,14 +153,8 @@ def run_round(
         U=params.U,
         eps=params.eps,
         eta=params.eta,
+        m_pre=m_used,
     )
-
-    m_t = sett["m"]
-
-    if params.omega_max is not None and params.omega_max > 0.0:
-        m_agg = cap_weight_shares(m_t.copy(), params.omega_max, eps=params.eps)
-    else:
-        m_agg = m_t
 
     if params.scoring_mode == "quantiles_crps":
         reports_for_agg = np.zeros((n, len(params.taus)), dtype=np.float64)
@@ -148,15 +167,59 @@ def run_round(
             if a.participate and a.report is not None:
                 reports_for_agg[i] = float(a.report)
 
-    r_hat = aggregate_forecast(
-        reports_for_agg, m_agg, alpha=alpha, eps=params.eps, fallback=None
-    )
+    if params.aggregation_mode == "wager":
+        r_hat = aggregate_forecast(
+            reports_for_agg, m_used, alpha=alpha, eps=params.eps, fallback=None
+        )
+    else:
+        # Michael robust LR backend: use (w, D) for aggregation only; do not mix with m_used
+        if params.aggregation_mode == "michael_robust_lr":
+            agg = state.agg_state
+            if "w" not in agg or "D" not in agg:
+                w = np.ones(n, dtype=np.float64) / n
+                D = np.zeros((n, n), dtype=np.float64)
+            else:
+                w = np.asarray(agg["w"], dtype=np.float64).ravel()
+                D = np.asarray(agg["D"], dtype=np.float64)
+                if w.size != n or D.shape != (n, n):
+                    w = np.ones(n, dtype=np.float64) / n
+                    D = np.zeros((n, n), dtype=np.float64)
+            # Michael expects point forecasts; for quantiles use median (tau=0.5) as proxy
+            if params.scoring_mode == "quantiles_crps" and params.taus is not None:
+                idx_mid = int(np.argmin(np.abs(params.taus - 0.5)))
+                x_t = np.array(
+                    [reports_for_agg[i, idx_mid] if alpha[i] == 0 else 0.0 for i in range(n)],
+                    dtype=np.float64,
+                )
+            else:
+                x_t = np.asarray(reports_for_agg, dtype=np.float64).ravel().copy()
+                x_t[alpha == 1] = 0.0
+            y_hat, _ = michael_predict(x_t, alpha, w, D)
+            r_hat = float(y_hat)
+            w_new, D_new, _ = michael_update(
+                x_t, y_t, alpha, w, D,
+                tau=params.delta_is,
+                lr=params.michael_lr,
+            )
+            new_state.agg_state = {"w": w_new, "D": D_new}
+        else:
+            r_hat = aggregate_forecast(
+                reports_for_agg, m_used, alpha=alpha, eps=params.eps, fallback=None
+            )
 
     prof = sett["profit"]
 
     losses_norm = normalised_loss(losses, params.scoring_mode)
     L_new = update_ewma_loss(
-        L_prev, losses_norm, alpha, rho=params.rho, kappa=params.kappa, L0=params.L0
+        L_prev,
+        losses_norm,
+        alpha,
+        rho=params.rho,
+        kappa=params.kappa,
+        L0=params.L0,
+        m_t=m_used,
+        m_ref=params.m_ref,
+        use_exposure_weighting=params.use_exposure_weighted_skill,
     )
 
     sigma_new = loss_to_skill(
@@ -171,8 +234,8 @@ def run_round(
         )
         new_state.sigma[a.account_id] = float(sigma_new[i])
         new_state.weights_prev[a.account_id] = (
-            float(m_agg[i]) / float(np.sum(m_agg))
-            if float(np.sum(m_agg)) > params.eps
+            float(m_used[i]) / float(np.sum(m_used))
+            if float(np.sum(m_used)) > params.eps
             else 0.0
         )
         new_state.profit_prev[a.account_id] = float(prof[i])
@@ -180,8 +243,12 @@ def run_round(
     new_state.agg_prev = r_hat
     new_state.t = state.t + 1
 
-    M_t = float(np.sum(m_t))
-    w_arr = m_agg / M_t if M_t > params.eps else np.zeros(n)
+    # Optional allocation hook: future michael_split / Shapley / oos_rewards
+    if params.allocation_mode == "michael_split":
+        pass  # placeholder; settlement remains Raja
+
+    M_t = float(np.sum(m_used))
+    w_arr = m_used / M_t if M_t > params.eps else np.zeros(n)
     hhi = compute_hhi(w_arr)
     n_eff = compute_n_eff(w_arr)
 
@@ -202,8 +269,9 @@ def run_round(
         "ids": ids,
         "deposits": b.tolist(),
         "sigma": sigma_t.tolist(),
-        "m": m_t.tolist(),
-        "m_agg": m_agg.tolist(),
+        "m_raw": m_raw.tolist(),
+        "m": m_used.tolist(),
+        "m_agg": m_used.tolist(),
         "scores": scores.tolist(),
         "losses": losses.tolist(),
         "alpha": alpha.tolist(),

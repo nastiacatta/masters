@@ -4,10 +4,12 @@ from onlinev2.core.staking import (
     choose_deposits,
     skill_gate,
     effective_wager_bankroll,
+    effective_wager_capped,
     cap_weight_shares,
     update_wealth,
 )
 __all__ = [
     "confidence_from_quantiles", "choose_deposits", "skill_gate",
-    "effective_wager_bankroll", "cap_weight_shares", "update_wealth",
+    "effective_wager_bankroll", "effective_wager_capped", "cap_weight_shares",
+    "update_wealth",
 ]

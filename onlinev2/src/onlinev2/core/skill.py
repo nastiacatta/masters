@@ -14,12 +14,38 @@ Pure computation only; no I/O.
 import numpy as np
 
 
-def update_ewma_loss(L_prev, losses_t, alpha_t, rho, kappa=0.0, L0=0.0):
+def default_initial_loss(sigma_min, gamma, sigma_init=None, eps=1e-3):
+    """
+    Map a conservative sigma_init into a finite initial EWMA loss so that
+    unseen accounts do not start at sigma=1. If sigma_init is None, use
+    a conservative default and clip to < 1.
+    """
+    s_min = float(sigma_min)
+    if sigma_init is None:
+        sigma_init = max(s_min + float(eps), 0.2)
+    sigma_init = min(float(sigma_init), 1.0 - 1e-6)
+    if not (s_min < sigma_init < 1.0):
+        raise ValueError("Need sigma_min < sigma_init < 1")
+    return missingness_L0(sigma_init, s_min, float(gamma))
+
+
+def update_ewma_loss(
+    L_prev,
+    losses_t,
+    alpha_t,
+    rho,
+    kappa=0.0,
+    L0=0.0,
+    m_t=None,
+    m_ref=1.0,
+    use_exposure_weighting=False,
+):
     """
     EWMA loss update per forecaster.
 
-    Present (alpha=0): L = (1 - rho) * L_prev + rho * loss.
-    Missing (alpha=1): L = (1 - kappa) * L_prev + kappa * L0.
+    Present (alpha=0): L = (1 - rho_eff) * L_prev + rho_eff * loss.
+    When use_exposure_weighting is True, rho_eff_i = rho * min(1, m_i / m_ref).
+    Missing (alpha=1): L = (1 - kappa) * L_prev + kappa * L0 (unchanged).
     """
     L_prev = np.asarray(L_prev, dtype=np.float64)
     losses_t = np.asarray(losses_t, dtype=np.float64)
@@ -28,9 +54,25 @@ def update_ewma_loss(L_prev, losses_t, alpha_t, rho, kappa=0.0, L0=0.0):
     L = L_prev.copy()
     present = (alpha_t == 0)
     missing = (alpha_t == 1)
-    L[present] = (1.0 - float(rho)) * L[present] + float(rho) * losses_t[present]
+
+    if np.any(present):
+        rho_eff = np.full(L.shape, float(rho), dtype=np.float64)
+
+        if use_exposure_weighting:
+            if m_t is None:
+                raise ValueError("m_t must be provided when use_exposure_weighting=True")
+            m_t = np.asarray(m_t, dtype=np.float64)
+            exposure = np.minimum(1.0, np.maximum(m_t, 0.0) / float(m_ref))
+            rho_eff[present] = rho_eff[present] * exposure[present]
+
+        L[present] = (
+            (1.0 - rho_eff[present]) * L[present]
+            + rho_eff[present] * losses_t[present]
+        )
+
     if float(kappa) != 0.0 and np.any(missing):
         L[missing] = (1.0 - float(kappa)) * L[missing] + float(kappa) * float(L0)
+
     return L
 
 

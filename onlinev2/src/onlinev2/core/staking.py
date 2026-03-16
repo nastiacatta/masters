@@ -6,6 +6,8 @@ Pipeline: confidence from quantile width → deposit from wealth → effective w
 → dominance cap → wealth update. Pure mechanism logic only; no I/O.
 """
 
+from typing import Optional
+
 import numpy as np
 from scipy.stats import norm
 
@@ -86,6 +88,33 @@ def effective_wager_bankroll(
     b_t = np.asarray(b_t, dtype=np.float64)
     g = skill_gate(sigma_t, lam, eta)
     return b_t * g
+
+
+def effective_wager_capped(
+    b_t: np.ndarray,
+    sigma_t: np.ndarray,
+    lam: float,
+    eta: float = 1.0,
+    alpha_t: Optional[np.ndarray] = None,
+    omega_max: Optional[float] = None,
+    eps: float = 1e-12,
+) -> np.ndarray:
+    """
+    Single wager vector for both settlement and aggregation: raw effective wager
+    from b, sigma, lam, eta; zero out absent if alpha_t given; apply cap if
+    omega_max active. Returns (n,) to be used as m_pre and for aggregation.
+    """
+    m_t = effective_wager_bankroll(b_t, sigma_t, lam, eta)
+
+    if alpha_t is not None:
+        alpha_t = np.asarray(alpha_t, dtype=np.int32).ravel()
+        m_t = np.asarray(m_t, dtype=np.float64).ravel().copy()
+        m_t[alpha_t == 1] = 0.0
+
+    if omega_max is not None and omega_max > 0.0:
+        m_t = cap_weight_shares(m_t, omega_max=omega_max, eps=eps)
+
+    return m_t
 
 
 def cap_weight_shares(
