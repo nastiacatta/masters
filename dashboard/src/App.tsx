@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { StoreProvider } from '@/lib/store';
 import { ExplorerProvider } from '@/lib/explorerStore';
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -13,7 +13,7 @@ export default function App() {
   return (
     <StoreProvider>
       <ExplorerProvider>
-        <BrowserRouter basename="/masters">
+        <HashRouter>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
             <main className="flex-1 overflow-hidden bg-slate-50 flex flex-col">
@@ -39,7 +39,7 @@ export default function App() {
               </Routes>
             </main>
           </div>
-        </BrowserRouter>
+        </HashRouter>
       </ExplorerProvider>
     </StoreProvider>
   );
