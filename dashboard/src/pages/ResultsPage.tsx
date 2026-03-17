@@ -71,10 +71,10 @@ function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => vo
 }
 
 type Verdict = 'good' | 'neutral' | 'bad';
-const VERDICT_STYLES: Record<Verdict, { ring: string; bg: string; text: string; badge: string }> = {
-  good:    { ring: 'ring-emerald-300', bg: 'bg-emerald-50',  text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' },
-  neutral: { ring: 'ring-amber-300',   bg: 'bg-amber-50',    text: 'text-amber-700',   badge: 'bg-amber-100 text-amber-700' },
-  bad:     { ring: 'ring-red-300',     bg: 'bg-red-50',      text: 'text-red-700',     badge: 'bg-red-100 text-red-700' },
+const VERDICT_STYLES: Record<Verdict, { ring: string; bg: string; text: string }> = {
+  good:    { ring: 'ring-emerald-300', bg: 'bg-emerald-50',  text: 'text-emerald-700' },
+  neutral: { ring: 'ring-amber-300',   bg: 'bg-amber-50',    text: 'text-amber-700' },
+  bad:     { ring: 'ring-red-300',     bg: 'bg-red-50',      text: 'text-red-700' },
 };
 
 function AnswerCard({ title, metric, metricLabel, verdict, interpretation, caveat }: {
