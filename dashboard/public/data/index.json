@@ -47,7 +47,7 @@
     "name": "calibration",
     "displayName": "Calibration",
     "description": "Evaluates the calibration of the aggregate forecast by checking quantile coverage against nominal levels.",
-    "block": "experiments",
+    "block": "core",
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 6,
