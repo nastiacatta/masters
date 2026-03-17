@@ -291,7 +291,7 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
       nEff: trace.nEff,
       meanSigma: mean(trace.sigma_t),
       totalDeposited: trace.deposits.reduce((sum, value) => sum + value, 0),
-      totalInfluence: trace.influence.reduce((sum, value) => sum + value, 0),
+      totalInfluence: trace.effectiveWager.reduce((sum, value) => sum + value, 0),
       totalDistributed: trace.totalPayoff.reduce(
         (sum, value) => sum + Math.max(0, value),
         0,

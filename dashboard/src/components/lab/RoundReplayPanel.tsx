@@ -55,7 +55,7 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
     return Array.from({ length: N }, (_, i) => ({
       name: agentName(i),
       deposit: trace.deposits[i],
-      influence: trace.influence[i],
+      effectiveWager: trace.effectiveWager[i],
       score: trace.scores[i],
       payoff: trace.profit[i],
       wealth: trace.wealth_after[i],
@@ -188,7 +188,7 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
                   <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />
                 ))}
               </Bar>
-              <Bar dataKey="influence" name="Wager mᵢ" radius={[4, 4, 0, 0]} maxBarSize={32}>
+              <Bar dataKey="effectiveWager" name="Wager mᵢ" radius={[4, 4, 0, 0]} maxBarSize={32}>
                 {agentBarData.map((d) => (
                   <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />
                 ))}

@@ -1,5 +1,5 @@
 import type { BuilderSelections, DepositPolicy, InfluenceRule, AggregationRule, SettlementRule } from '@/lib/coreMechanism/runRoundComposable';
-import type { BehaviourPresetId } from '@/lib/behaviour/scenarioSimulator';
+import { PRESET_META, type BehaviourPresetId } from '@/lib/behaviour/scenarioSimulator';
 import type { DGPId } from '@/lib/coreMechanism/dgpSimulator';
 import type { SimParams } from '@/lib/mechanismExplorer/types';
 
@@ -147,6 +147,15 @@ export default function ScenarioBuilder({
     setParams({ ...params, [key]: value });
   };
 
+  const selectedBehaviour = PRESET_META[behaviourPreset];
+  const behaviourInfo = selectedBehaviour
+    ? {
+        meaning: selectedBehaviour.description,
+        implementation: `Uses levers: ${selectedBehaviour.levers.join(', ')}.`,
+        roundEffect: selectedBehaviour.description,
+      }
+    : null;
+
   return (
     <aside className="w-64 shrink-0 bg-slate-900 text-white rounded-xl p-4 space-y-5 overflow-y-auto max-h-[calc(100vh-8rem)] scrollbar-thin">
       <div>
@@ -242,6 +251,7 @@ export default function ScenarioBuilder({
           ))}
         </div>
 
+        {behaviourInfo && (
         <div className="mt-3 rounded-lg border border-slate-700 bg-slate-900/70 p-3">
           <div className="text-[11px] font-semibold text-slate-100">
             {selectedBehaviour?.label}
@@ -262,6 +272,7 @@ export default function ScenarioBuilder({
             {behaviourInfo.roundEffect}
           </p>
         </div>
+        )}
       </div>
 
       <div className="border-t border-slate-700/50 pt-4">

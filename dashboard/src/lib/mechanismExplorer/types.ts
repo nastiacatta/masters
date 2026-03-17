@@ -38,7 +38,7 @@ export type SkillVariant = 'Fixed' | 'EWMA' | 'Fast adapt' | 'Slow adapt';
 export type DepositVariant = 'Fixed unit' | 'Random' | 'Bankroll×conf' | 'Oracle-style';
 export type InfluenceVariant = 'Equal' | 'Stake-only' | 'Skill-only' | 'Blended' | 'Capped blend';
 export type AggregationVariant = 'Equal pool' | 'Linear pool' | '√-weight pool' | 'Log pool';
-export type SettlementVariant = 'Skill-only' | 'Skill+utility' | 'No-arbitrage';
+export type SettlementVariant = 'Skill-only' | 'Skill+bonus pool' | 'No-arbitrage';
 export type BehaviourVariant =
   | 'Benign'
   | 'Bursty'

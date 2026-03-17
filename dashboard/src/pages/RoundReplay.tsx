@@ -233,7 +233,7 @@ export default function RoundReplay() {
               </div>
               <div className="rounded-lg bg-slate-50 p-2">
                 <p className="font-medium text-slate-600 mb-1">Influence (effective)</p>
-                <p className="font-mono text-slate-800">{trace.influence.map((v, i) => `${agentDisplayName(i)} ${fmtNum(v, 2)}`).join(', ')}</p>
+                <p className="font-mono text-slate-800">{trace.effectiveWager.map((v, i) => `${agentDisplayName(i)} ${fmtNum(v, 2)}`).join(', ')}</p>
               </div>
               <div className="rounded-lg bg-slate-50 p-2">
                 <p className="font-medium text-slate-600 mb-1">Weights w_i</p>

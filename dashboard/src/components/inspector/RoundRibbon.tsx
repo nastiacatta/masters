@@ -42,7 +42,7 @@ const COLUMNS: Column[] = [
     formula: 'm_{i,t} = b_{i,t}(λ + (1−λ)σ_{i,t})',
     desc: 'Deposit filtered through the skill gate. Poor skill reduces effective wager below deposit.',
     color: SEM.wager.main, bg: SEM.wager.light,
-    getValue: (t, i) => t.influence[i],
+    getValue: (t, i) => t.effectiveWager[i],
     format: (v) => v.toFixed(2),
   },
   {

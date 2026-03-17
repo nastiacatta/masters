@@ -1,5 +1,6 @@
 import type { WalkthroughRoundResult } from '@/lib/types';
 import { fmtNum, fmtPct, agentDisplayName } from '@/lib/formatters';
+import ProxyBadge from '@/components/dashboard/ProxyBadge';
 
 interface ResultsStepProps {
   result: WalkthroughRoundResult | null;
@@ -15,6 +16,14 @@ export default function ResultsStep({ result }: ResultsStepProps) {
       )}
       {result && (
         <>
+          {result.isProxy && (
+            <div className="flex items-center gap-2 mb-1">
+              <ProxyBadge />
+              <span className="text-xs text-slate-500">
+                No full trace available. Values below are approximated from round records.
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {result.aggregateForecast != null && (
               <div className="rounded-lg border border-slate-200 bg-white p-3">

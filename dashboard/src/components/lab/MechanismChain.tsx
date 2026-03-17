@@ -27,8 +27,8 @@ const CHAIN_NODES: ChainNode[] = [
   },
   {
     key: 'influence', label: 'Wager', sym: 'mᵢ',
-    getValue: (t, i) => t.influence[i],
-    getAggregate: (t) => t.influence.reduce((a, b) => a + b, 0),
+    getValue: (t, i) => t.effectiveWager[i],
+    getAggregate: (t) => t.effectiveWager.reduce((a, b) => a + b, 0),
     color: '#6366f1', bgColor: '#eef2ff',
   },
   {

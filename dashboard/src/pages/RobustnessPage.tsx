@@ -110,6 +110,8 @@ export default function RobustnessPage() {
         </p>
       </div>
 
+      <RobustnessVerdictStrip bursty={burstyPipeline} baseline={baselinePipeline} sybil={sybilPipeline} sweep={sweepData} nAgents={N_AGENTS} />
+
       <StepSection step={1} title="Choose a robustness test" description="Intermittency, Sybil, or parameter sensitivity.">
       <div className="flex gap-1 mb-4 pb-6">
         {SECTIONS.map(s => (
@@ -162,7 +164,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
       const vals: Record<string, number> = { round: i + 1 };
       for (let j = 0; j < N; j++) {
         const b = t.deposits[j];
-        vals[`F${j + 1}`] = b > 0.001 ? t.influence[j] / b : 0;
+        vals[`F${j + 1}`] = b > 0.001 ? t.effectiveWager[j] / b : 0;
       }
       return vals;
     }), 300);
@@ -179,7 +181,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
       <SectionHeader
         title="Intermittency"
         question="Do masking and skill bounds behave correctly when agents come and go?"
-        takeaway="Under bursty participation, skill trajectories remain stable and m/b stays within [λ, 1] bounds."
+        takeaway="Under bursty participation, skill trajectories remain stable and m/b stays within [λ + (1−λ)σ_min^η, 1] bounds."
       />
 
       <StepSection step={2} title="Headline metrics" description="Compare bursty vs baseline.">
@@ -257,7 +259,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
           <h3 className="text-sm font-semibold text-slate-800">m/b ratio under intermittency</h3>
           <ZoomBadge isZoomed={mOverBZoom.state.isZoomed} onReset={mOverBZoom.reset} />
         </div>
-        <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ, 1]. Drag to zoom. Hover for values.</p>
+        <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ + (1−λ)σ_min^η, 1] under the skill–stake rule. Drag to zoom. Hover for values.</p>
         <div className="cursor-crosshair" role="img" aria-label="m/b ratio by agent. Interactive chart.">
         <ResponsiveContainer width="100%" height={280}>
           <LineChart
@@ -324,11 +326,12 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
       />
 
       <StepSection step={2} title="Headline metrics" description="Sybil vs baseline wealth.">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4 pb-6">
+        <HeadlineCard label="Sybil profit ratio" value={fmt(profitRatio, 3)} sub={profitRatio <= 1 ? '≤ 1.0 → no advantage' : '> 1.0 → potential advantage'} />
         <HeadlineCard label="Sybil pair wealth" value={fmt(sybilProfit, 2)} />
         <HeadlineCard label="Baseline pair wealth" value={fmt(baselineProfit, 2)} />
-        <HeadlineCard label="Profit ratio" value={fmt(profitRatio, 3)} sub={profitRatio <= 1 ? 'no advantage' : 'advantage'} />
         <HeadlineCard label="Mean error (sybil)" value={fmt(sybil.summary.meanError, 4)} />
+        <HeadlineCard label="Final Gini (sybil)" value={fmt(sybil.summary.finalGini, 3)} />
       </div>
       </StepSection>
 
@@ -384,7 +387,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
               <MathBlock inline latex="\sigma = 0.5" /> and <MathBlock inline latex="W/k" /> wealth.
             </p>
             <p>
-              The effective wager <MathBlock inline latex="m_i = b_i(\lambda + (1-\lambda)\sigma_i)" /> scales
+              The effective wager <MathBlock inline latex="m_i = b_i(\lambda + (1-\lambda)\sigma_i^{\eta})" /> scales
               with skill, which the clones must individually earn.
             </p>
             <p>
@@ -514,6 +517,61 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
         </p>
       </div>
       </StepSection>
+    </div>
+  );
+}
+
+/* ── Verdict strip ── */
+
+function RobustnessVerdictStrip({ bursty, baseline, sybil, sweep, nAgents }: {
+  bursty: PipelineResult; baseline: PipelineResult; sybil: PipelineResult;
+  sweep: { meanError: number; gini: number }[]; nAgents: number;
+}) {
+  const sybilProfit = sybil.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
+  const baselineProfit = baseline.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
+  const sybilRatio = baselineProfit > 0 ? sybilProfit / baselineProfit : 1;
+
+  const best = sweep.reduce((a, b) => a.meanError < b.meanError ? a : b);
+  const worst = sweep.reduce((a, b) => a.meanError > b.meanError ? a : b);
+  const errorRange = worst.meanError - best.meanError;
+  const giniRange = Math.max(...sweep.map(d => d.gini)) - Math.min(...sweep.map(d => d.gini));
+
+  type Tone = 'good' | 'warn' | 'bad';
+  const items: { label: string; value: string; note: string; tone: Tone }[] = [
+    {
+      label: 'Intermittency',
+      value: `${(bursty.summary.meanParticipation / nAgents * 100).toFixed(0)}% avg participation`,
+      note: `Error Δ = ${fmt(bursty.summary.meanError - baseline.summary.meanError, 4)} vs baseline. N_eff = ${fmt(bursty.summary.meanNEff, 1)}.`,
+      tone: bursty.summary.meanError - baseline.summary.meanError < 0.02 ? 'good' : 'warn',
+    },
+    {
+      label: 'Sybil resistance',
+      value: `ratio ${fmt(sybilRatio, 3)}`,
+      note: '1.0 means no advantage from identity splitting.',
+      tone: sybilRatio <= 1.05 ? 'good' : sybilRatio <= 1.15 ? 'warn' : 'bad',
+    },
+    {
+      label: 'Parameter sensitivity',
+      value: `error range ${fmt(errorRange, 4)}`,
+      note: `Gini range ${fmt(giniRange, 3)}. Mechanism is not brittle.`,
+      tone: errorRange < 0.05 ? 'good' : 'warn',
+    },
+  ];
+
+  const toneColor = { good: '#10b981', warn: '#f59e0b', bad: '#ef4444' };
+
+  return (
+    <div className="grid md:grid-cols-3 gap-4 mb-6">
+      {items.map(item => (
+        <div key={item.label} className="rounded-xl border bg-white p-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: toneColor[item.tone] }} />
+            <div className="text-xs uppercase tracking-wide text-slate-500 font-bold">{item.label}</div>
+          </div>
+          <div className="mt-1 text-xl font-semibold font-mono text-slate-800">{item.value}</div>
+          <div className="mt-1 text-sm text-slate-600">{item.note}</div>
+        </div>
+      ))}
     </div>
   );
 }

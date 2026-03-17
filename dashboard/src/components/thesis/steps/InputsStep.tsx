@@ -1,5 +1,6 @@
 import type { WalkthroughInputs } from '@/lib/types';
 import { fmtNum, taskTypeLabel, scoringRuleLabel, agentDisplayName } from '@/lib/formatters';
+import ProxyBadge from '@/components/dashboard/ProxyBadge';
 
 interface InputsStepProps {
   inputs: WalkthroughInputs | null;
@@ -22,6 +23,7 @@ export default function InputsStep({ inputs, experimentName, scenarioLabel }: In
               Scenario: {scenarioLabel}
             </span>
           )}
+          {inputs?.isProxy && <ProxyBadge />}
         </div>
       )}
       {!inputs && (

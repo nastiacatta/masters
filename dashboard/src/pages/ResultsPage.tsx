@@ -148,7 +148,7 @@ export default function ResultsPage() {
       fixedDepPipeline.traces.map((t, i) => {
         const avgSigma = t.sigma_t.reduce((a, b) => a + b, 0) / t.sigma_t.length;
         const totalDeposit = t.deposits.reduce((a, b) => a + b, 0);
-        const totalInfluence = t.influence.reduce((a, b) => a + b, 0);
+        const totalInfluence = t.effectiveWager.reduce((a, b) => a + b, 0);
         const mOverB = totalDeposit > 0 ? totalInfluence / totalDeposit : 1;
         return { round: i + 1, mOverB, sigma: avgSigma };
       }),
@@ -161,6 +161,7 @@ export default function ResultsPage() {
       name: d.label,
       meanError: d.pipeline.summary.meanError,
       gini: d.pipeline.summary.finalGini,
+      meanNEff: d.pipeline.summary.meanNEff,
     })).sort((a, b) => a.meanError - b.meanError);
   }, [deposits]);
 
@@ -180,9 +181,10 @@ export default function ResultsPage() {
         <p className="text-sm font-medium text-slate-700 mt-2">
           What changes when skill enters the weighting?
         </p>
-        <p className="text-xs text-slate-500 mt-2 rounded-lg bg-amber-50 border border-amber-200/60 px-3 py-2 max-w-2xl">
-          These are fixed benchmark comparisons, not your current setup. To explore your own scenario, use Mechanism.
-        </p>
+        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 max-w-2xl">
+          <strong>Illustrative in-browser simulation only:</strong> baseline DGP, seed {SEED}, N = {N_AGENTS}, T = {ROUNDS}.
+          Use experiment-backed pages for thesis evidence.
+        </div>
       </div>
 
       {/* Step 1: Choose baselines */}
@@ -208,17 +210,21 @@ export default function ResultsPage() {
       </StepSection>
 
       {/* Step 2: Headline metrics */}
-      <StepSection step={2} title="Headline metrics" description="Ranked by mean error (lower is better).">
+      <StepSection step={2} title="Headline metrics" description="Ranked by mean error (lower is better). Δ is relative to Equal weights.">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
-        {sorted.map((m, i) => (
-          <HeadlineMetric
-            key={m.key}
-            label={`#${i + 1} ${m.label}`}
-            value={fmt(m.pipeline.summary.meanError, 4)}
-            sub={`Gini ${fmt(m.pipeline.summary.finalGini, 3)}`}
-            better={i === 0}
-          />
-        ))}
+        {sorted.map((m, i) => {
+          const equal = methods.find(x => x.key === 'equal')!;
+          const delta = m.pipeline.summary.meanError - equal.pipeline.summary.meanError;
+          return (
+            <HeadlineMetric
+              key={m.key}
+              label={`#${i + 1} ${m.label}`}
+              value={fmt(m.pipeline.summary.meanError, 4)}
+              sub={`Δ vs equal: ${delta >= 0 ? '+' : ''}${fmt(delta, 4)} · Gini ${fmt(m.pipeline.summary.finalGini, 3)} · N_eff ${fmt(m.pipeline.summary.meanNEff, 1)}`}
+              better={i === 0}
+            />
+          );
+        })}
       </div>
       </StepSection>
 
@@ -288,7 +294,7 @@ export default function ResultsPage() {
               term="Skill lever in isolation"
               definition="With fixed deposits, the ratio m/b isolates the pure effect of skill on influence."
               interpretation="If σ rises, m/b rises. This chart removes stake-size noise."
-              latex="\\frac{m_i}{b_i} = \\lambda + (1-\\lambda)\\sigma_i"
+              latex="\\frac{m_i}{b_i} = \\lambda + (1-\\lambda)\\sigma_i^{\\eta}"
               axes={{ x: 'round', y: 'm/b or average σ' }}
             />
             <ZoomBadge isZoomed={skillLeverZoom.state.isZoomed} onReset={skillLeverZoom.reset} />
@@ -322,15 +328,15 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Chart 3: Deposit policy */}
+        {/* Chart 3: Deposit policy — error and Gini side by side */}
         <ChartCard
-          title="Deposit policy comparison"
-          subtitle="Mean error by deposit rule. Hover bars for values. Noisy stake hurts; meaningful deposits help."
+          title="Deposit policy: accuracy vs concentration"
+          subtitle="Mean error and final Gini by deposit rule. Lower error is better; lower Gini means more equitable."
           help={{
             term: 'Deposit policy comparison',
-            definition: 'Compares stake-setting rules.',
-            interpretation: 'Lower bar means lower mean error, so better forecast performance.',
-            axes: { x: 'deposit policy', y: 'mean error' },
+            definition: 'Compares stake-setting rules on both forecast quality and wealth inequality.',
+            interpretation: 'The best policy minimises error without concentrating wealth.',
+            axes: { x: 'deposit policy', y: 'mean error / Gini' },
           }}
         >
           <ResponsiveContainer width="100%" height={300}>
@@ -339,13 +345,11 @@ export default function ResultsPage() {
               <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE}
                 label={{ value: 'Deposit policy', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-                label={{ value: 'Mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                label={{ value: 'Value', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
-              <Bar dataKey="meanError" name="Mean error" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                {depositBarData.map((_, i) => (
-                  <Cell key={i} fill={i === 0 ? '#10b981' : i === depositBarData.length - 1 ? '#ef4444' : SEM.deposit.main} />
-                ))}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+              <Bar dataKey="meanError" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={32} fill={SEM.outcome.main} />
+              <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={32} fill={SEM.wealth.main} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -383,7 +387,7 @@ export default function ResultsPage() {
       <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
         <MathBlock
           inline
-          latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}\bigr)"
+          latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}^{\eta}\bigr)"
         />
         <p className="text-xs text-slate-500 mt-2">
           The effective wager gates deposit through skill. With noisy deposits,

@@ -55,7 +55,7 @@ const LAYERS: Layer[] = [
     accent: SEM.wager.main,
     nodes: [
       { id: 'elig', label: 'Eligibility', sym: '✓ / ✗', color: '#64748b', bg: '#f1f5f9', desc: 'Validate participation, check deposits, exclude absent agents' },
-      { id: 'm', label: 'Eff. wager', sym: 'mᵢ,ₜ', color: SEM.wager.main, bg: SEM.wager.light, desc: 'Deposit filtered through the skill gate', formula: 'm_{i,t} = b_{i,t}\\bigl(\\lambda + (1-\\lambda)\\,\\sigma_{i,t}\\bigr)' },
+      { id: 'm', label: 'Eff. wager', sym: 'mᵢ,ₜ', color: SEM.wager.main, bg: SEM.wager.light, desc: 'Deposit filtered through the skill gate', formula: 'm_{i,t} = b_{i,t}\\bigl(\\lambda + (1-\\lambda)\\,\\sigma_{i,t}^{\\eta}\\bigr)' },
       { id: 'cap', label: 'Cap / normalise', sym: 'w̃ᵢ', color: '#6366f1', bg: '#eef2ff', desc: 'Cap individual weights so no single agent dominates aggregation' },
       { id: 'agg', label: 'Aggregate', sym: 'r̂ₜ', color: SEM.aggregate.main, bg: SEM.aggregate.light, desc: 'Weighted combination of reports into the market forecast', formula: '\\hat{r}_t = \\sum_i w_i\\,r_{i,t}' },
     ],
@@ -68,7 +68,7 @@ const LAYERS: Layer[] = [
     nodes: [
       { id: 'y', label: 'Outcome', sym: 'yₜ', color: SEM.outcome.main, bg: SEM.outcome.light, desc: 'The realised outcome, observed after forecasts are locked in' },
       { id: 's', label: 'Score', sym: 'sᵢ,ₜ', color: SEM.score.main, bg: SEM.score.light, desc: 'How close agent i\u2019s report was to yₜ', formula: 's_{i,t} = S(r_{i,t},\\, y_t)' },
-      { id: 'Pi', label: 'Settlement', sym: 'Πᵢ,ₜ', color: SEM.payoff.main, bg: SEM.payoff.light, desc: 'Payoff after scoring — zero-sum redistribution', formula: '\\Pi^{\\text{skill}}_{i,t} = m_{i,t}\\bigl(1 + s_{i,t} - \\bar{s}_t\\bigr)' },
+      { id: 'Pi', label: 'Settlement', sym: 'Πᵢ,ₜ', color: SEM.payoff.main, bg: SEM.payoff.light, desc: 'Competitive settlement from effective wagers and relative score', formula: '\\Pi^{\\mathrm{skill}}_{i,t} = m_{i,t}\\bigl(1 + s_{i,t} - \\bar{s}_t\\bigr),\\quad \\bar{s}_t = \\frac{\\sum_j m_{j,t}s_{j,t}}{\\sum_j m_{j,t}}' },
     ],
   },
   {
@@ -80,7 +80,8 @@ const LAYERS: Layer[] = [
       { id: 'rhat_out', label: 'Forecast', sym: 'r̂ₜ', color: SEM.aggregate.main, bg: SEM.aggregate.light, desc: 'Published aggregate forecast for consumers' },
       { id: 'm_out', label: 'Weights', sym: 'mᵢ', color: SEM.wager.main, bg: SEM.wager.light, desc: 'Effective weights used in aggregation' },
       { id: 'Pi_out', label: 'Payoffs', sym: 'Πᵢ', color: SEM.payoff.main, bg: SEM.payoff.light, desc: 'Individual payoffs after settlement' },
-      { id: 'W_next', label: 'Wealth\u2032', sym: 'Wᵢ,ₜ₊₁', color: SEM.wealth.main, bg: SEM.wealth.light, desc: 'Updated wealth for the next round', formula: 'W_{i,t+1} = W_{i,t} - b_{i,t} + \\Pi_{i,t}' },
+      { id: 'refund', label: 'Refund', sym: 'bᵢ − mᵢ', color: '#475569', bg: '#f8fafc', desc: 'Immediate refund of the deposit portion that does not count as effective wager', formula: '\\mathrm{refund}_{i,t} = b_{i,t} - m_{i,t}' },
+      { id: 'W_next', label: 'Wealth\u2032', sym: 'Wᵢ,ₜ₊₁', color: SEM.wealth.main, bg: SEM.wealth.light, desc: 'Updated wealth for the next round', formula: 'W_{i,t+1} = W_{i,t} + \\pi_{i,t},\\quad \\pi_{i,t} = \\Pi^{\\mathrm{skill}}_{i,t} - m_{i,t}' },
       { id: 'sigma_next', label: 'Skill\u2032', sym: 'σᵢ,ₜ₊₁', color: SEM.skill.main, bg: SEM.skill.light, desc: 'Updated online skill estimate for the next round' },
       { id: 'diag', label: 'Diagnostics', sym: 'Neff, HHI', color: '#94a3b8', bg: '#f8fafc', desc: 'Concentration metrics, calibration, effective sample size' },
     ],
@@ -94,7 +95,7 @@ const EDGES: [string, string][] = [
   ['elig', 'm'], ['m', 'cap'], ['cap', 'agg'],
   ['agg', 'rhat_out'], ['cap', 'm_out'],
   ['y', 's'], ['elig', 's'], ['cap', 'Pi'], ['s', 'Pi'],
-  ['Pi', 'Pi_out'], ['Pi_out', 'W_next'], ['s', 'sigma_next'],
+  ['Pi', 'Pi_out'], ['Pi_out', 'W_next'], ['m', 'refund'], ['refund', 'W_next'], ['s', 'sigma_next'],
   ['Pi', 'diag'], ['s', 'diag'],
   ['W_next', 'W'], ['sigma_next', 'sigma'],
 ];

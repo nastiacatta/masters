@@ -20,7 +20,7 @@ export function composableTraceToDisplayTrace(
 ): DisplayRoundTrace {
   const N = t.reports.length;
   const totalDeposit = t.deposits.reduce((a, b) => a + b, 0);
-  const totalWager = t.influence.reduce((a, b) => a + b, 0);
+  const totalWager = t.effectiveWager.reduce((a, b) => a + b, 0);
   const totalRefund = t.refunds.reduce((a, b) => a + b, 0);
   const totalPayout = t.totalPayoff.reduce((a, b) => a + b, 0);
   const scoreShares = normalise(t.scores.map((s) => Math.max(0, s)));
@@ -36,7 +36,7 @@ export function composableTraceToDisplayTrace(
     confidence: Array(N).fill(null),
     sigma: t.sigma_t,
     deposits: t.deposits,
-    wagers: t.influence,
+    wagers: t.effectiveWager,
     weights: t.weights,
     aggregate: {
       q50: t.r_hat,

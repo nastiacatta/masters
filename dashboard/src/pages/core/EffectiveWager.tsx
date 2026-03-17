@@ -18,7 +18,7 @@ export default function EffectiveWager() {
           </h3>
           <MathBlock accent label="Skill-gated wager" latex="m_{i,t} = b_{i,t} \\bigl( \\lambda + (1-\\lambda) \\sigma_{i,t}^\\eta \\bigr)" />
           <p className="text-xs text-slate-500 mt-2">
-            With <MathBlock inline latex="\\eta = 1" /> (linear gate). For <MathBlock inline latex="\\eta > 1" /> the code uses <MathBlock inline latex="g(\\sigma) = \\lambda + (1-\\lambda) \\sigma^\\eta" /> so low-skill agents’ wagers shrink more sharply. <MathBlock inline latex="m/b \\in [\\lambda, 1]" />.
+            With <MathBlock inline latex="\\eta = 1" /> (linear gate). For <MathBlock inline latex="\\eta > 1" /> the code uses <MathBlock inline latex="g(\\sigma) = \\lambda + (1-\\lambda) \\sigma^\\eta" /> so low-skill agents’ wagers shrink more sharply. <MathBlock inline latex="m/b \\in [\\lambda + (1-\\lambda)\\sigma_{\\min}^\\eta,\\, 1]" />.
           </p>
         </div>
 

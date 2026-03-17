@@ -58,7 +58,7 @@ export interface RoundTrace {
   participated: boolean[];
   reports: number[];
   deposits: number[];
-  influence: number[];
+  effectiveWager: number[];
 
   aggregationMass: number[];
   cappedAggregationMass: number[];
@@ -224,11 +224,11 @@ export function runComposableRound(
     computeDeposit(state[index], sigma_t[index], decision, params),
   );
 
-  const influence = decisions.map((decision, index) =>
+  const effectiveWager = decisions.map((decision, index) =>
     computeInfluence(deposits[index], sigma_t[index], decision.participate, params),
   );
 
-  const aggregationMass = computeAggregationMass(influence, params);
+  const aggregationMass = computeAggregationMass(effectiveWager, params);
   const cappedAggregationMass =
     params.omegaMax < 1
       ? capWeightShares(aggregationMass, params.omegaMax)
@@ -247,27 +247,27 @@ export function runComposableRound(
     decision.participate && decision.report != null ? scoreMae(y, reports[index]) : 0,
   );
 
-  const totalInfluence = influence.reduce((sum, value) => sum + value, 0);
+  const totalEffectiveWager = effectiveWager.reduce((sum, value) => sum + value, 0);
 
   const meanScore =
-    totalInfluence > EPS
-      ? influence.reduce((sum, value, index) => sum + value * scores[index], 0) /
-        totalInfluence
+    totalEffectiveWager > EPS
+      ? effectiveWager.reduce((sum, value, index) => sum + value * scores[index], 0) /
+        totalEffectiveWager
       : 0;
 
   const skillPayoff =
-    totalInfluence > EPS
-      ? influence.map((value, index) =>
+    totalEffectiveWager > EPS
+      ? effectiveWager.map((value, index) =>
           value > 0 ? value * (1 + clamp(scores[index], 0, 1) - meanScore) : 0,
         )
-      : influence.map(() => 0);
+      : effectiveWager.map(() => 0);
 
-  let utilityPayoff = influence.map(() => 0);
+  let utilityPayoff = effectiveWager.map(() => 0);
   if (
     params.builder.settlementRule === 'skill_plus_utility' &&
     params.utilityPool > 0
   ) {
-    const qualifiedMass = influence.map((value, index) =>
+    const qualifiedMass = effectiveWager.map((value, index) =>
       scores[index] > params.scoreThreshold ? value * scores[index] : 0,
     );
     const qualifiedTotal = qualifiedMass.reduce((sum, value) => sum + value, 0);
@@ -283,8 +283,8 @@ export function runComposableRound(
     (value, index) => value + utilityPayoff[index],
   );
 
-  const profit = totalPayoff.map((value, index) => value - influence[index]);
-  const refunds = deposits.map((value, index) => Math.max(0, value - influence[index]));
+  const profit = totalPayoff.map((value, index) => value - effectiveWager[index]);
+  const refunds = deposits.map((value, index) => Math.max(0, value - effectiveWager[index]));
   const wealth_after = wealth_before.map((wealth, index) =>
     Math.max(0, wealth + profit[index]),
   );
@@ -317,7 +317,7 @@ export function runComposableRound(
     participated,
     reports,
     deposits,
-    influence,
+    effectiveWager,
 
     aggregationMass,
     cappedAggregationMass,

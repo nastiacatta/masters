@@ -145,7 +145,7 @@ export default function ValidationPanel({ pipeline }: Props) {
     let maskViolations = 0;
     for (const t of traces) {
       for (let i = 0; i < t.participated.length; i++) {
-        if (!t.participated[i] && t.influence[i] > EPS) maskViolations++;
+        if (!t.participated[i] && t.effectiveWager[i] > EPS) maskViolations++;
       }
     }
     results.push({
@@ -191,7 +191,7 @@ export default function ValidationPanel({ pipeline }: Props) {
   const budgetData = useMemo(() => {
     return downsample(
       pipeline.traces.map((t, i) => {
-        const totalIn = t.influence.reduce((a, b) => a + b, 0);
+        const totalIn = t.effectiveWager.reduce((a, b) => a + b, 0);
         const totalOut = t.totalPayoff.reduce((a, b) => a + b, 0);
         return {
           round: i + 1,

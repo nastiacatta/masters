@@ -24,8 +24,8 @@ import { useChartZoom } from '@/hooks/useChartZoom';
 
 const INVARIANTS = [
   { label: 'Budget balanced', desc: 'Total payouts equal total effective wagers.', color: SEM.payoff.main },
-  { label: 'Cashflow identity', desc: 'Wealth change = payoff − deposit for every agent.', color: SEM.wealth.main },
-  { label: 'Profit bounded', desc: 'No agent gains more than the total pool.', color: SEM.wager.main },
+  { label: 'Cashflow identity', desc: 'Wealth change = profit = total payoff − effective wager; cashout = refund + total payoff.', color: SEM.wealth.main },
+  { label: 'Profit bounded', desc: 'For active agents, −mᵢ ≤ πᵢ ≤ mᵢ because scores and the weighted mean score lie in [0, 1].', color: SEM.wager.main },
   { label: 'Absent excluded', desc: 'Missing agents get mᵢ = 0, no payoff.', color: SEM.score.main },
 ];
 
@@ -172,6 +172,10 @@ export default function MechanismPage() {
           <p className="text-xs text-slate-500 mt-2 rounded-lg bg-indigo-50 border border-indigo-200/60 px-3 py-2 max-w-2xl">
             These controls update the live walkthrough. Round outputs (outcome, forecast, error, skill, wealth) reflect the current setup.
           </p>
+          <p className="text-sm text-slate-600 mt-2 max-w-2xl">
+            The interactive walkthrough uses a bounded point-score demo (s = 1 − |y − r|),
+            while the thesis discussion also covers probabilistic scoring and quantile-based evaluation.
+          </p>
         </div>
 
         {/* ── Step 1: Understand the system ── */}
@@ -279,7 +283,8 @@ export default function MechanismPage() {
 
               {/* Key metrics for current round */}
               {trace && (
-                <div className="grid grid-cols-4 gap-2 mt-3">
+                <>
+                <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 mt-3">
                   <div className="bg-slate-50 rounded-lg px-2.5 py-1.5">
                     <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Outcome y</div>
                     <div className="text-sm font-bold font-mono text-slate-800">{fmt(trace.y, 4)}</div>
@@ -298,7 +303,30 @@ export default function MechanismPage() {
                     <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Active</div>
                     <div className="text-sm font-bold font-mono text-slate-800">{trace.activeCount}/{N}</div>
                   </div>
+                  <div className="bg-slate-50 rounded-lg px-2.5 py-1.5">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">N_eff</div>
+                    <div className="text-sm font-bold font-mono text-slate-800">{fmt(trace.nEff, 2)}</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg px-2.5 py-1.5">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Top share</div>
+                    <div className="text-sm font-bold font-mono text-slate-800">{fmt(trace.topShare, 3)}</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg px-2.5 py-1.5">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Deposited / paid / refund</div>
+                    <div className="text-sm font-bold font-mono text-slate-800">
+                      {fmt(trace.deposits.reduce((a, b) => a + b, 0), 1)} / {fmt(trace.totalPayoff.reduce((a, b) => a + Math.max(0, b), 0), 1)} / {fmt(trace.refunds.reduce((a, b) => a + b, 0), 1)}
+                    </div>
+                  </div>
                 </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Round {currentRound + 1}: {trace.activeCount} agent{trace.activeCount !== 1 ? 's' : ''} participated.
+                  Influence concentration {fmt(trace.topShare, 3)}.
+                  {(() => {
+                    const best = trace.totalPayoff.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v)[0];
+                    return best && best.v > 0 ? ` Largest payoff went to ${agentName(best.i)}.` : '';
+                  })()}
+                </p>
+                </>
               )}
             </div>
             </StepSection>
@@ -522,11 +550,11 @@ export default function MechanismPage() {
 /* ── Agent bar charts for round detail ── */
 
 function AgentBarCharts({ trace, N }: {
-  trace: { deposits: number[]; influence: number[]; scores: number[]; profit: number[]; wealth_after: number[]; wealth_before: number[]; participated: boolean[]; activeCount: number };
+  trace: { deposits: number[]; effectiveWager: number[]; scores: number[]; profit: number[]; wealth_after: number[]; wealth_before: number[]; participated: boolean[]; activeCount: number };
   N: number;
 }) {
   const agentBarData = useMemo(() => Array.from({ length: N }, (_, i) => ({
-    name: agentName(i), deposit: trace.deposits[i], influence: trace.influence[i],
+    name: agentName(i), deposit: trace.deposits[i], effectiveWager: trace.effectiveWager[i],
     score: trace.scores[i], payoff: trace.profit[i], wealth: trace.wealth_after[i],
     active: trace.participated[i], idx: i,
   })), [trace, N]);
@@ -540,7 +568,7 @@ function AgentBarCharts({ trace, N }: {
             term="Deposits vs effective wagers"
             definition="b_i is the posted deposit. m_i is the part that actually counts after skill adjustment."
             interpretation="If two agents deposit the same amount, the one with higher σ_i gets higher effective wager."
-            latex="m_i = b_i\\bigl(\\lambda + (1-\\lambda)\\sigma_i\\bigr)"
+            latex="m_i = b_i\\bigl(\\lambda + (1-\\lambda)\\sigma_i^{\\eta}\\bigr)"
             axes={{ x: 'agent', y: 'amount' }}
           />
         </div>
@@ -556,7 +584,7 @@ function AgentBarCharts({ trace, N }: {
             <Bar dataKey="deposit" name="Deposit bᵢ" radius={[4, 4, 0, 0]} maxBarSize={28} opacity={0.4}>
               {agentBarData.map(d => <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />)}
             </Bar>
-            <Bar dataKey="influence" name="Wager mᵢ" radius={[4, 4, 0, 0]} maxBarSize={28}>
+            <Bar dataKey="effectiveWager" name="Wager mᵢ" radius={[4, 4, 0, 0]} maxBarSize={28}>
               {agentBarData.map(d => <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />)}
             </Bar>
           </BarChart>
@@ -568,9 +596,9 @@ function AgentBarCharts({ trace, N }: {
           <h4 className="text-sm font-semibold text-slate-800">Profit by agent</h4>
           <InfoToggle
             term="Profit by agent"
-            definition="Payout minus deposit."
-            interpretation="Positive means the agent made money on that round, negative means a loss."
-            latex="\\pi_i = \\Pi_i - b_i"
+            definition="Total payoff minus effective wager."
+            interpretation="Positive means the agent gained on that round, negative means a loss. Bounded by ±mᵢ."
+            latex="\\pi_i = \\Pi^{\\mathrm{skill}}_i - m_i"
             axes={{ x: 'agent', y: 'profit' }}
           />
         </div>
