@@ -10,7 +10,6 @@ import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import { DEFAULT_BUILDER_SELECTIONS, type BuilderSelections } from '@/lib/coreMechanism/runRoundComposable';
 import type { SimParams } from '@/lib/mechanismExplorer/types';
 import { SEM } from '@/lib/tokens';
-import MathBlock from '@/components/dashboard/MathBlock';
 import InfoToggle from '@/components/dashboard/InfoToggle';
 import SystemArchitecture from '@/components/mechanism/SystemArchitecture';
 import ScenarioBuilder from '@/components/lab/ScenarioBuilder';
@@ -170,21 +169,6 @@ export default function MechanismPage() {
           <div className="space-y-4 pb-6">
             <SystemArchitecture />
 
-            <div className="grid sm:grid-cols-2 gap-3">
-              <MathBlock
-                label="Effective wager"
-                latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}\bigr)"
-                caption="Deposit filtered through the skill gate."
-                accent
-              />
-              <MathBlock
-                label="Skill-pool payoff"
-                latex="\Pi^{\text{skill}}_{i,t} = m_{i,t}\left(1 + s_{i,t} - \bar{s}_t\right)"
-                caption="Zero-sum redistribution: better-than-average scorers gain."
-                accent
-              />
-            </div>
-
             <div className="flex flex-wrap gap-2">
               {INVARIANTS.map(({ label, color }) => (
                 <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium" style={{ background: color + '12', color }}>
@@ -201,7 +185,7 @@ export default function MechanismPage() {
           <div className="flex items-center gap-2 mb-4 flex-wrap pb-6">
           <button
             onClick={() => setControlsOpen(!controlsOpen)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               controlsOpen ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >

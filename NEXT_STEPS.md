@@ -50,7 +50,7 @@ Every core comparison must include:
 | **Skill-only** | w_i ∝ σ_i (or learned performance score), no stake |
 | **Blended skill+stake** | Full mechanism: m_i = b_i · g(σ_i) |
 | **Bankroll pipeline** | Full five-step pipeline (A→B→C→D→E) |
-| **Quantile averaging vs linear pooling** | Where relevant (Raja et al. argue QA is sharper) |
+| **Quantile averaging vs linear pooling** | Where relevant. Compare pointwise quantile averaging against linear pooling empirically; do not describe the implemented operator as QA pooling unless QA is actually implemented. |
 
 ---
 
@@ -67,7 +67,7 @@ Every core comparison must include:
 - Budget balance
 - Non-negativity of payouts
 - Equal-score zero profit
-- Truthfulness proxy
+- Per-round conditional truthfulness proxy, holding current effective wagers fixed
 - No-arbitrage sanity
 
 **Question:** Does the mechanism satisfy its stated invariants?
@@ -93,7 +93,7 @@ Every core comparison must include:
 | `fixed_deposit` | With fixed deposits, does skill-only improve over equal? | equal, skill-only | Same seed, T, n_forecasters, fixed b_i | Δ CRPS, skill ranking recovery | Skill gate adds value when deposits are equal |
 | `weight_comparison` | Does weight learning converge on exogenous vs endogenous DGPs? | equal, learned (exogenous), learned (endogenous) | Same seeds, T, DGP family | Convergence curves, target vs learned | Learning works; endogenous harder |
 | `weight_rules` | Which weight rule wins under which deposit policy? | uniform, deposit, skill, mechanism, best-single | Same seed, T, n_forecasters, two deposit policies | Δ CRPS by (rule, policy) | Mechanism best under bankroll; skill-only competitive under fixed |
-| `calibration` | Is the aggregate forecast well-calibrated? | N/A | Same seed, T, n_forecasters | PIT, reliability diagram, sharpness | Calibration preserved under QA |
+| `calibration` | Is the aggregate forecast well-calibrated? | N/A | Same seed, T, n_forecasters | PIT, reliability diagram, sharpness | Calibration is assessed empirically rather than assumed from the pooling rule |
 
 ---
 
@@ -123,7 +123,7 @@ Every core comparison must include:
 
 | Experiment | Question | Baselines | Fixed Controls | Output Metrics | Expected Insight |
 |------------|----------|-----------|----------------|----------------|------------------|
-| `sybil` | Does splitting identity gain advantage? | single identity, k-way split | Same seed, k_max, n_trials | Profit difference, profit ratio | Sybilproof: no gain from split |
+| `sybil` | Does splitting identity gain advantage under identical reports and conserved total wager? | single identity, k-way split | Same seed, k_max, n_trials | Profit difference, profit ratio | Check invariance in the narrow split/merge case documented by the mechanism |
 | `behaviour_matrix` | How do benign vs adversarial behaviours affect CRPS and concentration? | benign, sybil, arbitrageur, collusion, manipulator, insider | Same seed, T, n_users | Δ CRPS, Δ Gini, attacker_weight_share | Attack gain vs benign; concentration cost |
 | `arbitrage_scan` | When does arbitrage appear and dominate wealth? | no arbitrageur, arbitrageur (grid) | Same seed, parameter grid | Arbitrage heatmap, attacker profit | Regions of vulnerability |
 | `detection_adaptation` | Does adaptive evader beat fixed manipulator? | fixed manipulator, adaptive evader | Same seed, T, n_users | Distortion vs baseline, evasion success | Defence collateral damage quantified |

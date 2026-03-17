@@ -3,7 +3,9 @@ Deterministic staking: bankroll-based deposits, confidence proxy, skill-gated
 effective wagers, and dominance cap.
 
 Pipeline: confidence from quantile width → deposit from wealth → effective wager
-→ dominance cap → wealth update. Pure mechanism logic only; no I/O.
+→ dominance cap → wealth update. The confidence term is a heuristic proxy
+derived from quantile width in probit space; it is not itself induced by a
+proper scoring rule. Pure mechanism logic only; no I/O.
 """
 
 from typing import Optional
@@ -27,6 +29,12 @@ def confidence_from_quantiles(
     Bounded confidence multiplier c_i from quantile width in probit space.
     c_i = exp(-beta_c * Delta z_i) with Delta z_i >= 0, so values are in (0, 1].
     Returns (n,) in [c_min, c_max]. c_max=1.0 is consistent with the formula.
+
+    Important:
+        This is safe for theorem claims only when the input quantiles are from
+        history (e.g. t-1) or otherwise fixed before the current round report is
+        chosen. If q_t is the current round report, deposits become
+        report-dependent and the standard truthfulness argument does not apply.
     """
     q_t = np.asarray(q_t, dtype=np.float64)
     taus = np.asarray(taus, dtype=np.float64).ravel()
@@ -61,6 +69,13 @@ def choose_deposits(
     """
     Deterministic deposit: b_i = min(W_i, b_max, f * W_i * c_i) for active agents.
     Returns (n,) deposits, 0 for absent.
+
+    Important:
+        For theorem-preserving weighted-score settlement, c_t must be fixed before
+        the agent chooses the round-t report, for example from lagged reports or
+        another exogenous/precommitted signal. If c_t is computed from the current
+        round report, then b_t and hence m_t become report-dependent, and the
+        standard truthfulness argument does not apply.
     """
     W_t = np.asarray(W_t, dtype=np.float64).ravel()
     c_t = np.asarray(c_t, dtype=np.float64).ravel()

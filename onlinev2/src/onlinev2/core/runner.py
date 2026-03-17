@@ -1,9 +1,14 @@
 """
-Deterministic round runner: single-round execution of the Lambert mechanism.
+Core deterministic round execution.
 
 run_round is pure given (state, params, actions, y_t). All stochasticity sits
 in the DGP and the behaviour layer. This module does not import behaviour;
 actions satisfy the AgentInput protocol (see core.types).
+
+Deposits in `actions` are treated as already chosen and locked for the round.
+The core does not derive deposits from current reports. Per-round truthfulness
+claims therefore require the caller to ensure deposit/exposure is fixed with
+respect to the current report.
 """
 
 from __future__ import annotations
@@ -128,8 +133,13 @@ def run_round(
     """
     Core deterministic round execution.
 
-    Steps: validate actions → score → effective wagers → cap → aggregate →
-    settle → update wealth → update EWMA/sigma → emit logs.
+    Steps: validate actions -> score -> effective wagers -> cap -> aggregate ->
+    settle -> update wealth -> update EWMA/sigma -> emit logs.
+
+    Deposits in ``actions`` are treated as locked. The core does not derive
+    deposits from current reports. Per-round truthfulness requires the caller
+    to ensure deposit/exposure is F_{t-1}-measurable.
+
     Returns (new_state, logs).
     """
     _validate_actions(actions)

@@ -780,7 +780,7 @@ def run_simulation(
     c_min: float = 0.8,
     c_max: float = 1.3,
     omega_max: float = 0.0,
-    lag_confidence: bool = False,
+    lag_confidence: bool = True,
     use_constant_confidence: bool = False,
     freeze_wealth: bool = False,
     # ---
@@ -932,7 +932,8 @@ def run_simulation(
     snapshot = {"scores": None, "sigma": None, "deposits": None, "alpha": None}
 
     for t in range(T):
-        # Round ordering: get reports -> confidence -> deposit -> sigma -> m -> score -> settle -> update
+        # Round ordering (theorem-safe mode):
+        # sigma/history -> lagged confidence or precommitted deposit -> current report -> score -> settle -> update
         y_t = float(y[t])
         if reports is not None:
             reports_t = np.asarray(reports[:, t], dtype=np.float64).copy()
@@ -951,14 +952,38 @@ def run_simulation(
         if bankroll_mode:
             if use_constant_confidence:
                 c_t = np.ones(n_forecasters, dtype=np.float64)
+
             elif scoring_mode == "quantiles_crps" and q_reports is not None:
-                q_source = prev_q if (lag_confidence and prev_q is not None) else q_reports[:, t, :]
-                c_t = confidence_from_quantiles(
-                    q_source, taus,
-                    eps=1e-6, beta_c=float(beta_c),
-                    c_min=float(c_min), c_max=float(c_max),
-                )
+                if lag_confidence:
+                    if prev_q is None:
+                        c_t = np.ones(n_forecasters, dtype=np.float64)
+                    else:
+                        c_t = confidence_from_quantiles(
+                            prev_q,
+                            taus,
+                            eps=1e-6,
+                            beta_c=float(beta_c),
+                            c_min=float(c_min),
+                            c_max=float(c_max),
+                        )
+                else:
+                    import warnings
+                    warnings.warn(
+                        "lag_confidence=False makes deposits depend on the current report. "
+                        "Use only for empirical ablations, not for truthfulness claims.",
+                        RuntimeWarning,
+                    )
+                    c_t = confidence_from_quantiles(
+                        q_reports[:, t, :],
+                        taus,
+                        eps=1e-6,
+                        beta_c=float(beta_c),
+                        c_min=float(c_min),
+                        c_max=float(c_max),
+                    )
+
                 prev_q = q_reports[:, t, :].copy()
+
             else:
                 c_t = np.ones(n_forecasters, dtype=np.float64)
 

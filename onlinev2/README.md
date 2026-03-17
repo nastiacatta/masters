@@ -236,13 +236,17 @@ Three deposit modes are available in `run_simulation(deposit_mode=...)`:
 
 ### Bankroll staking pipeline (`deposit_mode="bankroll"`)
 
-Each round follows five steps:
+Each round follows five steps in theorem-safe mode:
 
-1. **Confidence proxy** (A): Quantile width in probit space → bounded multiplier `c_i ∈ [c_min, c_max]`
-2. **Deposit** (B): `b_i = min(W_i, b_max, f · W_i · c_i)` — proportional to wealth and confidence
-3. **Skill gate** (C): `m_i = b_i · (λ + (1-λ) · σ_i^η)` — power-law gating crushes low-skill wagers
-4. **Weight cap** (D): Bounded simplex projection (not clip-then-renormalise). Project aggregation shares onto the simplex with upper bound `ω_max` (preserves total budget; each share ≤ `ω_max`; infeasible if `ω_max < 1/n`).
-5. **Wealth update** (E): `W_{i,t+1} = max(0, W_{i,t} + π_{i,t})`
+1. Prior-round state determines `σ_{i,t}`.
+2. Confidence is either constant, exogenous, or **lagged from round t-1** (default: `lag_confidence=True`).
+3. Deposit is chosen from wealth and that pre-round confidence signal: `b_i = min(W_i, b_max, f · W_i · c_i)`.
+4. Effective wager: `m_i = b_i · (λ + (1-λ) · σ_i^η)`.
+5. Current reports are scored and settlement is applied.
+6. Weight cap (optional): bounded simplex projection with upper bound `ω_max`.
+7. Wealth update: `W_{i,t+1} = max(0, W_{i,t} + π_{i,t})`.
+
+Per-round truthfulness is preserved only when `b_{i,t}` and hence `m_{i,t}` are fixed with respect to the round-t report. Using current-round report width to set deposits (`lag_confidence=False`) is an empirical design variant, not a theorem-preserving one.
 
 Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` (base fraction), `omega_max` (cap), `beta_c` (confidence steepness).
 
@@ -254,11 +258,11 @@ Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` 
 |---|----------|---------------|-----------|
 | 1 | `settlement` | Budget balance, non-negative payouts, equal-score zero profit | Budget gap, profit/ROI histograms |
 | 2 | `skill_wager` | Skill and wager evolution under intermittent participation | σ, wager, cumulative profit per agent |
-| 3 | `aggregation` | Aggregate CRPS: blended / equal / stake / skill / bankroll | Rolling + cumulative CRPS (5 methods) |
+| 3 | `aggregation` | Aggregate CRPS-hat: blended / equal / stake / skill / bankroll | Rolling + cumulative CRPS-hat (5 methods) |
 | 4 | `calibration` | Quantile reliability (coverage vs nominal τ) | Reliability diagram |
 | 5 | `parameter_sweep` | Grid over λ and σ_min | Heatmaps (CRPS, Gini) |
 | 6 | `sybil` | Sybil resistance — splitting identities doesn't help | Profit difference and ratio by k |
-| 7 | `scoring` | Point/MAE vs quantiles/CRPS side-by-side | Invariant table, σ evolution, profit |
+| 7 | `scoring` | Point/MAE vs quantiles/CRPS-hat side-by-side | Invariant table, σ evolution, profit |
 | 8 | `fixed_deposit` | Isolate skill effect (fixed deposits) | σ, wager, profit |
 | 9 | `skill_recovery` | Bayes-consistent latent DGP — verify skill ordering | τ vs loss/σ, PIT, calibration |
 | 10 | `baseline_dgp` | Baseline DGP diagnostic (y ~ U(0,1)) | Truth vs reports, noise vs MAE |
@@ -300,12 +304,13 @@ When utility U > 0, total ROI can exceed 1. The bound applies only to the skill 
 
 ### Round ordering
 
-Each round enforces: `σ_t` from `L_{t-1}` → `m_t` → score `s_t` → settle → update `L_t`.
-Wagers depend on **prior** history only, preserving Lambert's per-round truthfulness.
+In theorem-safe mode (`lag_confidence=True`, default): `σ_t` from `L_{t-1}` → lagged confidence or precommitted deposit → `m_t` → current report → score `s_t` → settle → update `L_t`.
+
+Per-round truthfulness holds only if `m_{i,t}` is fixed with respect to `r_{i,t}`. The effective wager `m_{i,t} = b_{i,t}(λ + (1-λ)σ_{i,t}^η)` satisfies this when `b_{i,t}` is precommitted or derived from lagged information. If `b_{i,t}` is computed from the current report width (`lag_confidence=False`), the standard Lambert truthfulness argument does not apply.
 
 ### Sybil resistance
 
-Sybilproofness holds for identity splits/merges with identical reports and conserved total wager.
+The mechanism is invariant to identity splits or merges only in the narrow case where the split identities submit identical reports and the total wager is conserved. This should not be stated as a general sybilproofness result for arbitrary dynamic behaviour.
 
 ---
 
