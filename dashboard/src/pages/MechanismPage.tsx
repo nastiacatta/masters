@@ -1,9 +1,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend, ReferenceLine, Label, Brush,
-  ReferenceArea,
+  AreaChart, Area, LineChart, Line, BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  ReferenceLine, Label, Brush, ReferenceArea,
 } from 'recharts';
 import { useStore } from '@/lib/store';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
@@ -14,6 +14,7 @@ import MathBlock from '@/components/dashboard/MathBlock';
 import ScenarioBuilder from '@/components/lab/ScenarioBuilder';
 import RoundRibbon from '@/components/inspector/RoundRibbon';
 import ValidationPanel from '@/components/lab/ValidationPanel';
+import StepSection from '@/components/dashboard/StepSection';
 import {
   AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   TOOLTIP_STYLE, BRUSH_PROPS, agentName, fmt, downsample, movingAvg,
@@ -171,59 +172,63 @@ export default function MechanismPage() {
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* ── Header ── */}
-        <div className="mb-6">
+        <div className="mb-8">
           <h2 className="text-2xl font-bold text-slate-900">Mechanism</h2>
           <p className="text-sm font-medium text-slate-700 mt-2">
             How does one round work, and why is the mechanism well-defined?
           </p>
         </div>
 
-        {/* ── Pipeline diagram (compact) ── */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 mb-4 overflow-x-auto">
-          <div className="flex items-center gap-1.5 min-w-max">
-            <PipelineNode label="Forecast" sym="rᵢ" color={SEM.outcome.main} bgColor={SEM.outcome.light} />
-            <PipelineArrow />
-            <PipelineNode label="Deposit" sym="bᵢ" color={SEM.deposit.main} bgColor={SEM.deposit.light} />
-            <PipelineArrow />
-            <PipelineNode label="Skill" sym="σᵢ" color={SEM.skill.main} bgColor={SEM.skill.light} />
-            <PipelineArrow />
-            <PipelineNode label="Eff. wager" sym="mᵢ" color={SEM.wager.main} bgColor={SEM.wager.light} />
-            <PipelineArrow />
-            <PipelineNode label="Aggregate" sym="r̂" color={SEM.aggregate.main} bgColor={SEM.aggregate.light} />
-            <PipelineArrow />
-            <PipelineNode label="Settlement" sym="Πᵢ" color={SEM.payoff.main} bgColor={SEM.payoff.light} />
-            <PipelineArrow />
-            <PipelineNode label="Wealth" sym="Wᵢ′" color={SEM.wealth.main} bgColor={SEM.wealth.light} />
+        {/* ── Step 1: Understand the pipeline ── */}
+        <StepSection step={1} title="Understand the pipeline" description="One round flows left to right.">
+          <div className="space-y-4 pb-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 overflow-x-auto">
+              <div className="flex items-center gap-1.5 min-w-max">
+                <PipelineNode label="Forecast" sym="rᵢ" color={SEM.outcome.main} bgColor={SEM.outcome.light} />
+                <PipelineArrow />
+                <PipelineNode label="Deposit" sym="bᵢ" color={SEM.deposit.main} bgColor={SEM.deposit.light} />
+                <PipelineArrow />
+                <PipelineNode label="Skill" sym="σᵢ" color={SEM.skill.main} bgColor={SEM.skill.light} />
+                <PipelineArrow />
+                <PipelineNode label="Eff. wager" sym="mᵢ" color={SEM.wager.main} bgColor={SEM.wager.light} />
+                <PipelineArrow />
+                <PipelineNode label="Aggregate" sym="r̂" color={SEM.aggregate.main} bgColor={SEM.aggregate.light} />
+                <PipelineArrow />
+                <PipelineNode label="Settlement" sym="Πᵢ" color={SEM.payoff.main} bgColor={SEM.payoff.light} />
+                <PipelineArrow />
+                <PipelineNode label="Wealth" sym="Wᵢ′" color={SEM.wealth.main} bgColor={SEM.wealth.light} />
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <MathBlock
+                label="Effective wager"
+                latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}\bigr)"
+                caption="Deposit filtered through the skill gate."
+                accent
+              />
+              <MathBlock
+                label="Skill-pool payoff"
+                latex="\Pi^{\text{skill}}_{i,t} = m_{i,t}\left(1 + s_{i,t} - \bar{s}_t\right)"
+                caption="Zero-sum redistribution: better-than-average scorers gain."
+                accent
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {INVARIANTS.map(({ label, color }) => (
+                <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium" style={{ background: color + '12', color }}>
+                  <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ background: color }}>✓</span>
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        </StepSection>
 
-        {/* ── Core equations + invariants row ── */}
-        <div className="grid sm:grid-cols-2 gap-3 mb-4">
-          <MathBlock
-            label="Effective wager"
-            latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}\bigr)"
-            caption="Deposit filtered through the skill gate."
-            accent
-          />
-          <MathBlock
-            label="Skill-pool payoff"
-            latex="\Pi^{\text{skill}}_{i,t} = m_{i,t}\left(1 + s_{i,t} - \bar{s}_t\right)"
-            caption="Zero-sum redistribution: better-than-average scorers gain."
-            accent
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-6">
-          {INVARIANTS.map(({ label, color }) => (
-            <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium" style={{ background: color + '12', color }}>
-              <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ background: color }}>✓</span>
-              {label}
-            </span>
-          ))}
-        </div>
-
-        {/* ── Controls & View mode toggle ── */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {/* ── Step 2: Set inputs ── */}
+        <StepSection step={2} title="Set inputs" description="Optional: change DGP, behaviour, or parameters.">
+          <div className="flex items-center gap-2 mb-4 flex-wrap pb-6">
           <button
             onClick={() => setControlsOpen(!controlsOpen)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -248,7 +253,8 @@ export default function MechanismPage() {
               </button>
             ))}
           </div>
-        </div>
+          </div>
+        </StepSection>
 
         <div className="flex gap-4">
           {/* ── Controls sidebar ── */}
@@ -278,10 +284,11 @@ export default function MechanismPage() {
           </AnimatePresence>
 
           {/* ── Main content area ── */}
-          <div className="flex-1 min-w-0 space-y-4">
+          <div className="flex-1 min-w-0 space-y-6">
 
-            {/* ══ ROUND SCRUBBER (always visible) ══ */}
-            <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-0 z-20 shadow-sm">
+            {/* ── Step 3: Pick a round ── */}
+            <StepSection step={3} title="Pick a round" description="Use the slider or click a chart point to jump.">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-0 z-20 shadow-sm -mt-1">
               <div className="flex items-center gap-3 flex-wrap">
                 <button type="button" onClick={() => setSelectedRound(Math.max(0, currentRound - 1))}
                   className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors">
@@ -330,8 +337,10 @@ export default function MechanismPage() {
                 </div>
               )}
             </div>
+            </StepSection>
 
-            {/* ══ TIMELINE VIEW ══ */}
+            {/* ── Step 4: Explore ── */}
+            <StepSection step={4} title="Explore" description="Timeline, round detail, or invariant checks.">
             {viewMode === 'timeline' && (
               <div className="space-y-4">
                 {/* Agent selector */}
@@ -500,10 +509,10 @@ export default function MechanismPage() {
               </div>
             )}
 
-            {/* ══ VALIDATION VIEW ══ */}
             {viewMode === 'validation' && (
               <ValidationPanel pipeline={pipeline} />
             )}
+            </StepSection>
           </div>
         </div>
       </div>
@@ -565,6 +574,3 @@ function AgentBarCharts({ trace, N, selectedAgent }: {
     </div>
   );
 }
-
-/* recharts re-exports for the BarChart used in AgentBarCharts */
-import { BarChart, Bar, Cell } from 'recharts';

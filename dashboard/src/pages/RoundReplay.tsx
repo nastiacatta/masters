@@ -34,14 +34,14 @@ export default function RoundReplay() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const nAgents = selectedExperiment?.nAgents ?? 3;
-  const maxRound = getMaxRound(skillWagerData, selectedExperiment?.rounds ?? 10000);
+  const maxRound = getMaxRound(skillWagerData, selectedExperiment?.rounds ?? 20000);
   const roundData = getRoundData(skillWagerData, currentRound);
   const { activeCount, totalWager, avgProfit, participationPct } = getRoundMetrics(
     roundData,
     nAgents,
   );
 
-  const pipelineRounds = Math.min(selectedExperiment?.rounds ?? 500, 500);
+  const pipelineRounds = Math.min(selectedExperiment?.rounds ?? 20000, 20000);
   const pipeline = useMemo(() => {
     if (!selectedExperiment) return null;
     const dgpId: DGPId = ['baseline', 'latent_fixed', 'aggregation_method1', 'aggregation_method3'].includes(selectedExperiment.dgp as DGPId)

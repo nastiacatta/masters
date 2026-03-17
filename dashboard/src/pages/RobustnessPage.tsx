@@ -7,6 +7,7 @@ import {
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
+import StepSection from '@/components/dashboard/StepSection';
 import {
   AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
@@ -109,7 +110,8 @@ export default function RobustnessPage() {
         </p>
       </div>
 
-      <div className="flex gap-1 mb-6">
+      <StepSection step={1} title="Choose a robustness test" description="Intermittency, Sybil, or parameter sensitivity.">
+      <div className="flex gap-1 mb-4 pb-6">
         {SECTIONS.map(s => (
           <button
             key={s.id}
@@ -124,6 +126,7 @@ export default function RobustnessPage() {
           </button>
         ))}
       </div>
+      </StepSection>
 
       {activeSection === 'intermittency' && (
         <IntermittencySection bursty={burstyPipeline} baseline={baselinePipeline} />
@@ -172,21 +175,24 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
   }, [bursty.rounds, N]);
 
   return (
-    <div>
+    <div className="space-y-6">
       <SectionHeader
         title="Intermittency"
         question="Do masking and skill bounds behave correctly when agents come and go?"
         takeaway="Under bursty participation, skill trajectories remain stable and m/b stays within [λ, 1] bounds."
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <StepSection step={2} title="Headline metrics" description="Compare bursty vs baseline.">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
         <HeadlineCard label="Mean error (bursty)" value={fmt(bursty.summary.meanError, 4)} />
         <HeadlineCard label="Mean error (baseline)" value={fmt(baseline.summary.meanError, 4)} />
         <HeadlineCard label="Avg participation" value={`${(bursty.summary.meanParticipation / N * 100).toFixed(0)}%`} />
         <HeadlineCard label="Final Gini" value={fmt(bursty.summary.finalGini, 3)} />
       </div>
+      </StepSection>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+      <StepSection step={3} title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom.">
+      <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <ChartCard title="Participation under intermittency" subtitle="Number of active agents per round.">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={participationData} margin={CHART_MARGIN}>
@@ -275,6 +281,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
           </LineChart>
         </ResponsiveContainer>
       </div>
+      </StepSection>
     </div>
   );
 }
@@ -299,21 +306,24 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
   const N = sybil.traces[0]?.participated.length ?? 6;
 
   return (
-    <div>
+    <div className="space-y-6">
       <SectionHeader
         title="Sybil resistance"
         question="Can an agent gain by splitting into multiple identities?"
         takeaway="No measurable advantage from identity splitting in the tested setup."
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <StepSection step={2} title="Headline metrics" description="Sybil vs baseline wealth.">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
         <HeadlineCard label="Sybil pair wealth" value={fmt(sybilProfit, 2)} />
         <HeadlineCard label="Baseline pair wealth" value={fmt(baselineProfit, 2)} />
         <HeadlineCard label="Profit ratio" value={fmt(profitRatio, 3)} sub={profitRatio <= 1 ? 'no advantage' : 'advantage'} />
         <HeadlineCard label="Mean error (sybil)" value={fmt(sybil.summary.meanError, 4)} />
       </div>
+      </StepSection>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+      <StepSection step={3} title="Charts & explanation" description="Wealth trajectories and why sybil fails.">
+      <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-slate-800">Wealth under sybil attack</h3>
@@ -371,6 +381,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
           </div>
         </div>
       </div>
+      </StepSection>
     </div>
   );
 }
@@ -397,21 +408,24 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
   const sigColors = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
 
   return (
-    <div>
+    <div className="space-y-6">
       <SectionHeader
         title="Parameter sensitivity"
         question="How do λ and σ_min affect accuracy and inequality?"
         takeaway="Lower λ and lower σ_min slightly improve accuracy but can increase inequality. The mechanism is not brittle."
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <StepSection step={2} title="Headline metrics" description="Best and worst configs.">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
         <HeadlineCard label="Best config" value={`λ=${best.lam}, σ_min=${best.sigmaMin}`} sub={`error ${fmt(best.meanError, 4)}`} />
         <HeadlineCard label="Worst config" value={`λ=${worst.lam}, σ_min=${worst.sigmaMin}`} sub={`error ${fmt(worst.meanError, 4)}`} />
         <HeadlineCard label="Error range" value={fmt(worst.meanError - best.meanError, 4)} sub="max − min" />
         <HeadlineCard label="Gini range" value={fmt(Math.max(...data.map(d => d.gini)) - Math.min(...data.map(d => d.gini)), 3)} sub="max − min" />
       </div>
+      </StepSection>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+      <StepSection step={3} title="Charts" description="Bar chart and accuracy vs inequality scatter.">
+      <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Lower is better.">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={barData} margin={{ ...CHART_MARGIN, bottom: 20 }}>
@@ -480,6 +494,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
           downweighting — at the cost of higher concentration (Gini).
         </p>
       </div>
+      </StepSection>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SEM } from '@/lib/tokens';
 import MathBlock from '@/components/dashboard/MathBlock';
+import StepSection from '@/components/dashboard/StepSection';
 
 function ClaimCard({
   number,
@@ -60,33 +61,39 @@ export default function HomePage() {
         />
       </div>
 
-      <div className="mt-10 grid gap-4">
-        <ClaimCard
-          number={1}
-          title="The mechanism is coherent"
-          body="Deposits, wagers, aggregation, payouts — core accounting holds."
-          link="/mechanism"
-          color={SEM.wager.main}
-        />
-        <ClaimCard
-          number={2}
-          title="Skill weighting changes allocation"
-          body="Attenuates noisy stake; equal weighting remains a strong benchmark."
-          link="/results"
-          color={SEM.skill.main}
-        />
-      </div>
+      <div className="mt-10">
+      <StepSection step={1} title="The claims" description="What this thesis argues.">
+        <div className="grid gap-4 pt-2">
+          <ClaimCard
+            number={1}
+            title="The mechanism is coherent"
+            body="Deposits, wagers, aggregation, payouts — core accounting holds."
+            link="/mechanism"
+            color={SEM.wager.main}
+          />
+          <ClaimCard
+            number={2}
+            title="Skill weighting changes allocation"
+            body="Attenuates noisy stake; equal weighting remains a strong benchmark."
+            link="/results"
+            color={SEM.skill.main}
+          />
+        </div>
+      </StepSection>
 
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link to="/mechanism" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
-          Mechanism
-        </Link>
-        <Link to="/results" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
-          Results
-        </Link>
-        <Link to="/robustness" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
-          Robustness
-        </Link>
+      <StepSection step={2} title="Where to go" description="Follow the flow: Mechanism → Results → Robustness.">
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Link to="/mechanism" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
+            1. Mechanism
+          </Link>
+          <Link to="/results" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
+            2. Results
+          </Link>
+          <Link to="/robustness" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
+            3. Robustness
+          </Link>
+        </div>
+      </StepSection>
       </div>
     </div>
     </div>

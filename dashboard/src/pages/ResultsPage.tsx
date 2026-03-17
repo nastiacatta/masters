@@ -7,6 +7,7 @@ import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipelin
 import { METHOD, SEM } from '@/lib/tokens';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
+import StepSection from '@/components/dashboard/StepSection';
 import {
   CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample,
 } from '@/components/lab/shared';
@@ -180,8 +181,9 @@ export default function ResultsPage() {
         </p>
       </div>
 
-      {/* Baseline toggles */}
-      <div className="flex items-center gap-2 mb-6 flex-wrap">
+      {/* Step 1: Choose baselines */}
+      <StepSection step={1} title="Choose baselines" description="Toggle which weighting rules to compare.">
+      <div className="flex items-center gap-2 mb-4 flex-wrap pb-6">
         <span className="text-xs text-slate-500 font-medium mr-1">Show:</span>
         {methods.map(m => (
           <button
@@ -199,9 +201,11 @@ export default function ResultsPage() {
           </button>
         ))}
       </div>
+      </StepSection>
 
-      {/* Headline metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      {/* Step 2: Headline metrics */}
+      <StepSection step={2} title="Headline metrics" description="Ranked by mean error (lower is better).">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
         {sorted.map((m, i) => (
           <HeadlineMetric
             key={m.key}
@@ -212,7 +216,10 @@ export default function ResultsPage() {
           />
         ))}
       </div>
+      </StepSection>
 
+      {/* Step 3: Charts */}
+      <StepSection step={3} title="Charts" description="Drag to zoom. Compare forecast quality, skill lever, and deposit policies.">
       {/* Chart 1: Forecast quality comparison */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 mb-6">
         <div className="flex items-center gap-2 mb-1">
@@ -310,8 +317,10 @@ export default function ResultsPage() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
+      </StepSection>
 
-      {/* Evidence summary */}
+      {/* Step 4: Evidence summary */}
+      <StepSection step={4} title="Evidence summary" description="Key takeaways from this run.">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-800 mb-4">Evidence summary</h3>
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
@@ -338,7 +347,6 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Key equation */}
       <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
         <MathBlock
           inline
@@ -350,6 +358,7 @@ export default function ResultsPage() {
           the mechanism compounds both signals.
         </p>
       </div>
+      </StepSection>
     </div>
     </div>
   );
