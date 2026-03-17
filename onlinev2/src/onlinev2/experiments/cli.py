@@ -77,6 +77,24 @@ def main() -> None:
         help="Base output directory (core -> outdir/core/experiments/, behaviour -> outdir/behaviour/experiments/)",
     )
     parser.add_argument(
+        "--T",
+        type=int,
+        default=None,
+        help="Override round horizon for supported experiments",
+    )
+    parser.add_argument(
+        "--T0",
+        type=int,
+        default=None,
+        help="Override burn-in horizon for supported experiments",
+    )
+    parser.add_argument(
+        "--n_seeds",
+        type=int,
+        default=None,
+        help="Override number of seeds for supported experiments",
+    )
+    parser.add_argument(
         "--write_summary",
         type=str,
         default="true",
@@ -87,7 +105,7 @@ def main() -> None:
 
     outdir = args.outdir
     write_summary = args.write_summary.lower() == "true"
-    set_cli_args(outdir, write_summary)
+    set_cli_args(outdir, write_summary, T=args.T, T0=args.T0, n_seeds=args.n_seeds)
 
     runner = runner_module
 

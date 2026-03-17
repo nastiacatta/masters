@@ -282,7 +282,7 @@ def run_skill_wager_intermittency(T=200, n_forecasters=6, missing_prob=0.3, seed
 # C) Forecast aggregation performance
 # ===================================================================
 
-def run_forecast_aggregation(T=500, n_forecasters=10, missing_prob=0.2, seed=7,
+def run_forecast_aggregation(T=20000, n_forecasters=10, missing_prob=0.2, seed=7,
                              outdir="outputs", block="core", rolling_window=30):
     """Quick overview: Mechanism | Bankroll-Confidence vs baselines.
 
@@ -375,7 +375,7 @@ def run_forecast_aggregation(T=500, n_forecasters=10, missing_prob=0.2, seed=7,
 # D) Calibration diagnostics
 # ===================================================================
 
-def run_calibration_diagnostics(T=300, n_forecasters=10, missing_prob=0.2, seed=7,
+def run_calibration_diagnostics(T=20000, n_forecasters=10, missing_prob=0.2, seed=7,
                                 outdir="outputs", block="core"):
     """Quantile reliability curve: empirical coverage p_hat(tau) vs nominal tau."""
     ep = _exp_paths(outdir, "calibration", block)
@@ -788,7 +788,7 @@ def run_fixed_deposit_skill_effect(T=200, n_forecasters=6, seed=17, outdir="outp
 # ===================================================================
 
 SKILL_RECOVERY_TAU = np.array([0.15, 0.22, 0.32, 0.46, 0.68, 1.0], dtype=np.float64)
-SKILL_RECOVERY_N_SEEDS = 10
+SKILL_RECOVERY_N_SEEDS = 20
 
 
 def _pit_single_forecaster(y, q_tk, taus):
@@ -812,7 +812,7 @@ def _coverage_table(y, q_reports, taus):
     return np.array([[np.mean(y <= q_reports[i, :, k]) for k in range(K)] for i in range(n)])
 
 
-def run_skill_recovery_benchmark_latent(T=2000, T0=500, tau_i=None, seed=42,
+def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
                                         outdir="outputs", block="core", gamma=4.0, rho=0.1,
                                         sigma_min=0.1, sigma_z=1.0,
                                         taus_quantiles=None, n_seeds=SKILL_RECOVERY_N_SEEDS):

@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 from typing import List
 
 # Default canonical config (NEXT_STEPS.md)
-CANONICAL_SEEDS: List[int] = [42, 43, 44, 45, 46]
-CANONICAL_T = 500
+CANONICAL_SEEDS: List[int] = list(range(42, 62))  # 20 seeds
+CANONICAL_T = 20000
 CANONICAL_N_FORECASTERS = 10
 CANONICAL_MISSING_PROB = 0.2
 CANONICAL_TAU_I = [0.15, 0.22, 0.32, 0.46, 0.68, 0.75, 0.82, 0.88, 0.93, 1.0]  # first n_forecasters used

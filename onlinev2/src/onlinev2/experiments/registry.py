@@ -14,13 +14,27 @@ def get_core_experiments(runner_module) -> List[Tuple[str, Callable]]:
     return [
         ("settlement", lambda: runner_module.run_settlement_sanity(outdir=_outdir(), block="core")),
         ("skill_wager", lambda: runner_module.run_skill_wager_intermittency(outdir=_outdir(), block="core")),
-        ("aggregation", lambda: runner_module.run_forecast_aggregation(outdir=_outdir(), block="core")),
-        ("calibration", lambda: runner_module.run_calibration_diagnostics(outdir=_outdir(), block="core")),
+        ("aggregation", lambda: runner_module.run_forecast_aggregation(
+            T=_T() if _T() is not None else 20000,
+            outdir=_outdir(),
+            block="core",
+        )),
+        ("calibration", lambda: runner_module.run_calibration_diagnostics(
+            T=_T() if _T() is not None else 20000,
+            outdir=_outdir(),
+            block="core",
+        )),
         ("parameter_sweep", lambda: runner_module.run_parameter_sweep(outdir=_outdir(), block="core")),
         ("sybil", lambda: runner_module.run_sybil_experiment(outdir=_outdir(), block="core")),
         ("scoring", lambda: runner_module.run_scoring_validation(outdir=_outdir(), block="core")),
         ("fixed_deposit", lambda: runner_module.run_fixed_deposit_skill_effect(outdir=_outdir(), block="core")),
-        ("skill_recovery", lambda: runner_module.run_skill_recovery_benchmark_latent(outdir=_outdir(), block="core")),
+        ("skill_recovery", lambda: runner_module.run_skill_recovery_benchmark_latent(
+            T=_T() if _T() is not None else 20000,
+            T0=_T0() if _T0() is not None else 5000,
+            n_seeds=_n_seeds() if _n_seeds() is not None else 20,
+            outdir=_outdir(),
+            block="core",
+        )),
         ("baseline_dgp", lambda: runner_module.run_baseline_dgp_diagnostic(outdir=_outdir(), block="core")),
         ("latent_fixed_dgp", lambda: runner_module.run_latent_fixed_dgp_diagnostic(outdir=_outdir(), block="core")),
         ("aggregation_dgp", lambda: runner_module.run_aggregation_dgp_diagnostic(outdir=_outdir(), block="core")),
@@ -56,13 +70,37 @@ def get_behaviour_experiments(runner_module, write_summary: bool = None) -> List
 # Set by CLI before calling get_*_experiments so lambdas see current outdir/write_summary
 _outdir_val = "outputs"
 _write_summary_val = True
+_T_val = None
+_T0_val = None
+_n_seeds_val = None
 
 
 def _outdir() -> str:
     return _outdir_val
 
 
-def set_cli_args(outdir: str, write_summary: bool) -> None:
-    global _outdir_val, _write_summary_val
+def _T():
+    return _T_val
+
+
+def _T0():
+    return _T0_val
+
+
+def _n_seeds():
+    return _n_seeds_val
+
+
+def set_cli_args(
+    outdir: str,
+    write_summary: bool,
+    T: int | None = None,
+    T0: int | None = None,
+    n_seeds: int | None = None,
+) -> None:
+    global _outdir_val, _write_summary_val, _T_val, _T0_val, _n_seeds_val
     _outdir_val = outdir
     _write_summary_val = write_summary
+    _T_val = T
+    _T0_val = T0
+    _n_seeds_val = n_seeds

@@ -9,10 +9,7 @@ export interface InfoToggleContent {
   axes?: { x: string; y: string };
 }
 
-interface InfoToggleProps extends InfoToggleContent {
-  /** Optional: render as inline block next to title (default: icon only) */
-  inline?: boolean;
-}
+interface InfoToggleProps extends InfoToggleContent {}
 
 export default function InfoToggle({
   term,
@@ -20,7 +17,6 @@ export default function InfoToggle({
   interpretation,
   latex,
   axes,
-  inline = false,
 }: InfoToggleProps) {
   const [open, setOpen] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
