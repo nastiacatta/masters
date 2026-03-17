@@ -14,7 +14,7 @@ import {
 } from './runRoundComposable';
 import type { BehaviourPresetId } from '@/lib/behaviour/scenarioSimulator';
 
-const DEFAULT_ROUNDS = 500;
+const DEFAULT_ROUNDS = 20000;
 const DEFAULT_SEED = 42;
 const DEFAULT_N = 6;
 const INITIAL_WEALTH = 20;

@@ -170,7 +170,7 @@ export default function ScenarioBuilder({
       <div className="border-t border-slate-700/50 pt-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Parameters</h2>
         <div className="space-y-3">
-          <SliderRow label="Rounds (T)" value={params.T} min={10} max={200} step={5} onChange={(v) => setParam('T', v)} />
+          <SliderRow label="Rounds (T)" value={params.T} min={10} max={20000} step={100} onChange={(v) => setParam('T', v)} format={(v) => v >= 1000 ? `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k` : String(v)} />
           <SliderRow label="Forecasters (N)" value={params.N} min={3} max={12} step={1} onChange={(v) => setParam('N', v)} />
           <SliderRow label="Seed" value={seed} min={1} max={999} step={1} onChange={setSeed} />
           <div className="border-t border-slate-700/50 pt-3 mt-3">
