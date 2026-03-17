@@ -9,7 +9,7 @@ import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
 import StepSection from '@/components/dashboard/StepSection';
 import {
-  AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
@@ -191,14 +191,16 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
       </div>
       </StepSection>
 
-      <StepSection step={3} title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom.">
+      <StepSection step={3} title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom. Hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Participation under intermittency" subtitle="Number of active agents per round.">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={participationData} margin={CHART_MARGIN}>
+        <ChartCard title="Participation under intermittency" subtitle="Active agents per round. Use brush to pan. Hover for values.">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={participationData} margin={CHART_MARGIN_LABELED}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, N]} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, N]}
+                label={{ value: 'Active agents', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Bar dataKey="active" name="Active agents" radius={[2, 2, 0, 0]} maxBarSize={6}>
                 {participationData.map((d, i) => (
@@ -215,22 +217,25 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-slate-800">Skill trajectories</h3>
+            <h3 className="text-sm font-semibold text-slate-800">Skill trajectories (σ)</h3>
             <ZoomBadge isZoomed={skillZoom.state.isZoomed} onReset={skillZoom.reset} />
           </div>
-          <p className="text-[11px] text-slate-400 mb-2">σᵢ over time. Drag to zoom.</p>
-          <ResponsiveContainer width="100%" height={260}>
+          <p className="text-[11px] text-slate-400 mb-2">Skill σ by agent over time. Drag to zoom. Hover for values.</p>
+          <div className="cursor-crosshair" role="img" aria-label="Skill trajectories under intermittency. Interactive chart.">
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart
               data={skillData}
-              margin={CHART_MARGIN}
+              margin={CHART_MARGIN_LABELED}
               onMouseDown={skillZoom.onMouseDown}
               onMouseMove={skillZoom.onMouseMove}
               onMouseUp={skillZoom.onMouseUp}
             >
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                domain={[skillZoom.state.left, skillZoom.state.right]} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                domain={[skillZoom.state.left, skillZoom.state.right]}
+                label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
               {Array.from({ length: N }, (_, i) => (
@@ -243,6 +248,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
               <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -251,19 +257,22 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
           <h3 className="text-sm font-semibold text-slate-800">m/b ratio under intermittency</h3>
           <ZoomBadge isZoomed={mOverBZoom.state.isZoomed} onReset={mOverBZoom.reset} />
         </div>
-        <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ, 1] bounds. Drag to zoom.</p>
-        <ResponsiveContainer width="100%" height={260}>
+        <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ, 1]. Drag to zoom. Hover for values.</p>
+        <div className="cursor-crosshair" role="img" aria-label="m/b ratio by agent. Interactive chart.">
+        <ResponsiveContainer width="100%" height={280}>
           <LineChart
             data={mOverBData}
-            margin={CHART_MARGIN}
+            margin={CHART_MARGIN_LABELED}
             onMouseDown={mOverBZoom.onMouseDown}
             onMouseMove={mOverBZoom.onMouseMove}
             onMouseUp={mOverBZoom.onMouseUp}
           >
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-              domain={[mOverBZoom.state.left, mOverBZoom.state.right]} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]} />
+              domain={[mOverBZoom.state.left, mOverBZoom.state.right]}
+              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]}
+              label={{ value: 'm/b', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
             <ReferenceLine y={1} stroke="#94a3b8" strokeDasharray="4 4" />
@@ -280,6 +289,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
             <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </div>
       </StepSection>
     </div>
@@ -322,26 +332,29 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
       </div>
       </StepSection>
 
-      <StepSection step={3} title="Charts & explanation" description="Wealth trajectories and why sybil fails.">
+      <StepSection step={3} title="Charts & explanation" description="Wealth trajectories and why sybil fails. Drag to zoom, hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-slate-800">Wealth under sybil attack</h3>
             <ZoomBadge isZoomed={wealthZoom.state.isZoomed} onReset={wealthZoom.reset} />
           </div>
-          <p className="text-[11px] text-slate-400 mb-2">Agents F1–F2 are sybil clones. Drag to zoom.</p>
-          <ResponsiveContainer width="100%" height={280}>
+          <p className="text-[11px] text-slate-400 mb-2">F1–F2 are sybil clones. Drag to zoom. Hover for values.</p>
+          <div className="cursor-crosshair" role="img" aria-label="Wealth under sybil. Interactive chart.">
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart
               data={wealthData}
-              margin={CHART_MARGIN}
+              margin={CHART_MARGIN_LABELED}
               onMouseDown={wealthZoom.onMouseDown}
               onMouseMove={wealthZoom.onMouseMove}
               onMouseUp={wealthZoom.onMouseUp}
             >
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                domain={[wealthZoom.state.left, wealthZoom.state.right]} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                domain={[wealthZoom.state.left, wealthZoom.state.right]}
+                label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                label={{ value: 'Wealth', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
               <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="4 4">
@@ -360,6 +373,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
               <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -424,14 +438,16 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
       </div>
       </StepSection>
 
-      <StepSection step={3} title="Charts" description="Bar chart and accuracy vs inequality scatter.">
+      <StepSection step={3} title="Charts" description="Bar chart and scatter. Hover bars or points for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Lower is better.">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barData} margin={{ ...CHART_MARGIN, bottom: 20 }}>
+        <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Hover bars for values. Lower is better.">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={barData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="lam" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="lam" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                label={{ value: 'λ (stake weight)', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                label={{ value: 'Mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
               {sigMins.map((sig, i) => (
@@ -444,9 +460,9 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-800 mb-1">Accuracy vs inequality</h3>
-          <p className="text-[11px] text-slate-400 mb-3">Each dot is one (λ, σ_min) config. Hover for details.</p>
-          <div className="h-[300px] relative">
-            <svg viewBox="0 0 400 300" className="w-full h-full">
+          <p className="text-[11px] text-slate-400 mb-3">Each point is one (λ, σ_min) config. Hover a point to see error and Gini.</p>
+          <div className="h-[320px] relative cursor-default" role="img" aria-label="Scatter: mean error vs Gini by config. Hover points for details.">
+            <svg viewBox="0 0 400 300" className="w-full h-full" aria-hidden="true">
               {data.map((d, i) => {
                 const x = 40 + (d.meanError - best.meanError) / (worst.meanError - best.meanError + 0.001) * 320;
                 const giniRange = Math.max(...data.map(p => p.gini)) - Math.min(...data.map(p => p.gini));
@@ -467,20 +483,23 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
                     />
                     {isHovered && (
                       <g>
-                        <rect x={x + 12} y={y - 28} width={120} height={42} rx={6} fill="white" stroke="#e2e8f0" />
-                        <text x={x + 18} y={y - 12} fontSize="10" fill="#334155" fontWeight="600">
+                        <rect x={Math.min(x + 12, 268)} y={y - 32} width={130} height={48} rx={8} fill="white" stroke="#94a3b8" strokeWidth={1.5} />
+                        <text x={Math.min(x + 18, 274)} y={y - 14} fontSize="11" fill="#0f172a" fontWeight="600">
                           λ={d.lam} σ_min={d.sigmaMin}
                         </text>
-                        <text x={x + 18} y={y + 2} fontSize="10" fill="#64748b">
-                          err={fmt(d.meanError, 4)} gini={fmt(d.gini, 3)}
+                        <text x={Math.min(x + 18, 274)} y={y + 4} fontSize="10" fill="#475569">
+                          Mean error: {fmt(d.meanError, 4)}
+                        </text>
+                        <text x={Math.min(x + 18, 274)} y={y + 20} fontSize="10" fill="#475569">
+                          Gini: {fmt(d.gini, 3)}
                         </text>
                       </g>
                     )}
                   </g>
                 );
               })}
-              <text x="200" y="298" textAnchor="middle" fontSize="10" fill="#94a3b8">Mean error →</text>
-              <text x="12" y="150" textAnchor="middle" fontSize="10" fill="#94a3b8" transform="rotate(-90, 12, 150)">Gini →</text>
+              <text x="200" y="298" textAnchor="middle" fontSize="11" fill="#64748b" fontWeight="500">Mean error (→ better)</text>
+              <text x="14" y="150" textAnchor="middle" fontSize="11" fill="#64748b" fontWeight="500" transform="rotate(-90, 14, 150)">Gini (→ more inequality)</text>
             </svg>
           </div>
         </div>

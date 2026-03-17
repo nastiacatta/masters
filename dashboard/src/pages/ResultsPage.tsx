@@ -9,7 +9,7 @@ import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
 import StepSection from '@/components/dashboard/StepSection';
 import {
-  CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample,
+  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
@@ -224,24 +224,27 @@ export default function ResultsPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 mb-6">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-sm font-semibold text-slate-800">Forecast quality comparison</h3>
-          <span className="text-[11px] text-slate-400 italic">Drag to zoom</span>
+          <span className="text-[11px] text-slate-400">Drag to zoom. Toggle methods above.</span>
           <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
         </div>
         <p className="text-[11px] text-slate-400 mb-3">
           Cumulative mean error. {bestMethod.label} is best ({fmt(bestMethod.pipeline.summary.meanError, 4)}); {worstMethod.label} is worst ({fmt(worstMethod.pipeline.summary.meanError, 4)}).
         </p>
-        <ResponsiveContainer width="100%" height={340}>
+        <div className="cursor-crosshair" role="img" aria-label="Forecast quality by method. Interactive chart.">
+        <ResponsiveContainer width="100%" height={360}>
           <LineChart
             data={cumErrorData}
-            margin={CHART_MARGIN}
+            margin={CHART_MARGIN_LABELED}
             onMouseDown={cumErrorZoom.onMouseDown}
             onMouseMove={cumErrorZoom.onMouseMove}
             onMouseUp={cumErrorZoom.onMouseUp}
           >
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-              domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]}
+              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Cumulative mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
             {methods.map(m => enabledMethods[m.key] && (
@@ -262,6 +265,7 @@ export default function ResultsPage() {
             <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Charts 2 & 3 */}
@@ -272,19 +276,22 @@ export default function ResultsPage() {
             <h3 className="text-sm font-semibold text-slate-800">Skill lever in isolation</h3>
             <ZoomBadge isZoomed={skillLeverZoom.state.isZoomed} onReset={skillLeverZoom.reset} />
           </div>
-          <p className="text-[11px] text-slate-400 mb-3">Fixed deposit: m/b tracks σ when stake noise is removed.</p>
-          <ResponsiveContainer width="100%" height={280}>
+          <p className="text-[11px] text-slate-400 mb-3">Fixed deposit: m/b tracks σ when stake noise is removed. Drag to zoom.</p>
+          <div className="cursor-crosshair" role="img" aria-label="Skill lever m/b and σ. Interactive chart.">
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart
               data={skillLeverData}
-              margin={CHART_MARGIN}
+              margin={CHART_MARGIN_LABELED}
               onMouseDown={skillLeverZoom.onMouseDown}
               onMouseMove={skillLeverZoom.onMouseMove}
               onMouseUp={skillLeverZoom.onMouseUp}
             >
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                domain={[skillLeverZoom.state.left, skillLeverZoom.state.right]} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]} />
+                domain={[skillLeverZoom.state.left, skillLeverZoom.state.right]}
+                label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]}
+                label={{ value: 'm/b or σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
               <Line type="monotone" dataKey="mOverB" name="m/b ratio" stroke={SEM.wager.main} strokeWidth={2} dot={false} />
@@ -295,18 +302,21 @@ export default function ResultsPage() {
               <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Chart 3: Deposit policy */}
         <ChartCard
           title="Deposit policy comparison"
-          subtitle="Mean error by deposit rule. Noisy stake hurts; meaningful deposits help."
+          subtitle="Mean error by deposit rule. Hover bars for values. Noisy stake hurts; meaningful deposits help."
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={depositBarData} margin={{ ...CHART_MARGIN, bottom: 20 }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={depositBarData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                label={{ value: 'Deposit policy', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                label={{ value: 'Mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Bar dataKey="meanError" name="Mean error" radius={[6, 6, 0, 0]} maxBarSize={48}>
                 {depositBarData.map((_, i) => (

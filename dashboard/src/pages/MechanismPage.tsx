@@ -16,7 +16,7 @@ import RoundRibbon from '@/components/inspector/RoundRibbon';
 import ValidationPanel from '@/components/lab/ValidationPanel';
 import StepSection from '@/components/dashboard/StepSection';
 import {
-  AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   TOOLTIP_STYLE, BRUSH_PROPS, agentName, fmt, downsample, movingAvg,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
@@ -371,13 +371,14 @@ export default function MechanismPage() {
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="text-sm font-semibold text-slate-800">Forecast error</h4>
-                    <span className="text-[11px] text-slate-400 italic">Click a point to jump to that round. Drag to zoom.</span>
+                    <span className="text-[11px] text-slate-400">Click a point to jump to that round. Drag to zoom.</span>
                     <ZoomBadge isZoomed={errorZoom.state.isZoomed} onReset={errorZoom.reset} />
                   </div>
-                  <ResponsiveContainer width="100%" height={240}>
+                  <div className="cursor-crosshair" role="img" aria-label="Forecast error over rounds. Interactive chart.">
+                  <ResponsiveContainer width="100%" height={260}>
                     <AreaChart
                       data={errorData}
-                      margin={CHART_MARGIN}
+                      margin={CHART_MARGIN_LABELED}
                       onClick={handleChartClick}
                       onMouseDown={errorZoom.onMouseDown}
                       onMouseMove={errorZoom.onMouseMove}
@@ -391,8 +392,10 @@ export default function MechanismPage() {
                       </defs>
                       <CartesianGrid {...GRID_PROPS} />
                       <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                        domain={[errorZoom.state.left, errorZoom.state.right]} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        domain={[errorZoom.state.left, errorZoom.state.right]}
+                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Error |y − r̂|', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                       <Tooltip content={<SmartTooltip />} />
                       <ReferenceLine y={pipeline.summary.meanError} stroke="#94a3b8" strokeDasharray="4 4">
                         <Label value={`μ = ${fmt(pipeline.summary.meanError, 4)}`} position="right" fill="#94a3b8" fontSize={9} />
@@ -406,19 +409,22 @@ export default function MechanismPage() {
                       <Brush dataKey="round" {...BRUSH_PROPS} />
                     </AreaChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {/* Skill + Wealth side by side */}
                 <div className="grid lg:grid-cols-2 gap-4">
                   <div className="bg-white rounded-xl border border-slate-200 p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <h4 className="text-sm font-semibold text-slate-800">Skill trajectories</h4>
+                      <h4 className="text-sm font-semibold text-slate-800">Skill trajectories (σ)</h4>
                       <ZoomBadge isZoomed={skillZoom.state.isZoomed} onReset={skillZoom.reset} />
                     </div>
+                    <p className="text-[11px] text-slate-400 mb-2">Skill σ by agent over time. Click or drag to zoom.</p>
+                    <div className="cursor-crosshair" role="img" aria-label="Skill trajectories by agent. Interactive chart.">
                     <ResponsiveContainer width="100%" height={260}>
                       <LineChart
                         data={skillData}
-                        margin={CHART_MARGIN}
+                        margin={CHART_MARGIN_LABELED}
                         onClick={handleChartClick}
                         onMouseDown={skillZoom.onMouseDown}
                         onMouseMove={skillZoom.onMouseMove}
@@ -426,8 +432,10 @@ export default function MechanismPage() {
                       >
                         <CartesianGrid {...GRID_PROPS} />
                         <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                          domain={[skillZoom.state.left, skillZoom.state.right]} />
-                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                          domain={[skillZoom.state.left, skillZoom.state.right]}
+                          label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                          label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                         <Tooltip content={<SmartTooltip />} />
                         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                         <ReferenceLine y={pipeline.params.sigma_min} stroke="#94a3b8" strokeDasharray="4 4">
@@ -447,6 +455,7 @@ export default function MechanismPage() {
                         <Brush dataKey="round" {...BRUSH_PROPS} />
                       </LineChart>
                     </ResponsiveContainer>
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -454,10 +463,12 @@ export default function MechanismPage() {
                       <h4 className="text-sm font-semibold text-slate-800">Wealth evolution</h4>
                       <ZoomBadge isZoomed={wealthZoom.state.isZoomed} onReset={wealthZoom.reset} />
                     </div>
+                    <p className="text-[11px] text-slate-400 mb-2">Wealth by agent over time. Click or drag to zoom.</p>
+                    <div className="cursor-crosshair" role="img" aria-label="Wealth evolution by agent. Interactive chart.">
                     <ResponsiveContainer width="100%" height={260}>
                       <LineChart
                         data={wealthData}
-                        margin={CHART_MARGIN}
+                        margin={CHART_MARGIN_LABELED}
                         onClick={handleChartClick}
                         onMouseDown={wealthZoom.onMouseDown}
                         onMouseMove={wealthZoom.onMouseMove}
@@ -465,8 +476,10 @@ export default function MechanismPage() {
                       >
                         <CartesianGrid {...GRID_PROPS} />
                         <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                          domain={[wealthZoom.state.left, wealthZoom.state.right]} />
-                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                          domain={[wealthZoom.state.left, wealthZoom.state.right]}
+                          label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                          label={{ value: 'Wealth', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                         <Tooltip content={<SmartTooltip />} />
                         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                         <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="4 4">
@@ -486,6 +499,7 @@ export default function MechanismPage() {
                         <Brush dataKey="round" {...BRUSH_PROPS} />
                       </LineChart>
                     </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -535,14 +549,16 @@ function AgentBarCharts({ trace, N }: {
   return (
     <div className="grid lg:grid-cols-2 gap-4">
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <h4 className="text-sm font-semibold text-slate-800 mb-1">Deposits vs Wagers</h4>
-        <p className="text-[11px] text-slate-400 mb-2">Deposit bᵢ (light) vs effective wager mᵢ (dark)</p>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={agentBarData} margin={CHART_MARGIN}>
+        <h4 className="text-sm font-semibold text-slate-800 mb-1">Deposits vs effective wagers</h4>
+        <p className="text-[11px] text-slate-400 mb-2">Deposit b (light) vs effective wager m (dark). Hover for values.</p>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={agentBarData} margin={CHART_MARGIN_LABELED}>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-            <Tooltip />
+            <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Agent', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'b / m', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} />
             <Bar dataKey="deposit" name="Deposit bᵢ" radius={[4, 4, 0, 0]} maxBarSize={28} opacity={0.4}>
               {agentBarData.map(d => <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />)}
             </Bar>
@@ -554,14 +570,16 @@ function AgentBarCharts({ trace, N }: {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <h4 className="text-sm font-semibold text-slate-800 mb-1">Scores & Profit</h4>
-        <p className="text-[11px] text-slate-400 mb-2">Score sᵢ (bars) and profit πᵢ (green = gain, red = loss)</p>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={agentBarData} margin={CHART_MARGIN}>
+        <h4 className="text-sm font-semibold text-slate-800 mb-1">Profit by agent</h4>
+        <p className="text-[11px] text-slate-400 mb-2">Profit π (green = gain, red = loss). Hover for values.</p>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={agentBarData} margin={CHART_MARGIN_LABELED}>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-            <Tooltip />
+            <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Agent', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Profit π', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} />
             <Bar dataKey="payoff" name="Profit πᵢ" radius={[4, 4, 4, 4]} maxBarSize={28}>
               {agentBarData.map(d => (
                 <Cell key={d.idx} fill={d.payoff >= 0 ? '#10b981' : '#ef4444'} opacity={d.active ? 1 : 0.3} />

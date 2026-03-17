@@ -8,6 +8,9 @@ export const AGENT_PALETTE = [
 
 export const CHART_MARGIN = { top: 8, right: 24, bottom: 4, left: 4 };
 
+/** Use when chart has X/Y axis labels so they are not clipped */
+export const CHART_MARGIN_LABELED = { top: 10, right: 24, bottom: 28, left: 44 };
+
 export const AXIS_TICK = { fontSize: 10, fill: '#94a3b8' };
 export const AXIS_STROKE = '#cbd5e1';
 

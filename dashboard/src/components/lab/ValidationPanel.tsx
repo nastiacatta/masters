@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
-import { CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, fmt, downsample } from './shared';
+import { CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, fmt, downsample } from './shared';
 
 interface Props {
   pipeline: PipelineResult;
@@ -266,12 +266,12 @@ export default function ValidationPanel({ pipeline }: Props) {
 
       {/* Budget balance chart */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <h4 className="text-sm font-semibold text-slate-800">Budget Balance Over Time</h4>
-        <p className="text-[11px] text-slate-400 mt-0.5 italic mb-3">
-          Gap = total payout − total influence per round (should be near 0 for skill-only settlement)
+        <h4 className="text-sm font-semibold text-slate-800">Budget balance over time</h4>
+        <p className="text-[11px] text-slate-400 mt-0.5 mb-3">
+          Gap = total payout − total influence per round (should be near 0). Hover for values.
         </p>
         <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={budgetData} margin={CHART_MARGIN}>
+          <AreaChart data={budgetData} margin={CHART_MARGIN_LABELED}>
             <defs>
               <linearGradient id="budgetGradPos" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
@@ -283,8 +283,10 @@ export default function ValidationPanel({ pipeline }: Props) {
               </linearGradient>
             </defs>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Budget gap', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip content={<SmartTooltip />} />
             <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} />
             <Area
