@@ -1,5 +1,37 @@
-onlinev1
-michael
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+.env
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Node / dashboard
+dashboard/node_modules/
+dashboard/dist/
+
+# Generated experiment artefacts
+onlinev2/outputs/
+dashboard/public/data/core
+dashboard/public/data/behaviour
 
 # PDFs
 *.pdf
+
+# Local editor state
+.vscode/
+.idea/
+
+# Legacy top-level dirs (deprecated)
+onlinev1
+michael

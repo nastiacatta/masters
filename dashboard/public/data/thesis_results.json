@@ -1,0 +1,62 @@
+[
+  {
+    "id": "skill_improves_accuracy",
+    "title": "Skill improves accuracy in the identifiable benchmark",
+    "claim": "Blended skill + stake weighting reduces forecast error relative to equal weights when the DGP has a latent truth.",
+    "metric": "ΔCRPS < 0",
+    "metricLabel": "ΔCRPS vs equal",
+    "chart": "cumulative_error",
+    "interpretation": "The online skill layer tracks intrinsic forecaster quality well in the latent-truth setting, so up-weighting better forecasters improves the aggregate.",
+    "caveat": "This is a clean benchmark with identifiable truth, not a strategic or adversarial setting.",
+    "experimentName": "master_comparison",
+    "category": "aggregation_quality"
+  },
+  {
+    "id": "skill_recovery",
+    "title": "Skill estimates recover after perturbation",
+    "claim": "The EWMA skill layer recovers correct ordering within ~50 rounds after a shock to all skill weights.",
+    "metric": "Rank correlation > 0.9",
+    "metricLabel": "Spearman ρ (learned vs true skill)",
+    "chart": "skill_vs_true",
+    "interpretation": "The exponential decay parameter γ controls the speed-accuracy trade-off: faster decay recovers quicker but is noisier.",
+    "caveat": "Recovery speed depends on γ, signal-to-noise ratio, and the number of active agents.",
+    "experimentName": "skill_recovery",
+    "category": "skill_recovery"
+  },
+  {
+    "id": "concentration_controlled",
+    "title": "Wealth concentration stays controlled",
+    "claim": "Gini and HHI do not rise sharply under skill + stake weighting compared to equal weights.",
+    "metric": "ΔGini ≈ 0, ΔN_eff ≈ 0",
+    "metricLabel": "ΔGini, ΔHHI, ΔN_eff",
+    "chart": "concentration_bar",
+    "interpretation": "Skill gating attenuates noisy large bets without concentrating wealth in few agents.",
+    "caveat": "Under some deposit policies (e.g. wealth-fraction), concentration can still rise if skilled agents compound returns.",
+    "experimentName": "master_comparison",
+    "category": "aggregation_quality"
+  },
+  {
+    "id": "calibration_holds",
+    "title": "Calibration holds in the centre, weakens in the tails",
+    "claim": "The aggregate forecast is well-calibrated for central quantiles but PIT coverage degrades for extreme quantiles.",
+    "metric": "PIT coverage gap < 5% for central, > 10% for tails",
+    "metricLabel": "PIT coverage gap",
+    "chart": "reliability_diagram",
+    "interpretation": "The linear pool preserves calibration for moderate probability events but under-disperses in the tails.",
+    "caveat": "Tail miscalibration is the main modelling limitation and is shared across all weighting methods.",
+    "experimentName": "calibration",
+    "category": "calibration"
+  },
+  {
+    "id": "equal_is_strong_baseline",
+    "title": "Equal weighting is a strong baseline",
+    "claim": "Uniform weights are surprisingly hard to beat, especially under non-stationarity or small panels.",
+    "metric": "ΔCRPS close to 0",
+    "metricLabel": "ΔCRPS (blended − equal)",
+    "chart": "method_ranking",
+    "interpretation": "Skill + stake helps most when the panel includes both strong and weak forecasters and enough rounds for skill to converge.",
+    "caveat": "With few agents or short horizons, estimation noise in σ can erase the advantage.",
+    "experimentName": "master_comparison",
+    "category": "aggregation_quality"
+  }
+]

@@ -176,7 +176,6 @@ def run_settlement_sanity(n_rounds=500, n_agents=20, seed=42, outdir="outputs",
     ]
     y_pos = 0.85
     for label, detail, ok in checks:
-        marker = "PASS" if ok else "FAIL"
         color = COLORS["green"] if ok else COLORS["red"]
         ax.text(0.05, y_pos, f"{'●' if ok else '✗'}  {label}", transform=ax.transAxes,
                 fontsize=12, fontweight="bold", color=color)
@@ -202,7 +201,7 @@ def run_skill_wager_intermittency(T=200, n_forecasters=6, missing_prob=0.3, seed
     res = run_simulation(T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
                          seed=seed, scoring_mode=scoring_mode, gamma=gamma, rho=rho,
                          store_history=True)
-    lam = res["params"]["lam"]
+    res["params"]["lam"]
     sigma_min = res["params"]["sigma_min"]
     n_show = min(3, n_forecasters)
 
@@ -1261,7 +1260,7 @@ def run_aggregation_dgp_diagnostic(T=1000, n_forecasters=3, seed=42, outdir="out
 
         # MAE bar chart
         ax = axes[row, 2]
-        bars = ax.bar(range(n_forecasters), mae,
+        ax.bar(range(n_forecasters), mae,
                       color=[agent_color(i) for i in range(n_forecasters)],
                       alpha=0.85, edgecolor="white")
         ax.set_xticks(range(n_forecasters))
@@ -1566,7 +1565,7 @@ def run_weight_rule_comparison(T=1000, n_forecasters=6, seed=42, outdir="outputs
         x_pos = np.arange(len(weight_rules))
         vals = [float(np.mean(seed_crps_ws[dp_key][wr])) for wr in weight_rules]
         ses = [_se(seed_crps_ws[dp_key][wr], S) for wr in weight_rules]
-        bars = ax.bar(x_pos, vals,
+        ax.bar(x_pos, vals,
                       color=[rule_colors[wr] for wr in weight_rules],
                       edgecolor="white", alpha=0.85)
         ax.errorbar(x_pos, vals, yerr=ses, fmt="none",

@@ -74,6 +74,16 @@ Tests cover: DGP registry and generation, weight-learning smoke, behaviour–mec
 
 The **`dashboard/`** folder contains an optional React (Vite) frontend. It is **not** required to run or develop the Python package. It expects experiment outputs under `public/data/`: `index.json` (in repo) plus `core/` and `behaviour/` (populated by running experiments). **Portable data:** avoid absolute symlinks; from repo root run `./scripts/link-dashboard-data.sh` to link `dashboard/public/data/{core,behaviour}` to `onlinev2/outputs/{core,behaviour}`. To run: `cd dashboard && npm install && npm run dev`. See `dashboard/README.md` (status, data setup, behaviour coverage), `dashboard/public/data/README.md` (data layout), and `dashboard/docs/BEHAVIOUR_COVERAGE.md` (taxonomy vs data-backed experiments).
 
+## Reproduce thesis artefacts
+
+From repo root:
+
+```bash
+./scripts/reproduce_submission.sh
+```
+
+This installs the package, runs lint and tests, regenerates the core benchmark outputs (`master_comparison`, `bankroll_ablation`, `calibration`), and links dashboard data.
+
 ## Import surface
 
 Prefer the **`onlinev2`** namespace:

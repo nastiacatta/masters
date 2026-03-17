@@ -197,7 +197,6 @@ def run_round(
             if a.participate and a.report is not None:
                 reports_for_agg[i] = float(a.report)
 
-    theta_for_settle = None
     # In quantile mode, Michael backend expects point forecasts. Use wager aggregation
     # for r_hat (full quantile report) to preserve PIT and CRPS. Michael runs only
     # for theta when michael_split allocation is used.
@@ -224,7 +223,7 @@ def run_round(
         x_t[alpha == 1] = 0.0
         y_hat, aux = michael_predict(x_t, alpha, w, D)
         r_hat = float(y_hat)
-        theta_for_settle = aux.get("theta")
+        aux.get("theta")
         w_new, D_new, _ = michael_update(
             x_t, y_t, alpha, w, D,
             tau=_resolve_michael_tau(params),

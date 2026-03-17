@@ -27,10 +27,10 @@ It makes clear:
 
 | Route | Purpose |
 |-------|--------|
-| `/` | **Default landing.** Thesis overview: research question, why static stake-only is not enough, Raja vs online extension, how to use the dashboard. |
-| `/mechanism` | **Main walkthrough.** Step-by-step round walkthrough: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; explanation panel; summary metrics. |
-| `/results` | **Comparisons.** Fixed benchmark comparisons (evidence), not the current Mechanism setup. |
-| `/robustness` | Invariants, tests, sanity checks, assumptions. Experiment selector and tabs (Main result, Round replay, Behaviour, Robustness checks). |
+| `/` | **Overview.** Thesis overview: research question, why static stake-only is not enough, Raja vs online extension, how to use the dashboard. |
+| `/mechanism` | **Mechanism walkthrough.** Step-by-step round walkthrough: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; explanation panel; summary metrics. |
+| `/results` | **Main results.** Headline answers (accuracy, concentration, issues), evidence tabs (accuracy, skill lever, deposit policy, calibration), and limitations. Organised by thesis questions: did it work, where, why, when does it break. |
+| `/robustness` | **Robustness & attacks.** Invariants, tests, sanity checks, adversaries, failure modes. Experiment selector and tabs (Main result, Round replay, Behaviour, Robustness checks). |
 | `/appendix` | Legacy interactive lab / pipeline tools. |
 | `/appendix/experiments` | Cross-scenario comparison with tabs: Core, Behaviour, DGP comparison, Robustness / adversaries, Ablations. |
 

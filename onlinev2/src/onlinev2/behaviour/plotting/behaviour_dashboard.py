@@ -45,8 +45,8 @@ def make_behaviour_dashboard(
     arbitrage_csv_path: if set, export A(theta) table to this path.
     """
 
-    exp_name = config.get("experiment_name", "behaviour")
-    T = config.get("T", 0)
+    config.get("experiment_name", "behaviour")
+    config.get("T", 0)
 
     # 1) Participation over time: N_t
     if "participation_per_round" in logs:

@@ -2,10 +2,10 @@ import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
 const ROUTES: { to: string; label: string }[] = [
-  { to: '/',           label: 'Home' },
-  { to: '/mechanism',  label: 'Mechanism' },
-  { to: '/results',    label: 'Comparisons' },
-  { to: '/robustness', label: 'Robustness' },
+  { to: '/',           label: 'Overview' },
+  { to: '/mechanism',  label: 'Mechanism walkthrough' },
+  { to: '/results',    label: 'Main results' },
+  { to: '/robustness', label: 'Robustness & attacks' },
 ];
 
 export default function Sidebar() {

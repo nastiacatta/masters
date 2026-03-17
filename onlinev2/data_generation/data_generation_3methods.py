@@ -110,7 +110,7 @@ def generate_truth_and_quantile_reports(T: int, n: int, taus, seed=None, *, meth
       q_latent = x_latent + sigmas[i] * Phi^{-1}(tau)
       q = link(q_latent)
     """
-    rng = np.random.default_rng(seed)
+    np.random.default_rng(seed)
     taus = np.asarray(taus, dtype=np.float64)
     K = len(taus)
     z_tau = norm.ppf(taus).astype(np.float64)
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     seed = 42
     # Data generation: true weights (will be normalised to sum to 1)
     true_w = np.array([0.8, 0.1, 0.5], dtype=np.float64)
-    # true_w_normalised = true_w / true_w.sum()  # [0.8/1.4, 0.1/1.4, 0.5/1.4]
+    true_w_normalised = true_w / true_w.sum()  # [0.8/1.4, 0.1/1.4, 0.5/1.4]
     # Algorithm: start at equal weights 1/3 each
     w0 = np.ones(n_forecasters, dtype=np.float64) / n_forecasters
 

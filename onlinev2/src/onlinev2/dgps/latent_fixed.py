@@ -69,7 +69,6 @@ class _DGPLatentFixed:
         taus = None
         if quantiles is not None:
             taus = np.asarray(quantiles, dtype=np.float64).ravel()
-            K = taus.size
             z_tau = norm.ppf(taus).astype(np.float64)
             v = (sig2 * tau_true**2 / denom)[:, None]
             kappa = kwargs.get("kappa_i", np.ones(n, dtype=np.float64))

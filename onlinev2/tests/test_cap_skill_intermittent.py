@@ -39,6 +39,7 @@ def test_cap_used_for_both_settlement_and_aggregation():
     assert logs["m"] == logs["m_agg"], "same effective wager vector for settlement and aggregation"
     m_used = np.array(logs["m"])
     m_raw = np.array(logs["m_raw"])
+    assert m_raw.shape == m_used.shape, "m_raw and m_used same shape"
     # With omega_max=0.4, cap should bind so m_used != m_raw (unless already within cap)
     total = float(m_used.sum())
     shares = m_used / total
