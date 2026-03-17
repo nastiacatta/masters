@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend, Cell, Brush, ReferenceArea,
+  Tooltip, ResponsiveContainer, Legend, Brush, ReferenceArea,
 } from 'recharts';
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import { METHOD, SEM } from '@/lib/tokens';
