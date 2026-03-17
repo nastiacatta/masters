@@ -11,6 +11,8 @@ import { DEFAULT_BUILDER_SELECTIONS, type BuilderSelections } from '@/lib/coreMe
 import type { SimParams } from '@/lib/mechanismExplorer/types';
 import { SEM } from '@/lib/tokens';
 import MathBlock from '@/components/dashboard/MathBlock';
+import InfoToggle from '@/components/dashboard/InfoToggle';
+import SystemArchitecture from '@/components/mechanism/SystemArchitecture';
 import ScenarioBuilder from '@/components/lab/ScenarioBuilder';
 import RoundRibbon from '@/components/inspector/RoundRibbon';
 import ValidationPanel from '@/components/lab/ValidationPanel';
@@ -28,22 +30,6 @@ const INVARIANTS = [
   { label: 'Absent excluded', desc: 'Missing agents get mᵢ = 0, no payoff.', color: SEM.score.main },
 ];
 
-function PipelineArrow() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" className="shrink-0 text-slate-300">
-      <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </svg>
-  );
-}
-
-function PipelineNode({ label, sym, color, bgColor }: { label: string; sym: string; color: string; bgColor: string }) {
-  return (
-    <div className="shrink-0 rounded-xl border-2 px-3 py-2 text-center min-w-[72px]" style={{ borderColor: color + '40', background: bgColor }}>
-      <div className="text-[9px] font-bold uppercase tracking-wider" style={{ color: color + 'bb' }}>{label}</div>
-      <div className="text-sm font-mono font-semibold mt-0.5" style={{ color }}>{sym}</div>
-    </div>
-  );
-}
 
 function SmartTooltip({ active, payload, label }: {
   active?: boolean;
@@ -179,26 +165,10 @@ export default function MechanismPage() {
           </p>
         </div>
 
-        {/* ── Step 1: Understand the pipeline ── */}
-        <StepSection step={1} title="Understand the pipeline" description="One round flows left to right.">
+        {/* ── Step 1: Understand the system ── */}
+        <StepSection step={1} title="Understand the system" description="Not a flat pipeline — a layered repeated system with feedback.">
           <div className="space-y-4 pb-6">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 overflow-x-auto">
-              <div className="flex items-center gap-1.5 min-w-max">
-                <PipelineNode label="Forecast" sym="rᵢ" color={SEM.outcome.main} bgColor={SEM.outcome.light} />
-                <PipelineArrow />
-                <PipelineNode label="Deposit" sym="bᵢ" color={SEM.deposit.main} bgColor={SEM.deposit.light} />
-                <PipelineArrow />
-                <PipelineNode label="Skill" sym="σᵢ" color={SEM.skill.main} bgColor={SEM.skill.light} />
-                <PipelineArrow />
-                <PipelineNode label="Eff. wager" sym="mᵢ" color={SEM.wager.main} bgColor={SEM.wager.light} />
-                <PipelineArrow />
-                <PipelineNode label="Aggregate" sym="r̂" color={SEM.aggregate.main} bgColor={SEM.aggregate.light} />
-                <PipelineArrow />
-                <PipelineNode label="Settlement" sym="Πᵢ" color={SEM.payoff.main} bgColor={SEM.payoff.light} />
-                <PipelineArrow />
-                <PipelineNode label="Wealth" sym="Wᵢ′" color={SEM.wealth.main} bgColor={SEM.wealth.light} />
-              </div>
-            </div>
+            <SystemArchitecture />
 
             <div className="grid sm:grid-cols-2 gap-3">
               <MathBlock
@@ -371,6 +341,13 @@ export default function MechanismPage() {
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="text-sm font-semibold text-slate-800">Forecast error</h4>
+                    <InfoToggle
+                      term="Forecast error"
+                      definition="The distance between the realised outcome (y_t) and the aggregate forecast (r̂_t) in round t."
+                      interpretation="e_t = 0 means the forecast hit the outcome exactly. Smaller is better."
+                      latex="e_t = \\left| y_t - \\hat{r}_t \\right|"
+                      axes={{ x: 'round', y: 'absolute error' }}
+                    />
                     <span className="text-[11px] text-slate-400">Click a point to jump to that round. Drag to zoom.</span>
                     <ZoomBadge isZoomed={errorZoom.state.isZoomed} onReset={errorZoom.reset} />
                   </div>
@@ -417,6 +394,13 @@ export default function MechanismPage() {
                   <div className="bg-white rounded-xl border border-slate-200 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="text-sm font-semibold text-slate-800">Skill trajectories (σ)</h4>
+                      <InfoToggle
+                        term="Skill trajectories (σ)"
+                        definition="The mechanism's current online estimate of forecaster i's recent forecasting quality."
+                        interpretation="Higher σ means that forecaster currently gets more influence from the same deposit. It is learned over time, so it is not a fixed trait."
+                        latex="\\sigma_{i,t} \\in [\\sigma_{\\min}, 1]"
+                        axes={{ x: 'round', y: 'skill weight σ' }}
+                      />
                       <ZoomBadge isZoomed={skillZoom.state.isZoomed} onReset={skillZoom.reset} />
                     </div>
                     <p className="text-[11px] text-slate-400 mb-2">Skill σ by agent over time. Click or drag to zoom.</p>
@@ -461,6 +445,13 @@ export default function MechanismPage() {
                   <div className="bg-white rounded-xl border border-slate-200 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="text-sm font-semibold text-slate-800">Wealth evolution</h4>
+                      <InfoToggle
+                        term="Wealth evolution"
+                        definition="Agent i's bankroll after settlement at round t."
+                        interpretation="Rising line means cumulative gains, falling line means cumulative losses."
+                        latex="W_{i,t}"
+                        axes={{ x: 'round', y: 'wealth' }}
+                      />
                       <ZoomBadge isZoomed={wealthZoom.state.isZoomed} onReset={wealthZoom.reset} />
                     </div>
                     <p className="text-[11px] text-slate-400 mb-2">Wealth by agent over time. Click or drag to zoom.</p>
@@ -549,7 +540,16 @@ function AgentBarCharts({ trace, N }: {
   return (
     <div className="grid lg:grid-cols-2 gap-4">
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <h4 className="text-sm font-semibold text-slate-800 mb-1">Deposits vs effective wagers</h4>
+        <div className="flex items-center gap-1.5 mb-1">
+          <h4 className="text-sm font-semibold text-slate-800">Deposits vs effective wagers</h4>
+          <InfoToggle
+            term="Deposits vs effective wagers"
+            definition="b_i is the posted deposit. m_i is the part that actually counts after skill adjustment."
+            interpretation="If two agents deposit the same amount, the one with higher σ_i gets higher effective wager."
+            latex="m_i = b_i\\bigl(\\lambda + (1-\\lambda)\\sigma_i\\bigr)"
+            axes={{ x: 'agent', y: 'amount' }}
+          />
+        </div>
         <p className="text-[11px] text-slate-400 mb-2">Deposit b (light) vs effective wager m (dark). Hover for values.</p>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={agentBarData} margin={CHART_MARGIN_LABELED}>
@@ -570,7 +570,16 @@ function AgentBarCharts({ trace, N }: {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <h4 className="text-sm font-semibold text-slate-800 mb-1">Profit by agent</h4>
+        <div className="flex items-center gap-1.5 mb-1">
+          <h4 className="text-sm font-semibold text-slate-800">Profit by agent</h4>
+          <InfoToggle
+            term="Profit by agent"
+            definition="Payout minus deposit."
+            interpretation="Positive means the agent made money on that round, negative means a loss."
+            latex="\\pi_i = \\Pi_i - b_i"
+            axes={{ x: 'agent', y: 'profit' }}
+          />
+        </div>
         <p className="text-[11px] text-slate-400 mb-2">Profit π (green = gain, red = loss). Hover for values.</p>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={agentBarData} margin={CHART_MARGIN_LABELED}>

@@ -6,6 +6,7 @@ import {
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import { METHOD, SEM } from '@/lib/tokens';
 import ChartCard from '@/components/dashboard/ChartCard';
+import InfoToggle from '@/components/dashboard/InfoToggle';
 import MathBlock from '@/components/dashboard/MathBlock';
 import StepSection from '@/components/dashboard/StepSection';
 import {
@@ -224,6 +225,12 @@ export default function ResultsPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 mb-6">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-sm font-semibold text-slate-800">Forecast quality comparison</h3>
+          <InfoToggle
+            term="Forecast quality comparison"
+            definition="Compares aggregation methods over time."
+            interpretation="Each line shows the cumulative mean error up to that round. Lower line means better forecasting performance."
+            axes={{ x: 'round', y: 'cumulative mean error' }}
+          />
           <span className="text-[11px] text-slate-400">Drag to zoom. Toggle methods above.</span>
           <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
         </div>
@@ -274,6 +281,13 @@ export default function ResultsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-slate-800">Skill lever in isolation</h3>
+            <InfoToggle
+              term="Skill lever in isolation"
+              definition="With fixed deposits, the ratio m/b isolates the pure effect of skill on influence."
+              interpretation="If σ rises, m/b rises. This chart removes stake-size noise."
+              latex="\\frac{m_i}{b_i} = \\lambda + (1-\\lambda)\\sigma_i"
+              axes={{ x: 'round', y: 'm/b or average σ' }}
+            />
             <ZoomBadge isZoomed={skillLeverZoom.state.isZoomed} onReset={skillLeverZoom.reset} />
           </div>
           <p className="text-[11px] text-slate-400 mb-3">Fixed deposit: m/b tracks σ when stake noise is removed. Drag to zoom.</p>
@@ -309,6 +323,12 @@ export default function ResultsPage() {
         <ChartCard
           title="Deposit policy comparison"
           subtitle="Mean error by deposit rule. Hover bars for values. Noisy stake hurts; meaningful deposits help."
+          help={{
+            term: 'Deposit policy comparison',
+            definition: 'Compares stake-setting rules.',
+            interpretation: 'Lower bar means lower mean error, so better forecast performance.',
+            axes: { x: 'deposit policy', y: 'mean error' },
+          }}
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={depositBarData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>

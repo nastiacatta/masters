@@ -31,4 +31,11 @@ export const GLOSSARY_ENTRIES = [
   { symbol: 'πᵢ',  meaning: 'Profit — payoff minus deposit: Πᵢ − bᵢ' },
   { symbol: 'λ',   meaning: 'Stake weight — interpolation between pure-skill and pure-stake' },
   { symbol: 'γ',   meaning: 'EWMA decay — how fast skill adapts to recent performance' },
+  // User-facing chart terms (shared across pages)
+  { symbol: 'Forecast error', meaning: 'Distance between realised outcome y and aggregate forecast r̂; e_t = |y_t − r̂_t|. Smaller is better.' },
+  { symbol: 'CRPS', meaning: 'Proper score for probabilistic forecasts; measures how far predicted distribution F is from outcome y. Lower is better; rewards calibration and sharpness.' },
+  { symbol: 'Calibration', meaning: 'Forecasts are calibrated when realised outcomes look like draws from the forecast distribution. PIT ideal: uniform; reliability ideal: diagonal.' },
+  { symbol: 'Gini', meaning: 'Inequality or concentration measure. 0 = more equal; larger = more concentration in few agents.' },
+  { symbol: 'N_eff', meaning: 'Effective number of agents (participation / diversity measure).' },
+  { symbol: 'm/b', meaning: 'Effective wager over deposit; m/b = λ + (1−λ)σ. With fixed deposits, isolates the effect of skill on influence.' },
 ] as const;
