@@ -4,12 +4,12 @@ import copy
 from dataclasses import dataclass
 from typing import Any, List, Optional, Sequence
 
-from onlinev2.behaviour.traits import UserTraits, generate_population
+from onlinev2.behaviour.policies.belief import GaussianBeliefModel
+from onlinev2.behaviour.policies.identity import SingleAccountIdentity
 from onlinev2.behaviour.policies.participation import BaselineParticipation
 from onlinev2.behaviour.policies.reporting import TruthfulReporting
 from onlinev2.behaviour.policies.staking import FixedFractionStaking
-from onlinev2.behaviour.policies.identity import SingleAccountIdentity
-from onlinev2.behaviour.policies.belief import GaussianBeliefModel
+from onlinev2.behaviour.traits import UserTraits, generate_population
 
 
 @dataclass

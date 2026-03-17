@@ -4,6 +4,7 @@ Core types: DGP metadata, pre-generated data container.
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import numpy as np
 
 

@@ -6,11 +6,11 @@ Same naming, consistent styling, readable defaults.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
-from onlinev2.plotting.style import new_figure, save_fig, COLORS
+from onlinev2.plotting.style import COLORS, new_figure, save_fig
 
 
 def make_behaviour_dashboard(
@@ -44,7 +44,6 @@ def make_behaviour_dashboard(
     extra_arbitrage_heatmap: if True, produce plot 8 (arbitrage margin heatmap).
     arbitrage_csv_path: if set, export A(theta) table to this path.
     """
-    import matplotlib.pyplot as plt
 
     exp_name = config.get("experiment_name", "behaviour")
     T = config.get("T", 0)

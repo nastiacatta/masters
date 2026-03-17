@@ -7,24 +7,18 @@ Tests for the full behaviour catalogue.
 - Sybil split preserves total user bankroll
 - CollusiveMultiAccountIdentity and FakeActivityIdentity
 """
-import numpy as np
 import pytest
 
-from onlinev2.behaviour.factory import make_behaviour
-from onlinev2.behaviour.config.behaviour_configs import get_preset_kwargs, PRESET_NAMES
-from onlinev2.behaviour.protocol import RoundPublicState
-from onlinev2.behaviour.traits import UserTraits
-from onlinev2.behaviour.population import build_population
 from onlinev2.behaviour.composite import CompositeBehaviourModel
+from onlinev2.behaviour.factory import make_behaviour
 from onlinev2.behaviour.policies.identity import (
-    SingleAccountIdentity,
-    SplitAccountIdentity,
     CollusiveMultiAccountIdentity,
     FakeActivityIdentity,
+    SplitAccountIdentity,
 )
-from onlinev2.behaviour.policies.staking import FixedFractionStaking, BreakEvenStaking
-from onlinev2.mechanism.models import MechanismParams, MechanismState
-from onlinev2.mechanism.runner import run_round
+from onlinev2.behaviour.policies.staking import BreakEvenStaking
+from onlinev2.behaviour.population import build_population
+from onlinev2.behaviour.protocol import RoundPublicState
 
 
 def _make_pub_state(t=0, n_users=3):

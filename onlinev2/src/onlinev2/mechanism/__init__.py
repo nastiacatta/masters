@@ -5,13 +5,13 @@ New code should import from onlinev2.core (types, runner, scoring, settlement, e
 This package re-exports the same API for backward compatibility.
 """
 
+from onlinev2.core.runner import run_round
 from onlinev2.core.types import (
     AgentInput,
     MechanismParams,
     MechanismState,
     Report,
 )
-from onlinev2.core.runner import run_round
 
 __all__ = [
     "AgentInput",

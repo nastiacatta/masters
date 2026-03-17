@@ -196,9 +196,7 @@ def test_michael_split_allocation_uses_theta():
 
     new_state, logs = run_round(state=state, params=params, actions=actions, y_t=0.5)
 
-    # m_agg is wager-based; m (used for settlement) can differ with michael_split
-    m_agg = np.array(logs["m_agg"])
-    m_settle = np.array(logs["m"])
+    # m_agg is wager-based; m (used for settlement) can differ with michael_split.
     # With michael_split, theta drives settlement; after a few rounds theta != uniform
     # At least verify run completes and profits sum to zero (self-financing)
     prof = np.array(logs["profit"])

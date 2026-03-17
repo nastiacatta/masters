@@ -19,7 +19,6 @@ from typing import Any, Dict, Optional, Protocol
 
 import numpy as np
 
-
 Report = Any
 
 

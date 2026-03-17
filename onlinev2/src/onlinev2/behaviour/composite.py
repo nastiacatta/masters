@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
-from onlinev2.behaviour.protocol import AgentAction, BehaviourModel, RoundPublicState
 from onlinev2.behaviour.population import UserConfig
+from onlinev2.behaviour.protocol import AgentAction, BehaviourModel, RoundPublicState
 
 
 @dataclass

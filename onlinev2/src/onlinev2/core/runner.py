@@ -18,40 +18,40 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from onlinev2.core.types import AgentInput, MechanismParams, MechanismState
+from onlinev2.core.aggregation import aggregate_forecast
+from onlinev2.core.intermittent import michael_predict, michael_update
+from onlinev2.core.metrics import (
+    compute_gini,
+    compute_hhi,
+    compute_n_eff,
+    compute_pit,
+    validate_quantile_monotonicity,
+)
+from onlinev2.core.michael_allocation import (
+    michael_oos_allocation,
+    michael_rewards,
+    normalise_present,
+    update_phi_c,
+)
 from onlinev2.core.scoring import (
-    mae_loss,
-    score_mae,
     crps_hat_from_quantiles,
-    score_crps_hat,
+    mae_loss,
     normalised_loss,
+    score_crps_hat,
+    score_mae,
 )
 from onlinev2.core.settlement import settle_round
-from onlinev2.core.aggregation import aggregate_forecast
+from onlinev2.core.shapley import shapley_mc
 from onlinev2.core.skill import (
-    update_ewma_loss,
-    loss_to_skill,
     default_initial_loss,
+    loss_to_skill,
+    update_ewma_loss,
 )
 from onlinev2.core.staking import (
     effective_wager_bankroll,
     effective_wager_capped,
 )
-from onlinev2.core.intermittent import michael_predict, michael_update
-from onlinev2.core.michael_allocation import (
-    michael_oos_allocation,
-    update_phi_c,
-    normalise_present,
-    michael_rewards,
-)
-from onlinev2.core.shapley import shapley_mc
-from onlinev2.core.metrics import (
-    compute_gini,
-    compute_pit,
-    compute_hhi,
-    compute_n_eff,
-    validate_quantile_monotonicity,
-)
+from onlinev2.core.types import AgentInput, MechanismParams, MechanismState
 
 
 def _resolve_michael_tau(params: MechanismParams) -> float:

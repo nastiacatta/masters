@@ -6,7 +6,7 @@ No access to hidden real-user mappings except for evaluation.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 

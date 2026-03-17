@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 
 from onlinev2.mechanism.metrics import (
+    compute_gini,
     compute_hhi,
     compute_n_eff,
-    compute_gini,
     compute_pit,
     compute_sharpness,
     validate_quantile_monotonicity,

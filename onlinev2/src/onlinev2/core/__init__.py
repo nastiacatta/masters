@@ -7,6 +7,7 @@ actions via the AgentInput protocol. No plotting, no CSV writing, no
 subprocess or R calls.
 """
 
+from onlinev2.core.runner import run_round
 from onlinev2.core.types import (
     AgentInput,
     MechanismParams,
@@ -14,7 +15,6 @@ from onlinev2.core.types import (
     Report,
     RoundInput,
 )
-from onlinev2.core.runner import run_round
 
 __all__ = [
     "AgentInput",

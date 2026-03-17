@@ -29,7 +29,7 @@ def _check_invariants(m_in: np.ndarray, m_out: np.ndarray, omega_max: float) -> 
 
 @pytest.mark.parametrize("omega_max", [0.25, 0.5, 1.0])
 def test_cap_already_within_cap(omega_max: float) -> None:
-    """Vector already within cap: equal or below omega_max shares; output should preserve mass and stay within cap."""
+    """Within cap: shares <= omega_max; output preserves mass and stays within cap."""
     n = 5
     m = np.ones(n, dtype=np.float64) / n  # equal weights, share 1/n each
     if omega_max < 1.0 / n - 1e-12:
@@ -53,12 +53,13 @@ def test_cap_dominant_trader() -> None:
 
 
 def test_cap_sparse_with_zeros() -> None:
-    """Sparse vector with zeros: only some coordinates have mass; cap must preserve mass and not create negative."""
+    """Sparse vector with zeros; cap preserves mass and non-negativity."""
     omega_max = 0.25
     m = np.array([0.0, 0.5, 0.0, 0.5, 0.0], dtype=np.float64)
     m_cap = cap_weight_shares(m, omega_max=omega_max)
     _check_invariants(m, m_cap, omega_max)
-    # Both active get 0.5 each -> share 0.5 > omega_max, so both at cap 0.25, remainder 0.5 to zeros? No - remainder 1 - 2*0.25 = 0.5 to the 3 zeros = 1/6 each. So shares: 0.25, 0.25, 1/6, 1/6, 1/6.
+    # Both active get 0.5 each -> share 0.5 > omega_max, so both at cap 0.25.
+    # Remainder 1 - 2*0.25 = 0.5 to the 3 zeros = 1/6 each. Shares: 0.25, 0.25, 1/6, 1/6, 1/6.
     total = float(m_cap.sum())
     assert abs(total - 1.0) <= 1e-10
     shares = m_cap / total

@@ -11,17 +11,14 @@ Tests for the behaviour–mechanism boundary.
 import numpy as np
 import pytest
 
-from onlinev2.mechanism.models import MechanismParams, MechanismState
-from onlinev2.mechanism.runner import run_round
-from onlinev2.behaviour.protocol import AgentAction, RoundPublicState
-from onlinev2.behaviour.traits import UserTraits, generate_population
-from onlinev2.behaviour.population import build_population
 from onlinev2.behaviour.composite import CompositeBehaviourModel
 from onlinev2.behaviour.policies.identity import (
-    SingleAccountIdentity,
     SplitAccountIdentity,
-    ReputationResetIdentity,
 )
+from onlinev2.behaviour.population import build_population
+from onlinev2.behaviour.protocol import AgentAction, RoundPublicState
+from onlinev2.mechanism.models import MechanismParams, MechanismState
+from onlinev2.mechanism.runner import run_round
 
 
 def _make_fixed_actions(n=5, y_t=0.5):

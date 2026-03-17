@@ -55,33 +55,33 @@ def get_preset_kwargs(name: str, **overrides: Any) -> Dict[str, Any]:
     """
     name = PRESET_ALIASES.get(name, name)
 
+    from onlinev2.behaviour.policies.identity import (
+        CollusiveMultiAccountIdentity,
+        FakeActivityIdentity,
+        SingleAccountIdentity,
+        SplitAccountIdentity,
+    )
     from onlinev2.behaviour.policies.participation import (
+        AdaptiveParticipation,
+        AvoidSkillDecayParticipation,
         BaselineParticipation,
         BurstyParticipation,
         EdgeThresholdParticipation,
-        AvoidSkillDecayParticipation,
         WealthShockSensitiveParticipation,
-        AdaptiveParticipation,
     )
     from onlinev2.behaviour.policies.reporting import (
-        TruthfulReporting,
         HedgedReporting,
-        StrategicExternalityReporting,
         ReputationProtectionReporting,
+        StrategicExternalityReporting,
+        TruthfulReporting,
     )
     from onlinev2.behaviour.policies.staking import (
-        FixedFractionStaking,
-        KellyLikeStaking,
-        HouseMoneyStaking,
-        BreakEvenStaking,
         AffordabilityCappedStaking,
+        BreakEvenStaking,
+        FixedFractionStaking,
+        HouseMoneyStaking,
+        KellyLikeStaking,
         VolatilitySensitiveStaking,
-    )
-    from onlinev2.behaviour.policies.identity import (
-        SingleAccountIdentity,
-        SplitAccountIdentity,
-        CollusiveMultiAccountIdentity,
-        FakeActivityIdentity,
     )
 
     base: Dict[str, Any] = {

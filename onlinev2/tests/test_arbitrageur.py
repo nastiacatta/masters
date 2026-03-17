@@ -4,12 +4,11 @@ Tests for the arbitrageur adversary.
 1. Arbitrageur never returns participate=False with nonzero deposit
 2. Logs "arbitrage found" only if worst-case profit is positive
 """
-import numpy as np
 import pytest
 
-from onlinev2.behaviour.traits import UserTraits
 from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour
 from onlinev2.behaviour.protocol import RoundPublicState
+from onlinev2.behaviour.traits import UserTraits
 
 
 def _make_state(t=0, wealth=10.0, user_id="arb_0"):

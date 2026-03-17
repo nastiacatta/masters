@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from typing import Any, Optional, Sequence
 
-from onlinev2.behaviour.protocol import BehaviourModel
-from onlinev2.behaviour.population import build_population
 from onlinev2.behaviour.composite import CompositeBehaviourModel
-from onlinev2.behaviour.traits import UserTraits
 from onlinev2.behaviour.config.behaviour_configs import get_preset_kwargs
+from onlinev2.behaviour.population import build_population
+from onlinev2.behaviour.protocol import BehaviourModel
+from onlinev2.behaviour.traits import UserTraits
 
 
 def make_behaviour(
@@ -85,7 +85,9 @@ def make_behaviour(
         )
         adv_key = adv_traits.user_id
     elif adversary == "privileged_information":
-        from onlinev2.behaviour.adversaries.privileged_information import PrivilegedInformationBehaviour
+        from onlinev2.behaviour.adversaries.privileged_information import (
+            PrivilegedInformationBehaviour,
+        )
         adv = PrivilegedInformationBehaviour(
             adv_traits,
             scoring_mode=scoring_mode,

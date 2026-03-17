@@ -9,14 +9,15 @@ import csv
 import os
 
 from onlinev2.core.metrics import (
-    compute_pit,
-    compute_sharpness,
+    NetworkExporter as _NetworkExporter,
+)
+from onlinev2.core.metrics import (
+    RoundMetricsLogger,
+    compute_gini,
     compute_hhi,
     compute_n_eff,
-    compute_gini,
-    validate_quantile_monotonicity,
-    RoundMetricsLogger,
-    NetworkExporter as _NetworkExporter,
+    compute_pit,
+    compute_sharpness,
 )
 
 

@@ -5,7 +5,7 @@ from typing import Sequence
 
 import numpy as np
 
-from onlinev2.behaviour.protocol import clamp01, RoundPublicState
+from onlinev2.behaviour.protocol import RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
 try:

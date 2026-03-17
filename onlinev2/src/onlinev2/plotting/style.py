@@ -13,8 +13,6 @@ from __future__ import annotations
 import os
 from typing import Any
 
-import numpy as np
-
 # ---------------------------------------------------------------------------
 # Color palette — warm, readable, colorblind-friendly ordering
 # ---------------------------------------------------------------------------

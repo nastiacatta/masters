@@ -7,11 +7,11 @@ Regression tests for the onlinev2 refactor.
 - sigma stored from L_new (post-round), not L_prev.
 - PIT only in quantiles mode and present in logs.
 - Gini/HHI/N_eff from onlinev2.mechanism.metrics.
-- cap_weight_shares: non-negative, sum 1, each <= omega_max, budget preserved; omega_max < 1/n raises.
+- cap_weight_shares: non-negative, sum 1, each <= omega_max, budget preserved;
+  omega_max < 1/n raises.
 """
 import numpy as np
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Adversary integration: make_behaviour(ARBITRAGEUR) yields model where attacker_0 acts
@@ -36,7 +36,9 @@ def test_adversary_from_make_behaviour_emits_actions():
     actions = behaviour.act(state)
 
     account_ids = [a.account_id for a in actions]
-    assert "attacker_0" in account_ids, "attacker_0 must appear in actions from make_behaviour(ARBITRAGEUR)"
+    assert "attacker_0" in account_ids, (
+        "attacker_0 must appear in actions from make_behaviour(ARBITRAGEUR)"
+    )
     n_attacker = sum(1 for a in actions if a.account_id == "attacker_0")
     assert n_attacker >= 1, "at least one action must come from the adversary"
 
@@ -45,17 +47,20 @@ def test_adversary_from_make_behaviour_emits_actions():
 # Point mode: transform_report is always called (no belief+bias bypass)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skip(reason="Current composite may not call transform_report in all point-mode paths; desired invariant to enforce later")
+@pytest.mark.skip(
+    reason="Composite may not call transform_report in all point-mode paths; "
+    "desired invariant to enforce later"
+)
 def test_point_mode_transform_report_called():
     from onlinev2.behaviour.composite import CompositeBehaviourModel
-    from onlinev2.behaviour.population import UserConfig
-    from onlinev2.behaviour.traits import generate_population
-    from onlinev2.behaviour.policies.reporting import TruthfulReporting
-    from onlinev2.behaviour.policies.participation import BaselineParticipation
-    from onlinev2.behaviour.policies.staking import FixedFractionStaking
-    from onlinev2.behaviour.policies.identity import SingleAccountIdentity
     from onlinev2.behaviour.policies.belief import PrivateSignalBelief
+    from onlinev2.behaviour.policies.identity import SingleAccountIdentity
+    from onlinev2.behaviour.policies.participation import BaselineParticipation
+    from onlinev2.behaviour.policies.reporting import TruthfulReporting
+    from onlinev2.behaviour.policies.staking import FixedFractionStaking
+    from onlinev2.behaviour.population import UserConfig
     from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import generate_population
 
     class RecordingReporting(TruthfulReporting):
         called = False
@@ -110,10 +115,9 @@ def test_taus_numpy_array_no_ambiguous_truth():
 
 def test_runner_sigma_from_L_new_and_metrics_from_module():
     from onlinev2.core.runner import run_round
-    from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
     from onlinev2.core.skill import loss_to_skill, update_ewma_loss
+    from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
 
-    n = 3
     state = MechanismState(
         t=0,
         ewma_loss={"a": 0.0, "b": 0.2, "c": 0.4},
@@ -149,7 +153,9 @@ def test_runner_sigma_from_L_new_and_metrics_from_module():
     L_prev = np.array([0.0, 0.2, 0.4])
     losses_norm = np.array([0.0, 0.0, 0.0])
     alpha = np.array([0, 0, 0])
-    L_new = update_ewma_loss(L_prev, losses_norm, alpha, rho=params.rho, kappa=params.kappa, L0=params.L0)
+    L_new = update_ewma_loss(
+        L_prev, losses_norm, alpha, rho=params.rho, kappa=params.kappa, L0=params.L0
+    )
     sigma_expected = loss_to_skill(L_new, sigma_min=params.sigma_min, gamma=params.gamma)
     sigma_expected = np.clip(sigma_expected, params.sigma_min, 1.0)
     for i, aid in enumerate(["a", "b", "c"]):

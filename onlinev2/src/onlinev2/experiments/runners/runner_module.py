@@ -5,23 +5,30 @@ Each experiment runs simulations, saves data/plots under outputs/<block>/experim
 Run from this directory with package installed: python experiments.py --exp <name>
 or: run-onlinev2-experiments --exp <name>
 """
-import os
 import numpy as np
 from scipy import stats as scipy_stats
 
 from onlinev2.experiments.helpers import (
     cummean as _cummean,
+)
+from onlinev2.experiments.helpers import (
     ewma_smooth as _ewma_smooth,
+)
+from onlinev2.experiments.helpers import (
     exp_paths as _exp_paths,
-    run_r_plot as _run_r_plot,
+)
+from onlinev2.experiments.helpers import (
     rolling_mean as _rolling_mean,
+)
+from onlinev2.experiments.helpers import (
     se as _se,
+)
+from onlinev2.experiments.helpers import (
     write_csv as _write_csv,
 )
-from onlinev2.io.output_paths import ExperimentPaths
 from onlinev2.legacy_dgps import (
-    generate_truth_and_reports_latent,
     generate_truth_and_quantile_reports_latent,
+    generate_truth_and_reports_latent,
 )
 from onlinev2.mechanism.aggregation import aggregate_forecast
 from onlinev2.mechanism.metrics import compute_gini, compute_hhi, compute_n_eff
@@ -29,7 +36,6 @@ from onlinev2.mechanism.scoring import crps_hat_from_quantiles
 from onlinev2.mechanism.settlement import profit, raja_competitive_payout
 from onlinev2.plotting.style import (
     COLORS,
-    PALETTE,
     agent_color,
     apply_style,
     new_figure,
@@ -120,7 +126,7 @@ def run_settlement_sanity(n_rounds=500, n_agents=20, seed=42, outdir="outputs",
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -224,7 +230,7 @@ def run_skill_wager_intermittency(T=200, n_forecasters=6, missing_prob=0.3, seed
 
     # --- Plot: one combined figure ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return res
 
@@ -331,7 +337,7 @@ def run_forecast_aggregation(T=20000, n_forecasters=10, missing_prob=0.2, seed=7
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -400,7 +406,7 @@ def run_calibration_diagnostics(T=20000, n_forecasters=10, missing_prob=0.2, see
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -472,8 +478,7 @@ def run_parameter_sweep(T=200, n_forecasters=8, lam_vals=None, sigma_min_vals=No
 
     # --- Plot: three heatmaps ---
     try:
-        import matplotlib.pyplot as plt
-        from matplotlib.colors import Normalize
+        pass
     except Exception:
         return
 
@@ -565,7 +570,7 @@ def run_sybil_experiment(n_trials=20, k_max=8, seed=31, outdir="outputs", block=
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -634,7 +639,7 @@ def run_scoring_validation(seed=11, outdir="outputs", block="core"):
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -722,7 +727,7 @@ def run_fixed_deposit_skill_effect(T=200, n_forecasters=6, seed=17, outdir="outp
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return res
 
@@ -827,7 +832,6 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
     results = {}
 
     try:
-        import matplotlib.pyplot as plt
         _has_plt = True
     except Exception:
         _has_plt = False
@@ -1006,7 +1010,7 @@ def run_baseline_dgp_diagnostic(T=500, n_forecasters=6, seed=42, outdir="outputs
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return {"noise": noise, "mae": mae, "corr": corr}
 
@@ -1102,7 +1106,7 @@ def run_latent_fixed_dgp_diagnostic(T=1000, n_forecasters=6, seed=42, outdir="ou
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return {"tau_true": tau_true, "mae": mae}
 
@@ -1205,7 +1209,7 @@ def run_aggregation_dgp_diagnostic(T=1000, n_forecasters=3, seed=42, outdir="out
     ]
 
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -1302,7 +1306,6 @@ def run_dgp_comparison(T=500, seed=42, outdir="outputs", block="core"):
     }
 
     try:
-        import matplotlib.pyplot as plt
         from scipy.stats import gaussian_kde
     except Exception:
         return
@@ -1539,7 +1542,7 @@ def run_weight_rule_comparison(T=1000, n_forecasters=6, seed=42, outdir="outputs
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -1714,7 +1717,7 @@ def run_deposit_policy_comparison(T=1000, n_forecasters=6, seed=42, outdir="outp
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -1883,7 +1886,7 @@ def run_selective_participation(T=1000, n_forecasters=6, seed=42, outdir="output
 
     # --- Plot ---
     try:
-        import matplotlib.pyplot as plt
+        pass
     except Exception:
         return
 
@@ -1909,7 +1912,7 @@ def run_selective_participation(T=1000, n_forecasters=6, seed=42, outdir="output
                 "F0 (best)", fontsize=7, color=COLORS["slate"])
         ax.set(xlabel="Round $t$", ylabel="Learned skill $\\sigma$")
         ax.set_title(f"$\\kappa = {kappa}$" +
-                     (" (freeze)" if kappa == 0 else f" (decay toward $L_0$)"),
+                     (" (freeze)" if kappa == 0 else " (decay toward $L_0$)"),
                      fontsize=10, fontweight="bold")
         ax.legend(fontsize=8)
 
@@ -2142,7 +2145,8 @@ def run_weight_learning_comparison(T=15000, seed=42, outdir="outputs", block="co
     """
     from onlinev2.dgps import get_dgp
     from onlinev2.experiments.runners.weight_learning import (
-        online_weight_learning, _link_inv,
+        _link_inv,
+        online_weight_learning,
     )
 
     ep = _exp_paths(outdir, "weight_learning_comparison", block)
@@ -2353,29 +2357,31 @@ def run_behaviour_matrix(outdir="outputs", seed=42, block="behaviour", write_sum
       - adversaries (sybils, arbitrageur, collusion, manipulator, insider)
       - adaptive adversary variants
     """
-    from onlinev2.behaviour.traits import UserTraits, generate_population
-    from onlinev2.behaviour.population import build_population, UserConfig
     from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.policies.identity import (
+        SingleAccountIdentity,
+        SplitAccountIdentity,
+    )
     from onlinev2.behaviour.policies.participation import (
-        BaselineParticipation, BurstyParticipation,
-        EdgeThresholdParticipation, AvoidSkillDecayParticipation,
+        BaselineParticipation,
+        BurstyParticipation,
+        EdgeThresholdParticipation,
     )
     from onlinev2.behaviour.policies.reporting import (
-        TruthfulReporting, MiscalibratedReporting, HedgedReporting,
+        HedgedReporting,
+        MiscalibratedReporting,
+        TruthfulReporting,
     )
     from onlinev2.behaviour.policies.staking import (
-        FixedFractionStaking, KellyLikeStaking, HouseMoneyStaking, LumpyTierStaking,
+        FixedFractionStaking,
+        HouseMoneyStaking,
+        KellyLikeStaking,
+        LumpyTierStaking,
     )
-    from onlinev2.behaviour.policies.identity import (
-        SingleAccountIdentity, SplitAccountIdentity,
-    )
-    from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour
-    from onlinev2.behaviour.adversaries.manipulator import ManipulatorBehaviour
-    from onlinev2.behaviour.adversaries.collusion import CollusionGroupBehaviour
-    from onlinev2.behaviour.adversaries.insider import InsiderBehaviour
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "behaviour_matrix", block)
 
@@ -2497,8 +2503,8 @@ def run_behaviour_matrix(outdir="outputs", seed=42, block="behaviour", write_sum
 
     if write_summary and dashboard_logs:
         try:
-            from onlinev2.experiments.summarise import write_experiment_summary
             from onlinev2.behaviour.plotting.behaviour_dashboard import make_behaviour_dashboard
+            from onlinev2.experiments.summarise import write_experiment_summary
             config = {"experiment_name": "behaviour_matrix", "T": T, "n_users": n_users, "block": block,
                       "lam": 0.3, "eta": 1.0, "sigma_min": 0.1, "omega_max": 0.0}
             logs = {"mean_N_t": float(np.mean(dashboard_logs["participation_per_round"])),
@@ -2517,13 +2523,12 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
     Hold signal quality fixed, compare truthful vs hedged risk-averse,
     evaluate bias and welfare.
     """
-    from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
-    from onlinev2.behaviour.policies.reporting import TruthfulReporting, HedgedReporting
-    from onlinev2.behaviour.policies.staking import FixedFractionStaking
+    from onlinev2.behaviour.policies.reporting import HedgedReporting, TruthfulReporting
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "preference_stress_test", block)
 
@@ -2638,15 +2643,17 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
     Compare IID vs bursty vs edge-entry vs avoid-skill-decay participation,
     and compare missingness handling settings.
     """
-    from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.policies.participation import (
-        BaselineParticipation, BurstyParticipation,
-        EdgeThresholdParticipation, AvoidSkillDecayParticipation,
+        AvoidSkillDecayParticipation,
+        BaselineParticipation,
+        BurstyParticipation,
+        EdgeThresholdParticipation,
     )
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "intermittency_stress_test", block)
 
@@ -2773,13 +2780,13 @@ def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summa
     Run arbitrageurs across parameter grids to see when arbitrage appears
     and whether it dominates wealth.
     """
-    from onlinev2.behaviour.traits import UserTraits, generate_population
-    from onlinev2.behaviour.population import build_population
-    from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "arbitrage_scan", block)
 
@@ -2848,8 +2855,8 @@ def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summa
 
     if write_summary:
         try:
-            from onlinev2.experiments.summarise import write_experiment_summary
             from onlinev2.behaviour.plotting.behaviour_dashboard import make_behaviour_dashboard
+            from onlinev2.experiments.summarise import write_experiment_summary
             config = {"experiment_name": "arbitrage_scan", "T": T, "block": block}
             logs = {"attacker_cumulative_profit": float(np.mean([r["arb_total_profit"] for r in results])) if results else None}
             write_experiment_summary(ep, config, logs)
@@ -2864,14 +2871,14 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
     Optional: train a simple detector on fixed manipulation templates,
     then evaluate adaptive evaders.
     """
-    from onlinev2.behaviour.traits import UserTraits, generate_population
-    from onlinev2.behaviour.population import build_population
-    from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.evader import AdaptiveEvaderBehaviour
     from onlinev2.behaviour.adversaries.manipulator import ManipulatorBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "detection_adaptation", block)
 
@@ -3002,12 +3009,10 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
 
 def _run_behaviour_scenario_loop(T, n_users, seed, scenarios, ep, block, write_summary, scenario_key="scenario"):
     """Shared loop for behaviour experiments that vary scenarios."""
-    from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
-    from onlinev2.behaviour.policies.identity import SingleAccountIdentity
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
@@ -3046,13 +3051,13 @@ def _run_behaviour_scenario_loop(T, n_users, seed, scenarios, ep, block, write_s
 
 def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare no collusion vs collusion group; emit collusion metrics."""
-    from onlinev2.behaviour.traits import UserTraits
-    from onlinev2.behaviour.population import build_population
-    from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.coordinated_group import CoordinatedGroupBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "collusion_stress", block)
     T, n_benign = 150, 8
@@ -3110,13 +3115,13 @@ def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_sum
 
 def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare no insider vs insider; measure insider profit advantage."""
-    from onlinev2.behaviour.traits import UserTraits
-    from onlinev2.behaviour.population import build_population
-    from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.privileged_information import PrivilegedInformationBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "insider_advantage", block)
     T, n_benign = 150, 8
@@ -3160,13 +3165,13 @@ def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_su
 
 def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare no wash vs wash trader; measure activity inflation."""
-    from onlinev2.behaviour.traits import UserTraits
-    from onlinev2.behaviour.population import build_population
-    from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.wash_trader import WashTraderBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "wash_activity_gaming", block)
     T, n_benign = 150, 8
@@ -3208,13 +3213,13 @@ def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write
 
 def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare truthful vs strategic reporter; measure aggregate impact."""
-    from onlinev2.behaviour.traits import UserTraits
-    from onlinev2.behaviour.population import build_population
-    from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.adversaries.strategic_reporter import StrategicReporterBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "strategic_reporting", block)
     T, n_benign = 150, 8
@@ -3256,12 +3261,17 @@ def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_
 
 def run_identity_attack_matrix(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare single account vs sybil split vs reputation reset vs collusive multi-account."""
-    from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
-    from onlinev2.behaviour.policies.identity import SingleAccountIdentity, SplitAccountIdentity, ReputationResetIdentity, CollusiveMultiAccountIdentity
+    from onlinev2.behaviour.policies.identity import (
+        CollusiveMultiAccountIdentity,
+        ReputationResetIdentity,
+        SingleAccountIdentity,
+        SplitAccountIdentity,
+    )
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "identity_attack_matrix", block)
     T, n_users = 150, 8
@@ -3303,12 +3313,16 @@ def run_identity_attack_matrix(outdir="outputs", seed=42, block="behaviour", wri
 
 def run_drift_adaptation(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare fast vs slow adaptor to drift in y process."""
-    from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
-    from onlinev2.behaviour.policies.belief import FastAdaptorBeliefModel, SlowAdaptorBeliefModel, GaussianBeliefModel
+    from onlinev2.behaviour.policies.belief import (
+        FastAdaptorBeliefModel,
+        GaussianBeliefModel,
+        SlowAdaptorBeliefModel,
+    )
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "drift_adaptation", block)
     T, n_users = 200, 8
@@ -3350,15 +3364,19 @@ def run_drift_adaptation(outdir="outputs", seed=42, block="behaviour", write_sum
 
 def run_stake_policy_matrix(outdir="outputs", seed=42, block="behaviour", write_summary=True):
     """Compare fixed fraction vs Kelly-like vs house-money vs lumpy vs break-even vs volatility-sensitive."""
-    from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.policies.staking import (
-        FixedFractionStaking, KellyLikeStaking, HouseMoneyStaking,
-        LumpyTierStaking, BreakEvenStaking, VolatilitySensitiveStaking,
+        BreakEvenStaking,
+        FixedFractionStaking,
+        HouseMoneyStaking,
+        KellyLikeStaking,
+        LumpyTierStaking,
+        VolatilitySensitiveStaking,
     )
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.behaviour.protocol import RoundPublicState
 
     ep = _exp_paths(outdir, "stake_policy_matrix", block)
     T, n_users = 150, 8

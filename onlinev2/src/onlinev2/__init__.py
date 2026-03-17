@@ -17,8 +17,8 @@ def __getattr__(name: str):
     """Lazy import of behaviour layer to avoid pulling it for core-only consumers."""
     if name in ("BehaviourModel", "AgentAction", "RoundPublicState"):
         from onlinev2.behaviour.protocol import (
-            BehaviourModel,
             AgentAction,
+            BehaviourModel,
             RoundPublicState,
         )
         return {"BehaviourModel": BehaviourModel, "AgentAction": AgentAction, "RoundPublicState": RoundPublicState}[name]
