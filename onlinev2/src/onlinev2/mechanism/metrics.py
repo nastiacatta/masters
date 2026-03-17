@@ -18,6 +18,7 @@ from onlinev2.core.metrics import (
     compute_n_eff,
     compute_pit,
     compute_sharpness,
+    validate_quantile_monotonicity,
 )
 
 
@@ -56,6 +57,7 @@ __all__ = [
     "compute_hhi",
     "compute_n_eff",
     "compute_gini",
+    "validate_quantile_monotonicity",
     "NetworkExporter",
     "RoundMetricsLogger",
 ]
