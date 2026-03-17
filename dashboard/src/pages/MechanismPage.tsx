@@ -505,7 +505,7 @@ export default function MechanismPage() {
                   />
                 </div>
 
-                <AgentBarCharts trace={trace} N={N} selectedAgent={selectedAgent} />
+                <AgentBarCharts trace={trace} N={N} />
               </div>
             )}
 
@@ -522,10 +522,9 @@ export default function MechanismPage() {
 
 /* ── Agent bar charts for round detail ── */
 
-function AgentBarCharts({ trace, N, selectedAgent }: {
+function AgentBarCharts({ trace, N }: {
   trace: { deposits: number[]; influence: number[]; scores: number[]; profit: number[]; wealth_after: number[]; wealth_before: number[]; participated: boolean[]; activeCount: number };
   N: number;
-  selectedAgent: number | null;
 }) {
   const agentBarData = useMemo(() => Array.from({ length: N }, (_, i) => ({
     name: agentName(i), deposit: trace.deposits[i], influence: trace.influence[i],

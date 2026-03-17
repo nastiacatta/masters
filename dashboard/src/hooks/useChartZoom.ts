@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type MouseEvent } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export interface ZoomState {
   left: string | number;
@@ -28,7 +28,7 @@ const INITIAL: ZoomState = {
  *     )}
  *   </LineChart>
  */
-export function useChartZoom(dataKey = 'round') {
+export function useChartZoom(_dataKey = 'round') {
   const [state, setState] = useState<ZoomState>(INITIAL);
   const dragging = useRef(false);
 
