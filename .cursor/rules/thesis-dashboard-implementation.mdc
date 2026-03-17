@@ -14,7 +14,7 @@ Four primary routes, one thesis per page:
 |---------------|-----------------|-------------------------------------------------------------------|
 | `/`           | HomePage        | What is the research about? (Two claim cards)                     |
 | `/mechanism`  | MechanismPage   | How does one round work, and why is the mechanism well-defined?   |
-| `/results`    | ResultsPage     | What changes when skill enters the weighting?                     |
+| `/results`    | ResultsPage (Comparisons) | Fixed benchmark comparisons; what changes when skill enters the weighting? |
 | `/robustness` | RobustnessPage  | Does it hold up under missingness, sybil, and parameter changes?  |
 
 Legacy interactive tools live at `/appendix` (LabPage) and `/appendix/experiments`.

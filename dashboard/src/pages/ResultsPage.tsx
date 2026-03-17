@@ -106,8 +106,8 @@ export default function ResultsPage() {
   const deposits: DepositResult[] = useMemo(() => {
     const entries: { key: string; label: string; depositPolicy: DepositPolicy }[] = [
       { key: 'fixed',    label: 'Fixed unit',       depositPolicy: 'fixed_unit' },
-      { key: 'bankroll', label: 'Bankroll × conf',  depositPolicy: 'wealth_fraction' },
-      { key: 'oracle',   label: 'Oracle precision',  depositPolicy: 'sigma_scaled' },
+      { key: 'bankroll', label: 'Fraction of wealth',  depositPolicy: 'wealth_fraction' },
+      { key: 'oracle',   label: 'Wealth fraction × skill',  depositPolicy: 'sigma_scaled' },
     ];
     return entries.map(e => ({
       ...e,
@@ -176,9 +176,12 @@ export default function ResultsPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900">Results</h2>
+        <h2 className="text-2xl font-bold text-slate-900">Comparisons</h2>
         <p className="text-sm font-medium text-slate-700 mt-2">
           What changes when skill enters the weighting?
+        </p>
+        <p className="text-xs text-slate-500 mt-2 rounded-lg bg-amber-50 border border-amber-200/60 px-3 py-2 max-w-2xl">
+          These are fixed benchmark comparisons, not your current setup. To explore your own scenario, use Mechanism.
         </p>
       </div>
 

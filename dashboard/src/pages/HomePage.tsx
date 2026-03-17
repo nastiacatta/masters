@@ -81,13 +81,13 @@ export default function HomePage() {
         </div>
       </StepSection>
 
-      <StepSection step={2} title="Where to go" description="Follow the flow: Mechanism → Results → Robustness.">
+      <StepSection step={2} title="Where to go" description="Follow the flow: Mechanism → Comparisons → Robustness.">
         <div className="flex flex-wrap gap-3 pt-2">
           <Link to="/mechanism" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
             1. Mechanism
           </Link>
           <Link to="/results" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
-            2. Results
+            2. Comparisons
           </Link>
           <Link to="/robustness" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
             3. Robustness

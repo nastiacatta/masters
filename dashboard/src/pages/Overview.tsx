@@ -11,7 +11,7 @@ export default function Overview() {
     <div className="p-6 max-w-4xl space-y-6">
       <PageHeader
         title="Overview"
-        description="Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation? Use the Walkthrough to see one round step by step: Inputs → DGP → Core → Behaviour → Results → Next state."
+        description="Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation? Use the Walkthrough to see one round step by step: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state."
         question="Why adaptive skill and stake?"
       />
       <p className="text-sm text-slate-600">

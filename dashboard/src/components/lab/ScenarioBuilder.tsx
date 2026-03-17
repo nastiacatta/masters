@@ -24,9 +24,9 @@ const DGP_OPTIONS: { id: DGPId; label: string }[] = [
 ];
 
 const DEPOSIT_OPTIONS: { id: DepositPolicy; label: string }[] = [
-  { id: 'fixed_unit', label: 'Fixed unit' },
-  { id: 'wealth_fraction', label: 'Bankroll × conf' },
-  { id: 'sigma_scaled', label: 'σ-scaled' },
+  { id: 'fixed_unit', label: 'Fixed amount' },
+  { id: 'wealth_fraction', label: 'Fraction of wealth' },
+  { id: 'sigma_scaled', label: 'Wealth fraction × skill' },
 ];
 
 const INFLUENCE_OPTIONS: { id: InfluenceRule; label: string }[] = [
@@ -44,18 +44,43 @@ const AGGREGATION_OPTIONS: { id: AggregationRule; label: string }[] = [
 
 const SETTLEMENT_OPTIONS: { id: SettlementRule; label: string }[] = [
   { id: 'skill_only', label: 'Skill only' },
-  { id: 'skill_plus_utility', label: 'Skill + utility' },
+  { id: 'skill_plus_utility', label: 'Skill + bonus pool' },
 ];
 
 const BEHAVIOUR_OPTIONS: { id: BehaviourPresetId; label: string; desc: string }[] = [
-  { id: 'baseline', label: 'Benign', desc: 'Honest forecasters' },
-  { id: 'bursty', label: 'Bursty', desc: 'Intermittent participation' },
-  { id: 'risk_averse', label: 'Risk-averse', desc: 'Conservative reports' },
-  { id: 'manipulator', label: 'Manipulator', desc: 'Strategic bias' },
-  { id: 'sybil', label: 'Sybil', desc: 'Identity splitting' },
-  { id: 'evader', label: 'Evader', desc: 'Stealth manipulation' },
-  { id: 'arbitrageur', label: 'Arbitrageur', desc: 'Exploit spreads' },
+  { id: 'baseline', label: 'Benign', desc: 'Steady honest participation' },
+  { id: 'bursty', label: 'Bursty', desc: 'Participation arrives in clusters' },
+  { id: 'risk_averse', label: 'Risk-averse', desc: 'Smaller deposits and tighter reports' },
+  { id: 'manipulator', label: 'Manipulator', desc: 'Strategic directional bias' },
+  { id: 'sybil', label: 'Sybil', desc: 'One forecaster split across identities' },
+  { id: 'evader', label: 'Evader', desc: 'Manipulates, but tries to stay hidden' },
+  { id: 'arbitrageur', label: 'Arbitrageur', desc: 'Acts when disagreement is large' },
 ];
+
+const DEPOSIT_HELP: Record<DepositPolicy, string> = {
+  fixed_unit: 'Each active agent posts the same deposit each round.',
+  wealth_fraction: 'Each active agent deposits a fixed share of current wealth.',
+  sigma_scaled: 'Each active agent deposits a share of current wealth, scaled by current skill.',
+};
+
+const INFLUENCE_HELP: Record<InfluenceRule, string> = {
+  uniform: 'All active reports receive equal weight.',
+  deposit_only: 'Weights depend only on stake.',
+  skill_only: 'Weights depend only on the skill layer.',
+  skill_stake: 'Weights depend on both skill and stake.',
+};
+
+const AGGREGATION_HELP: Record<AggregationRule, string> = {
+  linear: 'Weights are used directly in the pool.',
+  sqrt: 'Large weights are compressed before pooling.',
+  softmax: 'Weights are normalised through a softmax transform.',
+};
+
+const SETTLEMENT_HELP: Record<SettlementRule, string> = {
+  skill_only: 'Payout depends on scoring performance and the skill layer only.',
+  skill_plus_utility:
+    'Same settlement logic as skill-only, plus an external bonus pool for agents above the score threshold.',
+};
 
 interface SliderRowProps {
   label: string;
@@ -132,22 +157,73 @@ export default function ScenarioBuilder({
       </div>
 
       <div className="border-t border-slate-700/50 pt-4">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Mechanism</h2>
+        <div className="text-xs font-semibold text-slate-200 mb-2">Mechanism</div>
+
         <div className="space-y-3">
-          <SelectRow label="Deposit policy" value={builder.depositPolicy} options={DEPOSIT_OPTIONS}
-            onChange={(v) => setBuilder({ ...builder, depositPolicy: v as DepositPolicy })} />
-          <SelectRow label="Influence rule" value={builder.influenceRule} options={INFLUENCE_OPTIONS}
-            onChange={(v) => setBuilder({ ...builder, influenceRule: v as InfluenceRule })} />
-          <SelectRow label="Aggregation" value={builder.aggregationRule} options={AGGREGATION_OPTIONS}
-            onChange={(v) => setBuilder({ ...builder, aggregationRule: v as AggregationRule })} />
-          <SelectRow label="Settlement" value={builder.settlementRule} options={SETTLEMENT_OPTIONS}
-            onChange={(v) => setBuilder({ ...builder, settlementRule: v as SettlementRule })} />
+          <div>
+            <SelectRow
+              label="Deposit"
+              value={builder.depositPolicy}
+              options={DEPOSIT_OPTIONS}
+              onChange={(v) => setBuilder({ ...builder, depositPolicy: v as DepositPolicy })}
+            />
+            <p className="mt-1 text-[11px] leading-5 text-slate-400">
+              {DEPOSIT_HELP[builder.depositPolicy]}
+            </p>
+          </div>
+
+          <div>
+            <SelectRow
+              label="Influence"
+              value={builder.influenceRule}
+              options={INFLUENCE_OPTIONS}
+              onChange={(v) => setBuilder({ ...builder, influenceRule: v as InfluenceRule })}
+            />
+            <p className="mt-1 text-[11px] leading-5 text-slate-400">
+              {INFLUENCE_HELP[builder.influenceRule]}
+            </p>
+          </div>
+
+          <div>
+            <SelectRow
+              label="Aggregation"
+              value={builder.aggregationRule}
+              options={AGGREGATION_OPTIONS}
+              onChange={(v) => setBuilder({ ...builder, aggregationRule: v as AggregationRule })}
+            />
+            <p className="mt-1 text-[11px] leading-5 text-slate-400">
+              {AGGREGATION_HELP[builder.aggregationRule]}
+            </p>
+          </div>
+
+          <div>
+            <SelectRow
+              label="Settlement"
+              value={builder.settlementRule}
+              options={SETTLEMENT_OPTIONS}
+              onChange={(v) => setBuilder({ ...builder, settlementRule: v as SettlementRule })}
+            />
+            <p className="mt-1 text-[11px] leading-5 text-slate-400">
+              {SETTLEMENT_HELP[builder.settlementRule]}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-slate-700 bg-slate-900/70 p-3">
+            <div className="text-[11px] font-semibold text-slate-100">
+              Deposit vs effective wager
+            </div>
+            <p className="mt-1 text-[11px] leading-5 text-slate-300">
+              Deposit \(b_i\) is what the agent posts this round. The effective wager is the
+              skill-adjusted amount that actually drives influence inside the mechanism.
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="border-t border-slate-700/50 pt-4">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Behaviour</h2>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="text-xs font-semibold text-slate-200 mb-2">Behaviour</div>
+
+        <div className="grid grid-cols-2 gap-2">
           {BEHAVIOUR_OPTIONS.map((o) => (
             <button
               key={o.id}
@@ -161,9 +237,30 @@ export default function ScenarioBuilder({
               title={o.desc}
             >
               <div className="font-medium">{o.label}</div>
-              <div className="text-[9px] opacity-60 mt-0.5 leading-tight">{o.desc}</div>
+              <div className="opacity-80">{o.desc}</div>
             </button>
           ))}
+        </div>
+
+        <div className="mt-3 rounded-lg border border-slate-700 bg-slate-900/70 p-3">
+          <div className="text-[11px] font-semibold text-slate-100">
+            {selectedBehaviour?.label}
+          </div>
+
+          <p className="mt-2 text-[11px] leading-5 text-slate-300">
+            <span className="font-semibold text-slate-100">What we mean: </span>
+            {behaviourInfo.meaning}
+          </p>
+
+          <p className="mt-2 text-[11px] leading-5 text-slate-300">
+            <span className="font-semibold text-slate-100">How it is implemented here: </span>
+            {behaviourInfo.implementation}
+          </p>
+
+          <p className="mt-2 text-[11px] leading-5 text-slate-300">
+            <span className="font-semibold text-slate-100">What changes in the round: </span>
+            {behaviourInfo.roundEffect}
+          </p>
         </div>
       </div>
 
@@ -180,7 +277,7 @@ export default function ScenarioBuilder({
               <SliderRow label="λ (stake weight)" value={params.lambda} min={0} max={1} step={0.05} onChange={(v) => setParam('lambda', v)} />
               <SliderRow label="η (skill exp.)" value={params.eta} min={0.5} max={3} step={0.1} onChange={(v) => setParam('eta', v)} />
               <SliderRow label="f (deposit frac.)" value={params.f} min={0.05} max={0.9} step={0.05} onChange={(v) => setParam('f', v)} />
-              <SliderRow label="U (utility pool)" value={params.U} min={0} max={200} step={5} onChange={(v) => setParam('U', v)} />
+              <SliderRow label="U (bonus pool)" value={params.U} min={0} max={200} step={5} onChange={(v) => setParam('U', v)} />
             </div>
           </div>
         </div>

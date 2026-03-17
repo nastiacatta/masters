@@ -1,13 +1,16 @@
 /**
  * Thesis walkthrough: step IDs, labels, and flow.
- * Flow: Inputs → DGP → Core → Behaviour → Results → Next state
+ * Flow: Inputs → DGP → Behaviour → Core → Results → Next state
+ *
+ * Behaviour (participation, reporting, deposits) sits between signal generation
+ * and deterministic core execution, matching the repo's separation of concerns.
  */
 
 export const WALKTHROUGH_STEPS = [
   'inputs',
   'dgp',
-  'core',
   'behaviour',
+  'core',
   'results',
   'next_state',
 ] as const;
@@ -24,7 +27,7 @@ export const WALKTHROUGH_STEP_LABELS: Record<WalkthroughStepId, string> = {
 };
 
 /** Mechanism explorer: 5 main stages */
-export const EXPLORER_STAGES = ['inputs', 'dgp', 'core', 'behaviour', 'results'] as const;
+export const EXPLORER_STAGES = ['inputs', 'dgp', 'behaviour', 'core', 'results'] as const;
 export type ExplorerStageId = (typeof EXPLORER_STAGES)[number];
 export const EXPLORER_STAGE_LABELS: Record<ExplorerStageId, string> = {
   inputs: 'Inputs',

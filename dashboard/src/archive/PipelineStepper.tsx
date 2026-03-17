@@ -72,7 +72,7 @@ export default function PipelineStepper() {
       <PageHeader
         hero
         title="Time-step pipeline"
-        subtitle="Step-by-step flow: Inputs → DGP → Core → Behaviour → Results. Choose components at each step to explore the thesis mechanism."
+        subtitle="Step-by-step flow: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results. Choose components at each step to explore the thesis mechanism."
         question="Can adaptive skill updates improve aggregate forecasts without letting wealthy or strategic agents dominate?"
         controls={
           <div className="flex flex-wrap items-center gap-3">

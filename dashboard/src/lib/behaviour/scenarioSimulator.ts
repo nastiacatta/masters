@@ -87,32 +87,33 @@ export const PRESET_META: Record<
   },
   bursty: {
     label: 'Bursty participation',
-    description: 'Participation arrives in clusters.',
+    description:
+      'Participation is clustered in time, so some rounds are crowded and others sparse.',
     levers: ['attendance bursts', 'missing rounds'],
   },
   risk_averse: {
     label: 'Risk-averse hedgers',
-    description: 'Reports closer to centre, smaller deposits.',
-    levers: ['conservative reports', 'lower stake fraction'],
+    description: 'Agents stake less and report more cautiously.',
+    levers: ['smaller deposits', 'tighter reports'],
   },
   manipulator: {
     label: 'Manipulator',
-    description: 'One agent pushes reports away from consensus.',
+    description: 'One agent pushes reports directionally and stakes more aggressively.',
     levers: ['biased report', 'higher deposits'],
   },
   sybil: {
     label: 'Sybil split',
-    description: 'Strong forecaster split into multiple identities.',
+    description: 'A strong forecaster is split across multiple identities.',
     levers: ['identity splitting', 'share fragmentation'],
   },
   evader: {
     label: 'Adaptive evader',
-    description: 'Attacker softens when manipulation becomes obvious.',
+    description: 'The attacker manipulates, but softens the attack when it becomes obvious.',
     levers: ['state-dependent bias', 'stealth response'],
   },
   arbitrageur: {
     label: 'Arbitrageur',
-    description: 'Participates only when disagreement is large.',
+    description: 'Participates mainly when disagreement is large.',
     levers: ['conditional participation', 'opportunistic staking'],
   },
 };

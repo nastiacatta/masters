@@ -34,12 +34,12 @@ const STEP_DETAIL: Record<
     formula: 'y_t \\sim \\text{DGP};\\; \\text{signals} \\rightarrow r_i',
     interpretation: 'The data generating process fixes how the outcome and agent signals are produced. Non-stationarity and correlation enter here.',
   },
+  behaviour: {
+    interpretation: 'How agents choose participation, reports, and deposits. Acts on private signals to produce actions (a_i, r_i, b_i) before the core mechanism runs.',
+  },
   core: {
     formula: 'm_i = b_i \\cdot g(\\sigma_i),\\; \\hat{r} = \\sum \\hat{m}_i r_i,\\; \\sigma_{t+1} = f(L_t)',
-    interpretation: 'Deterministic mechanism: effective wager, aggregation, settlement, skill update. No behaviour—only state and actions.',
-  },
-  behaviour: {
-    interpretation: 'How agents choose participation, reports, deposits, and identity. Stress tests and adversarial scenarios.',
+    interpretation: 'Deterministic mechanism applied to the submitted actions: effective wager, aggregation, settlement, skill update.',
   },
   results: {
     formula: '\\hat{r}_t,\\; y_t,\\; \\pi_i,\\; \\Delta W_i,\\; \\Delta\\sigma_i',

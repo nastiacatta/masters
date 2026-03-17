@@ -4,7 +4,7 @@ import clsx from 'clsx';
 const ROUTES: { to: string; label: string }[] = [
   { to: '/',           label: 'Home' },
   { to: '/mechanism',  label: 'Mechanism' },
-  { to: '/results',    label: 'Results' },
+  { to: '/results',    label: 'Comparisons' },
   { to: '/robustness', label: 'Robustness' },
 ];
 

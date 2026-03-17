@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts';
 import type { ForecastSeriesPoint } from '@/lib/types';
 import { WEIGHTING_COLORS, metricLabel } from '@/lib/formatters';
 import ChartCard from '../dashboard/ChartCard';
@@ -16,7 +16,7 @@ export default function ForecastQualityChart({ data }: Props) {
     ? ['crpsUniformCum', 'crpsDepositCum', 'crpsSkillCum', 'crpsMechanismCum', 'crpsBestSingleCum'] as const
     : ['crpsUniform', 'crpsDeposit', 'crpsSkill', 'crpsMechanism', 'crpsBestSingle'] as const;
 
-  const sampled = data.length > 200 ? data.filter((_, i) => i % Math.ceil(data.length / 200) === 0) : data;
+  const initialStart = Math.max(0, data.length - 120);
 
   return (
     <ChartCard
@@ -31,16 +31,20 @@ export default function ForecastQualityChart({ data }: Props) {
         active={mode}
         onChange={(v) => setMode(v as 'rolling' | 'cumulative')}
       />
-      <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={sampled} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart
+          data={data}
+          syncId="round-window"
+          margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke="#94a3b8" label={{ value: 'Round', position: 'insideBottom', offset: -2, fontSize: 10 }} />
-          <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+          <XAxis dataKey="t" tick={{ fontSize: 12 }} stroke="#94a3b8" label={{ value: 'Round', position: 'insideBottom', offset: -2, fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
           <Tooltip
-            contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
             formatter={(value: unknown, name: unknown) => [typeof value === 'number' ? value.toFixed(5) : String(value ?? ''), metricLabel(String(name ?? ''))]}
           />
-          <Legend wrapperStyle={{ fontSize: 10 }} formatter={(v: string) => metricLabel(v)} />
+          <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v: string) => metricLabel(v)} />
           {keys.map(key => (
             <Line
               key={key}
@@ -52,6 +56,14 @@ export default function ForecastQualityChart({ data }: Props) {
               strokeOpacity={key.includes('Mechanism') || key.includes('mechanism') ? 1 : 0.6}
             />
           ))}
+          <Brush
+            dataKey="t"
+            height={28}
+            startIndex={initialStart}
+            endIndex={data.length - 1}
+            travellerWidth={10}
+            stroke="#94a3b8"
+          />
         </LineChart>
       </ResponsiveContainer>
     </ChartCard>

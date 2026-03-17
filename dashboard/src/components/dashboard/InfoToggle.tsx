@@ -67,7 +67,7 @@ export default function InfoToggle({
             </button>
           </div>
           {latex && (
-            <div className="mb-2">
+            <div className="mb-3 p-2.5 rounded-lg bg-slate-50 border border-slate-100 overflow-x-auto text-base [&_.katex]:text-[1.0625rem]">
               <MathBlock latex={latex} inline />
             </div>
           )}

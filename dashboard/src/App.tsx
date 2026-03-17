@@ -39,6 +39,7 @@ export default function App() {
                 <Route path="/overview" element={<Navigate to="/" replace />} />
                 <Route path="/pipeline" element={<Navigate to="/mechanism" replace />} />
                 <Route path="/comparison" element={<Navigate to="/results" replace />} />
+                <Route path="/comparisons" element={<Navigate to="/results" replace />} />
                 <Route path="/mechanism-explorer" element={<Navigate to="/mechanism" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

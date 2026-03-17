@@ -1,5 +1,5 @@
 /**
- * Compact visual of the full pipeline: Inputs → DGP → Core → Behaviour → Results
+ * Compact visual of the full pipeline: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results
  * Plus round evolution: state S_t → actions + outcome → state S_{t+1}
  */
 export default function PipelineDiagram() {

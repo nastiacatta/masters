@@ -1,5 +1,5 @@
 /**
- * Horizontal stepper for Mechanism explorer: Inputs → DGP → Core → Behaviour → Results
+ * Horizontal stepper for Mechanism explorer: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results
  */
 import clsx from 'clsx';
 import type { ExplorerStageId } from '@/lib/thesis';

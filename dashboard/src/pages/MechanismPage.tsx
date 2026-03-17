@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar, Cell,
@@ -73,6 +73,7 @@ export default function MechanismPage() {
     rounds, nAgents, seed, setSeed,
     setRounds, setNAgents,
     selectedRound, setSelectedRound,
+    setLastPipelineResult,
   } = useStore();
 
   const [builder, setBuilder] = useState<BuilderSelections>(DEFAULT_BUILDER_SELECTIONS);
@@ -113,6 +114,12 @@ export default function MechanismPage() {
     });
   }, [selectedDGP, selectedBehaviourPreset, rounds, seed, nAgents, builder,
       simParams.gamma, simParams.lambda, simParams.eta, simParams.f, simParams.U]);
+
+  // Single source of truth: store holds the current scenario result for the app
+  useEffect(() => {
+    setLastPipelineResult(pipeline);
+    return () => setLastPipelineResult(null);
+  }, [pipeline, setLastPipelineResult]);
 
   const currentRound = Math.max(0, Math.min(selectedRound, pipeline.traces.length - 1));
   const trace = pipeline.traces[currentRound] ?? null;
@@ -161,6 +168,9 @@ export default function MechanismPage() {
           <h2 className="text-2xl font-bold text-slate-900">Mechanism</h2>
           <p className="text-sm font-medium text-slate-700 mt-2">
             How does one round work, and why is the mechanism well-defined?
+          </p>
+          <p className="text-xs text-slate-500 mt-2 rounded-lg bg-indigo-50 border border-indigo-200/60 px-3 py-2 max-w-2xl">
+            These controls update the live walkthrough. Round outputs (outcome, forecast, error, skill, wealth) reflect the current setup.
           </p>
         </div>
 

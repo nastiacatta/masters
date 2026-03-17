@@ -54,7 +54,7 @@ function builderToConfig(
   };
   const settlementLabels: Record<SettlementRule, MechanismConfig['settlement']> = {
     skill_only: 'Skill-only',
-    skill_plus_utility: 'Skill+utility',
+    skill_plus_utility: 'Skill+bonus pool',
   };
   const behaviourLabels: Record<BehaviourPresetId, MechanismConfig['behaviour']> = {
     baseline: 'Benign',
@@ -102,7 +102,7 @@ function configToBuilderAndPreset(
   };
   const settlementFromLabel: Record<string, SettlementRule> = {
     'Skill-only': 'skill_only',
-    'Skill+utility': 'skill_plus_utility',
+    'Skill+bonus pool': 'skill_plus_utility',
   };
   const presetFromLabel: Record<string, BehaviourPresetId> = {
     Benign: 'baseline',
@@ -269,7 +269,7 @@ export default function MechanismExplorer() {
     <div className="p-6 max-w-7xl">
       <PageHeader
         title="Walkthrough"
-        description="Step-by-step round flow: Inputs → DGP → Core → Behaviour → Results → Next state. The tabs below are subsections of this narrative. Pre-run evidence lives in Experiments and Validation; this page runs a live counterfactual pipeline when you Apply."
+        description="Step-by-step round flow: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state. The tabs below are subsections of this narrative. Pre-run evidence lives in Experiments and Validation; this page runs a live counterfactual pipeline when you Apply."
         question="How does one round move from forecast → influence → payout?"
       />
       <p className="text-xs text-slate-500 mb-4">

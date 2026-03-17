@@ -10,7 +10,9 @@ The dashboard supports a thesis on forecasting markets and wagering mechanisms. 
 
 It makes clear:
 
-1. **How one round works** — Inputs → DGP → Core → Behaviour → Results → Next state.
+1. **How one round works** — Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state.
+
+   Behaviour sits before the core. The DGP generates round conditions and private information. Behaviour maps those signals and the current state into actions such as participation, report, and deposit. The core then applies aggregation, settlement, and skill updating deterministically.
 2. **Where the thesis contribution enters** — The online skill update (EWMA loss → σ) and its interaction with stake in the effective wager and aggregation.
 3. **How state updates from t to t+1** — Wealth, skill weights, eligibility, and any missingness correction state.
 4. **How behaviour and DGP choices affect outcomes** — Via the Walkthrough (scenario/experiment/round selectors) and the Experiments page (cross-scenario comparison).
@@ -26,13 +28,13 @@ It makes clear:
 | Route | Purpose |
 |-------|--------|
 | `/` | **Default landing.** Thesis overview: research question, why static stake-only is not enough, Raja vs online extension, how to use the dashboard. |
-| `/mechanism` | **Main walkthrough.** Step-by-step round walkthrough: Inputs → DGP → Core → Behaviour → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; explanation panel; summary metrics. |
-| `/results` | Cross-scenario comparison and main result views. |
+| `/mechanism` | **Main walkthrough.** Step-by-step round walkthrough: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state. Scenario, experiment, and round selectors; central walkthrough area; explanation panel; summary metrics. |
+| `/results` | **Comparisons.** Fixed benchmark comparisons (evidence), not the current Mechanism setup. |
 | `/robustness` | Invariants, tests, sanity checks, assumptions. Experiment selector and tabs (Main result, Round replay, Behaviour, Robustness checks). |
 | `/appendix` | Legacy interactive lab / pipeline tools. |
 | `/appendix/experiments` | Cross-scenario comparison with tabs: Core, Behaviour, DGP comparison, Robustness / adversaries, Ablations. |
 
-Legacy redirects (so old links still work): `/overview` → `/`, `/walkthrough` → `/mechanism`, `/experiments` → `/appendix/experiments`, `/validation` → `/robustness`, `/lab` → `/appendix`, `/pipeline` → `/mechanism`, `/comparison` → `/results`, `/mechanism-explorer` → `/mechanism`.
+Legacy redirects (so old links still work): `/overview` → `/`, `/walkthrough` → `/mechanism`, `/experiments` → `/appendix/experiments`, `/validation` → `/robustness`, `/lab` → `/appendix`, `/pipeline` → `/mechanism`, `/comparison` → `/results`, `/comparisons` → `/results`, `/mechanism-explorer` → `/mechanism`.
 
 ## Data loading
 
