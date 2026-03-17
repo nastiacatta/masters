@@ -173,8 +173,10 @@ export default function MechanismPage() {
             These controls update the live walkthrough. Round outputs (outcome, forecast, error, skill, wealth) reflect the current setup.
           </p>
           <p className="text-sm text-slate-600 mt-2 max-w-2xl">
-            The interactive walkthrough uses a bounded point-score demo (s = 1 − |y − r|),
-            while the thesis discussion also covers probabilistic scoring and quantile-based evaluation.
+            This page is an interactive point-forecast demo using \( s = 1 - |y-r| \)
+            to make one round of the mechanism easy to inspect.
+            Thesis results are shown separately on Results and Robustness using
+            probabilistic metrics such as CRPS, calibration, and concentration.
           </p>
         </div>
 
