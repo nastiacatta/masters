@@ -411,11 +411,27 @@ export async function loadMasterComparison(): Promise<{
   config: { T: number; n_forecasters: number; seeds: number[]; warm_start?: number };
   rows: MasterComparisonRow[];
 } | null> {
-  const raw = await fetchJSON<{ config: unknown; rows: MasterComparisonRow[] }>(
+  const candidateUrls = [
     `${DATA_BASE}/core/experiments/master_comparison/data/master_comparison.json`,
-  );
-  if (!raw?.rows?.length) return null;
-  return { config: raw.config as { T: number; n_forecasters: number; seeds: number[]; warm_start?: number }, rows: raw.rows };
+    `${DATA_BASE}/core 2/experiments/master_comparison/data/master_comparison.json`,
+    `${DATA_BASE}/core 3/experiments/master_comparison/data/master_comparison.json`,
+  ];
+
+  for (const url of candidateUrls) {
+    try {
+      const raw = await fetchJSON<{ config: unknown; rows: MasterComparisonRow[] }>(url);
+      if (raw?.rows?.length) {
+        return {
+          config: raw.config as { T: number; n_forecasters: number; seeds: number[]; warm_start?: number },
+          rows: raw.rows,
+        };
+      }
+    } catch {
+      // Try next candidate path.
+    }
+  }
+
+  return null;
 }
 
 /** Load bankroll ablation (Full vs A-, B-, C-, D-, E-). */

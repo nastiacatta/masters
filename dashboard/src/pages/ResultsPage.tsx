@@ -349,12 +349,12 @@ export default function ResultsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Main results</h1>
           <p className="text-sm text-slate-600 mt-1.5 max-w-2xl">
             {useExp
-              ? 'Evidence from pre-run experiment outputs. This page does not use the live walkthrough state.'
-              : `In-browser demo (baseline DGP, seed\u00a0${DEMO_SEED}, N\u00a0=\u00a0${DEMO_N}, T\u00a0=\u00a0${DEMO_T}). Link experiment data for thesis evidence.`}
+              ? 'This view shows results from a large, pre-generated comparison using the same scenarios across all methods for a fair ranking.'
+              : `This view is a quick interactive demo with a smaller sample (seed ${DEMO_SEED}, ${DEMO_N} participants, ${DEMO_T} rounds).`}
           </p>
           {!useExp && !loading && (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-              <strong>Illustrative only.</strong> Run experiments and <code className="bg-amber-100 px-1 rounded">./scripts/link-dashboard-data.sh</code> to see thesis evidence.
+              <strong>Illustrative only.</strong> Use this as a quick visual guide; final ranking should be read from the experiment-backed view.
             </div>
           )}
         </div>
@@ -378,7 +378,7 @@ export default function ResultsPage() {
                     ? `Skill \u00d7 stake improves accuracy by ${fmt(Math.abs(deltaCrps), 4)}.`
                     : 'Equal weights match or beat Skill \u00d7 stake.'
               }
-              caveat={useExp ? 'Identifiable benchmark; strategic settings on Robustness.' : 'In-browser demo with point scores, not CRPS.'}
+              caveat={useExp ? 'Based on the full pre-generated comparison view.' : 'Demo values are directional and based on a smaller sample.'}
             />
             <AnswerCard
               title="Does wealth dominate?"
@@ -386,10 +386,10 @@ export default function ResultsPage() {
               metricLabel="Final Gini (blended)"
               verdict={concentrationVerdict}
               interpretation={
-                useExp ? 'Concentration via Gini, HHI, and N_eff under benchmark configuration.'
+                useExp ? 'Shows how concentrated influence becomes under each method.'
                   : `\u0394Gini vs equal: ${demoDeltaGini >= 0 ? '+' : ''}${fmt(demoDeltaGini, 3)}. ${Math.abs(demoDeltaGini) < 0.05 ? 'Concentration stays controlled.' : 'Concentration shifts under skill weighting.'}`
               }
-              caveat="Concentration depends on DGP and deposit policy."
+              caveat="Concentration can vary across environments."
             />
           </div>
         </section>
@@ -404,10 +404,10 @@ export default function ResultsPage() {
           {howToReadOpen && (
             <div className="mt-3 grid sm:grid-cols-4 gap-3">
               {([
-                ['Benchmark', useExp ? 'The canonical config that produced these outputs (DGP, T, N, seeds).' : `Demo: baseline DGP, seed ${DEMO_SEED}, N=${DEMO_N}, T=${DEMO_T}.`],
+                ['What this is', useExp ? 'A large, offline comparison designed for fair method ranking.' : 'A lightweight interactive demo for intuition.'],
                 ['Metric', useExp ? 'CRPS and \u0394CRPS for accuracy; Gini/HHI/N_eff for concentration.' : 'Mean absolute error (point score) and Gini for concentration.'],
-                ['Comparison', useExp ? 'Paired deltas vs equal from master_comparison.' : 'Four weighting methods run side by side in the browser.'],
-                ['Takeaway', 'One-line verdict above each chart.'],
+                ['What to read first', 'Start from the ranked list in Accuracy, then use the charts to see distance between methods.'],
+                ['What to keep in mind', useExp ? 'Small gaps indicate near-ties; larger negative values indicate better accuracy.' : 'Demo results are informative but less stable than the full experiment-backed view.'],
               ] as const).map(([label, desc]) => (
                 <div key={label} className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="text-[11px] font-semibold text-slate-700">{label}</div>
@@ -441,7 +441,7 @@ export default function ResultsPage() {
             <div className="space-y-5">
               {expAccuracyDisplay.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-                  No core-method data. Run <code className="bg-slate-200 px-1 rounded">master_comparison</code> and link outputs.
+                  No comparison data is currently available for the four main methods.
                 </div>
               ) : (
                 <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -450,14 +450,14 @@ export default function ResultsPage() {
                     <InfoToggle
                       term="\u0394CRPS \u00d7 10\u2074"
                       definition="Mean paired CRPS difference vs equal, rescaled \u00d710\u2074 for readability."
-                      interpretation="More negative is better. Zero = ties equal weights."
+                      interpretation="Lower values are better; values near zero indicate similar performance."
                       axes={{ x: 'scaled \u0394CRPS', y: 'method' }}
                     />
                   </div>
                   <p className="text-[11px] text-slate-500 mb-1 leading-relaxed">
-                    <strong>Setup:</strong> exogenous IID deposits · latent DGP ·{' '}
-                    {expAccuracyDisplay[0]?.n != null ? `${expAccuracyDisplay[0].n} matched seeds` : 'matched seeds'}.
-                    {expBestCore && <> <strong>Best:</strong> {expBestCore.label}.</>}
+                    <strong>How results are generated:</strong> the same sequence of scenarios is used for all four methods, then outcomes are averaged over{' '}
+                    {expAccuracyDisplay[0]?.n != null ? `${expAccuracyDisplay[0].n} scenarios` : 'all scenarios'}.
+                    {expBestCore && <> <strong>Current top method:</strong> {expBestCore.label}.</>}
                     {expMechVsSkillX1e4 != null && (
                       <> Skill\u00d7stake is{' '}
                         <span className="font-mono">{expMechVsSkillX1e4 >= 0 ? '+' : ''}{expMechVsSkillX1e4.toFixed(2)}</span>
@@ -467,7 +467,7 @@ export default function ResultsPage() {
                   </p>
                   <div className="grid lg:grid-cols-2 gap-6 mt-4">
                     <div>
-                      <div className="text-[11px] font-semibold text-slate-600 mb-2">Relative to equal (ΔCRPS × 10⁴)</div>
+                      <div className="text-[11px] font-semibold text-slate-600 mb-2">Compared with equal weighting</div>
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
                           <CartesianGrid {...GRID_PROPS} />
@@ -489,7 +489,7 @@ export default function ResultsPage() {
                       </ResponsiveContainer>
                     </div>
                     <div>
-                      <div className="text-[11px] font-semibold text-slate-600 mb-2">Gap to best method (× 10⁴)</div>
+                      <div className="text-[11px] font-semibold text-slate-600 mb-2">Distance from the top method</div>
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
                           <CartesianGrid {...GRID_PROPS} />
@@ -499,7 +499,7 @@ export default function ResultsPage() {
                           <Tooltip
                             formatter={(value) => [
                               `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '\u2014'} \u00d710\u207b\u2074`,
-                              'Gap to best',
+                              'Gap to top',
                             ]}
                             contentStyle={TOOLTIP_STYLE}
                           />
@@ -568,7 +568,7 @@ export default function ResultsPage() {
               </div>
               {calibrationData.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-                  No calibration data found. Run the <code className="bg-slate-200 px-1 rounded">calibration</code> experiment and link outputs.
+                  Calibration data is not available in this view.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={320}>
@@ -591,7 +591,7 @@ export default function ResultsPage() {
               <h3 className="text-sm font-semibold text-slate-800 mb-2">Bankroll ablation (\u0394CRPS vs Full)</h3>
               {ablationData.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-                  No ablation data. Run the <code className="bg-slate-200 px-1 rounded">bankroll_ablation</code> experiment and link outputs.
+                  Robustness comparison data is not available in this view.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={320}>
@@ -706,10 +706,10 @@ export default function ResultsPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Limitations</h2>
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <ul className="space-y-2 text-[11px] text-slate-600 leading-relaxed">
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">1.</span><span><strong className="text-slate-700">Identifiable benchmark required.</strong> The skill layer needs a proper scoring rule and enough rounds to converge.</span></li>
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">2.</span><span><strong className="text-slate-700">Strategic settings are harder.</strong> Gains from skill weighting shrink under manipulation. See Robustness.</span></li>
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">3.</span><span><strong className="text-slate-700">Some gains depend on DGP and deposit policy.</strong> Equal weights remain a strong baseline.</span></li>
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">4.</span><span><strong className="text-slate-700">Tail miscalibration is shared.</strong> All methods under-cover extreme quantiles.</span></li>
+              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">1.</span><span><strong className="text-slate-700">Enough history is needed.</strong> Reliability estimates become more stable with more rounds.</span></li>
+              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">2.</span><span><strong className="text-slate-700">Behavior can change outcomes.</strong> If participants adapt strategically, accuracy gains may shrink.</span></li>
+              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">3.</span><span><strong className="text-slate-700">Results depend on context.</strong> No single method wins in every possible environment.</span></li>
+              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">4.</span><span><strong className="text-slate-700">Extreme events remain challenging.</strong> All methods are less reliable in the tails.</span></li>
             </ul>
           </div>
         </section>
