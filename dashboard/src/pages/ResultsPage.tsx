@@ -719,18 +719,6 @@ export default function ResultsPage() {
           )}
         </section>
 
-        {/* Limitations */}
-        <section>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Limitations</h2>
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
-            <ul className="space-y-2 text-[11px] text-slate-600 leading-relaxed">
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">1.</span><span><strong className="text-slate-700">Enough history is needed.</strong> Reliability estimates become more stable with more rounds.</span></li>
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">2.</span><span><strong className="text-slate-700">Behavior can change outcomes.</strong> If participants adapt strategically, accuracy gains may shrink.</span></li>
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">3.</span><span><strong className="text-slate-700">Results depend on context.</strong> No single method wins in every possible environment.</span></li>
-              <li className="flex items-start gap-2"><span className="text-slate-400 mt-0.5 shrink-0">4.</span><span><strong className="text-slate-700">Extreme events remain challenging.</strong> All methods are less reliable in the tails.</span></li>
-            </ul>
-          </div>
-        </section>
       </div>
     </div>
   );
