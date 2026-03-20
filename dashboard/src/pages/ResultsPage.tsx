@@ -47,6 +47,7 @@ import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundC
 const DEMO_SEED = 42;
 const DEMO_N = 6;
 const DEMO_T = 200;
+const ENDOGENOUS_METHOD1_PLOT = `${import.meta.env.BASE_URL}data/experiments%202/weight_learning/plots/weight_convergence.png`;
 
 const CORE_METHOD_KEYS = ['uniform', 'deposit', 'skill', 'mechanism'] as const;
 const ACCURACY_EPS = 1e-4;
@@ -366,6 +367,42 @@ export default function ResultsPage() {
             </div>
           )}
         </div>
+
+        <section aria-label="Weight-learning sanity check" className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Endogenous DGP check: does the online learner recover structural weights?
+          </h2>
+          <p className="text-[11px] text-slate-600 mt-1.5 max-w-3xl leading-relaxed">
+            This panel shows <strong>Method 1 only</strong> from the endogenous aggregation generator.
+            It is a sanity check of identifiability: the learner should move weight toward forecasters
+            that structurally drive the generated outcome under the DGP coefficients.
+          </p>
+          <div className="mt-3 rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+            <img
+              src={ENDOGENOUS_METHOD1_PLOT}
+              alt="Method 1 endogenous weight convergence"
+              className="w-full h-72 object-cover object-top"
+              loading="lazy"
+            />
+          </div>
+          <div className="mt-3 grid sm:grid-cols-2 gap-3">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+              <p className="text-[11px] text-emerald-900 leading-relaxed">
+                <strong>What this checks:</strong> whether online LMS recovers the structural ordering under
+                the endogenous generator, not intrinsic forecasting skill.
+              </p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+              <p className="text-[11px] text-amber-900 leading-relaxed">
+                <strong>Interpretation guardrail:</strong> treat this as a recovery sanity check.
+                Intrinsic-skill validation comes from exogenous latent-truth benchmarks.
+              </p>
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2">
+            Method 1 is shown on the main slide for clean interpretation. Methods 2 and 3 belong in appendix context.
+          </p>
+        </section>
 
         {/* Headline answers */}
         <section aria-label="Headline answers">
