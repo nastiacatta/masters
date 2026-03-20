@@ -1992,17 +1992,36 @@ def _headline_metrics_from_run(res, crps_by_rule, warm_start=0):
     return out
 
 
-def run_master_comparison(T=500, n_forecasters=10, missing_prob=0.2, seeds=None,
-                          outdir="outputs", block="core", warm_start=100):
-    """Run all weighting methods on the same panel; output paired deltas vs equal.
+def run_master_comparison(
+    T=500,
+    n_forecasters=10,
+    missing_prob=0.2,
+    seeds=None,
+    outdir="outputs",
+    block="core",
+    warm_start=100,
+    deposit_mode="exponential",
+    stake_scale=1.0,
+    omega_max=0.0,
+):
+    """Run all weighting methods on the same panel using exogenous deposits.
 
-    One bankroll run per seed. For each run compute CRPS for uniform, deposit,
-    skill, mechanism, best_single. Report mean CRPS, Δ CRPS vs equal, and
-    concentration (HHI, N_eff, Gini) from the run.
+    Four core methods:
+      - uniform
+      - deposit
+      - skill
+      - mechanism
+
+    Key design:
+      - same y path per seed
+      - same reports per seed
+      - same missingness per seed
+      - same exogenous deposit draws per seed
     """
     from onlinev2.experiments.benchmark_config import get_canonical_config
 
-    cfg = get_canonical_config(seeds=seeds or [42, 43, 44], T=T, n_forecasters=n_forecasters)
+    # Keep canonical seed panel when no explicit override is provided.
+    cfg = get_canonical_config(seeds=seeds, T=T, n_forecasters=n_forecasters)
     ep = _exp_paths(outdir, "master_comparison", block)
     taus = cfg.taus()
     tau_i = cfg.tau_i()
@@ -2017,8 +2036,11 @@ def run_master_comparison(T=500, n_forecasters=10, missing_prob=0.2, seeds=None,
             seed=seed, scoring_mode="quantiles_crps", taus=taus,
             y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
             store_history=True,
-            deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
-            f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25,
+            deposit_mode=deposit_mode,
+            stake_scale=stake_scale,
+            eta=2.0,
+            lam=0.05,
+            omega_max=omega_max,
         )
         crps = _crps_for_weight_rules(y, q_reports_pre, taus, res, tau_i)
         metrics = _headline_metrics_from_run(res, crps, warm_start=warm_start)
@@ -2030,7 +2052,7 @@ def run_master_comparison(T=500, n_forecasters=10, missing_prob=0.2, seeds=None,
                 "method": method,
                 "seed": seed,
                 "DGP": cfg.dgp_name,
-                "preset": "bankroll",
+                "preset": f"{deposit_mode}_deposits",
                 "mean_crps": mean_crps,
                 "delta_crps_vs_equal": mean_crps - crps_equal if np.isfinite(crps_equal) else np.nan,
                 "mean_HHI": metrics.get("mean_HHI"),
@@ -2045,7 +2067,15 @@ def run_master_comparison(T=500, n_forecasters=10, missing_prob=0.2, seeds=None,
         rows,
     )
     master = {
-        "config": {"T": cfg.T, "n_forecasters": cfg.n_forecasters, "seeds": cfg.seeds, "warm_start": warm_start},
+        "config": {
+            "T": cfg.T,
+            "n_forecasters": cfg.n_forecasters,
+            "seeds": cfg.seeds,
+            "warm_start": warm_start,
+            "deposit_mode": deposit_mode,
+            "stake_scale": stake_scale,
+            "omega_max": omega_max,
+        },
         "rows": rows,
     }
     with open(ep.data("master_comparison.json"), "w") as f:

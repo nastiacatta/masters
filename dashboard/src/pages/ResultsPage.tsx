@@ -44,7 +44,7 @@ import {
 import { useChartZoom } from '@/hooks/useChartZoom';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
 
-const DEMO_SEEDS = Array.from({ length: 20 }, (_, i) => 42 + i);
+const DEMO_SEEDS = Array.from({ length: 100 }, (_, i) => 42 + i);
 const DEMO_N = 6;
 const DEMO_T = 200;
 const EPS = 1e-4;
@@ -116,7 +116,11 @@ const EXP_TABS = ['Accuracy', 'Concentration', 'Calibration', 'Ablation'] as con
 const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
 
 const METHOD_LABEL: Record<string, string> = {
-  uniform: 'Equal', deposit: 'Stake-only', skill: 'Skill-only', mechanism: 'Skill \u00d7 stake', best_single: 'Best single',
+  uniform: 'Equal',
+  deposit: 'Stake-only (exogenous deposits)',
+  skill: 'Skill-only',
+  mechanism: 'Skill \u00d7 stake (exogenous deposits + skill gate)',
+  best_single: 'Best single',
 };
 const METHOD_COLOR: Record<string, string> = {
   uniform: '#94a3b8', deposit: '#0d9488', skill: '#8b5cf6', mechanism: '#6366f1', best_single: '#f59e0b',
@@ -186,6 +190,7 @@ export default function ResultsPage() {
     if (!defaultExperiment) return [];
     return masterRows.filter((r) => r.experiment === defaultExperiment);
   }, [masterRows, defaultExperiment]);
+  const expPreset = expRows[0]?.preset ?? '';
 
   const methodAgg = useMemo(() => {
     const byMethod = new Map<string, MasterComparisonRow[]>();
@@ -553,7 +558,7 @@ export default function ResultsPage() {
           {howToReadOpen && (
             <div className="mt-3 grid sm:grid-cols-4 gap-3">
               {([
-                ['Benchmark', useExp ? 'The canonical config that produced these outputs (DGP, T, N, seeds).' : `Demo: baseline DGP, ${DEMO_SEEDS.length} matched seeds, N=${DEMO_N}, T=${DEMO_T}.`],
+                ['Benchmark', useExp ? `The canonical config that produced these outputs (DGP, T, N, seeds, deposit preset: ${expPreset || 'n/a'}).` : `Demo: baseline DGP, ${DEMO_SEEDS.length} matched seeds, N=${DEMO_N}, T=${DEMO_T}.`],
                 ['Metric', useExp ? 'CRPS and \u0394CRPS for accuracy; Gini/HHI/N_eff for concentration.' : 'Mean absolute error (point score) and Gini for concentration.'],
                 ['Comparison', useExp ? 'Paired deltas vs equal from master_comparison.' : 'Four weighting methods run side by side in the browser.'],
                 ['Takeaway', 'One-line verdict above each chart.'],

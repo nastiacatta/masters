@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 # Default canonical config (NEXT_STEPS.md)
-CANONICAL_SEEDS: List[int] = list(range(42, 62))  # 20 seeds
+CANONICAL_SEEDS: List[int] = list(range(42, 1042))  # 1000 matched seeds
 CANONICAL_T = 20000
 CANONICAL_N_FORECASTERS = 10
 CANONICAL_MISSING_PROB = 0.2
