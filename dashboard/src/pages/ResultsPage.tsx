@@ -465,9 +465,27 @@ export default function ResultsPage() {
                       </>
                     )}
                   </p>
+                  <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-[11px] font-semibold text-slate-700 mb-2">Ranking at a glance</div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                      {expAccuracyDisplay.map((d, i) => (
+                        <div key={`rank-${d.method}`} className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-semibold text-slate-500">#{i + 1}</span>
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+                          </div>
+                          <div className="text-[11px] font-medium text-slate-800 mt-1 truncate">{d.name}</div>
+                          <div className="text-[10px] font-mono text-slate-500 mt-1">
+                            {d.deltaCrpsX1e4 >= 0 ? '+' : ''}{d.deltaLabel} ×10⁻⁴
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-2">Lower values indicate better average accuracy.</p>
+                  </div>
                   <div className="grid lg:grid-cols-2 gap-6 mt-4">
                     <div>
-                      <div className="text-[11px] font-semibold text-slate-600 mb-2">Compared with equal weighting</div>
+                      <div className="text-[11px] font-semibold text-slate-600 mb-2">How each method compares with Equal</div>
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
                           <CartesianGrid {...GRID_PROPS} />
@@ -477,7 +495,7 @@ export default function ResultsPage() {
                           <Tooltip
                             formatter={(value) => [
                               `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '\u2014'} \u00d710\u207b\u2074`,
-                              '\u0394CRPS vs equal',
+                              'Difference vs Equal',
                             ]}
                             contentStyle={TOOLTIP_STYLE}
                           />
@@ -489,7 +507,7 @@ export default function ResultsPage() {
                       </ResponsiveContainer>
                     </div>
                     <div>
-                      <div className="text-[11px] font-semibold text-slate-600 mb-2">Distance from the top method</div>
+                      <div className="text-[11px] font-semibold text-slate-600 mb-2">How far each method is from #1</div>
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
                           <CartesianGrid {...GRID_PROPS} />
@@ -499,7 +517,7 @@ export default function ResultsPage() {
                           <Tooltip
                             formatter={(value) => [
                               `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '\u2014'} \u00d710\u207b\u2074`,
-                              'Gap to top',
+                              'Gap from #1',
                             ]}
                             contentStyle={TOOLTIP_STYLE}
                           />

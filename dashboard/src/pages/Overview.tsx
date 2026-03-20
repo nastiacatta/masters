@@ -41,6 +41,46 @@ export default function Overview() {
           <li>Changing conditions that induce non-stationary dynamics.</li>
         </ul>
       </section>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">How one round works</h3>
+          <p className="text-sm text-slate-600 mt-1">
+            Each round follows the same five-step flow: submit, weight, aggregate, settle, then update skill.
+          </p>
+        </div>
+        <div className="grid gap-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">1) Submit</p>
+            <p className="text-sm text-slate-700 mt-1">Each forecaster submits a deposit and a forecast.</p>
+            <p className="text-xs font-mono text-slate-600 mt-2">(b_i,t, r_i,t)</p>
+            <p className="text-xs text-slate-500 mt-1">b_i,t = current deposit, r_i,t = current forecast.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">2) Skill-adjusted wager</p>
+            <p className="text-sm text-slate-700 mt-1">Deposits are adjusted by skill fixed before the round.</p>
+            <p className="text-xs font-mono text-slate-600 mt-2">m_i,t = b_i,t * (lambda + (1 - lambda) * sigma_i,t)</p>
+            <p className="text-xs text-slate-500 mt-1">lambda is a floor so some of every deposit still counts.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">3) Influence and aggregate forecast</p>
+            <p className="text-sm text-slate-700 mt-1">Effective wagers are normalised into influence weights.</p>
+            <p className="text-xs font-mono text-slate-600 mt-2">m_hat_i,t = m_i,t / sum_j m_j,t</p>
+            <p className="text-xs font-mono text-slate-600 mt-1">r_hat_t = sum_i (m_hat_i,t * r_i,t)</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">4) Outcome and payoff</p>
+            <p className="text-sm text-slate-700 mt-1">After the outcome is realised, payoffs are settled by relative score quality.</p>
+            <p className="text-xs font-mono text-slate-600 mt-2">Pi_i,t = m_i,t * (1 + s(r_i,t, y_t) - weighted_avg_j s(r_j,t, y_t))</p>
+            <p className="text-xs text-slate-500 mt-1">Payoff depends on how well each forecaster scores versus others.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">5) Skill update for next round</p>
+            <p className="text-sm text-slate-700 mt-1">Realised loss updates the next-round skill value.</p>
+            <p className="text-xs font-mono text-slate-600 mt-2">sigma_i,t+1 = sigma_min + (1 - sigma_min) * exp(-gamma * L_i,t)</p>
+            <p className="text-xs text-slate-500 mt-1">Next round starts with this updated skill.</p>
+          </div>
+        </div>
+      </section>
       <p className="text-sm text-slate-600">
         Start with the <Link to="/walkthrough" className="text-teal-600 hover:underline font-medium">Walkthrough</Link> to explore the mechanism; use <Link to="/experiments" className="text-teal-600 hover:underline font-medium">Experiments</Link> for cross-scenario evidence and <Link to="/validation" className="text-teal-600 hover:underline font-medium">Validation</Link> for invariants and robustness.
       </p>
