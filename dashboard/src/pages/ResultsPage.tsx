@@ -4,7 +4,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  ErrorBar,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -37,6 +37,8 @@ import {
 } from '@/components/lab/shared';
 
 const EPS = 1e-4;
+/** Verdict band for mechanism ΔCRPS vs equal (raw units); smaller than 1e-3 so near-ties stay neutral. */
+const ACCURACY_EPS = 1e-4;
 
 /**
  * When experiment JSON is not linked, show this illustrative snapshot of mean ΔCRPS vs equal
@@ -118,10 +120,21 @@ const METHOD_COLOR: Record<string, string> = {
   uniform: '#94a3b8', deposit: '#0d9488', skill: '#8b5cf6', mechanism: '#6366f1', best_single: '#f59e0b',
 };
 
+/** Core four-method benchmark (exclude oracle `best_single` from primary accuracy views). */
+const CORE_METHOD_KEYS = ['uniform', 'deposit', 'skill', 'mechanism'] as const;
+
 function meanFinite(values: Array<number | undefined | null>): number | null {
   const xs = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
   if (xs.length === 0) return null;
   return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+
+function seFinite(values: Array<number | undefined | null>): number | null {
+  const xs = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  if (xs.length < 2) return null;
+  const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const variance = xs.reduce((acc, x) => acc + (x - m) ** 2, 0) / (xs.length - 1);
+  return Math.sqrt(variance / xs.length);
 }
 
 function mean(values: number[]): number | null {
@@ -195,10 +208,13 @@ export default function ResultsPage() {
       method,
       label: METHOD_LABEL[method] ?? method,
       color: METHOD_COLOR[method] ?? '#64748b',
+      meanCrps: meanFinite(rs.map((x) => x.mean_crps)),
       deltaCrps: meanFinite(rs.map((x) => x.delta_crps_vs_equal)),
+      deltaCrpsSE: seFinite(rs.map((x) => x.delta_crps_vs_equal)),
       meanHHI: meanFinite(rs.map((x) => x.mean_HHI)),
       meanNEff: meanFinite(rs.map((x) => x.mean_N_eff)),
       finalGini: meanFinite(rs.map((x) => x.final_gini)),
+      n: rs.length,
     }));
   }, [expRows]);
 
@@ -221,8 +237,11 @@ export default function ResultsPage() {
 
     const firstPlaceCounts = new Map<string, number>();
     let firstPlaceSeeds = 0;
+    const coreSet = new Set<string>(CORE_METHOD_KEYS);
     seedMethodCrps.forEach((methods) => {
-      const rows = Array.from(methods.entries()).filter(([, crps]) => Number.isFinite(crps));
+      const rows = Array.from(methods.entries()).filter(
+        ([method, crps]) => coreSet.has(method) && Number.isFinite(crps),
+      );
       if (rows.length === 0) return;
       rows.sort((a, b) => a[1] - b[1]);
       const bestMethod = rows[0][0];
@@ -285,27 +304,68 @@ export default function ResultsPage() {
   const expMechanism = expAccuracyStats.items.find((m) => m.method === 'mechanism') ?? null;
   const expMechanismConcentration = methodAgg.find((m) => m.method === 'mechanism') ?? null;
 
-  const expAccuracyBar = useMemo(() =>
-    [...expAccuracyStats.items].filter((m) => m.deltaCrps != null)
+  const expCoreMethods = useMemo(
+    () =>
+      methodAgg.filter(
+        (m) =>
+          (CORE_METHOD_KEYS as readonly string[]).includes(m.method) &&
+          m.deltaCrps != null,
+      ),
+    [methodAgg],
+  );
+
+  const expBestCore = useMemo(() => {
+    if (expCoreMethods.length === 0) return null;
+    return [...expCoreMethods].sort((a, b) => (a.deltaCrps ?? 0) - (b.deltaCrps ?? 0))[0];
+  }, [expCoreMethods]);
+
+  const expAccuracyDisplay = useMemo(() => {
+    if (!expBestCore) return [];
+
+    return [...expCoreMethods]
       .sort((a, b) => (a.deltaCrps ?? 0) - (b.deltaCrps ?? 0))
-      .map((m) => ({
-        name: m.label,
-        method: m.method,
-        deltaCrps: m.deltaCrps as number,
-        color: m.color,
-        ci95: m.ci95 ?? 0,
-        firstPlaceShare: m.firstPlaceShare ?? 0,
-      })),
-    [expAccuracyStats]);
+      .map((m) => {
+        const deltaX1e4 = (m.deltaCrps ?? 0) * 1e4;
+        const gapToBestX1e4 = ((m.deltaCrps ?? 0) - (expBestCore.deltaCrps ?? 0)) * 1e4;
+
+        return {
+          name: m.label,
+          method: m.method,
+          color: m.color,
+          deltaCrpsX1e4: deltaX1e4,
+          deltaLabel: `${deltaX1e4.toFixed(2)}`,
+          gapToBestX1e4,
+          gapLabel: `${gapToBestX1e4.toFixed(2)}`,
+          seX1e4: (m.deltaCrpsSE ?? 0) * 1e4,
+        };
+      });
+  }, [expCoreMethods, expBestCore]);
+
+  const expSkill = expCoreMethods.find((m) => m.method === 'skill') ?? null;
+  const expMech = expCoreMethods.find((m) => m.method === 'mechanism') ?? null;
+  const expEqual = expCoreMethods.find((m) => m.method === 'uniform') ?? null;
+
+  const expMechVsSkillX1e4 =
+    expSkill && expMech ? ((expMech.deltaCrps ?? 0) - (expSkill.deltaCrps ?? 0)) * 1e4 : null;
+
+  const expMechVsEqualX1e4 =
+    expEqual && expMech ? ((expMech.deltaCrps ?? 0) - (expEqual.deltaCrps ?? 0)) * 1e4 : null;
+
+  const expCoreFirstPlaceItems = useMemo(
+    () => expAccuracyStats.items.filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method)),
+    [expAccuracyStats.items],
+  );
 
   const expGiniBar = useMemo(() =>
-    [...methodAgg].filter((m) => m.finalGini != null)
+    [...methodAgg]
+      .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method) && m.finalGini != null)
       .sort((a, b) => (a.finalGini ?? 0) - (b.finalGini ?? 0))
       .map((m) => ({ name: m.label, method: m.method, finalGini: m.finalGini as number, color: m.color })),
     [methodAgg]);
 
   const expInfluenceBar = useMemo(() =>
-    [...methodAgg].filter((m) => m.meanHHI != null || m.meanNEff != null)
+    [...methodAgg]
+      .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method) && (m.meanHHI != null || m.meanNEff != null))
       .sort((a, b) => a.label.localeCompare(b.label))
       .map((m) => ({ name: m.label, method: m.method, meanHHI: m.meanHHI ?? null, meanNEff: m.meanNEff ?? null })),
     [methodAgg]);
@@ -320,19 +380,38 @@ export default function ResultsPage() {
     [...ablationRows].sort((a, b) => a.delta_crps_vs_full - b.delta_crps_vs_full),
     [ablationRows]);
 
-  /** Illustrative ΔCRPS vs equal when experiment files are not linked (static snapshot). */
-  const demoFallbackAccuracyBar = useMemo(
-    () =>
-      [...DEMO_BENCHMARK_DELTA_VS_EQUAL]
-        .sort((a, b) => a.delta - b.delta)
-        .map((d) => ({
-          name: METHOD_LABEL[d.method],
-          method: d.method,
-          deltaCrps: d.delta,
-          color: METHOD_COLOR[d.method],
-        })),
-    [],
-  );
+  /** Illustrative scaled rows for the static preview (same logic as experiment-backed charts). */
+  const demoFallbackDisplay = useMemo(() => {
+    const core = DEMO_BENCHMARK_DELTA_VS_EQUAL.map((d) => ({
+      method: d.method,
+      label: METHOD_LABEL[d.method],
+      color: METHOD_COLOR[d.method],
+      deltaCrps: d.delta,
+    }));
+    const best = [...core].sort((a, b) => a.deltaCrps - b.deltaCrps)[0];
+    if (!best) return [];
+    return [...core]
+      .sort((a, b) => a.deltaCrps - b.deltaCrps)
+      .map((m) => {
+        const deltaX1e4 = m.deltaCrps * 1e4;
+        const gapToBestX1e4 = (m.deltaCrps - best.deltaCrps) * 1e4;
+        return {
+          name: m.label,
+          method: m.method,
+          color: m.color,
+          deltaCrpsX1e4: deltaX1e4,
+          deltaLabel: deltaX1e4.toFixed(2),
+          gapToBestX1e4,
+          gapLabel: gapToBestX1e4.toFixed(2),
+          seX1e4: 0,
+        };
+      });
+  }, []);
+
+  const demoBestCore = useMemo(() => {
+    const first = demoFallbackDisplay[0];
+    return first ? { label: first.name, method: first.method } : null;
+  }, [demoFallbackDisplay]);
 
   const demoMechanismDelta = useMemo(
     () => DEMO_BENCHMARK_DELTA_VS_EQUAL.find((d) => d.method === 'mechanism')?.delta ?? null,
@@ -345,7 +424,14 @@ export default function ResultsPage() {
   const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : demoMechanismDelta;
   const gini = useExp ? (expMechanismConcentration?.finalGini ?? null) : null;
 
-  const accuracyVerdict: Verdict = deltaCrps == null ? 'neutral' : deltaCrps < -0.001 ? 'good' : deltaCrps > 0.001 ? 'bad' : 'neutral';
+  const accuracyVerdict: Verdict =
+    deltaCrps == null
+      ? 'neutral'
+      : deltaCrps < -ACCURACY_EPS
+        ? 'good'
+        : deltaCrps > ACCURACY_EPS
+          ? 'bad'
+          : 'neutral';
   const concentrationVerdict: Verdict = gini == null ? 'neutral' : gini < 0.55 ? 'good' : gini > 0.7 ? 'bad' : 'neutral';
 
   if (!tabs.includes(activeTab as never)) setActiveTab(tabs[0]);
@@ -361,8 +447,24 @@ export default function ResultsPage() {
               : 'Preview uses a static snapshot of the canonical four-method benchmark (exogenous IID deposits, latent-fixed DGP). Link outputs for full charts and concentration metrics.'}
           </p>
           {!useExp && !loading && (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-              <strong>Illustrative snapshot.</strong> Run <code className="bg-amber-100 px-1 rounded">python -m onlinev2.experiments.cli --exp master_comparison --block core --outdir outputs</code> then <code className="bg-amber-100 px-1 rounded">./scripts/link-dashboard-data.sh</code> for measured CRPS, CIs, and Gini/HHI.
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed space-y-2">
+              <p>
+                <strong>Illustrative snapshot.</strong> Charts use the same benchmark definitions as linked data; values are a fixed placeholder until you regenerate.
+              </p>
+              <p>
+                <strong>Run it locally (faster, fewer seeds):</strong>{' '}
+                <code className="bg-amber-100 px-1 rounded break-all">
+                  cd onlinev2 &amp;&amp; python -c &quot;from onlinev2.experiments.runners.runner_module import run_master_comparison; run_master_comparison(seeds=list(range(42,62)), T=500, outdir=&apos;outputs&apos;)&quot;
+                </code>
+                {' '}(20 seeds, same DGP/deposit mode as full run) then{' '}
+                <code className="bg-amber-100 px-1 rounded">./scripts/link-dashboard-data.sh</code>
+                {' '}from the repo root.
+              </p>
+              <p className="text-amber-800/90">
+                Full thesis run:{' '}
+                <code className="bg-amber-100 px-1 rounded">python -m onlinev2.experiments.cli --exp master_comparison --block core --outdir outputs</code>
+                {' '}(uses canonical 1000 seeds from <code className="bg-amber-100 px-1 rounded">benchmark_config.py</code>).
+              </p>
             </div>
           )}
         </div>
@@ -374,7 +476,11 @@ export default function ResultsPage() {
             <AnswerCard
               title="Does skill improve accuracy?"
               metric={deltaCrps == null ? '\u2014' : `${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)}`}
-              metricLabel={useExp ? `\u0394CRPS vs equal (S=${expAccuracyStats.nSeeds})` : '\u0394CRPS vs equal (Skill \u00d7 stake, illustrative)'}
+              metricLabel={
+                useExp
+                  ? `\u0394CRPS vs equal (S=${expAccuracyStats.nSeeds}); mech \u00d7 10\u2074 = ${expMechanism?.deltaCrps != null ? (expMechanism.deltaCrps * 1e4).toFixed(2) : '\u2014'}`
+                  : `\u0394CRPS vs equal (Skill \u00d7 stake); \u00d7 10\u2074 = ${demoMechanismDelta != null ? (demoMechanismDelta * 1e4).toFixed(2) : '\u2014'} (illustrative)`
+              }
               verdict={accuracyVerdict}
               interpretation={
                 deltaCrps == null ? 'Data not loaded yet.'
@@ -442,38 +548,168 @@ export default function ResultsPage() {
           {/* ========== EXPERIMENT-BACKED TABS ========== */}
 
           {useExp && activeTab === 'Accuracy' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-slate-800">Accuracy (\u0394CRPS vs equal)</h3>
-                <InfoToggle term="\u0394CRPS vs equal" definition="Paired difference in mean CRPS relative to equal weighting." interpretation="Negative values mean better accuracy than equal weights." axes={{ x: 'method', y: '\u0394CRPS' }} />
-              </div>
-              <p className="text-[11px] text-slate-500 mb-3">
-                <strong>Paired over matched seeds:</strong> bars show mean \u0394CRPS vs equal with 95% CI (\u00b11.96\u00d7SE), using the same seed panel across methods (S={expAccuracyStats.nSeeds}).
-              </p>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={expAccuracyBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
-                  <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                  <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                  <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
-                  <Tooltip content={<SmartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                  <Bar dataKey="deltaCrps" name="\u0394CRPS vs equal" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                    {expAccuracyBar.map((d) => <Cell key={d.method} fill={d.color} opacity={0.9} />)}
-                    <ErrorBar dataKey="ci95" width={4} stroke="#334155" strokeWidth={1.2} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="mt-3 grid sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <strong className="text-slate-700">Skill \u00d7 stake vs Skill-only:</strong>{' '}
-                  {expPairwise.mechVsSkill.mean == null
-                    ? 'insufficient data.'
-                    : `${expPairwise.mechVsSkill.mean < -EPS ? 'better' : expPairwise.mechVsSkill.mean > EPS ? 'worse' : 'effectively tied'} by ${fmt(Math.abs(expPairwise.mechVsSkill.mean), 4)} CRPS on average; ${expPairwise.mechVsSkill.wins}/${expPairwise.mechVsSkill.n} wins, ${expPairwise.mechVsSkill.losses}/${expPairwise.mechVsSkill.n} losses, ${expPairwise.mechVsSkill.ties}/${expPairwise.mechVsSkill.n} ties.`}
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                {expAccuracyDisplay.length === 0 && (
+                  <p className="text-sm text-slate-500 mb-4">No core-method rows found in master_comparison output.</p>
+                )}
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className="text-sm font-semibold text-slate-800">Accuracy summary</h3>
+                  <InfoToggle
+                    term="\u0394CRPS \u00d7 10\u2074"
+                    definition="Mean paired \u0394CRPS versus equal weighting, multiplied by 10\u2074 so small differences are visible on the axis."
+                    interpretation="More negative is better. Zero matches equal weights. Core four methods only (oracle best-single excluded here)."
+                    axes={{ x: 'scaled \u0394CRPS', y: 'method' }}
+                  />
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <strong className="text-slate-700">First-place share:</strong>{' '}
-                  {expAccuracyBar.map((d) => `${d.name} ${fmt(d.firstPlaceShare * 100, 0)}%`).join(' \u00b7 ')}
+
+                <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                  <strong>Setup:</strong> latent-fixed DGP, quantile CRPS scoring, exogenous IID exponential deposits (
+                  {expPreset || 'exponential_deposits'}
+                  ), matched seeds S={expAccuracyStats.nSeeds}, warm-start averaging as in{' '}
+                  <code className="bg-slate-100 px-1 rounded text-[10px]">master_comparison</code>.
+                </p>
+
+                <p className="text-[11px] text-slate-600 mb-4 leading-relaxed">
+                  <strong>Headline:</strong>{' '}
+                  {expBestCore ? (
+                    <span>
+                      <span className="text-slate-800 font-medium">{expBestCore.label}</span> has the best mean \u0394CRPS vs equal among the four methods.
+                    </span>
+                  ) : (
+                    'Could not compute core-method summary (check master_comparison CSV).'
+                  )}
+                  {expAccuracyDisplay.length > 0 && expMechVsSkillX1e4 != null && (
+                    <>
+                      {' '}
+                      Skill \u00d7 stake is{' '}
+                      <span className="font-mono">{Math.abs(expMechVsSkillX1e4).toFixed(2)}</span>
+                      {' '}
+                      scaled CRPS points (\u00d7 10\u2074){' '}
+                      {expMechVsSkillX1e4 > 0 ? 'worse' : expMechVsSkillX1e4 < 0 ? 'better' : 'tied with'}
+                      {' '}
+                      Skill-only on average.
+                    </>
+                  )}
+                  {expAccuracyDisplay.length > 0 && expMechVsEqualX1e4 != null && (
+                    <>
+                      {' '}
+                      Versus equal, Skill \u00d7 stake is{' '}
+                      <span className="font-mono">{expMechVsEqualX1e4.toFixed(2)}</span>
+                      {' '}
+                      on the same scale (negative \u003d improvement vs equal).
+                    </>
+                  )}
+                </p>
+
+                {expAccuracyDisplay.length > 0 && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <div>
+                    <div className="text-[11px] font-semibold text-slate-700 mb-2">
+                      Relative to equal (\u0394CRPS \u00d7 10\u2074)
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        data={expAccuracyDisplay}
+                        layout="vertical"
+                        margin={{ top: 8, right: 36, bottom: 8, left: 8 }}
+                      >
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          tick={AXIS_TICK}
+                          stroke={AXIS_STROKE}
+                          width={168}
+                        />
+                        <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                        <Tooltip
+                          formatter={(value) => {
+                            const v = Number(value);
+                            return [`${Number.isFinite(v) ? v.toFixed(2) : '\u2014'} (\u0394CRPS \u00d7 10\u2074)`, '\u0394CRPS vs equal'];
+                          }}
+                          contentStyle={TOOLTIP_STYLE}
+                        />
+                        <Bar dataKey="deltaCrpsX1e4" name="\u0394CRPS vs equal" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                          {expAccuracyDisplay.map((d) => (
+                            <Cell key={d.method} fill={d.color} opacity={0.92} />
+                          ))}
+                          <LabelList
+                            dataKey="deltaLabel"
+                            position="right"
+                            className="fill-slate-600 text-[10px] font-mono"
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div>
+                    <div className="text-[11px] font-semibold text-slate-700 mb-2">
+                      Gap to best method (\u00d7 10\u2074)
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        data={expAccuracyDisplay}
+                        layout="vertical"
+                        margin={{ top: 8, right: 36, bottom: 8, left: 8 }}
+                      >
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          tick={AXIS_TICK}
+                          stroke={AXIS_STROKE}
+                          width={168}
+                        />
+                        <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                        <Tooltip
+                          formatter={(value) => {
+                            const v = Number(value);
+                            return [`${Number.isFinite(v) ? v.toFixed(2) : '\u2014'} (\u00d7 10\u2074)`, 'Gap to best'];
+                          }}
+                          contentStyle={TOOLTIP_STYLE}
+                        />
+                        <Bar dataKey="gapToBestX1e4" radius={[0, 4, 4, 0]} maxBarSize={28} fill="#334155">
+                          <LabelList
+                            dataKey="gapLabel"
+                            position="right"
+                            className="fill-slate-200 text-[10px] font-mono"
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                )}
+
+                {expAccuracyDisplay.length > 0 && (
+                  <ol className="mt-4 list-decimal pl-5 text-[11px] text-slate-600 space-y-1">
+                    {expAccuracyDisplay.map((d, i) => (
+                      <li key={d.method}>
+                        <span className="font-medium text-slate-800">{d.name}</span>
+                        {' — ranked '}
+                        {i + 1}
+                        {' of 4 by mean \u0394CRPS vs equal; '}
+                        <span className="font-mono">\u0394\u00d710\u2074 = {d.deltaLabel}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+
+                <div className="mt-4 grid sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <strong className="text-slate-700">Skill \u00d7 stake vs Skill-only (mean CRPS):</strong>{' '}
+                    {expPairwise.mechVsSkill.mean == null
+                      ? 'insufficient data.'
+                      : `${expPairwise.mechVsSkill.mean < -EPS ? 'better' : expPairwise.mechVsSkill.mean > EPS ? 'worse' : 'effectively tied'} by ${fmt(Math.abs(expPairwise.mechVsSkill.mean), 6)} on average; ${expPairwise.mechVsSkill.wins}/${expPairwise.mechVsSkill.n} wins, ${expPairwise.mechVsSkill.losses}/${expPairwise.mechVsSkill.n} losses, ${expPairwise.mechVsSkill.ties}/${expPairwise.mechVsSkill.n} ties.`}
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <strong className="text-slate-700">First-place share (core four, lowest mean CRPS per seed):</strong>{' '}
+                    {expCoreFirstPlaceItems.map((d) => `${d.label} ${fmt((d.firstPlaceShare ?? 0) * 100, 0)}%`).join(' \u00b7 ') || '\u2014'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -563,47 +799,108 @@ export default function ResultsPage() {
           {/* ========== DEMO FALLBACK (static benchmark preview) ========== */}
 
           {!useExp && !loading && activeTab === 'Accuracy' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className="text-sm font-semibold text-slate-800">Accuracy (\u0394CRPS vs equal)</h3>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h3 className="text-sm font-semibold text-slate-800">Accuracy preview</h3>
                 <InfoToggle
-                  term="\u0394CRPS vs equal"
-                  definition="Illustrative mean paired difference vs equal weighting from the last offline master_comparison (exogenous IID deposits)."
-                  interpretation="Negative is better. Link JSON for standard errors and seed-level wins."
-                  axes={{ x: 'method', y: '\u0394CRPS' }}
+                  term="\u0394CRPS \u00d7 10\u2074"
+                  definition="Same scaling as linked experiment view. Values here are a static placeholder array."
+                  interpretation="More negative is better. Regenerate offline or link JSON for measured results."
+                  axes={{ x: 'scaled \u0394CRPS', y: 'method' }}
                 />
               </div>
-              <p className="text-[11px] text-slate-500">
-                Four core methods on the <strong>same</strong> latent DGP path per seed: equal weights; stake-only weights from <strong>exogenous</strong> IID deposits; skill-only from learned \u03c3; Skill \u00d7 stake uses <strong>those same deposits</strong> through the skill gate (\u03bb, \u03b7). Ranking below is a fixed snapshot—regenerate and update <code className="bg-slate-100 px-1 rounded text-[10px]">DEMO_BENCHMARK_DELTA_VS_EQUAL</code> or link data.
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                <strong>What this benchmark is:</strong> same latent-fixed DGP and quantile CRPS scoring as{' '}
+                <code className="bg-slate-100 px-1 rounded text-[10px]">master_comparison</code>
+                : exogenous IID exponential deposits, \u03bb / \u03b7 skill gate for Skill \u00d7 stake, random missingness.{' '}
+                {demoBestCore && (
+                  <>
+                    Illustrative best here: <span className="font-medium text-slate-700">{demoBestCore.label}</span>.
+                  </>
+                )}{' '}
+                Update <code className="bg-slate-100 px-1 rounded text-[10px]">DEMO_BENCHMARK_DELTA_VS_EQUAL</code> after a local run, or link outputs.
               </p>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={demoFallbackAccuracyBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
-                  <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} interval={0} angle={-18} textAnchor="end" height={68} />
-                  <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                  <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
-                  <Tooltip content={<SmartTooltip />} />
-                  <Bar dataKey="deltaCrps" name="\u0394CRPS vs equal" radius={[4, 4, 0, 0]} maxBarSize={44}>
-                    {demoFallbackAccuracyBar.map((d) => (
-                      <Cell key={d.method} fill={d.color} opacity={0.9} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+
+              <div className="grid lg:grid-cols-2 gap-6">
+                <div>
+                  <div className="text-[11px] font-semibold text-slate-700 mb-2">Relative to equal (\u0394CRPS \u00d7 10\u2074)</div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart
+                      data={demoFallbackDisplay}
+                      layout="vertical"
+                      margin={{ top: 8, right: 36, bottom: 8, left: 8 }}
+                    >
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                      <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={168} />
+                      <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                      <Tooltip
+                        formatter={(value) => {
+                          const v = Number(value);
+                          return [`${Number.isFinite(v) ? v.toFixed(2) : '\u2014'}`, '\u0394CRPS \u00d7 10\u2074'];
+                        }}
+                        contentStyle={TOOLTIP_STYLE}
+                      />
+                      <Bar dataKey="deltaCrpsX1e4" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                        {demoFallbackDisplay.map((d) => (
+                          <Cell key={d.method} fill={d.color} opacity={0.92} />
+                        ))}
+                        <LabelList dataKey="deltaLabel" position="right" className="fill-slate-600 text-[10px] font-mono" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold text-slate-700 mb-2">Gap to best (\u00d7 10\u2074)</div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart
+                      data={demoFallbackDisplay}
+                      layout="vertical"
+                      margin={{ top: 8, right: 36, bottom: 8, left: 8 }}
+                    >
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                      <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={168} />
+                      <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                      <Tooltip
+                        formatter={(value) => {
+                          const v = Number(value);
+                          return [`${Number.isFinite(v) ? v.toFixed(2) : '\u2014'}`, 'Gap to best'];
+                        }}
+                        contentStyle={TOOLTIP_STYLE}
+                      />
+                      <Bar dataKey="gapToBestX1e4" radius={[0, 4, 4, 0]} maxBarSize={28} fill="#334155">
+                        <LabelList dataKey="gapLabel" position="right" className="fill-slate-200 text-[10px] font-mono" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           )}
 
           {!useExp && !loading && activeTab === 'About' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 text-[11px] text-slate-600 leading-relaxed">
-              <h3 className="text-sm font-semibold text-slate-800">What this preview shows</h3>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4 text-[11px] text-slate-600 leading-relaxed">
+              <h3 className="text-sm font-semibold text-slate-800">Benchmark definition (four methods)</h3>
               <ul className="list-disc pl-5 space-y-1.5">
                 <li><strong className="text-slate-700">Equal</strong> — uniform weights over active forecasters.</li>
-                <li><strong className="text-slate-700">Stake-only (exogenous deposits)</strong> — weights proportional to IID exponential deposits (missing agents get zero stake).</li>
-                <li><strong className="text-slate-700">Skill-only</strong> — weights proportional to learned skill \u03c3 from past losses.</li>
-                <li><strong className="text-slate-700">Skill \u00d7 stake</strong> — same exogenous deposits as stake-only, multiplied by the skill gate: m \u221d b\u00b7(\u03bb + (1\u2212\u03bb)\u03c3^\u03b7).</li>
+                <li><strong className="text-slate-700">Stake-only (exogenous deposits)</strong> — weights proportional to IID exponential deposits; missing rounds zeroed.</li>
+                <li><strong className="text-slate-700">Skill-only</strong> — weights proportional to learned \u03c3 (EWMA losses, quantile CRPS).</li>
+                <li><strong className="text-slate-700">Skill \u00d7 stake</strong> — same deposit draws as stake-only, effective wager m \u221d b\u00b7(\u03bb + (1\u2212\u03bb)\u03c3^\u03b7); \u03c9_max=0 in the headline benchmark so aggregation is not cap-asymmetric.</li>
               </ul>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                <div className="font-semibold text-slate-800">Inputs (matches offline runner)</div>
+                <p>
+                  DGP <code className="bg-white px-1 rounded">latent_fixed</code>, scoring{' '}
+                  <code className="bg-white px-1 rounded">quantiles_crps</code>, deposits{' '}
+                  <code className="bg-white px-1 rounded">exponential</code>, paired seeds across methods, warm-start window for reported means.
+                </p>
+                <p className="text-slate-500">
+                  Fast local check (20 seeds): use the one-liner in the amber box above, then link. Full panel: canonical seeds in <code className="bg-white px-1 rounded">benchmark_config.py</code> via CLI.
+                </p>
+              </div>
               <p className="text-slate-500">
-                The live dashboard walkthrough uses a different toy pipeline. For thesis numbers, always use linked <code className="bg-slate-100 px-1 rounded">master_comparison</code> outputs.
+                The Walkthrough lab uses a separate toy pipeline. Thesis claims should cite linked <code className="bg-slate-100 px-1 rounded">master_comparison</code> outputs.
               </p>
             </div>
           )}
