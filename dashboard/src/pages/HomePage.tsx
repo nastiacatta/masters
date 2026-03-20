@@ -62,7 +62,38 @@ export default function HomePage() {
       </div>
 
       <div className="mt-10">
-      <StepSection step={1} title="The claims" description="What this thesis argues.">
+      <StepSection step={1} title="Round timeline" description="How one round is processed.">
+        <div className="grid gap-3 pt-2">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">1. Submission</p>
+            <p className="text-sm text-slate-700 mt-1">Forecaster submits a deposit and a forecast.</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">2. Skill adjustment</p>
+            <MathBlock latex="m_{i,t}=b_{i,t}\left(\lambda+(1-\lambda)\sigma_{i,t}\right)" />
+            <p className="text-sm text-slate-700">Current deposit is adjusted by pre-round skill.</p>
+            <p className="text-sm text-slate-600">Low skill reduces influence, but does not remove downside.</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">3. Aggregation</p>
+            <MathBlock latex="\hat{m}_{i,t}=\frac{m_{i,t}}{\sum_{j\in I_t}m_{j,t}},\quad \hat{r}_t=\sum_{i\in I_t}\hat{m}_{i,t}r_{i,t}" />
+            <p className="text-sm text-slate-700">Effective wagers are normalised into forecast weights.</p>
+            <p className="text-sm text-slate-600">The market forecast is a weighted combination of submitted forecasts.</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">4. Settlement and update</p>
+            <MathBlock latex="\Pi_{i,t}=m_{i,t}\left(1+s(r_{i,t},y_t)-\frac{\sum_{j\in I_t}m_{j,t}s(r_{j,t},y_t)}{\sum_{j\in I_t}m_{j,t}}\right)" />
+            <p className="text-sm text-slate-700">Payoffs depend on relative forecast performance.</p>
+            <MathBlock latex="\sigma_{i,t+1}=\sigma_{\min}+(1-\sigma_{\min})e^{-\gamma L_{i,t}}" />
+            <p className="text-sm text-slate-600">Realised performance updates next-round skill.</p>
+          </div>
+        </div>
+      </StepSection>
+
+      <StepSection step={2} title="The claims" description="What this thesis argues.">
         <div className="grid gap-4 pt-2">
           <ClaimCard
             number={1}
@@ -81,7 +112,7 @@ export default function HomePage() {
         </div>
       </StepSection>
 
-      <StepSection step={2} title="Where to go" description="Follow the flow: Mechanism → Comparisons → Robustness.">
+      <StepSection step={3} title="Where to go" description="Follow the flow: Mechanism → Comparisons → Robustness.">
         <div className="flex flex-wrap gap-3 pt-2">
           <Link to="/mechanism" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
             1. Mechanism

@@ -183,6 +183,8 @@ export default function ResultsPage() {
     if (!defaultExperiment) return [];
     return masterRows.filter((r) => r.experiment === defaultExperiment);
   }, [masterRows, defaultExperiment]);
+  const expSeedCount = useMemo(() => new Set(expRows.map((r) => r.seed)).size, [expRows]);
+  const isFullPanel = expSeedCount >= 1000;
 
   const methodAgg = useMemo(() => {
     const byMethod = new Map<string, MasterComparisonRow[]>();
@@ -332,7 +334,8 @@ export default function ResultsPage() {
     [demoMethods]);
 
   // --- which mode ---
-  const useExp = hasExpData && !loading;
+  const useExp = hasExpData && !loading && isFullPanel;
+  const hasPartialExp = hasExpData && !loading && !isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
   const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : demoDelta;
   const gini = useExp ? (expMechanism?.finalGini ?? null) : demoBlended.pipeline.summary.finalGini;
@@ -355,6 +358,11 @@ export default function ResultsPage() {
           {!useExp && !loading && (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
               <strong>Illustrative only.</strong> Use this as a quick visual guide; final ranking should be read from the experiment-backed view.
+            </div>
+          )}
+          {hasPartialExp && (
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-[11px] text-red-900 max-w-2xl leading-relaxed">
+              <strong>Full results not loaded.</strong> Available experiment data has {expSeedCount} scenarios, but this page requires 1000 for final ranking.
             </div>
           )}
         </div>
@@ -456,7 +464,7 @@ export default function ResultsPage() {
                   </div>
                   <p className="text-[11px] text-slate-500 mb-1 leading-relaxed">
                     <strong>How results are generated:</strong> the same sequence of scenarios is used for all four methods, then outcomes are averaged over{' '}
-                    {expAccuracyDisplay[0]?.n != null ? `${expAccuracyDisplay[0].n} scenarios` : 'all scenarios'}.
+                    {expSeedCount > 0 ? `${expSeedCount} scenarios` : 'all scenarios'}.
                     {expBestCore && <> <strong>Current top method:</strong> {expBestCore.label}.</>}
                     {expMechVsSkillX1e4 != null && (
                       <> Skill\u00d7stake is{' '}
@@ -465,6 +473,16 @@ export default function ResultsPage() {
                       </>
                     )}
                   </p>
+                  <div className={`mt-2 rounded-md border px-3 py-2 text-[11px] ${
+                    isFullPanel
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : 'border-amber-200 bg-amber-50 text-amber-900'
+                  }`}>
+                    <strong>Data basis:</strong>{' '}
+                    {isFullPanel
+                      ? `Full run loaded (${expSeedCount} scenarios). Ranking is based on the full panel.`
+                      : `Partial run loaded (${expSeedCount} scenarios, not 1000). Ranking is provisional.`}
+                  </div>
                   <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <div className="text-[11px] font-semibold text-slate-700 mb-2">Ranking at a glance</div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
