@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useExplorer } from '@/lib/explorerStore';
 import PageHeader from '@/components/dashboard/PageHeader';
 import MetricCard from '@/components/dashboard/MetricCard';
+import MathBlock from '@/components/dashboard/MathBlock';
 
 export default function Overview() {
   const { lastPipelineResult } = useExplorer();
@@ -43,41 +44,38 @@ export default function Overview() {
       </section>
       <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">How one round works</h3>
+          <h3 className="text-sm font-semibold text-slate-900">Round timeline</h3>
           <p className="text-sm text-slate-600 mt-1">
-            Each round follows the same five-step flow: submit, weight, aggregate, settle, then update skill.
+            A clear step-by-step view of how one market round is processed.
           </p>
         </div>
-        <div className="grid gap-3">
+        <div className="space-y-3">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">1) Submit</p>
-            <p className="text-sm text-slate-700 mt-1">Each forecaster submits a deposit and a forecast.</p>
-            <p className="text-xs font-mono text-slate-600 mt-2">(b_i,t, r_i,t)</p>
-            <p className="text-xs text-slate-500 mt-1">b_i,t = current deposit, r_i,t = current forecast.</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">1. Submission</p>
+            <p className="text-sm text-slate-700 mt-1">Forecaster submits a deposit and a forecast.</p>
+            <MathBlock inline latex="(b_{i,t}, r_{i,t})" className="text-xs text-slate-700" />
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">2) Skill-adjusted wager</p>
-            <p className="text-sm text-slate-700 mt-1">Deposits are adjusted by skill fixed before the round.</p>
-            <p className="text-xs font-mono text-slate-600 mt-2">m_i,t = b_i,t * (lambda + (1 - lambda) * sigma_i,t)</p>
-            <p className="text-xs text-slate-500 mt-1">lambda is a floor so some of every deposit still counts.</p>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">2. Skill adjustment</p>
+            <MathBlock latex="m_{i,t}=b_{i,t}\left(\lambda+(1-\lambda)\sigma_{i,t}\right)" />
+            <p className="text-sm text-slate-700">Current deposit is adjusted by pre-round skill.</p>
+            <p className="text-sm text-slate-600">Low skill reduces influence, but does not remove downside.</p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">3) Influence and aggregate forecast</p>
-            <p className="text-sm text-slate-700 mt-1">Effective wagers are normalised into influence weights.</p>
-            <p className="text-xs font-mono text-slate-600 mt-2">m_hat_i,t = m_i,t / sum_j m_j,t</p>
-            <p className="text-xs font-mono text-slate-600 mt-1">r_hat_t = sum_i (m_hat_i,t * r_i,t)</p>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">3. Aggregation</p>
+            <MathBlock latex="\hat{m}_{i,t}=\frac{m_{i,t}}{\sum_{j\in I_t}m_{j,t}},\quad \hat{r}_t=\sum_{i\in I_t}\hat{m}_{i,t}r_{i,t}" />
+            <p className="text-sm text-slate-700">Effective wagers are normalised into forecast weights.</p>
+            <p className="text-sm text-slate-600">The market forecast is a weighted combination of submitted forecasts.</p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">4) Outcome and payoff</p>
-            <p className="text-sm text-slate-700 mt-1">After the outcome is realised, payoffs are settled by relative score quality.</p>
-            <p className="text-xs font-mono text-slate-600 mt-2">Pi_i,t = m_i,t * (1 + s(r_i,t, y_t) - weighted_avg_j s(r_j,t, y_t))</p>
-            <p className="text-xs text-slate-500 mt-1">Payoff depends on how well each forecaster scores versus others.</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">5) Skill update for next round</p>
-            <p className="text-sm text-slate-700 mt-1">Realised loss updates the next-round skill value.</p>
-            <p className="text-xs font-mono text-slate-600 mt-2">sigma_i,t+1 = sigma_min + (1 - sigma_min) * exp(-gamma * L_i,t)</p>
-            <p className="text-xs text-slate-500 mt-1">Next round starts with this updated skill.</p>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">4. Settlement and update</p>
+            <MathBlock latex="\Pi_{i,t}=m_{i,t}\left(1+s(r_{i,t},y_t)-\frac{\sum_{j\in I_t}m_{j,t}s(r_{j,t},y_t)}{\sum_{j\in I_t}m_{j,t}}\right)" />
+            <p className="text-sm text-slate-700">Payoffs depend on relative forecast performance.</p>
+            <MathBlock latex="\sigma_{i,t+1}=\sigma_{\min}+(1-\sigma_{\min})e^{-\gamma L_{i,t}}" />
+            <p className="text-sm text-slate-600">Realised performance updates next-round skill.</p>
           </div>
         </div>
       </section>
