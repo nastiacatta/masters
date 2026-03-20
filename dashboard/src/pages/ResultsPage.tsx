@@ -20,12 +20,14 @@ import {
   loadCalibration,
   loadExperimentList,
   loadMasterComparison,
+  loadWeightRecoveryMethod1,
 } from '@/lib/adapters';
 import type {
   BankrollAblationRow,
   CalibrationPoint,
   ExperimentMeta,
   MasterComparisonRow,
+  WeightRecoveryRow,
 } from '@/lib/types';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import { METHOD, SEM } from '@/lib/tokens';
@@ -47,7 +49,6 @@ import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundC
 const DEMO_SEED = 42;
 const DEMO_N = 6;
 const DEMO_T = 200;
-const ENDOGENOUS_METHOD1_PLOT = `${import.meta.env.BASE_URL}data/experiments%202/weight_learning/plots/weight_convergence.png`;
 
 const CORE_METHOD_KEYS = ['uniform', 'deposit', 'skill', 'mechanism'] as const;
 const ACCURACY_EPS = 1e-4;
@@ -147,6 +148,7 @@ export default function ResultsPage() {
   const [masterRows, setMasterRows] = useState<MasterComparisonRow[]>([]);
   const [ablationRows, setAblationRows] = useState<BankrollAblationRow[]>([]);
   const [calibration, setCalibration] = useState<CalibrationPoint[]>([]);
+  const [weightRecoveryRows, setWeightRecoveryRows] = useState<WeightRecoveryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasExpData, setHasExpData] = useState(false);
 
@@ -162,11 +164,13 @@ export default function ResultsPage() {
         ]);
         const calibrationExp = (exps as ExperimentMeta[]).find((e) => e.name === 'calibration');
         const cal = calibrationExp ? await loadCalibration(calibrationExp).catch(() => []) : [];
+        const weightRecovery = await loadWeightRecoveryMethod1().catch(() => []);
         if (cancelled) return;
         const mRows = master?.rows ?? [];
         setMasterRows(mRows);
         setAblationRows(ablation?.rows ?? []);
         setCalibration(cal);
+        setWeightRecoveryRows(weightRecovery);
         setHasExpData(mRows.length > 0);
       } catch {
         if (!cancelled) setHasExpData(false);
@@ -367,42 +371,6 @@ export default function ResultsPage() {
             </div>
           )}
         </div>
-
-        <section aria-label="Weight-learning sanity check" className="rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Endogenous DGP check: does the online learner recover structural weights?
-          </h2>
-          <p className="text-[11px] text-slate-600 mt-1.5 max-w-3xl leading-relaxed">
-            This panel shows <strong>Method 1 only</strong> from the endogenous aggregation generator.
-            It is a sanity check of identifiability: the learner should move weight toward forecasters
-            that structurally drive the generated outcome under the DGP coefficients.
-          </p>
-          <div className="mt-3 rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-            <img
-              src={ENDOGENOUS_METHOD1_PLOT}
-              alt="Method 1 endogenous weight convergence"
-              className="w-full h-72 object-cover object-top"
-              loading="lazy"
-            />
-          </div>
-          <div className="mt-3 grid sm:grid-cols-2 gap-3">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-              <p className="text-[11px] text-emerald-900 leading-relaxed">
-                <strong>What this checks:</strong> whether online LMS recovers the structural ordering under
-                the endogenous generator, not intrinsic forecasting skill.
-              </p>
-            </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-              <p className="text-[11px] text-amber-900 leading-relaxed">
-                <strong>Interpretation guardrail:</strong> treat this as a recovery sanity check.
-                Intrinsic-skill validation comes from exogenous latent-truth benchmarks.
-              </p>
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-2">
-            Method 1 is shown on the main slide for clean interpretation. Methods 2 and 3 belong in appendix context.
-          </p>
-        </section>
 
         {/* Headline answers */}
         <section aria-label="Headline answers">
@@ -737,6 +705,57 @@ export default function ResultsPage() {
               </ResponsiveContainer>
             </div>
           )}
+        </section>
+
+        <section aria-label="Weight-learning sanity check" className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Endogenous DGP check: does the online learner recover structural weights?
+          </h2>
+          <p className="text-[11px] text-slate-600 mt-1.5 max-w-3xl leading-relaxed">
+            Method 1 only. This is a sanity check of identifiability under the endogenous generator:
+            learned weights should move toward forecasters that structurally drive the generated outcome.
+          </p>
+          {weightRecoveryRows.length === 0 ? (
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
+              Weight-recovery data is not available in this view.
+            </div>
+          ) : (
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+              <ResponsiveContainer width="100%" height={290}>
+                <BarChart
+                  data={weightRecoveryRows.map((r) => ({
+                    name: `F${r.forecaster}`,
+                    target: r.wTarget,
+                    learned: r.wLearned,
+                    absError: r.absError,
+                  }))}
+                  margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}
+                >
+                  <CartesianGrid {...GRID_PROPS} />
+                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                  <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                  <Tooltip content={<SmartTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+                  <Bar dataKey="target" name="Target weight (DGP)" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={24} />
+                  <Bar dataKey="learned" name="Learned weight (online LMS)" fill={SEM.skill.main} radius={[4, 4, 0, 0]} maxBarSize={24}>
+                    <LabelList dataKey="absError" position="top" formatter={(v: unknown) => `|e|=${fmt(Number(v), 3)}`} style={{ fontSize: 10, fill: '#64748b' }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          <div className="mt-3 grid sm:grid-cols-2 gap-3">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+              <p className="text-[11px] text-emerald-900 leading-relaxed">
+                <strong>What this checks:</strong> structural weight recovery under Method 1, not intrinsic forecasting skill.
+              </p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+              <p className="text-[11px] text-amber-900 leading-relaxed">
+                <strong>Interpretation guardrail:</strong> use exogenous latent-truth experiments for intrinsic-skill claims.
+              </p>
+            </div>
+          </div>
         </section>
 
       </div>

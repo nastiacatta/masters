@@ -122,6 +122,13 @@ export interface CalibrationPoint {
   nValid: number;
 }
 
+export interface WeightRecoveryRow {
+  forecaster: number;
+  wTarget: number;
+  wLearned: number;
+  absError: number;
+}
+
 export interface SweepPoint {
   lam: number;
   sigmaMin: number;

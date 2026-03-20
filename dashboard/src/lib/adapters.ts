@@ -23,6 +23,7 @@ import type {
   DetectionMetricsRow,
   MasterComparisonRow,
   BankrollAblationRow,
+  WeightRecoveryRow,
 } from './types';
 
 type RawRow = Record<string, unknown>;
@@ -164,6 +165,23 @@ export async function loadCalibration(exp: ExperimentMeta): Promise<CalibrationP
     tau: Number(r.tau),
     pHat: Number(r.p_hat),
     nValid: Number(r.n_valid),
+  }));
+}
+
+/** Load Method 1 endogenous weight recovery table (target vs learned). */
+export async function loadWeightRecoveryMethod1(): Promise<WeightRecoveryRow[]> {
+  const raw = await fetchCSV<{
+    forecaster: number;
+    w_target: number;
+    w_learned: number;
+    abs_error: number;
+  }>(`${DATA_BASE}/experiments%202/weight_learning_comparison/data/aggregation_weights.csv`);
+
+  return raw.map((r) => ({
+    forecaster: Number(r.forecaster),
+    wTarget: Number(r.w_target),
+    wLearned: Number(r.w_learned),
+    absError: Number(r.abs_error),
   }));
 }
 
