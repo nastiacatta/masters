@@ -62,7 +62,55 @@ export default function HomePage() {
       </div>
 
       <div className="mt-10">
-      <StepSection step={1} title="Round timeline" description="How one round is processed.">
+      <StepSection step={1} title="System overview" description="DGP → Behaviour → Core">
+        <div className="grid gap-3 pt-2">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-stretch">
+            <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">DGP</p>
+              <p className="text-sm text-slate-800 mt-1">What world is generated.</p>
+              <p className="text-xs text-slate-600 mt-1">Exogenous and endogenous outcome models.</p>
+            </div>
+            <div className="hidden sm:flex items-center justify-center text-slate-400 text-lg font-semibold">→</div>
+            <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Behaviour</p>
+              <p className="text-sm text-slate-800 mt-1">What users do in that world.</p>
+              <p className="text-xs text-slate-600 mt-1">Participation, beliefs, reporting, staking, identity strategy.</p>
+            </div>
+            <div className="hidden sm:flex items-center justify-center text-slate-400 text-lg font-semibold">→</div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Core</p>
+              <p className="text-sm text-slate-800 mt-1">How the market responds.</p>
+              <p className="text-xs text-slate-600 mt-1">Aggregation, scoring, settlement, and skill update.</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <MathBlock inline latex="\text{DGP} \;\rightarrow\; \text{Behaviour} \;\rightarrow\; \text{Core}" />
+          </div>
+        </div>
+      </StepSection>
+
+      <StepSection step={2} title="Behaviour block" description="How realism enters the simulation.">
+        <div className="grid gap-3 pt-2 sm:grid-cols-2">
+          <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Participation and timing</p>
+            <p className="text-sm text-slate-800 mt-1">Intermittent, bursty, and selective entry.</p>
+          </div>
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Belief and reporting</p>
+            <p className="text-sm text-slate-800 mt-1">Precision, bias, calibration, truthful vs strategic reporting.</p>
+          </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Staking behaviour</p>
+            <p className="text-sm text-slate-800 mt-1">Wealth constraints, confidence, and bankroll management.</p>
+          </div>
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">Identity and strategy</p>
+            <p className="text-sm text-slate-800 mt-1">Single account, sybils, collusion, adaptation over time.</p>
+          </div>
+        </div>
+      </StepSection>
+
+      <StepSection step={3} title="Round timeline" description="How one round is processed.">
         <div className="grid gap-3 pt-2">
           <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">1. Submission</p>
@@ -105,7 +153,7 @@ export default function HomePage() {
         </div>
       </StepSection>
 
-      <StepSection step={2} title="The claims" description="What this thesis argues.">
+      <StepSection step={4} title="The claims" description="What this thesis argues.">
         <div className="grid gap-4 pt-2">
           <ClaimCard
             number={1}
@@ -124,7 +172,7 @@ export default function HomePage() {
         </div>
       </StepSection>
 
-      <StepSection step={3} title="Where to go" description="Follow the flow: Mechanism → Comparisons → Robustness.">
+      <StepSection step={5} title="Where to go" description="Follow the flow: Mechanism → Comparisons → Robustness.">
         <div className="flex flex-wrap gap-3 pt-2">
           <Link to="/mechanism" className="rounded-lg border-2 border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors">
             1. Mechanism
