@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
-  Brush,
   CartesianGrid,
   Cell,
   ErrorBar,
@@ -27,27 +26,29 @@ import type {
   ExperimentMeta,
   MasterComparisonRow,
 } from '@/lib/types';
-import { runPipeline } from '@/lib/coreMechanism/runPipeline';
-import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
-import MathBlock from '@/components/dashboard/MathBlock';
 import {
   AXIS_STROKE,
   AXIS_TICK,
-  BRUSH_PROPS,
   CHART_MARGIN_LABELED,
   GRID_PROPS,
   TOOLTIP_STYLE,
-  downsample,
   fmt,
 } from '@/components/lab/shared';
-import { useChartZoom } from '@/hooks/useChartZoom';
-import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
 
-const DEMO_SEEDS = Array.from({ length: 100 }, (_, i) => 42 + i);
-const DEMO_N = 6;
-const DEMO_T = 200;
 const EPS = 1e-4;
+
+/**
+ * When experiment JSON is not linked, show this illustrative snapshot of mean ΔCRPS vs equal
+ * for the canonical exogenous-deposit `master_comparison` (latent_fixed DGP, matched seeds).
+ * Update after regenerating offline outputs.
+ */
+const DEMO_BENCHMARK_DELTA_VS_EQUAL: Array<{ method: 'uniform' | 'deposit' | 'skill' | 'mechanism'; delta: number }> = [
+  { method: 'skill', delta: -0.0015226 },
+  { method: 'mechanism', delta: -0.0000056 },
+  { method: 'uniform', delta: 0 },
+  { method: 'deposit', delta: 0.0026007 },
+];
 
 type Verdict = 'good' | 'neutral' | 'bad';
 const VERDICT_STYLES: Record<Verdict, { ring: string; bg: string; text: string }> = {
@@ -103,17 +104,8 @@ function AnswerCard({
   );
 }
 
-function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
-  if (!isZoomed) return null;
-  return (
-    <button onClick={onReset} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors">
-      <span>&#x27F2;</span> Reset zoom
-    </button>
-  );
-}
-
 const EXP_TABS = ['Accuracy', 'Concentration', 'Calibration', 'Ablation'] as const;
-const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
+const DEMO_TABS = ['Accuracy', 'About'] as const;
 
 const METHOD_LABEL: Record<string, string> = {
   uniform: 'Equal',
@@ -328,172 +320,30 @@ export default function ResultsPage() {
     [...ablationRows].sort((a, b) => a.delta_crps_vs_full - b.delta_crps_vs_full),
     [ablationRows]);
 
-  // --- demo fallback (in-browser pipeline) ---
-  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({
-    equal: true, skill_only: true, blended: true, stake_only: true,
-  });
-  const cumErrorZoom = useChartZoom();
+  /** Illustrative ΔCRPS vs equal when experiment files are not linked (static snapshot). */
+  const demoFallbackAccuracyBar = useMemo(
+    () =>
+      [...DEMO_BENCHMARK_DELTA_VS_EQUAL]
+        .sort((a, b) => a.delta - b.delta)
+        .map((d) => ({
+          name: METHOD_LABEL[d.method],
+          method: d.method,
+          deltaCrps: d.delta,
+          color: METHOD_COLOR[d.method],
+        })),
+    [],
+  );
 
-  const demoMethodDefs: { key: string; label: string; color: string; influenceRule: InfluenceRule }[] = [
-    { key: 'equal', label: METHOD.equal.label, color: METHOD.equal.color, influenceRule: 'uniform' },
-    { key: 'skill_only', label: METHOD.skill_only.label, color: METHOD.skill_only.color, influenceRule: 'skill_only' },
-    { key: 'blended', label: METHOD.blended.label, color: METHOD.blended.color, influenceRule: 'skill_stake' },
-    { key: 'stake_only', label: METHOD.stake_only.label, color: METHOD.stake_only.color, influenceRule: 'deposit_only' },
-  ];
-
-  const demoRuns = useMemo(() =>
-    DEMO_SEEDS.flatMap((seed) =>
-      demoMethodDefs.map((m) => {
-        const pipeline = runPipeline({
-          dgpId: 'baseline',
-          behaviourPreset: 'baseline',
-          rounds: DEMO_T,
-          seed,
-          n: DEMO_N,
-          builder: { influenceRule: m.influenceRule },
-        });
-        return {
-          seed,
-          ...m,
-          meanError: pipeline.summary.meanError,
-          finalGini: pipeline.summary.finalGini,
-          meanNEff: pipeline.summary.meanNEff,
-          pipeline,
-        };
-      })),
-    []);
-
-  const demoMethodStats = useMemo(() =>
-    demoMethodDefs
-      .map((m) => {
-        const rows = demoRuns.filter((r) => r.key === m.key);
-        const meanErrors = rows.map((r) => r.meanError);
-        const ginis = rows.map((r) => r.finalGini);
-        const nEffs = rows.map((r) => r.meanNEff);
-        return {
-          key: m.key,
-          label: m.label,
-          color: m.color,
-          nSeeds: rows.length,
-          meanError: mean(meanErrors),
-          meanErrorSE: stdError(meanErrors),
-          finalGini: mean(ginis),
-          finalGiniSE: stdError(ginis),
-          meanNEff: mean(nEffs),
-          meanNEffSE: stdError(nEffs),
-        };
-      })
-      .sort((a, b) => (a.meanError ?? Infinity) - (b.meanError ?? Infinity)),
-    [demoRuns]);
-
-  const demoBySeed = useMemo(() => {
-    const bySeed = new Map<number, Record<string, number>>();
-    for (const r of demoRuns) {
-      const row = bySeed.get(r.seed) ?? {};
-      row[r.key] = r.meanError;
-      bySeed.set(r.seed, row);
-    }
-    return bySeed;
-  }, [demoRuns]);
-
-  const pairedDelta = (aKey: string, bKey: string) => {
-    const deltas: number[] = [];
-    for (const row of demoBySeed.values()) {
-      const a = row[aKey];
-      const b = row[bKey];
-      if (typeof a === 'number' && typeof b === 'number') deltas.push(a - b);
-    }
-    return {
-      mean: mean(deltas),
-      se: stdError(deltas),
-      wins: deltas.filter((d) => d < -EPS).length,
-      losses: deltas.filter((d) => d > EPS).length,
-      ties: deltas.filter((d) => Math.abs(d) <= EPS).length,
-      n: deltas.length,
-    };
-  };
-
-  const demoBlendVsEqual = useMemo(() => pairedDelta('blended', 'equal'), [demoBySeed]);
-  const demoBlendVsSkill = useMemo(() => pairedDelta('blended', 'skill_only'), [demoBySeed]);
-  const demoBlendVsStake = useMemo(() => pairedDelta('blended', 'stake_only'), [demoBySeed]);
-  const demoBestAvg = demoMethodStats[0] ?? null;
-  const demoBlendedStats = demoMethodStats.find((x) => x.key === 'blended') ?? null;
-
-  const demoWinCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      equal: 0,
-      skill_only: 0,
-      blended: 0,
-      stake_only: 0,
-    };
-    for (const row of demoBySeed.values()) {
-      const entries = Object.entries(row)
-        .filter(([, value]) => typeof value === 'number')
-        .sort((a, b) => a[1] - b[1]);
-      if (!entries.length) continue;
-      const bestValue = entries[0][1];
-      const winners = entries.filter(([, value]) => Math.abs(value - bestValue) <= EPS);
-      for (const [key] of winners) counts[key] += 1 / winners.length;
-    }
-    return counts;
-  }, [demoBySeed]);
-
-  const demoCumError = useMemo(() => {
-    const raw = Array.from({ length: DEMO_T }, (_, i) => {
-      const point: Record<string, number> = { round: i + 1 };
-      for (const m of demoMethodDefs) {
-        const values = DEMO_SEEDS.map((seed) => {
-          const run = demoRuns.find((r) => r.seed === seed && r.key === m.key);
-          if (!run) return null;
-          const errors = run.pipeline.rounds.slice(0, i + 1).map((r) => r.error);
-          return errors.reduce((a, b) => a + b, 0) / errors.length;
-        }).filter((x): x is number => x != null);
-        point[m.key] = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-      }
-      return point;
-    });
-    return downsample(raw, 300);
-  }, [demoRuns]);
-
-  const demoDeposits = useMemo(() => {
-    const entries: { key: string; label: string; depositPolicy: DepositPolicy }[] = [
-      { key: 'fixed', label: 'Fixed amount', depositPolicy: 'fixed_unit' },
-      { key: 'bankroll', label: 'Fraction of wealth', depositPolicy: 'wealth_fraction' },
-      { key: 'oracle', label: 'Wealth fraction \u00d7 skill', depositPolicy: 'sigma_scaled' },
-    ];
-    return entries.map((e) => {
-      const runs = DEMO_SEEDS.map((seed) =>
-        runPipeline({
-          dgpId: 'baseline',
-          behaviourPreset: 'baseline',
-          rounds: DEMO_T,
-          seed,
-          n: DEMO_N,
-          builder: { depositPolicy: e.depositPolicy, influenceRule: 'skill_stake' },
-        }));
-      return {
-        name: e.label,
-        meanError: mean(runs.map((r) => r.summary.meanError)) ?? 0,
-        gini: mean(runs.map((r) => r.summary.finalGini)) ?? 0,
-      };
-    }).sort((a, b) => a.meanError - b.meanError);
-  }, []);
-
-  const demoConcentrationBar = useMemo(() =>
-    demoMethodStats.map((m) => ({
-      name: m.label,
-      key: m.key,
-      gini: m.finalGini ?? 0,
-      nEff: m.meanNEff ?? 0,
-      color: m.color,
-    })).sort((a, b) => a.gini - b.gini),
-    [demoMethodStats]);
+  const demoMechanismDelta = useMemo(
+    () => DEMO_BENCHMARK_DELTA_VS_EQUAL.find((d) => d.method === 'mechanism')?.delta ?? null,
+    [],
+  );
 
   // --- which mode ---
   const useExp = hasExpData && !loading;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
-  const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : (demoBlendVsEqual.mean ?? null);
-  const gini = useExp ? (expMechanismConcentration?.finalGini ?? null) : (demoBlendedStats?.finalGini ?? null);
+  const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : demoMechanismDelta;
+  const gini = useExp ? (expMechanismConcentration?.finalGini ?? null) : null;
 
   const accuracyVerdict: Verdict = deltaCrps == null ? 'neutral' : deltaCrps < -0.001 ? 'good' : deltaCrps > 0.001 ? 'bad' : 'neutral';
   const concentrationVerdict: Verdict = gini == null ? 'neutral' : gini < 0.55 ? 'good' : gini > 0.7 ? 'bad' : 'neutral';
@@ -508,11 +358,11 @@ export default function ResultsPage() {
           <p className="text-sm text-slate-600 mt-1.5 max-w-2xl">
             {useExp
               ? 'Evidence from pre-run experiment outputs. This page does not use the live walkthrough state.'
-              : `In-browser demo summary (baseline DGP, ${DEMO_SEEDS.length} matched seeds, N\u00a0=\u00a0${DEMO_N}, T\u00a0=\u00a0${DEMO_T}). Link experiment data for thesis evidence.`}
+              : 'Preview uses a static snapshot of the canonical four-method benchmark (exogenous IID deposits, latent-fixed DGP). Link outputs for full charts and concentration metrics.'}
           </p>
           {!useExp && !loading && (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-              <strong>Illustrative only.</strong> Run experiments and <code className="bg-amber-100 px-1 rounded">./scripts/link-dashboard-data.sh</code> to see thesis evidence.
+              <strong>Illustrative snapshot.</strong> Run <code className="bg-amber-100 px-1 rounded">python -m onlinev2.experiments.cli --exp master_comparison --block core --outdir outputs</code> then <code className="bg-amber-100 px-1 rounded">./scripts/link-dashboard-data.sh</code> for measured CRPS, CIs, and Gini/HHI.
             </div>
           )}
         </div>
@@ -524,24 +374,24 @@ export default function ResultsPage() {
             <AnswerCard
               title="Does skill improve accuracy?"
               metric={deltaCrps == null ? '\u2014' : `${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)}`}
-              metricLabel={useExp ? `\u0394CRPS vs equal (S=${expAccuracyStats.nSeeds})` : '\u0394 mean error vs equal'}
+              metricLabel={useExp ? `\u0394CRPS vs equal (S=${expAccuracyStats.nSeeds})` : '\u0394CRPS vs equal (Skill \u00d7 stake, illustrative)'}
               verdict={accuracyVerdict}
               interpretation={
                 deltaCrps == null ? 'Data not loaded yet.'
                   : deltaCrps < 0
-                    ? `Skill \u00d7 stake improves accuracy by ${fmt(Math.abs(deltaCrps), 4)}.`
-                    : 'Equal weights match or beat Skill \u00d7 stake.'
+                    ? `Skill \u00d7 stake improves accuracy vs equal by ${fmt(Math.abs(deltaCrps), 4)} (mean CRPS).`
+                    : 'Equal weights match or beat Skill \u00d7 stake on average CRPS.'
               }
-              caveat={useExp ? 'Identifiable benchmark; strategic settings on Robustness.' : 'In-browser demo with point scores, not CRPS.'}
+              caveat={useExp ? 'Identifiable benchmark; strategic settings on Robustness.' : 'Static snapshot; link master_comparison for live SEs and paired seed counts.'}
             />
             <AnswerCard
               title="Does wealth dominate?"
               metric={gini == null ? '\u2014' : fmt(gini, 3)}
-              metricLabel="Final Gini (blended)"
+              metricLabel={useExp ? 'Final Gini (mechanism path)' : 'Final Gini'}
               verdict={concentrationVerdict}
               interpretation={
                 useExp ? 'Concentration via Gini, HHI, and N_eff under benchmark configuration.'
-                  : `Average final Gini for Skill \u00d7 stake is ${fmt(demoBlendedStats?.finalGini ?? 0, 3)} across ${DEMO_SEEDS.length} matched seeds.`
+                  : 'Link experiment outputs to see Gini, HHI, and N_eff from the same run.'
               }
               caveat="Concentration depends on DGP and deposit policy."
             />
@@ -558,9 +408,9 @@ export default function ResultsPage() {
           {howToReadOpen && (
             <div className="mt-3 grid sm:grid-cols-4 gap-3">
               {([
-                ['Benchmark', useExp ? `The canonical config that produced these outputs (DGP, T, N, seeds, deposit preset: ${expPreset || 'n/a'}).` : `Demo: baseline DGP, ${DEMO_SEEDS.length} matched seeds, N=${DEMO_N}, T=${DEMO_T}.`],
-                ['Metric', useExp ? 'CRPS and \u0394CRPS for accuracy; Gini/HHI/N_eff for concentration.' : 'Mean absolute error (point score) and Gini for concentration.'],
-                ['Comparison', useExp ? 'Paired deltas vs equal from master_comparison.' : 'Four weighting methods run side by side in the browser.'],
+                ['Benchmark', useExp ? `The canonical config that produced these outputs (DGP, T, N, seeds, deposit preset: ${expPreset || 'n/a'}).` : 'Preview: four methods with exogenous IID deposits (same path per seed); illustrative \u0394CRPS bar below.'],
+                ['Metric', useExp ? 'CRPS and \u0394CRPS for accuracy; Gini/HHI/N_eff for concentration.' : '\u0394CRPS vs equal from static snapshot; link data for SEs and concentration.'],
+                ['Comparison', useExp ? 'Paired deltas vs equal from master_comparison.' : 'Equal, exogenous stake-only, skill-only, Skill \u00d7 stake (skill gate \u00d7 same deposits).'],
                 ['Takeaway', 'One-line verdict above each chart.'],
               ] as const).map(([label, desc]) => (
                 <div key={label} className="rounded-lg border border-slate-200 bg-white p-3">
@@ -710,113 +560,51 @@ export default function ResultsPage() {
             </div>
           )}
 
-          {/* ========== DEMO FALLBACK TABS ========== */}
+          {/* ========== DEMO FALLBACK (static benchmark preview) ========== */}
 
           {!useExp && !loading && activeTab === 'Accuracy' && (
-            <div className="space-y-5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium mr-1">Compare:</span>
-                {demoMethodDefs.map((m) => (
-                  <button key={m.key} onClick={() => setEnabledMethods((prev) => ({ ...prev, [m.key]: !prev[m.key] }))}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${enabledMethods[m.key] ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}
-                    style={enabledMethods[m.key] ? { background: m.color } : undefined}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: m.color }} />
-                    {m.label}
-                  </button>
-                ))}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h3 className="text-sm font-semibold text-slate-800">Accuracy (\u0394CRPS vs equal)</h3>
+                <InfoToggle
+                  term="\u0394CRPS vs equal"
+                  definition="Illustrative mean paired difference vs equal weighting from the last offline master_comparison (exogenous IID deposits)."
+                  interpretation="Negative is better. Link JSON for standard errors and seed-level wins."
+                  axes={{ x: 'method', y: '\u0394CRPS' }}
+                />
               </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-semibold text-slate-800">Forecast quality comparison</h3>
-                  <InfoToggle term="Forecast quality comparison" definition="Compares aggregation methods over time." interpretation="Each line shows the cumulative mean error. Lower is better." axes={{ x: 'round', y: 'cumulative mean error' }} />
-                  <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
-                </div>
-                <p className="text-[11px] text-slate-500 mb-3">
-                  <strong>Across {DEMO_SEEDS.length} matched seeds:</strong>{' '}
-                  {demoBestAvg ? `${demoBestAvg.label} has the lowest average mean error.` : 'No demo summary available.'}
-                  {demoBlendVsSkill.mean != null && (
-                    <>
-                      {' '}Skill \u00d7 stake vs Skill-only:{' '}
-                      {demoBlendVsSkill.mean < -EPS
-                        ? `better by ${fmt(Math.abs(demoBlendVsSkill.mean), 4)}`
-                        : demoBlendVsSkill.mean > EPS
-                          ? `worse by ${fmt(Math.abs(demoBlendVsSkill.mean), 4)}`
-                          : 'effectively tied'}
-                      {' '}over matched seeds.
-                    </>
-                  )}
-                </p>
-                <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600 leading-relaxed">
-                  <strong>Pairwise summary:</strong>{' '}
-                  Skill \u00d7 stake beats Equal in {demoBlendVsEqual.wins}/{demoBlendVsEqual.n} seeds,
-                  Skill-only in {demoBlendVsSkill.wins}/{demoBlendVsSkill.n},
-                  Stake-only in {demoBlendVsStake.wins}/{demoBlendVsStake.n}; tied within \u03b5 in {demoBlendVsEqual.ties + demoBlendVsSkill.ties + demoBlendVsStake.ties} pairwise seed-cases.
-                  {' '}First-place share: Equal {fmt((demoWinCounts.equal / DEMO_SEEDS.length) * 100, 0)}%, Skill-only {fmt((demoWinCounts.skill_only / DEMO_SEEDS.length) * 100, 0)}%, Skill \u00d7 stake {fmt((demoWinCounts.blended / DEMO_SEEDS.length) * 100, 0)}%, Stake-only {fmt((demoWinCounts.stake_only / DEMO_SEEDS.length) * 100, 0)}%.
-                </div>
-                <div className="cursor-crosshair" role="img" aria-label="Forecast quality by method">
-                  <ResponsiveContainer width="100%" height={360}>
-                    <LineChart data={demoCumError} margin={CHART_MARGIN_LABELED}
-                      onMouseDown={cumErrorZoom.onMouseDown} onMouseMove={cumErrorZoom.onMouseMove} onMouseUp={cumErrorZoom.onMouseUp}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                      {demoMethodDefs.map((m) => enabledMethods[m.key] && (
-                        <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                          strokeWidth={m.key === 'blended' ? 2.5 : 1.5} dot={false} strokeOpacity={m.key === 'blended' ? 1 : 0.7} />
-                      ))}
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                <MathBlock inline latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}^{\eta}\bigr)" />
-                <p className="text-xs text-slate-500 mt-2">
-                  The effective wager gates deposit through skill. With noisy deposits, skill attenuates bad bets.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {!useExp && !loading && activeTab === 'Concentration' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">Gini and N_eff by weighting method</h3>
-              <p className="text-[11px] text-slate-500 mb-3"><strong>Verdict:</strong> Lower Gini and higher N_eff indicate less concentration.</p>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={demoConcentrationBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
+              <p className="text-[11px] text-slate-500">
+                Four core methods on the <strong>same</strong> latent DGP path per seed: equal weights; stake-only weights from <strong>exogenous</strong> IID deposits; skill-only from learned \u03c3; Skill \u00d7 stake uses <strong>those same deposits</strong> through the skill gate (\u03bb, \u03b7). Ranking below is a fixed snapshot—regenerate and update <code className="bg-slate-100 px-1 rounded text-[10px]">DEMO_BENCHMARK_DELTA_VS_EQUAL</code> or link data.
+              </p>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={demoFallbackAccuracyBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} interval={0} angle={-18} textAnchor="end" height={68} />
                   <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                  <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
                   <Tooltip content={<SmartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={24}>
-                    {demoConcentrationBar.map((d) => <Cell key={d.key} fill={d.color} opacity={0.8} />)}
+                  <Bar dataKey="deltaCrps" name="\u0394CRPS vs equal" radius={[4, 4, 0, 0]} maxBarSize={44}>
+                    {demoFallbackAccuracyBar.map((d) => (
+                      <Cell key={d.method} fill={d.color} opacity={0.9} />
+                    ))}
                   </Bar>
-                  <Bar dataKey="nEff" name="Mean N_eff" radius={[4, 4, 0, 0]} maxBarSize={24} fill="#0ea5e9" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           )}
 
-          {!useExp && !loading && activeTab === 'Deposit policy' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">Deposit policy: accuracy vs concentration</h3>
-              <p className="text-[11px] text-slate-500 mb-3">Mean error and final Gini by deposit rule. Lower is better for both.</p>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={demoDeposits} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
-                  <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                  <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                  <Tooltip content={<SmartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                  <Bar dataKey="meanError" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={32} fill={SEM.outcome.main} />
-                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={32} fill={SEM.wealth.main} />
-                </BarChart>
-              </ResponsiveContainer>
+          {!useExp && !loading && activeTab === 'About' && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 text-[11px] text-slate-600 leading-relaxed">
+              <h3 className="text-sm font-semibold text-slate-800">What this preview shows</h3>
+              <ul className="list-disc pl-5 space-y-1.5">
+                <li><strong className="text-slate-700">Equal</strong> — uniform weights over active forecasters.</li>
+                <li><strong className="text-slate-700">Stake-only (exogenous deposits)</strong> — weights proportional to IID exponential deposits (missing agents get zero stake).</li>
+                <li><strong className="text-slate-700">Skill-only</strong> — weights proportional to learned skill \u03c3 from past losses.</li>
+                <li><strong className="text-slate-700">Skill \u00d7 stake</strong> — same exogenous deposits as stake-only, multiplied by the skill gate: m \u221d b\u00b7(\u03bb + (1\u2212\u03bb)\u03c3^\u03b7).</li>
+              </ul>
+              <p className="text-slate-500">
+                The live dashboard walkthrough uses a different toy pipeline. For thesis numbers, always use linked <code className="bg-slate-100 px-1 rounded">master_comparison</code> outputs.
+              </p>
             </div>
           )}
         </section>
