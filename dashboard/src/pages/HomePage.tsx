@@ -53,17 +53,6 @@ export default function HomePage() {
       <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
         Adaptive Skill and Stake in Forecast Markets
       </h1>
-      <p className="text-lg text-slate-500 mt-4 max-w-2xl">
-        Stake filtered by online skill from past forecasts.
-      </p>
-
-      <div className="mt-6 flex items-center gap-3 flex-wrap">
-        <MathBlock
-          inline
-          latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}\bigr)"
-        />
-      </div>
-
       <div className="mt-10">
       <StepSection step={1} title="System overview" description="DGP → Behaviour → Core">
         <div className="grid gap-3 pt-2">
@@ -115,9 +104,6 @@ export default function HomePage() {
               </div>
             </div>
           )}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <MathBlock inline latex="\text{DGP} \;\rightarrow\; \text{Behaviour} \;\rightarrow\; \text{Core}" />
-          </div>
         </div>
       </StepSection>
 
