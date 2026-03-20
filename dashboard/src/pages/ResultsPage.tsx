@@ -20,16 +20,15 @@ import {
   loadCalibration,
   loadExperimentList,
   loadMasterComparison,
-  loadWeightRecoveryMethod1,
 } from '@/lib/adapters';
 import type {
   BankrollAblationRow,
   CalibrationPoint,
   ExperimentMeta,
   MasterComparisonRow,
-  WeightRecoveryRow,
 } from '@/lib/types';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
+import { generateAggregation } from '@/lib/coreMechanism/dgpSimulator';
 import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
 import MathBlock from '@/components/dashboard/MathBlock';
@@ -140,6 +139,31 @@ function seFinite(values: Array<number | undefined | null>): number | null {
   return Math.sqrt(variance / xs.length);
 }
 
+function invNormCdf(p: number): number {
+  const x = Math.min(1 - 1e-12, Math.max(1e-12, p));
+  const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.38357751867269e2, -3.066479806614716e1, 2.506628277459239];
+  const b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1];
+  const c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+  const d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416];
+  const plow = 0.02425;
+  const phigh = 1 - plow;
+
+  if (x < plow) {
+    const q = Math.sqrt(-2 * Math.log(x));
+    return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+  }
+  if (x > phigh) {
+    const q = Math.sqrt(-2 * Math.log(1 - x));
+    return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+  }
+  const q = x - 0.5;
+  const r = q * q;
+  return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+    (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+}
+
 export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('Accuracy');
   const [howToReadOpen, setHowToReadOpen] = useState(false);
@@ -148,7 +172,6 @@ export default function ResultsPage() {
   const [masterRows, setMasterRows] = useState<MasterComparisonRow[]>([]);
   const [ablationRows, setAblationRows] = useState<BankrollAblationRow[]>([]);
   const [calibration, setCalibration] = useState<CalibrationPoint[]>([]);
-  const [weightRecoveryRows, setWeightRecoveryRows] = useState<WeightRecoveryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasExpData, setHasExpData] = useState(false);
 
@@ -164,13 +187,11 @@ export default function ResultsPage() {
         ]);
         const calibrationExp = (exps as ExperimentMeta[]).find((e) => e.name === 'calibration');
         const cal = calibrationExp ? await loadCalibration(calibrationExp).catch(() => []) : [];
-        const weightRecovery = await loadWeightRecoveryMethod1().catch(() => []);
         if (cancelled) return;
         const mRows = master?.rows ?? [];
         setMasterRows(mRows);
         setAblationRows(ablation?.rows ?? []);
         setCalibration(cal);
-        setWeightRecoveryRows(weightRecovery);
         setHasExpData(mRows.length > 0);
       } catch {
         if (!cancelled) setHasExpData(false);
@@ -337,6 +358,68 @@ export default function ResultsPage() {
       color: m.color,
     })).sort((a, b) => a.gini - b.gini),
     [demoMethods]);
+
+  const method1ConvergenceData = useMemo(() => {
+    const T = 20000;
+    const n = 3;
+    const trueW = [0.8, 0.1, 0.5];
+    const sim = generateAggregation(42, T, n, 1, trueW, [0.3, 0.6, 1.0], 0.25, 0.98, 0.35, 1.0);
+
+    const yLatent = sim.rounds.map((r) => invNormCdf(r.y));
+    const reportsLatent = Array.from({ length: n }, (_, i) => sim.rounds.map((r) => invNormCdf(r.reports[i])));
+
+    const eta = 0.015;
+    const etaDecay = 2e-5;
+    const w = [1 / n, 1 / n, 1 / n];
+    const hist: number[][] = Array.from({ length: n }, () => new Array(T).fill(0));
+
+    for (let t = 0; t < T; t++) {
+      for (let i = 0; i < n; i++) hist[i][t] = w[i];
+      const etaT = eta / (1 + t * etaDecay);
+      const r0 = reportsLatent[0][t];
+      const r1 = reportsLatent[1][t];
+      const r2 = reportsLatent[2][t];
+      const yHat = w[0] * r0 + w[1] * r1 + w[2] * r2;
+      const err = yLatent[t] - yHat;
+      const g0 = -2 * err * r0;
+      const g1 = -2 * err * r1;
+      const g2 = -2 * err * r2;
+      w[0] = Math.max(0, w[0] - etaT * g0);
+      w[1] = Math.max(0, w[1] - etaT * g1);
+      w[2] = Math.max(0, w[2] - etaT * g2);
+    }
+
+    const smoothWindow = 800;
+    const smooth = (arr: number[]) => {
+      const out = new Array(arr.length).fill(0);
+      let acc = 0;
+      for (let i = 0; i < arr.length; i++) {
+        acc += arr[i];
+        if (i >= smoothWindow) acc -= arr[i - smoothWindow];
+        out[i] = i < smoothWindow - 1 ? arr[i] : acc / smoothWindow;
+      }
+      return out;
+    };
+    const s0 = smooth(hist[0]);
+    const s1 = smooth(hist[1]);
+    const s2 = smooth(hist[2]);
+
+    return downsample(
+      Array.from({ length: T }, (_, i) => ({
+        round: i + 1,
+        w0Raw: hist[0][i],
+        w1Raw: hist[1][i],
+        w2Raw: hist[2][i],
+        w0Smooth: s0[i],
+        w1Smooth: s1[i],
+        w2Smooth: s2[i],
+        w0Target: trueW[0],
+        w1Target: trueW[1],
+        w2Target: trueW[2],
+      })),
+      700,
+    );
+  }, []);
 
   // --- which mode ---
   const useExp = hasExpData && !loading && isFullPanel;
@@ -715,35 +798,29 @@ export default function ResultsPage() {
             Method 1 only. This is a sanity check of identifiability under the endogenous generator:
             learned weights should move toward forecasters that structurally drive the generated outcome.
           </p>
-          {weightRecoveryRows.length === 0 ? (
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-              Weight-recovery data is not available in this view.
-            </div>
-          ) : (
-            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
-              <ResponsiveContainer width="100%" height={290}>
-                <BarChart
-                  data={weightRecoveryRows.map((r) => ({
-                    name: `F${r.forecaster}`,
-                    target: r.wTarget,
-                    learned: r.wLearned,
-                    absError: r.absError,
-                  }))}
-                  margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}
-                >
-                  <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                  <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                  <Tooltip content={<SmartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                  <Bar dataKey="target" name="Target weight (DGP)" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={24} />
-                  <Bar dataKey="learned" name="Learned weight (online LMS)" fill={SEM.skill.main} radius={[4, 4, 0, 0]} maxBarSize={24}>
-                    <LabelList dataKey="absError" position="top" formatter={(v: unknown) => `|e|=${fmt(Number(v), 3)}`} style={{ fontSize: 10, fill: '#64748b' }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+            <ResponsiveContainer width="100%" height={320}>
+              <LineChart data={method1ConvergenceData} margin={CHART_MARGIN_LABELED}>
+                <CartesianGrid {...GRID_PROPS} />
+                <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                <Tooltip content={<SmartTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+
+                <Line type="monotone" dataKey="w0Raw" name="F0 raw" stroke={METHOD.blended.color} strokeOpacity={0.25} dot={false} strokeWidth={1} />
+                <Line type="monotone" dataKey="w1Raw" name="F1 raw" stroke={METHOD.skill_only.color} strokeOpacity={0.25} dot={false} strokeWidth={1} />
+                <Line type="monotone" dataKey="w2Raw" name="F2 raw" stroke={METHOD.stake_only.color} strokeOpacity={0.25} dot={false} strokeWidth={1} />
+
+                <Line type="monotone" dataKey="w0Smooth" name="F0 smoothed" stroke={METHOD.blended.color} dot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="w1Smooth" name="F1 smoothed" stroke={METHOD.skill_only.color} dot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="w2Smooth" name="F2 smoothed" stroke={METHOD.stake_only.color} dot={false} strokeWidth={2} />
+
+                <Line type="monotone" dataKey="w0Target" name="F0 target" stroke={METHOD.blended.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} />
+                <Line type="monotone" dataKey="w1Target" name="F1 target" stroke={METHOD.skill_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} />
+                <Line type="monotone" dataKey="w2Target" name="F2 target" stroke={METHOD.stake_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
           <div className="mt-3 grid sm:grid-cols-2 gap-3">
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
               <p className="text-[11px] text-emerald-900 leading-relaxed">
