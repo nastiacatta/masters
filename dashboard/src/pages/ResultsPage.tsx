@@ -446,12 +446,12 @@ export default function ResultsPage() {
               ) : (
                 <div className="rounded-2xl border border-slate-200 bg-white p-5">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-slate-800">Accuracy (\u0394CRPS \u00d7 10\u2074)</h3>
+                    <h3 className="text-sm font-semibold text-slate-800">Accuracy ranking</h3>
                     <InfoToggle
-                      term="\u0394CRPS \u00d7 10\u2074"
-                      definition="Mean paired CRPS difference vs equal, rescaled \u00d710\u2074 for readability."
-                      interpretation="Lower values are better; values near zero indicate similar performance."
-                      axes={{ x: 'scaled \u0394CRPS', y: 'method' }}
+                      term="Average accuracy gap"
+                      definition="Average difference versus Equal across the same scenarios for all methods."
+                      interpretation="Lower is better. Zero means the same accuracy as Equal."
+                      axes={{ x: 'difference vs Equal', y: 'method' }}
                     />
                   </div>
                   <p className="text-[11px] text-slate-500 mb-1 leading-relaxed">
@@ -461,7 +461,7 @@ export default function ResultsPage() {
                     {expMechVsSkillX1e4 != null && (
                       <> Skill\u00d7stake is{' '}
                         <span className="font-mono">{expMechVsSkillX1e4 >= 0 ? '+' : ''}{expMechVsSkillX1e4.toFixed(2)}</span>
-                        {'\u00d710\u207b\u2074'} vs skill-only.
+                        {' points'} vs skill-only.
                       </>
                     )}
                   </p>
@@ -476,70 +476,35 @@ export default function ResultsPage() {
                           </div>
                           <div className="text-[11px] font-medium text-slate-800 mt-1 truncate">{d.name}</div>
                           <div className="text-[10px] font-mono text-slate-500 mt-1">
-                            {d.deltaCrpsX1e4 >= 0 ? '+' : ''}{d.deltaLabel} ×10⁻⁴
+                            {d.deltaCrpsX1e4 >= 0 ? '+' : ''}{d.deltaLabel} points
                           </div>
                         </div>
                       ))}
                     </div>
                     <p className="text-[10px] text-slate-500 mt-2">Lower values indicate better average accuracy.</p>
                   </div>
-                  <div className="grid lg:grid-cols-2 gap-6 mt-4">
-                    <div>
-                      <div className="text-[11px] font-semibold text-slate-600 mb-2">How each method compares with Equal</div>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
-                          <CartesianGrid {...GRID_PROPS} />
-                          <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                          <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={130} />
-                          <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
-                          <Tooltip
-                            formatter={(value) => [
-                              `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '\u2014'} \u00d710\u207b\u2074`,
-                              'Difference vs Equal',
-                            ]}
-                            contentStyle={TOOLTIP_STYLE}
-                          />
-                          <Bar dataKey="deltaCrpsX1e4" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                            {expAccuracyDisplay.map((d) => <Cell key={d.method} fill={d.color} opacity={0.9} />)}
-                            <LabelList dataKey="deltaLabel" position="right" style={{ fontSize: 10, fill: '#64748b' }} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-semibold text-slate-600 mb-2">How far each method is from #1</div>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
-                          <CartesianGrid {...GRID_PROPS} />
-                          <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                          <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={130} />
-                          <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
-                          <Tooltip
-                            formatter={(value) => [
-                              `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '\u2014'} \u00d710\u207b\u2074`,
-                              'Gap from #1',
-                            ]}
-                            contentStyle={TOOLTIP_STYLE}
-                          />
-                          <Bar dataKey="gapToBestX1e4" radius={[0, 4, 4, 0]} maxBarSize={28} fill="#334155">
-                            <LabelList dataKey="gapLabel" position="right" style={{ fontSize: 10, fill: '#64748b' }} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
+                  <div className="mt-4">
+                    <div className="text-[11px] font-semibold text-slate-600 mb-2">Method comparison (vs Equal)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={140} />
+                        <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                        <Tooltip
+                          formatter={(value) => [
+                            `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '—'} points`,
+                            'Difference vs Equal',
+                          ]}
+                          contentStyle={TOOLTIP_STYLE}
+                        />
+                        <Bar dataKey="deltaCrpsX1e4" radius={[0, 4, 4, 0]} maxBarSize={30}>
+                          {expAccuracyDisplay.map((d) => <Cell key={d.method} fill={d.color} opacity={0.9} />)}
+                          <LabelList dataKey="deltaLabel" position="right" style={{ fontSize: 10, fill: '#64748b' }} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                  <ol className="mt-4 space-y-1">
-                    {expAccuracyDisplay.map((d, i) => (
-                      <li key={d.method} className="flex items-center gap-2 text-[11px]">
-                        <span className="w-4 text-right font-mono text-slate-400">{i + 1}.</span>
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
-                        <span className="text-slate-700 font-medium">{d.name}</span>
-                        <span className="font-mono text-slate-500 ml-auto">
-                          {d.deltaCrpsX1e4 >= 0 ? '+' : ''}{d.deltaLabel} <span className="text-slate-400">\u00d710\u207b\u2074</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
                 </div>
               )}
             </div>
