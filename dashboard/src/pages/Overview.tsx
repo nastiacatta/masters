@@ -44,6 +44,62 @@ export default function Overview() {
       </section>
       <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
         <div>
+          <h3 className="text-sm font-semibold text-slate-900">System overview</h3>
+          <p className="text-sm text-slate-600 mt-1">
+            The pipeline is split so behaviour can be strategic while the core mechanism remains a clean state machine.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-stretch">
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">DGP</p>
+            <p className="text-sm text-slate-800 mt-1">What world is generated.</p>
+            <p className="text-xs text-slate-600 mt-1">Exogenous and endogenous outcome models.</p>
+          </div>
+          <div className="hidden sm:flex items-center justify-center text-slate-400 text-lg font-semibold">→</div>
+          <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Behaviour</p>
+            <p className="text-sm text-slate-800 mt-1">What users do in that world.</p>
+            <p className="text-xs text-slate-600 mt-1">Participation, beliefs, reports, deposits, identity choices.</p>
+          </div>
+          <div className="hidden sm:flex items-center justify-center text-slate-400 text-lg font-semibold">→</div>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Core</p>
+            <p className="text-sm text-slate-800 mt-1">How the market responds.</p>
+            <p className="text-xs text-slate-600 mt-1">Aggregation, scoring, settlement, and skill updates.</p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <MathBlock inline latex="\text{DGP} \;\rightarrow\; \text{Behaviour} \;\rightarrow\; \text{Core}" />
+        </div>
+      </section>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">Behaviour block</h3>
+          <p className="text-sm text-slate-600 mt-1">
+            Realism enters here: selective entry, belief quality, reporting incentives, bankroll dynamics, and strategic adaptation.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-teal-200 bg-teal-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Participation and timing</p>
+            <p className="text-sm text-slate-700 mt-1">Intermittent, bursty, and selective entry.</p>
+          </div>
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Belief and reporting</p>
+            <p className="text-sm text-slate-700 mt-1">Precision, bias, calibration, truthful vs strategic reporting.</p>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Staking behaviour</p>
+            <p className="text-sm text-slate-700 mt-1">Wealth constraints, confidence, and bankroll management.</p>
+          </div>
+          <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">Identity and strategy</p>
+            <p className="text-sm text-slate-700 mt-1">Single account, sybils, collusion, and adaptation over time.</p>
+          </div>
+        </div>
+      </section>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
+        <div>
           <h3 className="text-sm font-semibold text-slate-900">Round timeline</h3>
           <p className="text-sm text-slate-600 mt-1">
             A clear step-by-step view of how one market round is processed.
