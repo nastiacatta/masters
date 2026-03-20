@@ -11,9 +11,36 @@ export default function Overview() {
     <div className="p-6 max-w-4xl space-y-6">
       <PageHeader
         title="Overview"
-        description="Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation? Use the Walkthrough to see one round step by step: Inputs → DGP / private signal → Behaviour policy → Core mechanism → Results → Next state."
+        description="This project studies a repeated prediction market for probabilistic forecasting."
         question="Why adaptive skill and stake?"
       />
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">Project at a glance</h3>
+          <p className="text-sm text-slate-600 mt-1">
+            The mechanism combines self-financed wagering with an online estimate of forecaster reliability, learned from past realised outcomes.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Funding</p>
+            <p className="text-sm text-slate-700 mt-1">Self-financed wagering each round.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Weighting signal</p>
+            <p className="text-sm text-slate-700 mt-1">Current influence depends on both stake and learned skill.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Research aim</p>
+            <p className="text-sm text-slate-700 mt-1">Test whether history-aware weighting improves forecast aggregation.</p>
+          </div>
+        </div>
+        <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+          <li>Heterogeneous forecasters with different reliability profiles.</li>
+          <li>Intermittent participation where agents are not always active.</li>
+          <li>Changing conditions that induce non-stationary dynamics.</li>
+        </ul>
+      </section>
       <p className="text-sm text-slate-600">
         Start with the <Link to="/walkthrough" className="text-teal-600 hover:underline font-medium">Walkthrough</Link> to explore the mechanism; use <Link to="/experiments" className="text-teal-600 hover:underline font-medium">Experiments</Link> for cross-scenario evidence and <Link to="/validation" className="text-teal-600 hover:underline font-medium">Validation</Link> for invariants and robustness.
       </p>
