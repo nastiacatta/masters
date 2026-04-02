@@ -77,7 +77,7 @@ export default function SkillTrajectoryChart({
               dataKey={`agent_${a}`}
               name={agentDisplayName(a)}
               stroke={AGENT_COLORS[i % AGENT_COLORS.length]}
-              strokeWidth={1.2}
+              strokeWidth={1.8}
               dot={false}
               connectNulls
               hide={hiddenAgents.has(`agent_${a}`)}

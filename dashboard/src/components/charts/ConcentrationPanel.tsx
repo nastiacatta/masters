@@ -88,7 +88,7 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
         axes: { x: 'Method', y: 'Metric value' },
       }}
     >
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={300}>
         <BarChart
           data={data}
           margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}
@@ -96,20 +96,20 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
           <CartesianGrid {...GRID_PROPS} />
           <XAxis
             dataKey="label"
-            tick={AXIS_TICK}
+            tick={{ ...AXIS_TICK, fontSize: 12 }}
             stroke={AXIS_STROKE}
           />
           <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
           <Tooltip content={<SmartTooltip />} />
-          <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
           {hasGini && (
             <Bar
               dataKey="gini"
               name="Gini"
               fill={METRIC_COLORS.gini}
               radius={[4, 4, 0, 0]}
-              maxBarSize={18}
-              opacity={0.85}
+              maxBarSize={28}
+              opacity={0.9}
               isAnimationActive={true}
               animationDuration={300}
             />
@@ -120,8 +120,8 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
               name="HHI"
               fill={METRIC_COLORS.hhi}
               radius={[4, 4, 0, 0]}
-              maxBarSize={18}
-              opacity={0.85}
+              maxBarSize={28}
+              opacity={0.9}
               isAnimationActive={true}
               animationDuration={300}
             />
@@ -132,8 +132,8 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
               name="N_eff"
               fill={METRIC_COLORS.nEff}
               radius={[4, 4, 0, 0]}
-              maxBarSize={18}
-              opacity={0.85}
+              maxBarSize={28}
+              opacity={0.9}
               isAnimationActive={true}
               animationDuration={300}
             />

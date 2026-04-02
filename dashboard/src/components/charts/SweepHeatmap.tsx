@@ -26,19 +26,21 @@ export default function SweepHeatmap({ data }: Props) {
   const getColor = (v: number) => {
     const t = (v - minVal) / range;
     if (metric === 'meanCrps') {
-      const r = Math.round(37 + t * 200);
-      const g = Math.round(99 - t * 60);
-      const b = Math.round(235 - t * 180);
+      // Green (good) → Red (bad) for accuracy
+      const r = Math.round(16 + t * 223);
+      const g = Math.round(185 - t * 120);
+      const b = Math.round(129 - t * 60);
       return `rgb(${r},${g},${b})`;
     }
-    const r = Math.round(37 + t * 200);
-    const g = Math.round(99 - t * 60);
-    const b = Math.round(235 - t * 180);
+    // Purple (low) → Orange (high) for Gini
+    const r = Math.round(99 + t * 146);
+    const g = Math.round(102 - t * 40);
+    const b = Math.round(241 - t * 170);
     return `rgb(${r},${g},${b})`;
   };
 
-  const cellW = 60;
-  const cellH = 36;
+  const cellW = 72;
+  const cellH = 40;
 
   return (
     <ChartCard
@@ -65,14 +67,14 @@ export default function SweepHeatmap({ data }: Props) {
             <tr>
               <th className="text-[9px] text-slate-400 p-1"><MathBlock inline latex="\\lambda \\setminus \\sigma_{\\min}" /></th>
               {sigmaMins.map(s => (
-                <th key={s} className="text-[9px] text-slate-500 p-1 text-center" style={{ width: cellW }}>{s}</th>
+                <th key={s} className="text-[10px] text-slate-600 font-medium p-1 text-center" style={{ width: cellW }}>{s}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {lams.map(l => (
               <tr key={l}>
-                <td className="text-[9px] text-slate-500 p-1 text-right pr-2">{l}</td>
+                <td className="text-[10px] text-slate-600 font-medium p-1 text-right pr-2">{l}</td>
                 {sigmaMins.map(s => {
                   const pt = data.find(d => d.lam === l && d.sigmaMin === s);
                   const val = pt ? pt[metric] : 0;
@@ -83,7 +85,7 @@ export default function SweepHeatmap({ data }: Props) {
                         style={{ width: cellW, height: cellH, background: getColor(val) }}
                         title={`λ=${l}, σ_min=${s}: ${sweepMetricLabel(metric)}=${fmtNum(val)}`}
                       >
-                        <span className="text-[9px] text-white font-mono">{fmtNum(val, 4)}</span>
+                        <span className="text-[10px] text-white font-mono font-medium">{fmtNum(val, 4)}</span>
                       </div>
                     </td>
                   );

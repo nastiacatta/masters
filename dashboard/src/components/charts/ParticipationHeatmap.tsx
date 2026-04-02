@@ -27,8 +27,8 @@ export default function ParticipationHeatmap({ data }: Props) {
   }
 
   const nBlocks = Math.ceil((maxT + 1) / blockSize);
-  const cellW = Math.max(3, Math.min(12, 600 / nBlocks));
-  const cellH = 18;
+  const cellW = Math.max(5, Math.min(14, 700 / nBlocks));
+  const cellH = 24;
 
   return (
     <ChartCard
@@ -46,7 +46,7 @@ export default function ParticipationHeatmap({ data }: Props) {
           <div className="shrink-0 pr-2">
             {agents.map(a => (
               <div key={a} className="flex items-center justify-end" style={{ height: cellH }}>
-                <span className="text-[9px] text-slate-400">{agentDisplayName(a)}</span>
+                <span className="text-[10px] text-slate-500 font-medium">{agentDisplayName(a)}</span>
               </div>
             ))}
           </div>
@@ -60,11 +60,12 @@ export default function ParticipationHeatmap({ data }: Props) {
                     return (
                       <div
                         key={i}
+                        className="hover:ring-2 hover:ring-indigo-400 hover:z-10 transition-shadow cursor-default"
                         style={{
                           width: cellW,
                           height: cellH - 2,
-                          background: `rgba(37, 99, 235, ${opacity})`,
-                          borderRadius: 1,
+                          background: `rgba(37, 99, 235, ${Math.max(0.05, opacity)})`,
+                          borderRadius: 2,
                           margin: '1px 0.5px',
                         }}
                         title={`${agentDisplayName(b.agent)}, rounds ${b.block * blockSize}–${(b.block + 1) * blockSize - 1}: ${(b.rate * 100).toFixed(0)}% active`}
@@ -80,13 +81,13 @@ export default function ParticipationHeatmap({ data }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-3">
-          <span className="text-[9px] text-slate-400">Inactive</span>
+          <span className="text-[10px] text-slate-500">Inactive</span>
           <div className="flex gap-0.5">
             {[0, 0.25, 0.5, 0.75, 1].map(v => (
-              <div key={v} style={{ width: 16, height: 10, background: `rgba(37, 99, 235, ${v})`, borderRadius: 2, border: '1px solid #e2e8f0' }} />
+              <div key={v} style={{ width: 20, height: 12, background: `rgba(37, 99, 235, ${Math.max(0.05, v)})`, borderRadius: 2, border: '1px solid #e2e8f0' }} />
             ))}
           </div>
-          <span className="text-[9px] text-slate-400">Active</span>
+          <span className="text-[10px] text-slate-500">Active</span>
         </div>
       </div>
     </ChartCard>

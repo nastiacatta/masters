@@ -72,11 +72,11 @@ export default function DeltaBarChart({
         axes: { x: metricLabel, y: 'Method (ranked)' },
       }}
     >
-      <ResponsiveContainer width="100%" height={Math.max(250, sorted.length * 52 + 40)}>
+      <ResponsiveContainer width="100%" height={Math.max(280, sorted.length * 56 + 40)}>
         <BarChart
           data={sorted}
           layout="vertical"
-          margin={{ top: 8, right: 48, bottom: 8, left: 8 }}
+          margin={{ top: 8, right: 52, bottom: 8, left: 8 }}
         >
           <CartesianGrid {...GRID_PROPS} horizontal={false} />
           <XAxis
@@ -124,7 +124,7 @@ export default function DeltaBarChart({
           <Bar
             dataKey="delta"
             radius={[0, 4, 4, 0]}
-            maxBarSize={28}
+            maxBarSize={34}
             isAnimationActive={true}
             animationDuration={300}
           >

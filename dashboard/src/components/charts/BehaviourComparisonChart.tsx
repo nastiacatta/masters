@@ -70,11 +70,11 @@ export default function BehaviourComparisonChart({ data }: Props) {
         ))}
       </div>
       <div className="cursor-crosshair">
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart
           data={visibleData}
           layout="vertical"
-          margin={{ top: 5, right: 20, bottom: 5, left: 100 }}
+          margin={{ top: 5, right: 24, bottom: 5, left: 110 }}
           onMouseDown={zoom.onMouseDown}
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
@@ -82,13 +82,13 @@ export default function BehaviourComparisonChart({ data }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis
             type="number"
-            tick={{ fontSize: 10 }}
+            tick={{ fontSize: 11 }}
             stroke="#94a3b8"
             domain={zoom.state.isZoomed ? [zoom.state.left, zoom.state.right] : undefined}
           />
-          <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} stroke="#94a3b8" width={95} />
-          <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={20} isAnimationActive={true} animationDuration={300}>
+          <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" width={105} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
+          <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28} isAnimationActive={true} animationDuration={300}>
             {visibleData.map((d) => (
               <Cell key={d.idx} fill={COLORS[d.idx % COLORS.length]} />
             ))}
