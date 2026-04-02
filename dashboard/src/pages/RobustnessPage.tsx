@@ -98,14 +98,12 @@ export default function RobustnessPage() {
       <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900">Robustness &amp; attacks</h2>
-        <p className="text-sm font-medium text-slate-700 mt-2">
+        <p className="text-sm text-slate-600 mt-2 max-w-2xl">
           Does the mechanism hold up under missingness, identity splitting, and parameter variation?
         </p>
         <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-          <strong>Illustrative in-browser simulation.</strong> These charts use the demo pipeline
-          (point-score, baseline DGP, seed&nbsp;42, N&nbsp;=&nbsp;6, T&nbsp;=&nbsp;200).
-          For thesis evidence, link experiment data via <code className="bg-amber-100 px-1 rounded">./scripts/link-dashboard-data.sh</code> and
-          use the pre-run outputs from the Python experiments.
+          In-browser simulation (point-score, baseline DGP, seed 42, N = 6, T = 200).
+          For thesis-grade evidence, see the pre-run Python experiment outputs.
         </div>
       </div>
 
