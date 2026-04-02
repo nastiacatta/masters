@@ -62,6 +62,12 @@ function clip(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }
 
+function boxMuller(rng: () => number): number {
+  const u1 = rng(), u2 = rng();
+  if (u1 < 1e-12) return boxMuller(rng);
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+
 /** Baseline: y ~ U(0,1), reports_i = clip(y + N(0, tau_i^2), 0, 1). */
 export function generateBaseline(
   seed: number,
@@ -78,7 +84,7 @@ export function generateBaseline(
   for (let t = 0; t < T; t++) {
     const y = rng();
     const reports = tau.map((tau_i) => {
-      const eps = (rng() + rng() + rng() + rng() - 2) * 1.17741 * tau_i; // Box–Muller approx
+      const eps = boxMuller(rng) * tau_i;
       return clip(y + eps, 0, 1);
     });
     rounds.push({ t, y, reports });
@@ -100,11 +106,11 @@ export function generateLatentFixed(
   const sigmaZ2 = sigmaZ * sigmaZ;
   const rounds: RoundData[] = [];
   for (let t = 0; t < T; t++) {
-    const Z = (rng() + rng() + rng() + rng() - 2) * 1.17741 * sigmaZ;
+    const Z = boxMuller(rng) * sigmaZ;
     const y = normCdf(Z);
     const reports: number[] = [];
     for (let i = 0; i < n; i++) {
-      const eps = (rng() + rng() + rng() + rng() - 2) * 1.17741;
+      const eps = boxMuller(rng);
       const X = Z + beta[i] + tau[i] * eps;
       const denom = sigmaZ2 + tau[i] * tau[i];
       const mu = (sigmaZ2 / denom) * (X - beta[i]);
@@ -113,12 +119,6 @@ export function generateLatentFixed(
     rounds.push({ t, y, reports });
   }
   return { rounds, tauTrue: tau, meta: { sigma_z: sigmaZ } };
-}
-
-function boxMuller(rng: () => number): number {
-  const u1 = rng(), u2 = rng();
-  if (u1 < 1e-12) return boxMuller(rng);
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }
 
 /** AR(1): mu[0]=mu0, mu[t] = rho*mu[t-1] + sigma_state * z_t. */
