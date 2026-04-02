@@ -114,7 +114,7 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="px-4 py-3 border-t border-slate-200">
         <p className="text-[9px] text-slate-400 leading-relaxed">
-          Adaptive skill and stake in forecast markets.
+          MSc Thesis · 2026
         </p>
       </div>
     </aside>

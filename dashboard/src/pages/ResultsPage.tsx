@@ -431,7 +431,7 @@ export default function ResultsPage() {
           </p>
           {!useExp && !loading && (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-              <strong>Illustrative only.</strong> Use this as a quick visual guide; final ranking should be read from the experiment-backed view.
+              In-browser demo (seed {DEMO_SEED}, N = {DEMO_N}, T = {DEMO_T}). Final ranking should be read from the experiment-backed view.
             </div>
           )}
           {hasPartialExp && (
@@ -481,15 +481,14 @@ export default function ResultsPage() {
           <button type="button" onClick={() => setHowToReadOpen(!howToReadOpen)}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors">
             <span className={`transition-transform ${howToReadOpen ? 'rotate-90' : ''}`}>&#x25B6;</span>
-            How to read the results
+            Reading guide
           </button>
           {howToReadOpen && (
-            <div className="mt-3 grid sm:grid-cols-4 gap-3">
+            <div className="mt-3 grid sm:grid-cols-3 gap-3">
               {([
-                ['What this is', useExp ? 'A large, offline comparison designed for fair method ranking.' : 'A lightweight interactive demo for intuition.'],
-                ['Metric', useExp ? 'CRPS and \u0394CRPS for accuracy; Gini/HHI/N_eff for concentration.' : 'Mean absolute error (point score) and Gini for concentration.'],
-                ['What to read first', 'Start from the ranked list in Accuracy, then use the charts to see distance between methods.'],
-                ['What to keep in mind', useExp ? 'Small gaps indicate near-ties; larger negative values indicate better accuracy.' : 'Demo results are informative but less stable than the full experiment-backed view.'],
+                ['Data source', useExp ? 'Pre-generated offline comparison across identical scenarios for all methods.' : 'In-browser demo (smaller sample, directional only).'],
+                ['Metric', useExp ? 'CRPS and ΔCRPS for accuracy; Gini, HHI, N_eff for concentration.' : 'Mean absolute error and Gini coefficient.'],
+                ['Interpretation', useExp ? 'Negative ΔCRPS = better than equal weights. Small gaps indicate near-ties.' : 'Start from the Accuracy tab, then check Concentration for trade-offs.'],
               ] as const).map(([label, desc]) => (
                 <div key={label} className="rounded-lg border border-slate-200 bg-white p-3">
                   <div className="text-[11px] font-semibold text-slate-700">{label}</div>
@@ -755,8 +754,8 @@ export default function ResultsPage() {
                   <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
                 </div>
                 <p className="text-[11px] text-slate-500 mb-3">
-                  <strong>Verdict:</strong> {demoBest.label} is best ({fmt(demoBest.pipeline.summary.meanError, 4)} mean error).
-                  {demoDelta < 0 ? ` Skill \u00d7 stake beats equal by ${fmt(Math.abs(demoDelta), 4)}.` : ' Equal weights match or lead.'}
+                  {demoBest.label} achieves the lowest mean error ({fmt(demoBest.pipeline.summary.meanError, 4)}).
+                  {demoDelta < 0 ? ` Skill \u00d7 stake improves on equal weights by ${fmt(Math.abs(demoDelta), 4)}.` : ' Equal weights match or lead.'}
                 </p>
                 <div className="cursor-crosshair" role="img" aria-label="Forecast quality by method">
                   <ResponsiveContainer width="100%" height={360}>
@@ -789,7 +788,7 @@ export default function ResultsPage() {
           {!useExp && !loading && activeTab === 'Concentration' && (
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <h3 className="text-sm font-semibold text-slate-800 mb-2">Gini and N_eff by weighting method</h3>
-              <p className="text-[11px] text-slate-500 mb-3"><strong>Verdict:</strong> Lower Gini and higher N_eff indicate less concentration.</p>
+              <p className="text-[11px] text-slate-500 mb-3">Lower Gini and higher N_eff indicate less concentration.</p>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={demoConcentrationBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
