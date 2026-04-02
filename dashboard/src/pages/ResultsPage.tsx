@@ -94,9 +94,14 @@ const VERDICT_BORDER: Record<Verdict, string> = {
   bad: 'border-l-red-400',
 };
 const VERDICT_TEXT: Record<Verdict, string> = {
-  good: 'text-emerald-700',
-  neutral: 'text-amber-700',
-  bad: 'text-red-700',
+  good: 'text-emerald-600',
+  neutral: 'text-amber-600',
+  bad: 'text-red-600',
+};
+const VERDICT_BG: Record<Verdict, string> = {
+  good: 'bg-emerald-50',
+  neutral: 'bg-amber-50',
+  bad: 'bg-red-50',
 };
 
 function AnswerCard({
@@ -105,13 +110,13 @@ function AnswerCard({
   title: string; metric: string; metricLabel: string; verdict: Verdict; interpretation: string;
 }) {
   return (
-    <div className={`rounded-lg border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} bg-white p-4 flex flex-col gap-1.5`}>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{title}</div>
+    <div className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-5 flex flex-col gap-2`}>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</div>
       <div className="flex items-baseline gap-2">
-        <span className={`text-lg font-bold font-mono ${VERDICT_TEXT[verdict]}`}>{metric}</span>
+        <span className={`text-2xl font-bold font-mono ${VERDICT_TEXT[verdict]}`}>{metric}</span>
         <span className="text-[10px] text-slate-400">{metricLabel}</span>
       </div>
-      <p className="text-[11px] text-slate-500 leading-relaxed">{interpretation}</p>
+      <p className="text-xs text-slate-600">{interpretation}</p>
     </div>
   );
 }
@@ -272,8 +277,6 @@ export default function ResultsPage() {
     }));
   }, []);
 
-  const demoSorted = useMemo(() => [...demoMethods].sort((a, b) => a.pipeline.summary.meanError - b.pipeline.summary.meanError), [demoMethods]);
-  const demoBest = demoSorted[0];
   const demoEqual = demoMethods.find((x) => x.key === 'equal')!;
   const demoBlended = demoMethods.find((x) => x.key === 'blended')!;
   const demoDelta = demoBlended.pipeline.summary.meanError - demoEqual.pipeline.summary.meanError;
@@ -394,11 +397,14 @@ export default function ResultsPage() {
 
         {/* ── Header ── */}
         <header>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Main results</h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+          <div className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-semibold tracking-wide mb-4">
+            {useExp ? 'Experiment-backed' : 'Interactive demo'}
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Results</h1>
+          <p className="text-sm text-slate-500 mt-1">
             {useExp
-              ? 'Pre-generated comparison across identical scenarios for all methods.'
-              : `In-browser demo (seed ${DEMO_SEED}, N\u2009=\u2009${DEMO_N}, T\u2009=\u2009${DEMO_T}).`}
+              ? `${expSeedCount} scenarios, paired comparison across all methods.`
+              : `Seed ${DEMO_SEED} · ${DEMO_N} agents · ${DEMO_T} rounds`}
           </p>
         </header>
 
@@ -587,51 +593,53 @@ export default function ResultsPage() {
           {/* ═══ DEMO FALLBACK TABS ═══ */}
 
           {!useExp && !loading && activeTab === 'Accuracy' && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-semibold text-slate-800">Cumulative error by method</h3>
-                  <InfoToggle term="Forecast quality" definition="Cumulative mean error over rounds." interpretation="Lower is better." axes={{ x: 'round', y: 'cumulative mean error' }} />
-                  <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
-                </div>
-                <p className="text-[11px] text-slate-500 mb-3">
-                  {demoBest.label} achieves the lowest mean error ({fmt(demoBest.pipeline.summary.meanError, 4)}).
-                </p>
-                <div className="cursor-crosshair" role="img" aria-label="Forecast quality by method">
-                  <ResponsiveContainer width="100%" height={360}>
-                    <LineChart data={demoCumError} margin={CHART_MARGIN_LABELED}
-                      onMouseDown={cumErrorZoom.onMouseDown} onMouseMove={cumErrorZoom.onMouseMove} onMouseUp={cumErrorZoom.onMouseUp}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                      {demoMethods.map((m) => (
-                        <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                          strokeWidth={m.key === 'blended' ? 2.5 : 1.5} dot={false} strokeOpacity={m.key === 'blended' ? 1 : 0.7} />
-                      ))}
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-semibold text-slate-800">Cumulative error by method</h3>
+                <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Lower is better. <span className="font-semibold" style={{ color: METHOD.blended.color }}>Skill × stake</span> vs baselines.
+              </p>
+              <div className="cursor-crosshair">
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+                    onMouseDown={cumErrorZoom.onMouseDown} onMouseMove={cumErrorZoom.onMouseMove} onMouseUp={cumErrorZoom.onMouseUp}>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]}
+                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                      label={{ value: 'Cumulative mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                    <Tooltip content={<SmartTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                    {demoMethods.map((m) => (
+                      <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
+                        strokeWidth={m.key === 'blended' ? 3 : 1.5} dot={false}
+                        strokeOpacity={m.key === 'blended' ? 1 : 0.6}
+                        isAnimationActive={true} animationDuration={300} />
+                    ))}
+                    <Brush dataKey="round" {...BRUSH_PROPS} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}
 
           {!useExp && !loading && activeTab === 'Concentration' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-3">Gini and N_eff by method</h3>
-              <ResponsiveContainer width="100%" height={300}>
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">Concentration by method</h3>
+              <p className="text-xs text-slate-500 mb-4">Lower Gini = more equal. Higher N_eff = more effective participants.</p>
+              <ResponsiveContainer width="100%" height={340}>
                 <BarChart data={demoConcentrationBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                  <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
                   <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
                   <Tooltip content={<SmartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={24}>
-                    {demoConcentrationBar.map((d) => <Cell key={d.key} fill={d.color} opacity={0.8} />)}
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                    {demoConcentrationBar.map((d) => <Cell key={d.key} fill={d.color} opacity={0.85} />)}
                   </Bar>
-                  <Bar dataKey="nEff" name="Mean N_eff" radius={[4, 4, 0, 0]} maxBarSize={24} fill="#0ea5e9" />
+                  <Bar dataKey="nEff" name="Mean N_eff" radius={[4, 4, 0, 0]} maxBarSize={32} fill="#0ea5e9" opacity={0.85} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -639,16 +647,17 @@ export default function ResultsPage() {
 
           {!useExp && !loading && activeTab === 'Deposit policy' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-3">Deposit policy: accuracy vs concentration</h3>
-              <ResponsiveContainer width="100%" height={300}>
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">Deposit policy comparison</h3>
+              <p className="text-xs text-slate-500 mb-4">Mean error and Gini by deposit rule. Lower is better for both.</p>
+              <ResponsiveContainer width="100%" height={340}>
                 <BarChart data={demoDeposits} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                  <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
                   <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
                   <Tooltip content={<SmartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                  <Bar dataKey="meanError" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={32} fill={SEM.outcome.main} />
-                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={32} fill={SEM.wealth.main} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <Bar dataKey="meanError" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.outcome.main} opacity={0.85} />
+                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.wealth.main} opacity={0.85} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
