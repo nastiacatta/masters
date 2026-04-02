@@ -95,7 +95,8 @@ export function runRoundExtended(
 
   const totalPayoff = base.skill_payoff.map((pi, i) => pi + utilityPayoff[i]);
   const profit = totalPayoff.map((tp, i) => tp - base.m[i]);
-  const wealth_new = state.map((s, i) => Math.max(0, s.wealth + profit[i]));
+  const refundExt = base.deposits.map((d, i) => Math.max(0, d - base.m[i]));
+  const wealth_new = state.map((s, i) => Math.max(0, s.wealth - base.deposits[i] + totalPayoff[i] + refundExt[i]));
 
   return {
     ...base,
