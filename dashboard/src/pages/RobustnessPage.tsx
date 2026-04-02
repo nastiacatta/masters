@@ -13,6 +13,8 @@ import {
   TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
+import ZoomBadge from '@/components/charts/ZoomBadge';
+import Breadcrumb from '@/components/dashboard/Breadcrumb';
 
 const DGP_ID = 'baseline' as const;
 const SEED = 42;
@@ -57,17 +59,7 @@ function SectionHeader({ title, question, takeaway }: { title: string; question:
   );
 }
 
-function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
-  if (!isZoomed) return null;
-  return (
-    <button
-      onClick={onReset}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors ml-1"
-    >
-      <span>⟲</span> Reset zoom
-    </button>
-  );
-}
+// ZoomBadge imported from shared component
 
 export default function RobustnessPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('intermittency');
@@ -103,6 +95,7 @@ export default function RobustnessPage() {
   return (
     <div className="flex-1 overflow-y-auto">
     <div className="max-w-6xl mx-auto px-6 py-8">
+      <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900">Robustness &amp; attacks</h2>
         <p className="text-sm font-medium text-slate-700 mt-2">

@@ -1,96 +1,96 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import clsx from 'clsx';
-import ExperimentTopBar from '@/components/dashboard/ExperimentTopBar';
-import Validation from '@/pages/validation/Validation';
+import { AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import type { ExperimentMeta } from '@/lib/types';
+import ExperimentCard from '@/components/dashboard/ExperimentCard';
 
-const TABS = [
-  { id: 'baselines', label: 'Baselines' },
-  { id: 'behaviour', label: 'Behaviour' },
-  { id: 'adversarial', label: 'Adversarial' },
-] as const;
+const BLOCK_FILTERS = ['all', 'core', 'behaviour', 'experiments'] as const;
+type BlockFilter = (typeof BLOCK_FILTERS)[number];
 
-type TabId = (typeof TABS)[number]['id'];
-
-function filterExperiments(experiments: ExperimentMeta[], tab: TabId): ExperimentMeta[] {
-  switch (tab) {
-    case 'baselines':
-      return experiments.filter(
-        (e) =>
-          e.name === 'forecast_aggregation' ||
-          e.name === 'skill_wager' ||
-          e.name === 'fixed_deposit' ||
-          e.block === 'core'
-      );
-    case 'behaviour':
-      return experiments.filter(
-        (e) =>
-          e.block === 'behaviour' ||
-          e.name.includes('intermittency') ||
-          e.name.includes('stress') ||
-          e.name === 'intermittency_stress_test'
-      );
-    case 'adversarial':
-      return experiments.filter(
-        (e) =>
-          e.name.includes('sybil') ||
-          e.name.includes('arbitrage') ||
-          e.name.includes('detection') ||
-          e.name.includes('collusion') ||
-          e.name.includes('insider') ||
-          e.name.includes('identity') ||
-          e.block === 'core' ||
-          e.name === 'parameter_sweep' ||
-          e.name === 'calibration'
-      );
-    default:
-      return experiments;
+function filterExperiments(
+  experiments: ExperimentMeta[],
+  block: BlockFilter,
+  query: string,
+): ExperimentMeta[] {
+  let filtered = experiments;
+  if (block !== 'all') {
+    filtered = filtered.filter((e) => e.block === block);
   }
+  if (query.trim()) {
+    const q = query.trim().toLowerCase();
+    filtered = filtered.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        (e.displayName ?? '').toLowerCase().includes(q) ||
+        (e.description ?? '').toLowerCase().includes(q),
+    );
+  }
+  return filtered;
 }
 
 export default function ExperimentsPage() {
-  const [tab, setTab] = useState<TabId>('baselines');
-  const { experiments, selectedExperiment, setSelectedExperiment } = useStore();
-  const filtered = useMemo(() => filterExperiments(experiments, tab), [experiments, tab]);
+  const { experiments } = useStore();
+  const [blockFilter, setBlockFilter] = useState<BlockFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (!selectedExperiment || filtered.length === 0) return;
-    if (!filtered.some((e) => e.name === selectedExperiment.name)) {
-      setSelectedExperiment(filtered[0]);
-    }
-  }, [tab, filtered, selectedExperiment, setSelectedExperiment]);
+  const filtered = useMemo(
+    () => filterExperiments(experiments, blockFilter, searchQuery),
+    [experiments, blockFilter, searchQuery],
+  );
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <h1 className="text-lg font-semibold text-slate-900">Experiments</h1>
         <p className="text-sm text-slate-600 mt-0.5">
-          Cross-scenario evidence. Select a tab and an experiment.
+          Browse all experiments. Filter by block or search by name.
         </p>
       </div>
-      <div className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1 mx-4 mt-3 mb-2">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-              tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-800'
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
+
+      {/* Filter controls */}
+      <div className="px-4 pt-3 pb-2 space-y-2">
+        <div className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+          {BLOCK_FILTERS.map((b) => (
+            <button
+              key={b}
+              type="button"
+              onClick={() => setBlockFilter(b)}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize',
+                blockFilter === b
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-800',
+              )}
+            >
+              {b === 'all' ? 'All' : b}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search experiments…"
+          className="w-full max-w-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+        />
       </div>
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 pt-2">
-          <ExperimentTopBar experimentsFilter={filtered} />
-        </div>
-        <div className="p-4">
-          <Validation />
-        </div>
+
+      {/* Card grid */}
+      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-2">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-sm text-slate-500">
+            No experiments match your filters.
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((exp) => (
+                <ExperimentCard key={exp.name} experiment={exp} />
+              ))}
+            </div>
+          </AnimatePresence>
+        )}
       </div>
     </div>
   );

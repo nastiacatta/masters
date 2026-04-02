@@ -31,7 +31,16 @@ export default function ParticipationHeatmap({ data }: Props) {
   const cellH = 18;
 
   return (
-    <ChartCard title="Participation Heatmap" subtitle="Agents × rounds — darker = more active participation">
+    <ChartCard
+      title="Participation Heatmap"
+      subtitle="Agents × rounds — darker = more active participation"
+      help={{
+        term: 'Participation Heatmap',
+        definition: 'Shows each agent\'s participation rate over time blocks. Each cell represents a block of rounds.',
+        interpretation: 'Darker blue cells indicate higher participation rates. Gaps or light cells reveal intermittent agents.',
+        axes: { x: 'Round blocks', y: 'Agent' },
+      }}
+    >
       <div className="overflow-x-auto">
         <div className="flex">
           <div className="shrink-0 pr-2">

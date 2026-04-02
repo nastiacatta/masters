@@ -44,7 +44,16 @@ export default function SkillTrajectoryChart({
   const initialStart = Math.max(0, chartData.length - 120);
 
   return (
-    <ChartCard title={title} subtitle={`${yLabel} over time by agent`}>
+    <ChartCard
+      title={title}
+      subtitle={`${yLabel} over time by agent`}
+      help={{
+        term: title,
+        definition: 'Tracks each agent\'s online skill estimate (σ) or related metric over rounds.',
+        interpretation: 'Rising lines indicate improving skill estimates. Click legend items to toggle individual agents.',
+        axes: { x: 'Round', y: yLabel },
+      }}
+    >
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={chartData}
@@ -72,6 +81,8 @@ export default function SkillTrajectoryChart({
               dot={false}
               connectNulls
               hide={hiddenAgents.has(`agent_${a}`)}
+              isAnimationActive={true}
+              animationDuration={300}
             />
           ))}
           <Brush

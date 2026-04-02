@@ -26,13 +26,23 @@ export function EmptyState({ message = 'No data available.', children }: DataSta
 export function ErrorState({
   message = 'Something went wrong loading the data.',
   error,
+  onRetry,
   children,
-}: DataStatesProps & { error?: Error | null }) {
+}: DataStatesProps & { error?: Error | null; onRetry?: () => void }) {
   return (
     <div className="p-4 mb-4 bg-slate-100 border border-slate-200 rounded-xl">
       <p className="text-sm font-medium text-slate-800">{message}</p>
       {error?.message && (
         <p className="text-xs text-slate-600 mt-1 font-mono">{error.message}</p>
+      )}
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-3 px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-medium hover:bg-slate-700 transition-colors"
+        >
+          Retry
+        </button>
       )}
       {children}
     </div>
