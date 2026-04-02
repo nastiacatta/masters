@@ -13,34 +13,50 @@ export interface ExtendedParams extends MechanismParams {
   scoreThreshold?: number;
 }
 
-/** Cap weight shares per onlinev2 staking.cap_weight_shares. */
+/** Cap weight shares per onlinev2 staking.cap_weight_shares.
+ *  Projects shares onto the simplex with max share ≤ omegaMax.
+ *  Returns rescaled values that sum to the original total M. */
 export function capWeightShares(m: number[], omegaMax: number): number[] {
   const cleaned = m.map((v) => Math.max(0, v));
   const M = cleaned.reduce((a, b) => a + b, 0);
   if (M <= EPS) return cleaned;
   const n = cleaned.length;
   const om = Math.max(1 / n, Math.min(1, omegaMax));
-  let shares = cleaned.map((v) => v / M);
 
-  for (let iter = 0; iter < n + 5; iter++) {
-    const over = shares.map((s) => s > om + EPS);
-    if (!over.some(Boolean)) break;
-    let remainder = 1;
-    shares = shares.map((s, i) => {
-      if (over[i]) {
-        remainder -= om;
-        return om;
+  // Simplex projection: iteratively clip overweight shares and redistribute
+  let shares = cleaned.map((v) => v / M);
+  const capped = new Array(n).fill(false);
+
+  for (let iter = 0; iter < n; iter++) {
+    let excess = 0;
+    let freeTotal = 0;
+    let freeCount = 0;
+
+    for (let i = 0; i < n; i++) {
+      if (capped[i]) continue;
+      if (shares[i] > om + EPS) {
+        excess += shares[i] - om;
+        shares[i] = om;
+        capped[i] = true;
+      } else {
+        freeTotal += shares[i];
+        freeCount++;
       }
-      return s;
-    });
-    const free = n - over.filter(Boolean).length;
-    if (free <= 0) break;
-    const fill = Math.min(remainder / free, om);
-    shares = shares.map((s, i) => (over[i] ? s : fill));
+    }
+
+    if (excess <= EPS) break;
+    if (freeCount === 0) break;
+
+    // Redistribute excess proportionally among free agents
+    for (let i = 0; i < n; i++) {
+      if (capped[i]) continue;
+      shares[i] += (freeTotal > EPS ? shares[i] / freeTotal : 1 / freeCount) * excess;
+    }
   }
-  const sum = shares.reduce((a, b) => a + b, 0);
-  const norm = sum > 0 ? shares.map((s) => (s / sum) * M) : cleaned;
-  return norm;
+
+  // Rescale back to original total
+  const shareSum = shares.reduce((a, b) => a + b, 0);
+  return shareSum > EPS ? shares.map((s) => (s / shareSum) * M) : cleaned;
 }
 
 export interface ExtendedStepOutputs extends StepOutputs {

@@ -98,10 +98,20 @@ function makeRng(seed: number): () => number {
 }
 
 function normalSample(rng: () => number): number {
+  // Box-Muller using both components via closure cache
+  if (normalSample._cached !== undefined) {
+    const v = normalSample._cached;
+    normalSample._cached = undefined;
+    return v;
+  }
   const u1 = Math.max(rng(), 1e-9);
-  const u2 = Math.max(rng(), 1e-9);
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  const u2 = rng();
+  const r = Math.sqrt(-2 * Math.log(u1));
+  const theta = 2 * Math.PI * u2;
+  normalSample._cached = r * Math.sin(theta);
+  return r * Math.cos(theta);
 }
+normalSample._cached = undefined as number | undefined;
 
 function influenceFromWeighting(mode: WeightingMode | undefined): InfluenceRule {
   switch (mode) {
@@ -241,10 +251,11 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
   const dgp = generateDGP(options.dgpId, seed, T, n);
   const rng = makeRng(seed + 997);
 
+  const initialL = 0.5;
   let state: AgentState[] = Array.from({ length: n }, (_, index) => ({
     accountId: index,
-    L: 0.5,
-    sigma: 0.5,
+    L: initialL,
+    sigma: params.sigma_min + (1 - params.sigma_min) * Math.exp(-params.gamma * initialL),
     wealth: INITIAL_WEALTH,
   }));
 
