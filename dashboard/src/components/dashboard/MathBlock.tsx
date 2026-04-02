@@ -39,10 +39,10 @@ export default function MathBlock({ latex, inline, children, label, caption, cla
   return (
     <div
       className={clsx(
-        'rounded-xl border px-4 py-3 text-center overflow-x-auto',
+        'text-center',
         accent
-          ? 'border-blue-300 bg-blue-50/50 text-slate-800'
-          : 'border-slate-200 bg-white text-slate-700',
+          ? 'rounded-xl border border-blue-300 bg-blue-50/50 text-slate-800 px-4 py-3'
+          : '',
         className
       )}
     >
