@@ -68,7 +68,7 @@ export default function ForecastQualityChart({ data }: Props) {
             domain={[zoom.state.left, zoom.state.right]}
             label={{ value: 'Round', position: 'insideBottom', offset: -2, fontSize: 12 }}
           />
-          <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
+          <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" label={{ value: 'CRPS', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} />
           <Tooltip
             contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
             formatter={(value: unknown, name: unknown) => [typeof value === 'number' ? value.toFixed(5) : String(value ?? ''), metricLabel(String(name ?? ''))]}
@@ -86,9 +86,9 @@ export default function ForecastQualityChart({ data }: Props) {
               type="monotone"
               dataKey={key}
               stroke={WEIGHTING_COLORS[key]}
-              strokeWidth={key.includes('Mechanism') || key.includes('mechanism') ? 2.5 : 1.2}
+              strokeWidth={key.includes('Mechanism') || key.includes('mechanism') ? 3 : 1.5}
               dot={false}
-              strokeOpacity={key.includes('Mechanism') || key.includes('mechanism') ? 1 : 0.6}
+              strokeOpacity={key.includes('Mechanism') || key.includes('mechanism') ? 1 : 0.75}
               hide={hiddenSeries.has(key)}
               isAnimationActive={true}
               animationDuration={300}

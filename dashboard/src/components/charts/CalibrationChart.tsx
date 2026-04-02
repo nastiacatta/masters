@@ -52,7 +52,7 @@ export default function CalibrationChart({ data }: Props) {
             contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
             formatter={(value: unknown) => typeof value === 'number' ? value.toFixed(3) : String(value ?? '')}
           />
-          <Scatter data={data} fill="#2563eb" r={5} isAnimationActive={true} animationDuration={300} />
+          <Scatter data={data} fill="#2563eb" r={7} isAnimationActive={true} animationDuration={300} />
           {zoom.state.refLeft && zoom.state.refRight && (
             <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
           )}
