@@ -286,7 +286,7 @@ export function runComposableRound(
   const profit = totalPayoff.map((value, index) => value - effectiveWager[index]);
   const refunds = deposits.map((value, index) => Math.max(0, value - effectiveWager[index]));
   const wealth_after = wealth_before.map((wealth, index) =>
-    Math.max(0, wealth + profit[index]),
+    Math.max(0, wealth - deposits[index] + totalPayoff[index] + refunds[index]),
   );
 
   const L_new = L_prev.map((value, index) =>
