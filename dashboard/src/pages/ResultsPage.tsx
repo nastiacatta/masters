@@ -105,18 +105,18 @@ const VERDICT_BG: Record<Verdict, string> = {
 };
 
 function AnswerCard({
-  title, metric, metricLabel, verdict, interpretation,
+  question, answer, detail, verdict, explanation,
 }: {
-  title: string; metric: string; metricLabel: string; verdict: Verdict; interpretation: string;
+  question: string; answer: string; detail: string; verdict: Verdict; explanation: string;
 }) {
   return (
-    <div className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-5 flex flex-col gap-2`}>
-      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</div>
-      <div className="flex items-baseline gap-2">
-        <span className={`text-2xl font-bold font-mono ${VERDICT_TEXT[verdict]}`}>{metric}</span>
-        <span className="text-[10px] text-slate-400">{metricLabel}</span>
+    <div className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-5 space-y-3`}>
+      <div className="text-xs font-semibold text-slate-700">{question}</div>
+      <div className="flex items-baseline gap-3">
+        <span className={`text-2xl font-bold font-mono ${VERDICT_TEXT[verdict]}`}>{answer}</span>
+        <span className="text-xs text-slate-500">{detail}</span>
       </div>
-      <p className="text-xs text-slate-600">{interpretation}</p>
+      <p className="text-xs text-slate-500 leading-relaxed">{explanation}</p>
     </div>
   );
 }
@@ -246,11 +246,6 @@ export default function ResultsPage() {
       });
   }, [expCoreMethods, expBestCore]);
 
-  const expMechVsEqualX1e4 = (() => {
-    const mech = expCoreMethods.find((m) => m.method === 'mechanism');
-    return mech ? (mech.deltaCrps ?? 0) * 1e4 : null;
-  })();
-
   const calibrationData = useMemo(() =>
     calibration.filter((p) => Number.isFinite(p.tau) && Number.isFinite(p.pHat))
       .map((p) => ({ tau: p.tau, pHat: p.pHat, ideal: p.tau, nValid: p.nValid }))
@@ -280,7 +275,6 @@ export default function ResultsPage() {
   const demoEqual = demoMethods.find((x) => x.key === 'equal')!;
   const demoBlended = demoMethods.find((x) => x.key === 'blended')!;
   const demoDelta = demoBlended.pipeline.summary.meanError - demoEqual.pipeline.summary.meanError;
-  const demoDeltaGini = demoBlended.pipeline.summary.finalGini - demoEqual.pipeline.summary.finalGini;
 
   const demoCumError = useMemo(() => {
     const maxLen = Math.max(...demoMethods.map((m) => m.pipeline.rounds.length));
@@ -411,24 +405,25 @@ export default function ResultsPage() {
         {/* ── Headline cards ── */}
         <section className="grid sm:grid-cols-2 gap-4">
           <AnswerCard
-            title="Does skill improve accuracy?"
-            metric={deltaCrps == null ? '—' : `${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)}`}
-            metricLabel={useExp ? `ΔCRPS vs equal${expMechVsEqualX1e4 != null ? ` (×10⁴ = ${expMechVsEqualX1e4.toFixed(2)})` : ''}` : 'Δ mean error vs equal'}
+            question="Does adding skill to stake improve forecast accuracy?"
+            answer={deltaCrps == null ? '—' : deltaCrps < 0 ? 'Yes' : 'No'}
+            detail={deltaCrps == null ? '' : `Δ = ${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)} mean error`}
             verdict={accuracyVerdict}
-            interpretation={
-              deltaCrps == null ? 'Loading.'
-                : deltaCrps < 0 ? `Skill × stake improves accuracy by ${fmt(Math.abs(deltaCrps), 4)}.`
-                : 'Equal weights match or beat Skill × stake.'
+            explanation={
+              deltaCrps == null ? 'Loading data.'
+                : deltaCrps < 0
+                  ? `The skill-weighted method reduces average forecast error by ${fmt(Math.abs(deltaCrps), 4)} compared to equal weighting. This means the online skill layer is successfully identifying and upweighting better forecasters.`
+                  : 'Equal weighting performs as well or better. The skill layer does not add value in this configuration.'
             }
           />
           <AnswerCard
-            title="Does wealth dominate?"
-            metric={gini == null ? '—' : fmt(gini, 3)}
-            metricLabel="Final Gini (blended)"
+            question="Does skill weighting concentrate too much influence?"
+            answer={gini == null ? '—' : gini < 0.4 ? 'Low' : gini < 0.6 ? 'Moderate' : 'High'}
+            detail={gini == null ? '' : `Gini = ${fmt(gini, 3)}`}
             verdict={concentrationVerdict}
-            interpretation={
-              useExp ? 'Concentration across methods shown in the Concentration tab.'
-                : `ΔGini vs equal: ${demoDeltaGini >= 0 ? '+' : ''}${fmt(demoDeltaGini, 3)}.`
+            explanation={
+              gini == null ? 'Loading data.'
+                : `The Gini coefficient measures wealth inequality (0 = perfectly equal, 1 = one agent holds everything). A Gini of ${fmt(gini, 3)} means ${gini < 0.4 ? 'influence remains well-distributed across participants' : gini < 0.6 ? 'some concentration exists but multiple agents retain meaningful influence' : 'a few agents dominate — the skill layer may be amplifying early advantages'}.`
             }
           />
         </section>
@@ -593,14 +588,20 @@ export default function ResultsPage() {
           {/* ═══ DEMO FALLBACK TABS ═══ */}
 
           {!useExp && !loading && activeTab === 'Accuracy' && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-slate-800">Cumulative error by method</h3>
-                <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
+            <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-sm font-semibold text-slate-800">Cumulative forecast error over time</h3>
+                  <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
+                  Each line shows the running average error for a different weighting method.
+                  Lower means more accurate forecasts.
+                  The <span className="font-semibold" style={{ color: METHOD.blended.color }}>Skill × stake</span> line
+                  should track below the others if the online skill layer adds value.
+                  Drag to zoom into a time range.
+                </p>
               </div>
-              <p className="text-xs text-slate-500 mb-4">
-                Lower is better. <span className="font-semibold" style={{ color: METHOD.blended.color }}>Skill × stake</span> vs baselines.
-              </p>
               <div className="cursor-crosshair">
                 <ResponsiveContainer width="100%" height={400}>
                   <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
@@ -626,9 +627,15 @@ export default function ResultsPage() {
           )}
 
           {!useExp && !loading && activeTab === 'Concentration' && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Concentration by method</h3>
-              <p className="text-xs text-slate-500 mb-4">Lower Gini = more equal. Higher N_eff = more effective participants.</p>
+            <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Wealth concentration by method</h3>
+                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
+                  The Gini coefficient measures how unequally wealth is distributed (0 = perfectly equal, 1 = one agent holds everything).
+                  N_eff is the effective number of participants with meaningful influence.
+                  A good mechanism keeps Gini low and N_eff high — accuracy without letting anyone dominate.
+                </p>
+              </div>
               <ResponsiveContainer width="100%" height={340}>
                 <BarChart data={demoConcentrationBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
@@ -646,9 +653,16 @@ export default function ResultsPage() {
           )}
 
           {!useExp && !loading && activeTab === 'Deposit policy' && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Deposit policy comparison</h3>
-              <p className="text-xs text-slate-500 mb-4">Mean error and Gini by deposit rule. Lower is better for both.</p>
+            <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">How deposit rules affect outcomes</h3>
+                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
+                  The deposit policy determines how much each agent stakes per round.
+                  "Fixed" means everyone stakes the same amount. "Fraction of wealth" scales with bankroll.
+                  "Wealth × skill" also factors in the agent's skill estimate.
+                  Lower bars are better for both metrics.
+                </p>
+              </div>
               <ResponsiveContainer width="100%" height={340}>
                 <BarChart data={demoDeposits} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
