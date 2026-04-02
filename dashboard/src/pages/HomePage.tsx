@@ -1,17 +1,28 @@
 import { Link } from 'react-router-dom';
-import MathBlock from '@/components/dashboard/MathBlock';
-
-const STEPS = [
-  { n: 1, title: 'Submit',        color: 'bg-sky-500',     latex: 'r_{i,t},\\; b_{i,t}' },
-  { n: 2, title: 'Skill-adjust',  color: 'bg-violet-500',  latex: 'm_{i,t} = b_{i,t}(\\lambda + (1{-}\\lambda)\\,\\sigma_{i,t})' },
-  { n: 3, title: 'Aggregate',     color: 'bg-teal-500',    latex: '\\hat{r}_t = \\sum \\hat{m}_{i,t}\\, r_{i,t}' },
-  { n: 4, title: 'Settle & learn', color: 'bg-amber-500',  latex: '\\sigma_{i,t+1} = \\sigma_{\\min} + (1{-}\\sigma_{\\min})\\,e^{-\\gamma L_{i,t}}' },
-] as const;
 
 const NAV = [
   { to: '/results',    label: 'Results',    desc: 'Accuracy & concentration', color: 'border-l-indigo-500 hover:bg-indigo-50' },
   { to: '/mechanism',  label: 'Mechanism',  desc: 'Interactive walkthrough',  color: 'border-l-teal-500 hover:bg-teal-50' },
   { to: '/robustness', label: 'Robustness', desc: 'Attacks & sensitivity',   color: 'border-l-amber-500 hover:bg-amber-50' },
+] as const;
+
+const STEPS = [
+  {
+    n: 1, title: 'Submit', color: 'bg-sky-500',
+    what: 'Each forecaster submits a prediction and a wager.',
+  },
+  {
+    n: 2, title: 'Skill-adjust', color: 'bg-violet-500',
+    what: 'The wager is scaled by a learned skill estimate — low skill reduces influence.',
+  },
+  {
+    n: 3, title: 'Aggregate', color: 'bg-teal-500',
+    what: 'Adjusted wagers become weights. The market forecast is a weighted combination.',
+  },
+  {
+    n: 4, title: 'Settle & learn', color: 'bg-amber-500',
+    what: 'Payoffs reward accuracy. Skill estimates update from realised performance.',
+  },
 ] as const;
 
 export default function HomePage() {
@@ -55,18 +66,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Round timeline ── */}
+        {/* ── Round timeline — plain English ── */}
         <section>
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">One round</h2>
-          <div className="grid sm:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             {STEPS.map((s) => (
-              <div key={s.n} className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className={`w-6 h-6 rounded-full ${s.color} flex items-center justify-center text-white text-[10px] font-bold mb-2`}>
+              <div key={s.n} className="rounded-xl border border-slate-200 bg-white p-5 flex gap-4 items-start">
+                <div className={`w-7 h-7 rounded-full ${s.color} flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5`}>
                   {s.n}
                 </div>
-                <div className="text-sm font-semibold text-slate-800">{s.title}</div>
-                <div className="mt-2">
-                  <MathBlock latex={s.latex} className="text-[11px]" />
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">{s.title}</div>
+                  <div className="text-xs text-slate-500 mt-1 leading-relaxed">{s.what}</div>
                 </div>
               </div>
             ))}
