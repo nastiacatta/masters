@@ -354,7 +354,7 @@ export default function ResultsPage() {
     const reportsLatent = Array.from({ length: n }, (_, i) => sim.rounds.map((r) => invNormCdf(r.reports[i])));
 
     const eta = 0.015;
-    const etaDecay = 2e-5;
+    const etaDecay = 1e-4;
     const w = [1 / n, 1 / n, 1 / n];
     const hist: number[][] = Array.from({ length: n }, () => new Array(T).fill(0));
 
