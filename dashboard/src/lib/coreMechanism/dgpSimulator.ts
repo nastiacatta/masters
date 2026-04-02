@@ -98,11 +98,12 @@ export function generateLatentFixed(
   T: number,
   n: number,
   sigmaZ: number = 1,
-  tau_i?: number[]
+  tau_i?: number[],
+  beta_i?: number[],
 ): DGPSeries {
   const rng = createSeededRng(seed);
   const tau = tau_i ?? Array.from({ length: n }, () => 0.3 + rng() * 0.5);
-  const beta = Array.from({ length: n }, () => 0);
+  const beta = beta_i ?? Array.from({ length: n }, () => 0);
   const sigmaZ2 = sigmaZ * sigmaZ;
   const rounds: RoundData[] = [];
   for (let t = 0; t < T; t++) {
