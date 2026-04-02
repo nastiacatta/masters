@@ -21,6 +21,7 @@ import {
   TOOLTIP_STYLE, BRUSH_PROPS, agentName, fmt, downsample, movingAvg,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
+import ZoomBadge from '@/components/charts/ZoomBadge';
 
 const INVARIANTS = [
   { label: 'Budget balanced', desc: 'Total payouts equal total effective wagers.', color: SEM.payoff.main },
@@ -52,17 +53,7 @@ function SmartTooltip({ active, payload, label }: {
   );
 }
 
-function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
-  if (!isZoomed) return null;
-  return (
-    <button
-      onClick={onReset}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors"
-    >
-      <span>⟲</span> Reset zoom
-    </button>
-  );
-}
+// ZoomBadge imported from shared component
 
 type ViewMode = 'timeline' | 'inspect' | 'validation';
 

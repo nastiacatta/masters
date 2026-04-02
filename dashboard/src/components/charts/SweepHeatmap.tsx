@@ -5,6 +5,9 @@ import { useState } from 'react';
 import TabGroup from '../dashboard/TabGroup';
 import { fmtNum, sweepMetricLabel } from '@/lib/formatters';
 
+// Note: Drag-to-zoom is not applicable for this table-based heatmap.
+// The heatmap uses HTML table cells, not Recharts, so useChartZoom cannot be applied.
+
 interface Props {
   data: SweepPoint[];
 }
@@ -38,7 +41,16 @@ export default function SweepHeatmap({ data }: Props) {
   const cellH = 36;
 
   return (
-    <ChartCard title="Parameter Sweep" subtitle={<><MathBlock inline latex="\\lambda" /> vs <MathBlock inline latex="\\sigma_{\\min}" /> — explore the quality–concentration trade-off</>}>
+    <ChartCard
+      title="Parameter Sweep"
+      subtitle={<><MathBlock inline latex="\\lambda" /> vs <MathBlock inline latex="\\sigma_{\\min}" /> — explore the quality–concentration trade-off</>}
+      help={{
+        term: 'Parameter Sweep',
+        definition: 'A grid search over λ (stake weight) and σ_min (minimum skill floor), measuring accuracy (CRPS) and concentration (Gini) at each combination.',
+        interpretation: 'Darker cells indicate worse values. The mechanism is not brittle if the colour gradient is smooth rather than having sharp jumps.',
+        axes: { x: 'σ_min (minimum skill floor)', y: 'λ (stake weight)' },
+      }}
+    >
       <TabGroup
         tabs={[
           { id: 'meanCrps', label: 'Mean CRPS' },

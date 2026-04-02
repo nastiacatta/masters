@@ -5,7 +5,6 @@ import {
   Brush,
   CartesianGrid,
   Cell,
-  LabelList,
   Legend,
   Line,
   LineChart,
@@ -43,7 +42,14 @@ import {
   fmt,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
+import ZoomBadge from '@/components/charts/ZoomBadge';
+import DeltaBarChart from '@/components/charts/DeltaBarChart';
+import ConcentrationPanel from '@/components/charts/ConcentrationPanel';
+import FourPanelLayout from '@/components/charts/FourPanelLayout';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
+import Breadcrumb from '@/components/dashboard/Breadcrumb';
+import Skeleton from '@/components/dashboard/Skeleton';
 
 const DEMO_SEED = 42;
 const DEMO_N = 6;
@@ -106,14 +112,7 @@ function AnswerCard({
   );
 }
 
-function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
-  if (!isZoomed) return null;
-  return (
-    <button onClick={onReset} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors">
-      <span>&#x27F2;</span> Reset zoom
-    </button>
-  );
-}
+// ZoomBadge imported from shared component
 
 const EXP_TABS = ['Accuracy', 'Concentration', 'Calibration', 'Ablation'] as const;
 const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
@@ -235,20 +234,6 @@ export default function ResultsPage() {
 
   const expMechanism = methodAgg.find((m) => m.method === 'mechanism') ?? null;
 
-
-  const expGiniBar = useMemo(() =>
-    [...methodAgg]
-      .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method) && m.finalGini != null)
-      .sort((a, b) => (a.finalGini ?? 0) - (b.finalGini ?? 0))
-      .map((m) => ({ name: m.label, method: m.method, finalGini: m.finalGini as number, color: m.color })),
-    [methodAgg]);
-
-  const expInfluenceBar = useMemo(() =>
-    [...methodAgg]
-      .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method) && (m.meanHHI != null || m.meanNEff != null))
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .map((m) => ({ name: m.label, method: m.method, meanHHI: m.meanHHI ?? null, meanNEff: m.meanNEff ?? null })),
-    [methodAgg]);
 
   const expCoreMethods = useMemo(
     () => methodAgg.filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method) && m.deltaCrps != null),
@@ -436,6 +421,7 @@ export default function ResultsPage() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        <Breadcrumb activeTab={activeTab} />
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Main results</h1>
           <p className="text-sm text-slate-600 mt-1.5 max-w-2xl">
@@ -526,12 +512,89 @@ export default function ResultsPage() {
           </div>
 
           {loading && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-              Loading experiment outputs\u2026
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Skeleton height="120px" />
+                <Skeleton height="120px" />
+              </div>
+              <Skeleton height="320px" />
             </div>
           )}
 
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.2 }}
+          >
+
           {/* ========== EXPERIMENT-BACKED TABS ========== */}
+
+          {/* Four-panel overview when all experiment data is available */}
+          {useExp && !loading && expAccuracyDisplay.length > 0 && calibrationData.length > 0 && ablationData.length > 0 && activeTab === 'Accuracy' && (
+            <FourPanelLayout
+              title="Master Comparison Overview"
+              thesisPoint="Does combining skill with stake improve aggregate forecasts? This 4-panel view summarises accuracy, calibration, market structure, and ablation evidence."
+              primary={
+                <DeltaBarChart
+                  data={expAccuracyDisplay.map((d) => ({
+                    label: d.name,
+                    delta: d.deltaCrpsX1e4,
+                    se: d.seX1e4 > 0 ? d.seX1e4 : undefined,
+                    color: d.color,
+                  }))}
+                  baselineLabel="Baseline (equal)"
+                  metricLabel="Δ CRPS (×10⁴)"
+                />
+              }
+              calibration={
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="text-xs font-semibold text-slate-700 mb-2">Reliability diagram</div>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                      <YAxis dataKey="pHat" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
+                      <Line type="monotone" dataKey="pHat" name="Empirical p̂" stroke="#0d9488" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              }
+              structure={
+                <ConcentrationPanel
+                  data={methodAgg
+                    .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method))
+                    .map((m) => ({
+                      method: m.method,
+                      label: m.label,
+                      color: m.color,
+                      gini: m.finalGini ?? undefined,
+                      hhi: m.meanHHI ?? undefined,
+                      nEff: m.meanNEff ?? undefined,
+                    }))}
+                />
+              }
+              failure={
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="text-xs font-semibold text-slate-700 mb-2">Ablation (ΔCRPS vs Full)</div>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={ablationData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="variant" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                      <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Bar dataKey="delta_crps_vs_full" name="ΔCRPS vs Full" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#6366f1" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              }
+            />
+          )}
 
           {useExp && activeTab === 'Accuracy' && (
             <div className="space-y-5">
@@ -590,26 +653,16 @@ export default function ResultsPage() {
                     <p className="text-[10px] text-slate-500 mt-2">Lower values indicate better average accuracy.</p>
                   </div>
                   <div className="mt-4">
-                    <div className="text-[11px] font-semibold text-slate-600 mb-2">Method comparison (vs Equal)</div>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={expAccuracyDisplay} layout="vertical" margin={{ top: 4, right: 52, bottom: 4, left: 8 }}>
-                        <CartesianGrid {...GRID_PROPS} />
-                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                        <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={140} />
-                        <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" />
-                        <Tooltip
-                          formatter={(value) => [
-                            `${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '—'} points`,
-                            'Difference vs Equal',
-                          ]}
-                          contentStyle={TOOLTIP_STYLE}
-                        />
-                        <Bar dataKey="deltaCrpsX1e4" radius={[0, 4, 4, 0]} maxBarSize={30}>
-                          {expAccuracyDisplay.map((d) => <Cell key={d.method} fill={d.color} opacity={0.9} />)}
-                          <LabelList dataKey="deltaLabel" position="right" style={{ fontSize: 10, fill: '#64748b' }} />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <DeltaBarChart
+                      data={expAccuracyDisplay.map((d) => ({
+                        label: d.name,
+                        delta: d.deltaCrpsX1e4,
+                        se: d.seX1e4 > 0 ? d.seX1e4 : undefined,
+                        color: d.color,
+                      }))}
+                      baselineLabel="Baseline (equal)"
+                      metricLabel="Δ CRPS (×10⁴)"
+                    />
                   </div>
                 </div>
               )}
@@ -617,36 +670,18 @@ export default function ResultsPage() {
           )}
 
           {useExp && activeTab === 'Concentration' && (
-            <div className="grid lg:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="text-sm font-semibold text-slate-800 mb-2">Final Gini by method</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={expGiniBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Bar dataKey="finalGini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={36}>
-                      {expGiniBar.map((d) => <Cell key={d.method} fill={d.color} opacity={0.85} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="text-sm font-semibold text-slate-800 mb-2">HHI and N_eff by method</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={expInfluenceBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                    <Bar dataKey="meanHHI" name="Mean HHI" radius={[4, 4, 0, 0]} maxBarSize={18} fill="#ec4899" />
-                    <Bar dataKey="meanNEff" name="Mean N_eff" radius={[4, 4, 0, 0]} maxBarSize={18} fill="#0ea5e9" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <ConcentrationPanel
+              data={methodAgg
+                .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method))
+                .map((m) => ({
+                  method: m.method,
+                  label: m.label,
+                  color: m.color,
+                  gini: m.finalGini ?? undefined,
+                  hhi: m.meanHHI ?? undefined,
+                  nEff: m.meanNEff ?? undefined,
+                }))}
+            />
           )}
 
           {useExp && activeTab === 'Calibration' && (
@@ -788,6 +823,9 @@ export default function ResultsPage() {
               </ResponsiveContainer>
             </div>
           )}
+
+          </motion.div>
+          </AnimatePresence>
         </section>
 
         <section aria-label="Weight-learning sanity check" className="rounded-2xl border border-slate-200 bg-white p-5">
