@@ -2,8 +2,7 @@ import { Link } from 'react-router-dom';
 
 const NAV = [
   { to: '/results',    label: 'Results',    desc: 'Accuracy & concentration', color: 'border-l-indigo-500 hover:bg-indigo-50' },
-  { to: '/mechanism',  label: 'Mechanism',  desc: 'Interactive walkthrough',  color: 'border-l-teal-500 hover:bg-teal-50' },
-  { to: '/robustness', label: 'Robustness', desc: 'Attacks & sensitivity',   color: 'border-l-amber-500 hover:bg-amber-50' },
+  { to: '/behaviour',  label: 'Behaviour',  desc: 'Strategies, attacks & robustness', color: 'border-l-violet-500 hover:bg-violet-50' },
 ] as const;
 
 const STEPS = [

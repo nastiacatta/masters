@@ -37,12 +37,6 @@ const ChartBarIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M8 1.5L2.5 4V8C2.5 11.5 8 14.5 8 14.5C8 14.5 13.5 11.5 13.5 8V4L8 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-  </svg>
-);
-
 const BookIcon: FC<{ className?: string }> = ({ className }) => (
   <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M2.5 2.5H6C7.1 2.5 8 3.4 8 4.5V13.5C8 12.7 7.3 12 6.5 12H2.5V2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -59,14 +53,13 @@ const BeakerIcon: FC<{ className?: string }> = ({ className }) => (
 );
 
 const NAV_ITEMS: NavItem[] = [
-  /* Primary */
+  /* Primary — thesis story flow */
   { to: '/',           label: 'Overview',            icon: HomeIcon,     group: 'primary' },
-  { to: '/mechanism',  label: 'Mechanism',           icon: CogIcon,      group: 'primary' },
   { to: '/results',    label: 'Results',             icon: ChartBarIcon, group: 'primary' },
-  { to: '/robustness', label: 'Robustness',          icon: ShieldIcon,   group: 'primary' },
+  { to: '/behaviour',  label: 'Behaviour',           icon: BeakerIcon,   group: 'primary' },
   /* Secondary */
-  { to: '/appendix',              label: 'Appendix',    icon: BookIcon,   group: 'secondary' },
-  { to: '/appendix/experiments',  label: 'Experiments', icon: BeakerIcon, group: 'secondary' },
+  { to: '/mechanism',  label: 'Mechanism',           icon: CogIcon,      group: 'secondary' },
+  { to: '/appendix',   label: 'Appendix',            icon: BookIcon,     group: 'secondary' },
 ];
 
 /* ------------------------------------------------------------------ */
