@@ -9,13 +9,16 @@ export function createSeededRng(seed: number): () => number {
   };
 }
 
-/** Standard normal CDF approximation (Abramowitz & Stegun). */
+/** Standard normal CDF — uses the error function for full-range accuracy. */
 export function normCdf(x: number): number {
+  // erf-based: Φ(x) = 0.5 * (1 + erf(x / √2))
+  // erf approximation: Abramowitz & Stegun 7.1.26 (max error 1.5e-7)
+  const sign = x < 0 ? -1 : 1;
+  const z = Math.abs(x) / Math.SQRT2;
+  const t = 1 / (1 + 0.3275911 * z);
   const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
-  const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp(-(x * x) / 2);
-  const p = d * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
-  return x > 0 ? 1 - p : p;
+  const erfApprox = 1 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Math.exp(-z * z);
+  return 0.5 * (1 + sign * erfApprox);
 }
 
 /** Inverse normal CDF (probit) — Acklam's rational approximation. */
