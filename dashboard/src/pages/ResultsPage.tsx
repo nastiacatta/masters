@@ -841,7 +841,7 @@ export default function ResultsPage() {
               <LineChart data={method1ConvergenceData} margin={CHART_MARGIN_LABELED}>
                 <CartesianGrid {...GRID_PROPS} />
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']} />
                 <Tooltip content={<SmartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
 

@@ -145,8 +145,8 @@ export function generateAggregation(
 ): DGPSeries {
   const rng = createSeededRng(seed);
   const W = w ?? Array.from({ length: n }, () => 1 / n);
-  const sumW = W.reduce((a, b) => a + b, 0);
-  const wNorm = W.map(v => v / sumW);
+  // Use raw weights as-is — do NOT normalise to simplex.
+  // The LMS learner should recover the structural weights, not a normalised version.
   const sigs = sigmas ?? Array.from({ length: n }, () => 0.5);
   const mu_t = ar1(T, rng, rhoMu, sigmaState, 0);
   const rounds: RoundData[] = [];
@@ -159,7 +159,7 @@ export function generateAggregation(
       const centre = mu_t[t] + eta[i];
       xLatent.push(centre + sigs[i] * boxMuller(rng));
     }
-    const yLatent = xLatent.reduce((sum, x, i) => sum + wNorm[i] * x, 0) + sigmaEps * boxMuller(rng);
+    const yLatent = xLatent.reduce((sum, x, i) => sum + W[i] * x, 0) + sigmaEps * boxMuller(rng);
     const y = normCdf(yLatent);
     const reports = xLatent.map(z => normCdf(z));
     rounds.push({ t, y, reports });
@@ -167,7 +167,7 @@ export function generateAggregation(
   return {
     rounds,
     tauTrue: sigs,
-    meta: { method, w: wNorm },
+    meta: { method, w: W },
   };
 }
 
