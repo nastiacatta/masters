@@ -845,19 +845,23 @@ export default function ResultsPage() {
                 <Tooltip content={<SmartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
 
-                <Line type="monotone" dataKey="w0Raw" name="F0 raw" stroke={METHOD.blended.color} strokeOpacity={0.25} dot={false} strokeWidth={1} />
-                <Line type="monotone" dataKey="w1Raw" name="F1 raw" stroke={METHOD.skill_only.color} strokeOpacity={0.25} dot={false} strokeWidth={1} />
-                <Line type="monotone" dataKey="w2Raw" name="F2 raw" stroke={METHOD.stake_only.color} strokeOpacity={0.25} dot={false} strokeWidth={1} />
+                {/* Raw traces — visible on chart but hidden from legend */}
+                <Line type="monotone" dataKey="w0Raw" stroke={METHOD.blended.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
+                <Line type="monotone" dataKey="w1Raw" stroke={METHOD.skill_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
+                <Line type="monotone" dataKey="w2Raw" stroke={METHOD.stake_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
 
-                <Line type="monotone" dataKey="w0Smooth" name="F0 smoothed" stroke={METHOD.blended.color} dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="w1Smooth" name="F1 smoothed" stroke={METHOD.skill_only.color} dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="w2Smooth" name="F2 smoothed" stroke={METHOD.stake_only.color} dot={false} strokeWidth={2} />
+                {/* Smoothed learned weights */}
+                <Line type="monotone" dataKey="w0Smooth" name="F0 (w=0.8)" stroke={METHOD.blended.color} dot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="w1Smooth" name="F1 (w=0.1)" stroke={METHOD.skill_only.color} dot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="w2Smooth" name="F2 (w=0.5)" stroke={METHOD.stake_only.color} dot={false} strokeWidth={2} />
 
-                <Line type="monotone" dataKey="w0Target" name="F0 target" stroke={METHOD.blended.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} />
-                <Line type="monotone" dataKey="w1Target" name="F1 target" stroke={METHOD.skill_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} />
-                <Line type="monotone" dataKey="w2Target" name="F2 target" stroke={METHOD.stake_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} />
+                {/* Target reference lines — hidden from legend */}
+                <Line type="monotone" dataKey="w0Target" stroke={METHOD.blended.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
+                <Line type="monotone" dataKey="w1Target" stroke={METHOD.skill_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
+                <Line type="monotone" dataKey="w2Target" stroke={METHOD.stake_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
               </LineChart>
             </ResponsiveContainer>
+            <p className="text-[10px] text-slate-400 mt-1 text-center">Solid = smoothed learned weight · Dashed = true structural weight</p>
           </div>
           <div className="mt-3 grid sm:grid-cols-2 gap-3">
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
