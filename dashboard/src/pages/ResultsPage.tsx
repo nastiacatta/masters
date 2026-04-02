@@ -28,9 +28,9 @@ import type {
 } from '@/lib/types';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import { generateAggregation } from '@/lib/coreMechanism/dgpSimulator';
+import { normPpf } from '@/lib/coreMechanism/seededRng';
 import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
-import MathBlock from '@/components/dashboard/MathBlock';
 import {
   AXIS_STROKE,
   AXIS_TICK,
@@ -59,11 +59,6 @@ const CORE_METHOD_KEYS = ['uniform', 'deposit', 'skill', 'mechanism'] as const;
 const ACCURACY_EPS = 1e-4;
 
 type Verdict = 'good' | 'neutral' | 'bad';
-const VERDICT_STYLES: Record<Verdict, { ring: string; bg: string; text: string }> = {
-  good: { ring: 'ring-emerald-300', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  neutral: { ring: 'ring-amber-300', bg: 'bg-amber-50', text: 'text-amber-700' },
-  bad: { ring: 'ring-red-300', bg: 'bg-red-50', text: 'text-red-700' },
-};
 
 function SmartTooltip({
   active,
@@ -93,32 +88,39 @@ function SmartTooltip({
   );
 }
 
+const VERDICT_BORDER: Record<Verdict, string> = {
+  good: 'border-l-emerald-500',
+  neutral: 'border-l-amber-400',
+  bad: 'border-l-red-400',
+};
+const VERDICT_TEXT: Record<Verdict, string> = {
+  good: 'text-emerald-700',
+  neutral: 'text-amber-700',
+  bad: 'text-red-700',
+};
+
 function AnswerCard({
-  title, metric, metricLabel, verdict, interpretation, caveat,
+  title, metric, metricLabel, verdict, interpretation,
 }: {
-  title: string; metric: string; metricLabel: string; verdict: Verdict; interpretation: string; caveat: string;
+  title: string; metric: string; metricLabel: string; verdict: Verdict; interpretation: string;
 }) {
-  const v = VERDICT_STYLES[verdict];
   return (
-    <div className={`rounded-xl ring-1 ${v.ring} ${v.bg} p-4 flex flex-col gap-2`}>
-      <div className="text-xs font-bold text-slate-800">{title}</div>
+    <div className={`rounded-lg border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} bg-white p-4 flex flex-col gap-1.5`}>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{title}</div>
       <div className="flex items-baseline gap-2">
-        <span className={`text-lg font-bold font-mono ${v.text}`}>{metric}</span>
-        <span className="text-[10px] text-slate-500">{metricLabel}</span>
+        <span className={`text-lg font-bold font-mono ${VERDICT_TEXT[verdict]}`}>{metric}</span>
+        <span className="text-[10px] text-slate-400">{metricLabel}</span>
       </div>
-      <p className="text-[11px] text-slate-600 leading-relaxed">{interpretation}</p>
-      <p className="text-[10px] text-slate-400 italic leading-snug">{caveat}</p>
+      <p className="text-[11px] text-slate-500 leading-relaxed">{interpretation}</p>
     </div>
   );
 }
-
-// ZoomBadge imported from shared component
 
 const EXP_TABS = ['Accuracy', 'Concentration', 'Calibration', 'Ablation'] as const;
 const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
 
 const METHOD_LABEL: Record<string, string> = {
-  uniform: 'Equal', deposit: 'Stake-only', skill: 'Skill-only', mechanism: 'Skill \u00d7 stake', best_single: 'Best single',
+  uniform: 'Equal', deposit: 'Stake-only', skill: 'Skill-only', mechanism: 'Skill × stake', best_single: 'Best single',
 };
 const METHOD_COLOR: Record<string, string> = {
   uniform: '#94a3b8', deposit: '#0d9488', skill: '#8b5cf6', mechanism: '#6366f1', best_single: '#f59e0b',
@@ -138,34 +140,8 @@ function seFinite(values: Array<number | undefined | null>): number | null {
   return Math.sqrt(variance / xs.length);
 }
 
-function invNormCdf(p: number): number {
-  const x = Math.min(1 - 1e-12, Math.max(1e-12, p));
-  const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.38357751867269e2, -3.066479806614716e1, 2.506628277459239];
-  const b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1];
-  const c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
-  const d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416];
-  const plow = 0.02425;
-  const phigh = 1 - plow;
-
-  if (x < plow) {
-    const q = Math.sqrt(-2 * Math.log(x));
-    return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
-      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
-  }
-  if (x > phigh) {
-    const q = Math.sqrt(-2 * Math.log(1 - x));
-    return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
-      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
-  }
-  const q = x - 0.5;
-  const r = q * q;
-  return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
-    (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
-}
-
 export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('Accuracy');
-  const [howToReadOpen, setHowToReadOpen] = useState(false);
 
   // --- adapter-backed data ---
   const [masterRows, setMasterRows] = useState<MasterComparisonRow[]>([]);
@@ -234,7 +210,6 @@ export default function ResultsPage() {
 
   const expMechanism = methodAgg.find((m) => m.method === 'mechanism') ?? null;
 
-
   const expCoreMethods = useMemo(
     () => methodAgg.filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method) && m.deltaCrps != null),
     [methodAgg],
@@ -266,12 +241,10 @@ export default function ResultsPage() {
       });
   }, [expCoreMethods, expBestCore]);
 
-  const expSkill = expCoreMethods.find((m) => m.method === 'skill') ?? null;
-  const expMech = expCoreMethods.find((m) => m.method === 'mechanism') ?? null;
-  const expMechVsSkillX1e4 = expSkill && expMech
-    ? ((expMech.deltaCrps ?? 0) - (expSkill.deltaCrps ?? 0)) * 1e4
-    : null;
-  const expMechVsEqualX1e4 = expMech ? (expMech.deltaCrps ?? 0) * 1e4 : null;
+  const expMechVsEqualX1e4 = (() => {
+    const mech = expCoreMethods.find((m) => m.method === 'mechanism');
+    return mech ? (mech.deltaCrps ?? 0) * 1e4 : null;
+  })();
 
   const calibrationData = useMemo(() =>
     calibration.filter((p) => Number.isFinite(p.tau) && Number.isFinite(p.pHat))
@@ -284,9 +257,6 @@ export default function ResultsPage() {
     [ablationRows]);
 
   // --- demo fallback (in-browser pipeline) ---
-  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({
-    equal: true, skill_only: true, blended: true, stake_only: true,
-  });
   const cumErrorZoom = useChartZoom();
 
   const demoMethods = useMemo(() => {
@@ -326,7 +296,7 @@ export default function ResultsPage() {
     const entries: { key: string; label: string; depositPolicy: DepositPolicy }[] = [
       { key: 'fixed', label: 'Fixed amount', depositPolicy: 'fixed_unit' },
       { key: 'bankroll', label: 'Fraction of wealth', depositPolicy: 'wealth_fraction' },
-      { key: 'oracle', label: 'Wealth fraction \u00d7 skill', depositPolicy: 'sigma_scaled' },
+      { key: 'oracle', label: 'Wealth fraction × skill', depositPolicy: 'sigma_scaled' },
     ];
     return entries.map((e) => {
       const p = runPipeline({ dgpId: 'baseline', behaviourPreset: 'baseline', rounds: DEMO_T, seed: DEMO_SEED, n: DEMO_N, builder: { depositPolicy: e.depositPolicy, influenceRule: 'skill_stake' } });
@@ -350,8 +320,8 @@ export default function ResultsPage() {
     const trueW = [0.8, 0.1, 0.5];
     const sim = generateAggregation(42, T, n, 1, trueW, [0.3, 0.6, 1.0], 0.25, 0.98, 0.35, 1.0);
 
-    const yLatent = sim.rounds.map((r) => invNormCdf(r.y));
-    const reportsLatent = Array.from({ length: n }, (_, i) => sim.rounds.map((r) => invNormCdf(r.reports[i])));
+    const yLatent = sim.rounds.map((r) => normPpf(r.y));
+    const reportsLatent = Array.from({ length: n }, (_, i) => sim.rounds.map((r) => normPpf(r.reports[i])));
 
     const eta = 0.015;
     const etaDecay = 1e-4;
@@ -408,7 +378,6 @@ export default function ResultsPage() {
 
   // --- which mode ---
   const useExp = hasExpData && !loading && isFullPanel;
-  const hasPartialExp = hasExpData && !loading && !isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
   const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : demoDelta;
   const gini = useExp ? (expMechanism?.finalGini ?? null) : demoBlended.pipeline.summary.finalGini;
@@ -420,91 +389,50 @@ export default function ResultsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
         <Breadcrumb activeTab={activeTab} />
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Main results</h1>
-          <p className="text-sm text-slate-600 mt-1.5 max-w-2xl">
+
+        {/* ── Header ── */}
+        <header>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Main results</h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
             {useExp
-              ? 'This view shows results from a large, pre-generated comparison using the same scenarios across all methods for a fair ranking.'
-              : `This view is a quick interactive demo with a smaller sample (seed ${DEMO_SEED}, ${DEMO_N} participants, ${DEMO_T} rounds).`}
+              ? 'Pre-generated comparison across identical scenarios for all methods.'
+              : `In-browser demo (seed ${DEMO_SEED}, N\u2009=\u2009${DEMO_N}, T\u2009=\u2009${DEMO_T}).`}
           </p>
-          {!useExp && !loading && (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-              In-browser demo (seed {DEMO_SEED}, N = {DEMO_N}, T = {DEMO_T}). Final ranking should be read from the experiment-backed view.
-            </div>
-          )}
-          {hasPartialExp && (
-            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-[11px] text-red-900 max-w-2xl leading-relaxed">
-              <strong>Full results not loaded.</strong> Available experiment data has {expSeedCount} scenarios, but this page requires 1000 for final ranking.
-            </div>
-          )}
-        </div>
+        </header>
 
-        {/* Headline answers */}
-        <section aria-label="Headline answers">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Headline answers</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <AnswerCard
-              title="Does skill improve accuracy?"
-              metric={deltaCrps == null ? '\u2014' : `${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)}`}
-              metricLabel={
-                useExp
-                  ? `\u0394CRPS vs equal${expMechVsEqualX1e4 != null ? ` (\u00d710\u2074\u202f=\u202f${expMechVsEqualX1e4.toFixed(2)})` : ''}`
-                  : '\u0394 mean error vs equal'
-              }
-              verdict={accuracyVerdict}
-              interpretation={
-                deltaCrps == null ? 'Data not loaded yet.'
-                  : deltaCrps < 0
-                    ? `Skill \u00d7 stake improves accuracy by ${fmt(Math.abs(deltaCrps), 4)}.`
-                    : 'Equal weights match or beat Skill \u00d7 stake.'
-              }
-              caveat={useExp ? 'Based on the full pre-generated comparison view.' : 'Demo values are directional and based on a smaller sample.'}
-            />
-            <AnswerCard
-              title="Does wealth dominate?"
-              metric={gini == null ? '\u2014' : fmt(gini, 3)}
-              metricLabel="Final Gini (blended)"
-              verdict={concentrationVerdict}
-              interpretation={
-                useExp ? 'Shows how concentrated influence becomes under each method.'
-                  : `\u0394Gini vs equal: ${demoDeltaGini >= 0 ? '+' : ''}${fmt(demoDeltaGini, 3)}. ${Math.abs(demoDeltaGini) < 0.05 ? 'Concentration stays controlled.' : 'Concentration shifts under skill weighting.'}`
-              }
-              caveat="Concentration can vary across environments."
-            />
-          </div>
+        {/* ── Headline cards ── */}
+        <section className="grid sm:grid-cols-2 gap-4">
+          <AnswerCard
+            title="Does skill improve accuracy?"
+            metric={deltaCrps == null ? '—' : `${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)}`}
+            metricLabel={useExp ? `ΔCRPS vs equal${expMechVsEqualX1e4 != null ? ` (×10⁴ = ${expMechVsEqualX1e4.toFixed(2)})` : ''}` : 'Δ mean error vs equal'}
+            verdict={accuracyVerdict}
+            interpretation={
+              deltaCrps == null ? 'Loading.'
+                : deltaCrps < 0 ? `Skill × stake improves accuracy by ${fmt(Math.abs(deltaCrps), 4)}.`
+                : 'Equal weights match or beat Skill × stake.'
+            }
+          />
+          <AnswerCard
+            title="Does wealth dominate?"
+            metric={gini == null ? '—' : fmt(gini, 3)}
+            metricLabel="Final Gini (blended)"
+            verdict={concentrationVerdict}
+            interpretation={
+              useExp ? 'Concentration across methods shown in the Concentration tab.'
+                : `ΔGini vs equal: ${demoDeltaGini >= 0 ? '+' : ''}${fmt(demoDeltaGini, 3)}.`
+            }
+          />
         </section>
 
-        {/* How to read */}
+        {/* ── Tabs ── */}
         <section>
-          <button type="button" onClick={() => setHowToReadOpen(!howToReadOpen)}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors">
-            <span className={`transition-transform ${howToReadOpen ? 'rotate-90' : ''}`}>&#x25B6;</span>
-            Reading guide
-          </button>
-          {howToReadOpen && (
-            <div className="mt-3 grid sm:grid-cols-3 gap-3">
-              {([
-                ['Data source', useExp ? 'Pre-generated offline comparison across identical scenarios for all methods.' : 'In-browser demo (smaller sample, directional only).'],
-                ['Metric', useExp ? 'CRPS and ΔCRPS for accuracy; Gini, HHI, N_eff for concentration.' : 'Mean absolute error and Gini coefficient.'],
-                ['Interpretation', useExp ? 'Negative ΔCRPS = better than equal weights. Small gaps indicate near-ties.' : 'Start from the Accuracy tab, then check Concentration for trade-offs.'],
-              ] as const).map(([label, desc]) => (
-                <div key={label} className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="text-[11px] font-semibold text-slate-700">{label}</div>
-                  <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Tabs */}
-        <section>
-          <div className="flex gap-1 border-b border-slate-200 mb-5">
+          <div className="flex gap-1 border-b border-slate-200 mb-6">
             {tabs.map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${activeTab === tab ? 'border-teal-500 text-teal-700' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                className={`px-4 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${activeTab === tab ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                 {tab}
               </button>
             ))}
@@ -512,10 +440,7 @@ export default function ResultsPage() {
 
           {loading && (
             <div className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Skeleton height="120px" />
-                <Skeleton height="120px" />
-              </div>
+              <div className="grid sm:grid-cols-2 gap-4"><Skeleton height="120px" /><Skeleton height="120px" /></div>
               <Skeleton height="320px" />
             </div>
           )}
@@ -529,143 +454,75 @@ export default function ResultsPage() {
             transition={{ duration: 0.2 }}
           >
 
-          {/* ========== EXPERIMENT-BACKED TABS ========== */}
+          {/* ═══ EXPERIMENT-BACKED TABS ═══ */}
 
-          {/* Four-panel overview when all experiment data is available */}
-          {useExp && !loading && expAccuracyDisplay.length > 0 && calibrationData.length > 0 && ablationData.length > 0 && activeTab === 'Accuracy' && (
-            <FourPanelLayout
-              title="Master Comparison Overview"
-              thesisPoint="Does combining skill with stake improve aggregate forecasts? This 4-panel view summarises accuracy, calibration, market structure, and ablation evidence."
-              primary={
-                <DeltaBarChart
-                  data={expAccuracyDisplay.map((d) => ({
-                    label: d.name,
-                    delta: d.deltaCrpsX1e4,
-                    se: d.seX1e4 > 0 ? d.seX1e4 : undefined,
-                    color: d.color,
-                  }))}
-                  baselineLabel="Baseline (equal)"
-                  metricLabel="Δ CRPS (×10⁴)"
-                />
-              }
-              calibration={
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Reliability diagram</div>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                      <YAxis dataKey="pHat" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
-                      <Line type="monotone" dataKey="pHat" name="Empirical p̂" stroke="#0d9488" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              }
-              structure={
-                <ConcentrationPanel
-                  data={methodAgg
-                    .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method))
-                    .map((m) => ({
-                      method: m.method,
-                      label: m.label,
-                      color: m.color,
-                      gini: m.finalGini ?? undefined,
-                      hhi: m.meanHHI ?? undefined,
-                      nEff: m.meanNEff ?? undefined,
+          {useExp && !loading && activeTab === 'Accuracy' && (
+            expAccuracyDisplay.length > 0 && calibrationData.length > 0 && ablationData.length > 0 ? (
+              <FourPanelLayout
+                title="Master Comparison"
+                thesisPoint="Accuracy, calibration, market structure, and ablation evidence at a glance."
+                primary={
+                  <DeltaBarChart
+                    data={expAccuracyDisplay.map((d) => ({
+                      label: d.name,
+                      delta: d.deltaCrpsX1e4,
+                      se: d.seX1e4 > 0 ? d.seX1e4 : undefined,
+                      color: d.color,
                     }))}
-                />
-              }
-              failure={
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="text-xs font-semibold text-slate-700 mb-2">Ablation (ΔCRPS vs Full)</div>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={ablationData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="variant" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                      <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Bar dataKey="delta_crps_vs_full" name="ΔCRPS vs Full" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#6366f1" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              }
-            />
-          )}
-
-          {useExp && activeTab === 'Accuracy' && (
-            <div className="space-y-5">
-              {expAccuracyDisplay.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-                  No comparison data is currently available for the four main methods.
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-slate-800">Accuracy ranking</h3>
-                    <InfoToggle
-                      term="Average accuracy gap"
-                      definition="Average difference versus Equal across the same scenarios for all methods."
-                      interpretation="Lower is better. Zero means the same accuracy as Equal."
-                      axes={{ x: 'difference vs Equal', y: 'method' }}
-                    />
+                    baselineLabel="Baseline (equal)"
+                    metricLabel="Δ CRPS (×10⁴)"
+                  />
+                }
+                calibration={
+                  <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="text-xs font-semibold text-slate-700 mb-2">Reliability diagram</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                        <YAxis dataKey="pHat" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                        <Tooltip content={<SmartTooltip />} />
+                        <Line type="monotone" dataKey="ideal" name="Ideal" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
+                        <Line type="monotone" dataKey="pHat" name="Empirical p̂" stroke="#0d9488" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
-                  <p className="text-[11px] text-slate-500 mb-1 leading-relaxed">
-                    <strong>How results are generated:</strong> the same sequence of scenarios is used for all four methods, then outcomes are averaged over{' '}
-                    {expSeedCount > 0 ? `${expSeedCount} scenarios` : 'all scenarios'}.
-                    {expBestCore && <> <strong>Current top method:</strong> {expBestCore.label}.</>}
-                    {expMechVsSkillX1e4 != null && (
-                      <> Skill\u00d7stake is{' '}
-                        <span className="font-mono">{expMechVsSkillX1e4 >= 0 ? '+' : ''}{expMechVsSkillX1e4.toFixed(2)}</span>
-                        {' points'} vs skill-only.
-                      </>
-                    )}
-                  </p>
-                  <div className={`mt-2 rounded-md border px-3 py-2 text-[11px] ${
-                    isFullPanel
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                      : 'border-amber-200 bg-amber-50 text-amber-900'
-                  }`}>
-                    <strong>Data basis:</strong>{' '}
-                    {isFullPanel
-                      ? `Full run loaded (${expSeedCount} scenarios). Ranking is based on the full panel.`
-                      : `Partial run loaded (${expSeedCount} scenarios, not 1000). Ranking is provisional.`}
-                  </div>
-                  <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-[11px] font-semibold text-slate-700 mb-2">Ranking at a glance</div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                      {expAccuracyDisplay.map((d, i) => (
-                        <div key={`rank-${d.method}`} className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-semibold text-slate-500">#{i + 1}</span>
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
-                          </div>
-                          <div className="text-[11px] font-medium text-slate-800 mt-1 truncate">{d.name}</div>
-                          <div className="text-[10px] font-mono text-slate-500 mt-1">
-                            {d.deltaCrpsX1e4 >= 0 ? '+' : ''}{d.deltaLabel} points
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-2">Lower values indicate better average accuracy.</p>
-                  </div>
-                  <div className="mt-4">
-                    <DeltaBarChart
-                      data={expAccuracyDisplay.map((d) => ({
-                        label: d.name,
-                        delta: d.deltaCrpsX1e4,
-                        se: d.seX1e4 > 0 ? d.seX1e4 : undefined,
-                        color: d.color,
+                }
+                structure={
+                  <ConcentrationPanel
+                    data={methodAgg
+                      .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method))
+                      .map((m) => ({
+                        method: m.method,
+                        label: m.label,
+                        color: m.color,
+                        gini: m.finalGini ?? undefined,
+                        hhi: m.meanHHI ?? undefined,
+                        nEff: m.meanNEff ?? undefined,
                       }))}
-                      baselineLabel="Baseline (equal)"
-                      metricLabel="Δ CRPS (×10⁴)"
-                    />
+                  />
+                }
+                failure={
+                  <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="text-xs font-semibold text-slate-700 mb-2">Ablation (ΔCRPS vs Full)</div>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={ablationData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis dataKey="variant" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                        <Tooltip content={<SmartTooltip />} />
+                        <Bar dataKey="delta_crps_vs_full" name="ΔCRPS vs Full" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#6366f1" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                </div>
-              )}
-            </div>
+                }
+              />
+            ) : (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-500">
+                No comparison data available for the four main methods.
+              </div>
+            )
           )}
 
           {useExp && activeTab === 'Concentration' && (
@@ -684,15 +541,13 @@ export default function ResultsPage() {
           )}
 
           {useExp && activeTab === 'Calibration' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-slate-800">Calibration (reliability)</h3>
-                <InfoToggle term="Reliability diagram" definition="Compares nominal quantile \u03c4 against empirical coverage p\u0302(\u03c4)." interpretation="Perfect calibration lies on the diagonal p\u0302 = \u03c4." axes={{ x: 'nominal \u03c4', y: 'empirical p\u0302' }} />
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-semibold text-slate-800">Calibration</h3>
+                <InfoToggle term="Reliability diagram" definition="Compares nominal quantile τ against empirical coverage p̂(τ)." interpretation="Perfect calibration lies on the diagonal." axes={{ x: 'nominal τ', y: 'empirical p̂' }} />
               </div>
               {calibrationData.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-                  Calibration data is not available in this view.
-                </div>
+                <p className="text-[11px] text-slate-500">Calibration data not available.</p>
               ) : (
                 <ResponsiveContainer width="100%" height={320}>
                   <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
@@ -701,8 +556,8 @@ export default function ResultsPage() {
                     <YAxis dataKey="pHat" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
                     <Tooltip content={<SmartTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                    <Line type="monotone" dataKey="ideal" name="Ideal (p\u0302=\u03c4)" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
-                    <Line type="monotone" dataKey="pHat" name="Empirical p\u0302" stroke="#0d9488" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="ideal" name="Ideal (p̂=τ)" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
+                    <Line type="monotone" dataKey="pHat" name="Empirical p̂" stroke="#0d9488" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -710,12 +565,10 @@ export default function ResultsPage() {
           )}
 
           {useExp && activeTab === 'Ablation' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">Bankroll ablation (\u0394CRPS vs Full)</h3>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-slate-800 mb-3">Bankroll ablation (ΔCRPS vs Full)</h3>
               {ablationData.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-600">
-                  Robustness comparison data is not available in this view.
-                </div>
+                <p className="text-[11px] text-slate-500">Ablation data not available.</p>
               ) : (
                 <ResponsiveContainer width="100%" height={320}>
                   <BarChart data={ablationData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
@@ -724,38 +577,25 @@ export default function ResultsPage() {
                     <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
                     <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
                     <Tooltip content={<SmartTooltip />} />
-                    <Bar dataKey="delta_crps_vs_full" name="\u0394CRPS vs Full" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#6366f1" />
+                    <Bar dataKey="delta_crps_vs_full" name="ΔCRPS vs Full" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#6366f1" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </div>
           )}
 
-          {/* ========== DEMO FALLBACK TABS ========== */}
+          {/* ═══ DEMO FALLBACK TABS ═══ */}
 
           {!useExp && !loading && activeTab === 'Accuracy' && (
             <div className="space-y-5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-slate-500 font-medium mr-1">Compare:</span>
-                {demoMethods.map((m) => (
-                  <button key={m.key} onClick={() => setEnabledMethods((prev) => ({ ...prev, [m.key]: !prev[m.key] }))}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${enabledMethods[m.key] ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}
-                    style={enabledMethods[m.key] ? { background: m.color } : undefined}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: m.color }} />
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-semibold text-slate-800">Forecast quality comparison</h3>
-                  <InfoToggle term="Forecast quality comparison" definition="Compares aggregation methods over time." interpretation="Each line shows the cumulative mean error. Lower is better." axes={{ x: 'round', y: 'cumulative mean error' }} />
+                  <h3 className="text-sm font-semibold text-slate-800">Cumulative error by method</h3>
+                  <InfoToggle term="Forecast quality" definition="Cumulative mean error over rounds." interpretation="Lower is better." axes={{ x: 'round', y: 'cumulative mean error' }} />
                   <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
                 </div>
                 <p className="text-[11px] text-slate-500 mb-3">
                   {demoBest.label} achieves the lowest mean error ({fmt(demoBest.pipeline.summary.meanError, 4)}).
-                  {demoDelta < 0 ? ` Skill \u00d7 stake improves on equal weights by ${fmt(Math.abs(demoDelta), 4)}.` : ' Equal weights match or lead.'}
                 </p>
                 <div className="cursor-crosshair" role="img" aria-label="Forecast quality by method">
                   <ResponsiveContainer width="100%" height={360}>
@@ -766,7 +606,7 @@ export default function ResultsPage() {
                       <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
                       <Tooltip content={<SmartTooltip />} />
                       <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                      {demoMethods.map((m) => enabledMethods[m.key] && (
+                      {demoMethods.map((m) => (
                         <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
                           strokeWidth={m.key === 'blended' ? 2.5 : 1.5} dot={false} strokeOpacity={m.key === 'blended' ? 1 : 0.7} />
                       ))}
@@ -775,20 +615,12 @@ export default function ResultsPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
-
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                <MathBlock inline latex="m_{i,t} = b_{i,t}\bigl(\lambda + (1-\lambda)\,\sigma_{i,t}^{\eta}\bigr)" />
-                <p className="text-xs text-slate-500 mt-2">
-                  The effective wager gates deposit through skill. With noisy deposits, skill attenuates bad bets.
-                </p>
-              </div>
             </div>
           )}
 
           {!useExp && !loading && activeTab === 'Concentration' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">Gini and N_eff by weighting method</h3>
-              <p className="text-[11px] text-slate-500 mb-3">Lower Gini and higher N_eff indicate less concentration.</p>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-slate-800 mb-3">Gini and N_eff by method</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={demoConcentrationBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
@@ -806,9 +638,8 @@ export default function ResultsPage() {
           )}
 
           {!useExp && !loading && activeTab === 'Deposit policy' && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">Deposit policy: accuracy vs concentration</h3>
-              <p className="text-[11px] text-slate-500 mb-3">Mean error and final Gini by deposit rule. Lower is better for both.</p>
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-slate-800 mb-3">Deposit policy: accuracy vs concentration</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={demoDeposits} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
@@ -827,53 +658,35 @@ export default function ResultsPage() {
           </AnimatePresence>
         </section>
 
-        <section aria-label="Weight-learning sanity check" className="rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Endogenous DGP check: does the online learner recover structural weights?
+        {/* ── Weight learning sanity check ── */}
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-slate-900 mb-3">
+            Endogenous DGP check: weight recovery
           </h2>
-          <p className="text-[11px] text-slate-600 mt-1.5 max-w-3xl leading-relaxed">
-            Method 1 only. This is a sanity check of identifiability under the endogenous generator:
-            learned weights should move toward forecasters that structurally drive the generated outcome.
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={method1ConvergenceData} margin={CHART_MARGIN_LABELED}>
+              <CartesianGrid {...GRID_PROPS} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']} />
+              <Tooltip content={<SmartTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+
+              <Line type="monotone" dataKey="w0Raw" stroke={METHOD.blended.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
+              <Line type="monotone" dataKey="w1Raw" stroke={METHOD.skill_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
+              <Line type="monotone" dataKey="w2Raw" stroke={METHOD.stake_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
+
+              <Line type="monotone" dataKey="w0Smooth" name="F0 (w=0.8)" stroke={METHOD.blended.color} dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="w1Smooth" name="F1 (w=0.1)" stroke={METHOD.skill_only.color} dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="w2Smooth" name="F2 (w=0.5)" stroke={METHOD.stake_only.color} dot={false} strokeWidth={2} />
+
+              <Line type="monotone" dataKey="w0Target" stroke={METHOD.blended.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
+              <Line type="monotone" dataKey="w1Target" stroke={METHOD.skill_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
+              <Line type="monotone" dataKey="w2Target" stroke={METHOD.stake_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="text-[10px] text-slate-400 mt-2 text-center">
+            Solid = smoothed learned weight · Dashed = true structural weight
           </p>
-          <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
-            <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={method1ConvergenceData} margin={CHART_MARGIN_LABELED}>
-                <CartesianGrid {...GRID_PROPS} />
-                <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']} />
-                <Tooltip content={<SmartTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-
-                {/* Raw traces — visible on chart but hidden from legend */}
-                <Line type="monotone" dataKey="w0Raw" stroke={METHOD.blended.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
-                <Line type="monotone" dataKey="w1Raw" stroke={METHOD.skill_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
-                <Line type="monotone" dataKey="w2Raw" stroke={METHOD.stake_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
-
-                {/* Smoothed learned weights */}
-                <Line type="monotone" dataKey="w0Smooth" name="F0 (w=0.8)" stroke={METHOD.blended.color} dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="w1Smooth" name="F1 (w=0.1)" stroke={METHOD.skill_only.color} dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="w2Smooth" name="F2 (w=0.5)" stroke={METHOD.stake_only.color} dot={false} strokeWidth={2} />
-
-                {/* Target reference lines — hidden from legend */}
-                <Line type="monotone" dataKey="w0Target" stroke={METHOD.blended.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
-                <Line type="monotone" dataKey="w1Target" stroke={METHOD.skill_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
-                <Line type="monotone" dataKey="w2Target" stroke={METHOD.stake_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-[10px] text-slate-400 mt-1 text-center">Solid = smoothed learned weight · Dashed = true structural weight</p>
-          </div>
-          <div className="mt-3 grid sm:grid-cols-2 gap-3">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-              <p className="text-[11px] text-emerald-900 leading-relaxed">
-                <strong>What this checks:</strong> structural weight recovery under Method 1, not intrinsic forecasting skill.
-              </p>
-            </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-              <p className="text-[11px] text-amber-900 leading-relaxed">
-                <strong>Interpretation guardrail:</strong> use exogenous latent-truth experiments for intrinsic-skill claims.
-              </p>
-            </div>
-          </div>
         </section>
 
       </div>
