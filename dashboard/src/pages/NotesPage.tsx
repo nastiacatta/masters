@@ -47,6 +47,33 @@ const EXPERIMENTS = [
       { label: 'Log-deposit mechanism', delta: '-0.001066', pct: '+1.9%', sig: true },
     ],
   },
+  {
+    id: 'learning-curve',
+    title: 'The skill layer works from T=100 onwards',
+    status: 'confirmed' as const,
+    finding: 'The mechanism improvement is stable across T=100 to T=1000 (all ~5.2% under fixed deposits). The EWMA skill estimate converges quickly — no long burn-in needed.',
+    implication: 'The online skill layer is practical even for short horizons. 100 rounds is enough for the skill signal to separate good from bad forecasters.',
+    data: [
+      { label: 'T = 100', delta: '-0.002910', pct: '+5.3%', sig: true },
+      { label: 'T = 200', delta: '-0.002847', pct: '+5.2%', sig: true },
+      { label: 'T = 500', delta: '-0.002851', pct: '+5.2%', sig: true },
+      { label: 'T = 1000', delta: '-0.002871', pct: '+5.2%', sig: true },
+    ],
+  },
+  {
+    id: 'missingness',
+    title: 'Skill improvement degrades gracefully under missingness',
+    status: 'confirmed' as const,
+    finding: 'With 0% missingness the mechanism improves by 5.3%. At 60% missingness it still improves by 4.4%. The skill layer is robust to intermittent participation.',
+    implication: 'Even when most agents are absent most rounds, the EWMA skill estimate retains enough signal to improve aggregation.',
+    data: [
+      { label: '0% missing', delta: '-0.002911', pct: '+5.3%', sig: true },
+      { label: '10% missing', delta: '-0.002886', pct: '+5.2%', sig: true },
+      { label: '20% missing', delta: '-0.002851', pct: '+5.2%', sig: true },
+      { label: '40% missing', delta: '-0.002747', pct: '+5.0%', sig: true },
+      { label: '60% missing', delta: '-0.002424', pct: '+4.4%', sig: true },
+    ],
+  },
 ] as const;
 
 const STATUS_STYLE = {
