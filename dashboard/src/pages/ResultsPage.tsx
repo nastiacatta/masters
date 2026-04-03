@@ -293,7 +293,7 @@ export default function ResultsPage() {
     const entries: { key: string; label: string; depositPolicy: DepositPolicy }[] = [
       { key: 'fixed', label: 'Fixed amount', depositPolicy: 'fixed_unit' },
       { key: 'bankroll', label: 'Fraction of wealth', depositPolicy: 'wealth_fraction' },
-      { key: 'oracle', label: 'Wealth fraction × skill', depositPolicy: 'sigma_scaled' },
+      { key: 'oracle', label: 'Wealth × confidence (σ in deposit)', depositPolicy: 'sigma_scaled' },
     ];
     return entries.map((e) => {
       const p = runPipeline({ dgpId: 'baseline', behaviourPreset: 'baseline', rounds: DEMO_T, seed: DEMO_SEED, n: DEMO_N, builder: { depositPolicy: e.depositPolicy, influenceRule: 'skill_stake' } });
