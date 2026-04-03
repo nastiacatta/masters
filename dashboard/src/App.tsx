@@ -9,6 +9,7 @@ import MechanismPage from '@/pages/MechanismPage';
 import ResultsPage from '@/pages/ResultsPage';
 import RobustnessPage from '@/pages/RobustnessPage';
 import BehaviourPage from '@/pages/BehaviourPage';
+import NotesPage from '@/pages/NotesPage';
 
 import LabPage from '@/pages/LabPage';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
@@ -26,6 +27,7 @@ export default function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/results" element={<ResultsPage />} />
                 <Route path="/behaviour" element={<BehaviourPage />} />
+                <Route path="/notes" element={<NotesPage />} />
                 <Route path="/mechanism" element={<MechanismPage />} />
                 <Route path="/robustness" element={<RobustnessPage />} />
 

@@ -58,8 +58,9 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/results',    label: 'Results',             icon: ChartBarIcon, group: 'primary' },
   { to: '/behaviour',  label: 'Behaviour',           icon: BeakerIcon,   group: 'primary' },
   /* Secondary */
+  { to: '/notes',      label: 'Notes',              icon: BookIcon,     group: 'secondary' },
   { to: '/mechanism',  label: 'Mechanism',           icon: CogIcon,      group: 'secondary' },
-  { to: '/appendix',   label: 'Appendix',            icon: BookIcon,     group: 'secondary' },
+  { to: '/appendix',   label: 'Appendix',            icon: BeakerIcon,   group: 'secondary' },
 ];
 
 /* ------------------------------------------------------------------ */
