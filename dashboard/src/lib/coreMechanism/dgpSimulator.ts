@@ -3,9 +3,13 @@
  * Mirrors onlinev2 DGPs: baseline (exogenous), latent_fixed (exogenous),
  * aggregation_method1 (endogenous), aggregation_method3 (endogenous).
  */
-import { createSeededRng, normCdf } from './seededRng';
+import { createSeededRng, normCdf, normPpf } from './seededRng';
 
 export type DGPId = 'baseline' | 'latent_fixed' | 'aggregation_method1' | 'aggregation_method3';
+
+/** Quantile levels used for CRPS scoring throughout the mechanism. */
+export const TAUS = [0.1, 0.25, 0.5, 0.75, 0.9] as const;
+export type Taus = typeof TAUS;
 
 export interface DGPOption {
   id: DGPId;
@@ -50,6 +54,8 @@ export interface RoundData {
   t: number;
   y: number;
   reports: number[];
+  /** Quantile reports: qReports[i][k] = forecaster i's τ_k quantile. */
+  qReports: number[][];
 }
 
 export interface DGPSeries {
@@ -68,6 +74,20 @@ function boxMuller(rng: () => number): number {
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }
 
+/** Pre-computed z_tau = Φ⁻¹(τ) for each quantile level. */
+const Z_TAU = TAUS.map(tau => normPpf(tau));
+
+/** Generate quantile reports from a latent-space point and noise level.
+ *  q_k = Φ(pointLatent + sigma * z_tau_k), monotonised. */
+function quantilesFromLatent(pointLatent: number, sigma: number): number[] {
+  const raw = Z_TAU.map(z => normCdf(pointLatent + sigma * z));
+  // Enforce monotonicity
+  for (let k = 1; k < raw.length; k++) {
+    if (raw[k] < raw[k - 1]) raw[k] = raw[k - 1];
+  }
+  return raw;
+}
+
 /** Baseline: y ~ U(0,1), reports_i = clip(y + N(0, tau_i^2), 0, 1). */
 export function generateBaseline(
   seed: number,
@@ -83,11 +103,15 @@ export function generateBaseline(
   const rounds: RoundData[] = [];
   for (let t = 0; t < T; t++) {
     const y = rng();
-    const reports = tau.map((tau_i) => {
-      const eps = boxMuller(rng) * tau_i;
-      return clip(y + eps, 0, 1);
-    });
-    rounds.push({ t, y, reports });
+    const reports: number[] = [];
+    const qReports: number[][] = [];
+    for (let i = 0; i < n; i++) {
+      const eps = boxMuller(rng) * tau[i];
+      const pointLatent = normPpf(clip(y + eps, 1e-6, 1 - 1e-6));
+      reports.push(clip(y + eps, 0, 1));
+      qReports.push(quantilesFromLatent(pointLatent, tau[i]));
+    }
+    rounds.push({ t, y, reports, qReports });
   }
   return { rounds, tauTrue: tau, meta: {} };
 }
@@ -110,14 +134,18 @@ export function generateLatentFixed(
     const Z = boxMuller(rng) * sigmaZ;
     const y = normCdf(Z);
     const reports: number[] = [];
+    const qReports: number[][] = [];
     for (let i = 0; i < n; i++) {
       const eps = boxMuller(rng);
       const X = Z + beta[i] + tau[i] * eps;
       const denom = sigmaZ2 + tau[i] * tau[i];
       const mu = (sigmaZ2 / denom) * (X - beta[i]);
+      const postVar = (sigmaZ2 * tau[i] * tau[i]) / denom;
+      const postSd = Math.sqrt(postVar);
       reports.push(normCdf(mu));
+      qReports.push(quantilesFromLatent(mu, postSd));
     }
-    rounds.push({ t, y, reports });
+    rounds.push({ t, y, reports, qReports });
   }
   return { rounds, tauTrue: tau, meta: { sigma_z: sigmaZ } };
 }
@@ -163,7 +191,8 @@ export function generateAggregation(
     const yLatent = xLatent.reduce((sum, x, i) => sum + W[i] * x, 0) + sigmaEps * boxMuller(rng);
     const y = normCdf(yLatent);
     const reports = xLatent.map(z => normCdf(z));
-    rounds.push({ t, y, reports });
+    const qReports = xLatent.map((z, i) => quantilesFromLatent(z, sigs[i]));
+    rounds.push({ t, y, reports, qReports });
   }
   return {
     rounds,

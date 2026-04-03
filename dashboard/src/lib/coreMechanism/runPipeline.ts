@@ -277,6 +277,8 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
       rng,
     );
 
+    const { qReports: dgpQReports } = dgp.rounds[i];
+
     const trace = runComposableRound(
       roundNumber,
       state,
@@ -284,6 +286,7 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
         accountId: index,
         participate: decision.participate,
         report: decision.report,
+        qReport: decision.participate ? dgpQReports[index] : null,
         riskFraction: decision.riskFraction,
         depositMultiplier: decision.depositMultiplier,
       })),
@@ -293,11 +296,24 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
 
     traces.push(trace);
 
+    // Use CRPS of the aggregate quantile forecast as the round error
+    const aggCrps = trace.r_hat_q.length > 0
+      ? (() => {
+          let sum = 0;
+          for (let k = 0; k < trace.r_hat_q.length; k++) {
+            const taus = [0.1, 0.25, 0.5, 0.75, 0.9];
+            const err = y - trace.r_hat_q[k];
+            sum += err >= 0 ? taus[k] * err : (taus[k] - 1) * err;
+          }
+          return (2 * sum) / trace.r_hat_q.length;
+        })()
+      : Math.abs(y - trace.r_hat);
+
     rounds.push({
       round: roundNumber,
       y,
       r_hat: trace.r_hat,
-      error: Math.abs(y - trace.r_hat),
+      error: aggCrps,
       participation: trace.activeCount,
       nEff: trace.nEff,
       meanSigma: mean(trace.sigma_t),

@@ -158,8 +158,8 @@ export default function MechanismPage() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-slate-900">Mechanism</h2>
           <p className="text-sm text-slate-600 mt-2 max-w-2xl">
-            Interactive point-forecast walkthrough using \( s = 1 - |y-r| \).
-            Thesis results on the Results and Robustness pages use CRPS, calibration, and concentration metrics.
+            Interactive walkthrough using quantile forecasts scored by CRPS.
+            Each forecaster submits quantiles at τ = (0.1, 0.25, 0.5, 0.75, 0.9); the mechanism scores them via the pinball-loss CRPS surrogate.
           </p>
         </div>
 
