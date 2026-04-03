@@ -376,6 +376,7 @@ export default function ResultsPage() {
   // --- which mode ---
   const useExp = hasExpData && !loading && isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
+
   const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : demoDelta;
   const gini = useExp ? (expMechanism?.finalGini ?? null) : demoBlended.pipeline.summary.finalGini;
 
@@ -407,13 +408,17 @@ export default function ResultsPage() {
           <AnswerCard
             question="Does adding skill to stake improve forecast accuracy?"
             answer={deltaCrps == null ? '—' : deltaCrps < 0 ? 'Yes' : 'No'}
-            detail={deltaCrps == null ? '' : `Δ = ${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)} mean error`}
+            detail={deltaCrps == null ? '' : `Δ = ${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)} mean error${useExp ? ` (${expSeedCount} seeds)` : ''}`}
             verdict={accuracyVerdict}
             explanation={
               deltaCrps == null ? 'Loading data.'
-                : deltaCrps < 0
-                  ? `The skill-weighted method reduces average forecast error by ${fmt(Math.abs(deltaCrps), 4)} compared to equal weighting. This means the online skill layer is successfully identifying and upweighting better forecasters.`
-                  : 'Equal weighting performs as well or better. The skill layer does not add value in this configuration.'
+                : useExp
+                  ? (deltaCrps < 0
+                    ? `Across ${expSeedCount} paired seeds, skill × stake reduces CRPS by ${fmt(Math.abs(deltaCrps), 4)} vs equal weighting.`
+                    : `Across ${expSeedCount} paired seeds, equal weighting matches or beats skill × stake.`)
+                  : (deltaCrps < 0
+                    ? `In this single-seed demo, skill × stake reduces error by ${fmt(Math.abs(deltaCrps), 4)}.`
+                    : 'Equal weighting performs as well or better in this demo.')
             }
           />
           <AnswerCard
