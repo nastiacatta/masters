@@ -21,6 +21,7 @@ import {
   TOOLTIP_STYLE, BRUSH_PROPS, agentName, fmt, downsample, movingAvg,
 } from '@/components/lab/shared';
 import { useChartZoom } from '@/hooks/useChartZoom';
+import ZoomBadge from '@/components/charts/ZoomBadge';
 
 const INVARIANTS = [
   { label: 'Budget balanced', desc: 'Total payouts equal total effective wagers.', color: SEM.payoff.main },
@@ -52,17 +53,7 @@ function SmartTooltip({ active, payload, label }: {
   );
 }
 
-function ZoomBadge({ isZoomed, onReset }: { isZoomed: boolean; onReset: () => void }) {
-  if (!isZoomed) return null;
-  return (
-    <button
-      onClick={onReset}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium hover:bg-indigo-200 transition-colors"
-    >
-      <span>⟲</span> Reset zoom
-    </button>
-  );
-}
+// ZoomBadge imported from shared component
 
 type ViewMode = 'timeline' | 'inspect' | 'validation';
 
@@ -166,17 +157,9 @@ export default function MechanismPage() {
         {/* ── Header ── */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-slate-900">Mechanism</h2>
-          <p className="text-sm font-medium text-slate-700 mt-2">
-            How does one round work, and why is the mechanism well-defined?
-          </p>
-          <p className="text-xs text-slate-500 mt-2 rounded-lg bg-indigo-50 border border-indigo-200/60 px-3 py-2 max-w-2xl">
-            These controls update the live walkthrough. Round outputs (outcome, forecast, error, skill, wealth) reflect the current setup.
-          </p>
           <p className="text-sm text-slate-600 mt-2 max-w-2xl">
-            This page is an interactive point-forecast demo using \( s = 1 - |y-r| \)
-            to make one round of the mechanism easy to inspect.
-            Thesis results are shown separately on Results and Robustness using
-            probabilistic metrics such as CRPS, calibration, and concentration.
+            Interactive walkthrough using quantile forecasts scored by CRPS.
+            Each forecaster submits quantiles at τ = (0.1, 0.25, 0.5, 0.75, 0.9); the mechanism scores them via the pinball-loss CRPS surrogate.
           </p>
         </div>
 

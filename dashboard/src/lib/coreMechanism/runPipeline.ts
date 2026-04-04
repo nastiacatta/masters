@@ -98,10 +98,20 @@ function makeRng(seed: number): () => number {
 }
 
 function normalSample(rng: () => number): number {
+  // Box-Muller using both components via closure cache
+  if (normalSample._cached !== undefined) {
+    const v = normalSample._cached;
+    normalSample._cached = undefined;
+    return v;
+  }
   const u1 = Math.max(rng(), 1e-9);
-  const u2 = Math.max(rng(), 1e-9);
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  const u2 = rng();
+  const r = Math.sqrt(-2 * Math.log(u1));
+  const theta = 2 * Math.PI * u2;
+  normalSample._cached = r * Math.sin(theta);
+  return r * Math.cos(theta);
 }
+normalSample._cached = undefined as number | undefined;
 
 function influenceFromWeighting(mode: WeightingMode | undefined): InfluenceRule {
   switch (mode) {
@@ -241,10 +251,11 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
   const dgp = generateDGP(options.dgpId, seed, T, n);
   const rng = makeRng(seed + 997);
 
+  const initialL = 0.5;
   let state: AgentState[] = Array.from({ length: n }, (_, index) => ({
     accountId: index,
-    L: 0.5,
-    sigma: 0.5,
+    L: initialL,
+    sigma: params.sigma_min + (1 - params.sigma_min) * Math.exp(-params.gamma * initialL),
     wealth: INITIAL_WEALTH,
   }));
 
@@ -266,6 +277,8 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
       rng,
     );
 
+    const { qReports: dgpQReports } = dgp.rounds[i];
+
     const trace = runComposableRound(
       roundNumber,
       state,
@@ -273,6 +286,7 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
         accountId: index,
         participate: decision.participate,
         report: decision.report,
+        qReport: decision.participate ? dgpQReports[index] : null,
         riskFraction: decision.riskFraction,
         depositMultiplier: decision.depositMultiplier,
       })),
@@ -282,11 +296,24 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
 
     traces.push(trace);
 
+    // Use CRPS of the aggregate quantile forecast as the round error
+    const aggCrps = trace.r_hat_q.length > 0
+      ? (() => {
+          let sum = 0;
+          for (let k = 0; k < trace.r_hat_q.length; k++) {
+            const taus = [0.1, 0.25, 0.5, 0.75, 0.9];
+            const err = y - trace.r_hat_q[k];
+            sum += err >= 0 ? taus[k] * err : (taus[k] - 1) * err;
+          }
+          return (2 * sum) / trace.r_hat_q.length;
+        })()
+      : Math.abs(y - trace.r_hat);
+
     rounds.push({
       round: roundNumber,
       y,
       r_hat: trace.r_hat,
-      error: Math.abs(y - trace.r_hat),
+      error: aggCrps,
       participation: trace.activeCount,
       nEff: trace.nEff,
       meanSigma: mean(trace.sigma_t),

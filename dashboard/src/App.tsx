@@ -8,6 +8,8 @@ import HomePage from '@/pages/HomePage';
 import MechanismPage from '@/pages/MechanismPage';
 import ResultsPage from '@/pages/ResultsPage';
 import RobustnessPage from '@/pages/RobustnessPage';
+import BehaviourPage from '@/pages/BehaviourPage';
+import NotesPage from '@/pages/NotesPage';
 
 import LabPage from '@/pages/LabPage';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
@@ -23,8 +25,10 @@ export default function App() {
               <Routes>
                 {/* Primary routes */}
                 <Route path="/" element={<HomePage />} />
-                <Route path="/mechanism" element={<MechanismPage />} />
                 <Route path="/results" element={<ResultsPage />} />
+                <Route path="/behaviour" element={<BehaviourPage />} />
+                <Route path="/notes" element={<NotesPage />} />
+                <Route path="/mechanism" element={<MechanismPage />} />
                 <Route path="/robustness" element={<RobustnessPage />} />
 
                 {/* Appendix: legacy interactive tools */}
@@ -35,7 +39,7 @@ export default function App() {
                 <Route path="/lab" element={<Navigate to="/appendix" replace />} />
                 <Route path="/walkthrough" element={<Navigate to="/mechanism" replace />} />
                 <Route path="/experiments" element={<Navigate to="/appendix/experiments" replace />} />
-                <Route path="/validation" element={<Navigate to="/robustness" replace />} />
+                <Route path="/validation" element={<Navigate to="/behaviour" replace />} />
                 <Route path="/overview" element={<Navigate to="/" replace />} />
                 <Route path="/pipeline" element={<Navigate to="/mechanism" replace />} />
                 <Route path="/comparison" element={<Navigate to="/results" replace />} />

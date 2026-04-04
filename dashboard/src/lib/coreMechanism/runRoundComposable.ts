@@ -1,5 +1,6 @@
 import type { AgentState } from './runRound';
 import { capWeightShares } from './runRoundExtended';
+import { TAUS } from './dgpSimulator';
 
 const EPS = 1e-12;
 
@@ -43,6 +44,8 @@ export interface AgentDecision {
   accountId: number;
   participate: boolean;
   report: number | null;
+  /** Quantile reports: qReport[k] = τ_k quantile forecast. */
+  qReport: number[] | null;
   riskFraction?: number;
   depositMultiplier?: number;
 }
@@ -64,6 +67,8 @@ export interface RoundTrace {
   cappedAggregationMass: number[];
   weights: number[];
   r_hat: number;
+  /** Aggregate quantile forecast: r_hat_q[k] = weighted quantile at τ_k. */
+  r_hat_q: number[];
 
   losses: number[];
   scores: number[];
@@ -88,12 +93,29 @@ function clamp(value: number, lo = 0, hi = 1): number {
   return Math.max(lo, Math.min(hi, value));
 }
 
-function maeLoss(y: number, r: number): number {
-  return Math.abs(r - y);
+/** Pinball loss L^(τ)(y, q). */
+function pinballLoss(y: number, q: number, tau: number): number {
+  const err = y - q;
+  return err >= 0 ? tau * err : (tau - 1) * err;
 }
 
-function scoreMae(y: number, r: number): number {
-  return 1 - Math.abs(y - r);
+/** CRPS-hat: average pinball loss over quantile grid, scaled to [0, 2]. */
+function crpsHat(y: number, qReport: number[]): number {
+  let sum = 0;
+  for (let k = 0; k < TAUS.length; k++) {
+    sum += pinballLoss(y, qReport[k], TAUS[k]);
+  }
+  return (2 * sum) / TAUS.length;
+}
+
+/** Score from CRPS-hat: s = 1 - C_hat/2, bounded in [0, 1]. */
+function scoreCrps(y: number, qReport: number[]): number {
+  return clamp(1 - crpsHat(y, qReport) / 2);
+}
+
+/** Loss for EWMA skill update — use CRPS-hat directly. */
+function crpsLoss(y: number, qReport: number[]): number {
+  return crpsHat(y, qReport);
 }
 
 function lossToSkill(L: number, sigmaMin: number, gamma: number): number {
@@ -219,6 +241,9 @@ export function runComposableRound(
   const reports = decisions.map((decision) =>
     decision.participate && decision.report != null ? clamp(decision.report) : 0,
   );
+  const qReports = decisions.map((decision) =>
+    decision.participate && decision.qReport != null ? decision.qReport : TAUS.map(() => 0),
+  );
 
   const deposits = decisions.map((decision, index) =>
     computeDeposit(state[index], sigma_t[index], decision, params),
@@ -239,12 +264,17 @@ export function runComposableRound(
   const r_hat =
     weights.reduce((sum, weight, index) => sum + weight * reports[index], 0);
 
+  // Aggregate quantile forecast: weighted average at each τ level
+  const r_hat_q = TAUS.map((_, k) =>
+    weights.reduce((sum, weight, index) => sum + weight * qReports[index][k], 0),
+  );
+
   const losses = decisions.map((decision, index) =>
-    decision.participate && decision.report != null ? maeLoss(y, reports[index]) : 0,
+    decision.participate && decision.qReport != null ? crpsLoss(y, qReports[index]) : 0,
   );
 
   const scores = decisions.map((decision, index) =>
-    decision.participate && decision.report != null ? scoreMae(y, reports[index]) : 0,
+    decision.participate && decision.qReport != null ? scoreCrps(y, qReports[index]) : 0,
   );
 
   const totalEffectiveWager = effectiveWager.reduce((sum, value) => sum + value, 0);
@@ -286,7 +316,7 @@ export function runComposableRound(
   const profit = totalPayoff.map((value, index) => value - effectiveWager[index]);
   const refunds = deposits.map((value, index) => Math.max(0, value - effectiveWager[index]));
   const wealth_after = wealth_before.map((wealth, index) =>
-    Math.max(0, wealth + profit[index]),
+    Math.max(0, wealth - deposits[index] + totalPayoff[index] + refunds[index]),
   );
 
   const L_new = L_prev.map((value, index) =>
@@ -323,6 +353,7 @@ export function runComposableRound(
     cappedAggregationMass,
     weights,
     r_hat,
+    r_hat_q,
 
     losses,
     scores,
