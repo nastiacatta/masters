@@ -98,7 +98,7 @@ export default function LabPage() {
           <div>
             <h1 className="text-base font-bold text-slate-900 tracking-tight">Simulation Lab</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Configure, run, compare, and validate wagering mechanism designs
+              Interactive sandbox for mechanism exploration
             </p>
           </div>
           <div className="flex items-center gap-3">

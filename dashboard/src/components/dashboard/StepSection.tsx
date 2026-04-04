@@ -1,6 +1,8 @@
 /**
  * StepSection — clearly divides content into numbered steps.
  */
+import { motion } from 'framer-motion';
+
 interface Props {
   step: number;
   title: string;
@@ -22,9 +24,14 @@ export default function StepSection({ step, title, description, children }: Prop
           ) : null}
         </div>
       </div>
-      <div className="pl-10 border-l-2 border-slate-200 ml-3 min-h-8">
+      <motion.div
+        className="pl-10 border-l-2 border-slate-200 ml-3 min-h-8"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
         {children}
-      </div>
+      </motion.div>
     </div>
   );
 }

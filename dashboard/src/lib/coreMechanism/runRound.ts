@@ -131,7 +131,8 @@ export function runRound(
   const s_bar = M > EPS ? m.reduce((sum, mi, i) => sum + mi * scores[i], 0) / M : 0;
   const skill_payoff = M > EPS ? m.map((mi, idx) => mi * (1 + Math.max(0, Math.min(1, scores[idx])) - s_bar)) : m.map(() => 0);
   const profit = skill_payoff.map((pi, idx) => pi - m[idx]);
-  const wealth_new = wealth.map((w, idx) => Math.max(0, w + profit[idx]));
+  const refund = deposits.map((d, idx) => Math.max(0, d - m[idx]));
+  const wealth_new = wealth.map((w, idx) => Math.max(0, w - deposits[idx] + skill_payoff[idx] + refund[idx]));
 
   const kappa = params.kappa ?? 0;
   const L0 = params.L0 ?? 0;
