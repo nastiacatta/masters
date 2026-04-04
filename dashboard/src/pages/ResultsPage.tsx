@@ -19,6 +19,8 @@ import {
   loadCalibration,
   loadExperimentList,
   loadMasterComparison,
+  loadRealDataComparison,
+  type RealDataResult,
 } from '@/lib/adapters';
 import type {
   BankrollAblationRow,
@@ -121,7 +123,7 @@ function AnswerCard({
   );
 }
 
-const EXP_TABS = ['Accuracy', 'Concentration', 'Calibration', 'Ablation'] as const;
+const EXP_TABS = ['Real data', 'Accuracy', 'Concentration', 'Calibration', 'Ablation'] as const;
 const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
 
 const METHOD_LABEL: Record<string, string> = {
@@ -146,7 +148,7 @@ function seFinite(values: Array<number | undefined | null>): number | null {
 }
 
 export default function ResultsPage() {
-  const [activeTab, setActiveTab] = useState<string>('Accuracy');
+  const [activeTab, setActiveTab] = useState<string>('Real data');
 
   // --- adapter-backed data ---
   const [masterRows, setMasterRows] = useState<MasterComparisonRow[]>([]);
@@ -154,6 +156,7 @@ export default function ResultsPage() {
   const [calibration, setCalibration] = useState<CalibrationPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasExpData, setHasExpData] = useState(false);
+  const [realData, setRealData] = useState<RealDataResult | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +176,9 @@ export default function ResultsPage() {
         setAblationRows(ablation?.rows ?? []);
         setCalibration(cal);
         setHasExpData(mRows.length > 0);
+        // Load real-data comparison
+        const rd = await loadRealDataComparison('elia_wind').catch(() => null);
+        if (!cancelled && rd) setRealData(rd);
       } catch {
         if (!cancelled) setHasExpData(false);
       } finally {
@@ -377,7 +383,9 @@ export default function ResultsPage() {
   const useExp = hasExpData && !loading && isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
 
-  const deltaCrps = useExp ? (expMechanism?.deltaCrps ?? null) : demoDelta;
+  const deltaCrps = realData
+    ? (realData.rows.find(r => r.method === 'mechanism')?.delta_crps_vs_equal ?? null)
+    : useExp ? (expMechanism?.deltaCrps ?? null) : demoDelta;
   const gini = useExp ? (expMechanism?.finalGini ?? null) : demoBlended.pipeline.summary.finalGini;
 
   const accuracyVerdict: Verdict = deltaCrps == null ? 'neutral' : deltaCrps < -ACCURACY_EPS ? 'good' : deltaCrps > ACCURACY_EPS ? 'bad' : 'neutral';
@@ -459,6 +467,79 @@ export default function ResultsPage() {
             exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.2 }}
           >
+
+          {/* ═══ REAL DATA TAB ═══ */}
+
+          {activeTab === 'Real data' && realData && (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-semibold">Real data</span>
+                  <h3 className="text-sm font-semibold text-indigo-900">Elia Offshore Wind — {realData.config.T.toLocaleString()} hourly points</h3>
+                </div>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  {realData.config.n_forecasters} forecasting models ({realData.config.forecasters.join(', ')}) on Belgian offshore wind power (2024–2025).
+                  Each model is strictly causal and retrained periodically. The mechanism learns which model is best and adjusts weights over time.
+                </p>
+              </div>
+
+              <DeltaBarChart
+                data={realData.rows.map(r => ({
+                  label: r.method === 'uniform' ? 'Equal' : r.method === 'skill' ? 'Skill-only' : r.method === 'mechanism' ? 'Skill × stake' : r.method === 'best_single' ? 'Best single' : r.method,
+                  delta: r.delta_crps_vs_equal * 1e4,
+                  color: r.method === 'mechanism' ? '#6366f1' : r.method === 'skill' ? '#8b5cf6' : r.method === 'uniform' ? '#94a3b8' : '#f59e0b',
+                }))}
+                baselineLabel="Equal weighting"
+                metricLabel="Δ CRPS (×10⁴)"
+              />
+
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-sm font-semibold text-slate-800">CRPS over time</h3>
+                  <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
+                </div>
+                <p className="text-xs text-slate-500 mb-3">
+                  Lower is better. The mechanism (purple) should track below equal weighting (grey) as skill estimates converge.
+                </p>
+                <div className="cursor-crosshair">
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart
+                      data={downsample(realData.per_round.map((r, i) => ({
+                        t: r.t,
+                        uniform: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_uniform, 0) / (i + 1),
+                        mechanism: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_mechanism, 0) / (i + 1),
+                        skill: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_skill, 0) / (i + 1),
+                        best: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_best_single, 0) / (i + 1),
+                      })), 500)}
+                      margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+                      onMouseDown={cumErrorZoom.onMouseDown}
+                      onMouseMove={cumErrorZoom.onMouseMove}
+                      onMouseUp={cumErrorZoom.onMouseUp}
+                    >
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]}
+                        label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                      <Line type="monotone" dataKey="uniform" name="Equal" stroke="#94a3b8" strokeWidth={1.5} dot={false} />
+                      <Line type="monotone" dataKey="skill" name="Skill-only" stroke="#8b5cf6" strokeWidth={1.5} dot={false} strokeOpacity={0.7} />
+                      <Line type="monotone" dataKey="mechanism" name="Skill × stake" stroke="#6366f1" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="best" name="Best single" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeOpacity={0.7} />
+                      <Brush dataKey="t" {...BRUSH_PROPS} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Real data' && !realData && !loading && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+              <p className="text-sm text-slate-500">Real-data comparison not available. Run the forecaster models on your data first.</p>
+            </div>
+          )}
 
           {/* ═══ EXPERIMENT-BACKED TABS ═══ */}
 
