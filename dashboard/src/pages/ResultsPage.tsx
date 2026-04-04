@@ -320,15 +320,29 @@ export default function ResultsPage() {
     })).sort((a, b) => a.gini - b.gini),
     [demoMethods]);
 
-  // Weight convergence from the blended (skill×stake) demo pipeline
-  const weightConvergence = useMemo(() => {
+  // Weight convergence: use sigma (skill estimate) which converges cleanly,
+  // plus a final target-vs-learned bar from the weight recovery data
+  const skillConvergence = useMemo(() => {
     const traces = demoBlended.pipeline.traces;
     const raw = traces.map((t, i) => {
       const pt: Record<string, number> = { round: i + 1 };
-      for (let j = 0; j < DEMO_N; j++) pt[`F${j + 1}`] = t.weights[j];
+      for (let j = 0; j < DEMO_N; j++) pt[`F${j + 1}`] = t.sigma_t[j];
       return pt;
     });
     return downsample(raw, 300);
+  }, [demoBlended]);
+
+  // Final weights bar: target (equal = 1/N) vs learned (final weights from mechanism)
+  const finalWeightsBar = useMemo(() => {
+    const lastTrace = demoBlended.pipeline.traces[demoBlended.pipeline.traces.length - 1];
+    if (!lastTrace) return [];
+    return Array.from({ length: DEMO_N }, (_, i) => ({
+      name: agentName(i),
+      learned: lastTrace.weights[i],
+      equal: 1 / DEMO_N,
+      sigma: lastTrace.sigma_t[i],
+      color: AGENT_PALETTE[i % AGENT_PALETTE.length],
+    })).sort((a, b) => b.learned - a.learned);
   }, [demoBlended]);
 
   // Precompute cumulative CRPS for real-data chart (O(n) instead of O(n²))
@@ -497,27 +511,46 @@ export default function ResultsPage() {
 
               {/* Weight convergence */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight convergence</h3>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">Skill convergence</h3>
                 <p className="text-xs text-slate-500 mb-3">
-                  How the mechanism's learned weights evolve over time. Better forecasters receive higher weights as the skill layer learns from realised performance.
+                  Each agent's learned skill estimate (σ) over time. Good forecasters converge to high σ, poor ones to low σ.
+                  The mechanism uses these to reweight — higher σ means more influence.
                 </p>
-                <ResponsiveContainer width="100%" height={320}>
-                  <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']}
-                      label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                    {Array.from({ length: DEMO_N }, (_, i) => (
-                      <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
-                    ))}
-                    <ReferenceLine y={1 / DEMO_N} stroke="#94a3b8" strokeDasharray="4 4" />
-                    <Brush dataKey="round" {...BRUSH_PROPS} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="grid lg:grid-cols-[2fr_1fr] gap-4">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={skillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                        label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+                      {Array.from({ length: DEMO_N }, (_, i) => (
+                        <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
+                      ))}
+                      <Brush dataKey="round" {...BRUSH_PROPS} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <div>
+                    <div className="text-xs font-semibold text-slate-700 mb-2">Final weights vs equal</div>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={finalWeightsBar} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 4 }}>
+                        <CartesianGrid {...GRID_PROPS} horizontal={false} />
+                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={36} />
+                        <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
+                          formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
+                        <ReferenceLine x={1 / DEMO_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                        <Bar dataKey="learned" name="Learned" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                          {finalWeightsBar.map((d) => <Cell key={d.name} fill={d.color} opacity={0.9} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <p className="text-[10px] text-slate-400 mt-1">Dashed line = equal weight (1/{DEMO_N}). Bars show final learned weights.</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -722,29 +755,47 @@ export default function ResultsPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Weight convergence (demo) */}
+              {/* Skill convergence (demo) */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight convergence</h3>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">Skill convergence</h3>
                 <p className="text-xs text-slate-500 mb-3">
-                  The mechanism learns to assign higher weights to more accurate forecasters. The dashed line shows equal weighting (1/{DEMO_N}).
+                  Each agent's learned skill estimate (σ) over time. The mechanism separates good from bad forecasters within ~50 rounds, then stabilises.
                 </p>
-                <ResponsiveContainer width="100%" height={320}>
-                  <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']}
-                      label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                    {Array.from({ length: DEMO_N }, (_, i) => (
-                      <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
-                    ))}
-                    <ReferenceLine y={1 / DEMO_N} stroke="#94a3b8" strokeDasharray="4 4" />
-                    <Brush dataKey="round" {...BRUSH_PROPS} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="grid lg:grid-cols-[2fr_1fr] gap-4">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={skillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                        label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+                      {Array.from({ length: DEMO_N }, (_, i) => (
+                        <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
+                      ))}
+                      <Brush dataKey="round" {...BRUSH_PROPS} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <div>
+                    <div className="text-xs font-semibold text-slate-700 mb-2">Final weights vs equal</div>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={finalWeightsBar} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 4 }}>
+                        <CartesianGrid {...GRID_PROPS} horizontal={false} />
+                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={36} />
+                        <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
+                          formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
+                        <ReferenceLine x={1 / DEMO_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                        <Bar dataKey="learned" name="Learned" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                          {finalWeightsBar.map((d) => <Cell key={d.name} fill={d.color} opacity={0.9} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <p className="text-[10px] text-slate-400 mt-1">Dashed line = equal weight (1/{DEMO_N}). Bars show final learned weights.</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
