@@ -32,6 +32,8 @@ interface DeltaBarChartProps {
   baselineLabel?: string;
   /** X-axis label */
   metricLabel?: string;
+  /** Optional title override for the chart card */
+  title?: string;
 }
 
 /** Sorted data row with rank badge text for the Y-axis label. */
@@ -47,12 +49,13 @@ export default function DeltaBarChart({
   data,
   baselineLabel = 'Baseline (equal)',
   metricLabel = 'Δ CRPS (×10⁴)',
+  title,
 }: DeltaBarChartProps) {
   // Sort ascending by delta (most negative = best accuracy first)
   const sorted: SortedRow[] = [...data]
     .sort((a, b) => a.delta - b.delta)
     .map((d, i) => ({
-      name: `#${i + 1}  ${d.label}`,
+      name: d.label,
       delta: d.delta,
       se: d.se ?? 0,
       color: d.color,
@@ -61,7 +64,7 @@ export default function DeltaBarChart({
 
   return (
     <ChartCard
-      title="Accuracy Ranking"
+      title={title ?? "Accuracy Ranking"}
       subtitle="Bars show Δ vs baseline — left of zero is better."
       help={{
         term: 'Delta Bar Chart',

@@ -85,7 +85,7 @@ export default function BehaviourPage() {
             Behaviour & Robustness
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            How do agents behave, and does the mechanism hold up?
+            Behaviour &amp; Robustness
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             The mechanism separates deterministic core from strategic behaviour. This page explores both.
@@ -129,7 +129,7 @@ function TaxonomyTab() {
             <div className="text-sm font-semibold mb-2">{f.label}</div>
             <div className="flex flex-wrap gap-1.5">
               {f.items.map(item => (
-                <span key={item} className="text-[10px] bg-white/60 rounded px-2 py-0.5">{item}</span>
+                <span key={item} className="text-[11px] bg-white/60 rounded px-2 py-0.5">{item}</span>
               ))}
             </div>
           </div>
@@ -174,7 +174,7 @@ function SeasonalityTab() {
           <BarChart data={SEASON_DATA} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="season" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} label={{ value: '% improvement vs equal', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} label={{ value: '% improvement', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties} formatter={(v: unknown) => [`+${Number(v).toFixed(1)}%`, 'Improvement']} />
             <Bar dataKey="pct" radius={[6, 6, 0, 0]} maxBarSize={60}>
               {SEASON_DATA.map(s => <Cell key={s.season} fill={s.color} opacity={0.85} />)}
@@ -209,6 +209,10 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-slate-600 max-w-2xl">
+        Real forecasters go offline — sensors fail, models retrain, or participants simply skip rounds.
+        If the mechanism can't handle gaps gracefully, skill estimates drift and accuracy suffers.
+      </p>
       <p className="text-sm text-slate-600 max-w-2xl">
         Agents may participate intermittently — bursty sessions, selective entry, or random absence. The mechanism must handle missing forecasters without breaking skill estimates or budget balance.
       </p>
@@ -285,6 +289,10 @@ function SybilTab({ sybil, baseline }: { sybil: PipelineResult; baseline: Pipeli
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-slate-600 max-w-2xl">
+        A Sybil attack is the most basic exploit: if splitting into clones doubles your influence, the mechanism is broken.
+        This test checks whether the skill gate makes identity-splitting unprofitable.
+      </p>
       <p className="text-sm text-slate-600 max-w-2xl">
         Can an agent gain by splitting into multiple identities? The skill gate means each clone must individually earn its skill estimate, so splitting doesn't help.
       </p>
