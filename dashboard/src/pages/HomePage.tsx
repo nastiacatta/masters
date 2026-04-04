@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 const NAV = [
   { to: '/results',    label: 'Results',    desc: 'Accuracy & concentration', color: 'border-l-indigo-500 hover:bg-indigo-50' },
   { to: '/behaviour',  label: 'Behaviour',  desc: 'Strategies, attacks & robustness', color: 'border-l-violet-500 hover:bg-violet-50' },
+  { to: '/notes',      label: 'Notes',      desc: 'All experiments & methodology', color: 'border-l-slate-400 hover:bg-slate-50' },
+] as const;
+
+const FINDINGS = [
+  { icon: '✓', color: 'bg-emerald-500', title: 'Skill improves accuracy', detail: 'The online skill layer improves forecast aggregation by up to 21% on real wind data (DM test, p < 0.001). Confirmed on two datasets.' },
+  { icon: '↔', color: 'bg-indigo-500', title: 'Robust across conditions', detail: 'Works at all horizons (1h to day-ahead), in all seasons, and under 60% missingness. No long burn-in needed.' },
+  { icon: '⚖', color: 'bg-amber-500', title: 'Deposit policy matters', detail: 'The deposit policy determines how much skill signal reaches the aggregate. Fixed deposits isolate skill best; noisy deposits dilute it.' },
 ] as const;
 
 const STEPS = [
@@ -77,6 +84,24 @@ export default function HomePage() {
                 <div>
                   <div className="text-sm font-semibold text-slate-800">{s.title}</div>
                   <div className="text-xs text-slate-500 mt-1 leading-relaxed">{s.what}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Key findings ── */}
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Key findings</h2>
+          <div className="space-y-3">
+            {FINDINGS.map((f) => (
+              <div key={f.title} className="rounded-xl border border-slate-200 bg-white p-5 flex gap-4 items-start">
+                <div className={`w-7 h-7 rounded-full ${f.color} flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5`}>
+                  {f.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">{f.title}</div>
+                  <div className="text-xs text-slate-500 mt-1 leading-relaxed">{f.detail}</div>
                 </div>
               </div>
             ))}
