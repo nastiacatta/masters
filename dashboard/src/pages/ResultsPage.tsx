@@ -20,6 +20,7 @@ import {
   loadExperimentList,
   loadMasterComparison,
   loadRealDataComparison,
+  loadWeightRecoveryMethod1,
   type RealDataResult,
 } from '@/lib/adapters';
 import type {
@@ -27,6 +28,7 @@ import type {
   CalibrationPoint,
   ExperimentMeta,
   MasterComparisonRow,
+  WeightRecoveryRow,
 } from '@/lib/types';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import { METHOD, SEM } from '@/lib/tokens';
@@ -158,6 +160,7 @@ export default function ResultsPage() {
   const [hasExpData, setHasExpData] = useState(false);
   const [realData, setRealData] = useState<RealDataResult | null>(null);
   const [realDataElec, setRealDataElec] = useState<RealDataResult | null>(null);
+  const [weightRecovery, setWeightRecovery] = useState<WeightRecoveryRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,6 +185,8 @@ export default function ResultsPage() {
         if (!cancelled && rd) setRealData(rd);
         const rdElec = await loadRealDataComparison('elia_electricity').catch(() => null);
         if (!cancelled && rdElec) setRealDataElec(rdElec);
+        const wr = await loadWeightRecoveryMethod1().catch(() => []);
+        if (!cancelled) setWeightRecovery(wr);
       } catch {
         if (!cancelled) setHasExpData(false);
       } finally {
@@ -552,6 +557,43 @@ export default function ResultsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Sanity check: weight recovery from T=20000 synthetic experiment */}
+              {weightRecovery.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-semibold text-slate-800">Sanity check — weight recovery</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold">T = 20,000</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-3">
+                    On a synthetic DGP with known true weights (w = 0.8, 0.1, 0.5), the mechanism recovers them accurately.
+                    This confirms the EWMA skill layer converges to the correct ranking given enough data.
+                  </p>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={weightRecovery.map(r => ({
+                        name: `F${r.forecaster + 1}`,
+                        target: r.wTarget,
+                        learned: r.wLearned,
+                      }))}
+                      margin={{ top: 8, right: 24, bottom: 24, left: 24 }}
+                    >
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
+                        formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
+                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                      <Bar dataKey="target" name="True weight" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.6} />
+                      <Bar dataKey="learned" name="Learned weight" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.9} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Mean absolute error: {fmt(weightRecovery.reduce((s, r) => s + r.absError, 0) / weightRecovery.length, 4)}.
+                    Weights are unnormalised — the mechanism learns the correct relative scale.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
