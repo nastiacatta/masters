@@ -74,17 +74,40 @@ export default function HomePage() {
 
         {/* ── Round timeline — plain English ── */}
         <section>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">One round</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {STEPS.map((s) => (
-              <div key={s.n} className="rounded-xl border border-slate-200 bg-white p-5 flex gap-4 items-start">
-                <div className={`w-7 h-7 rounded-full ${s.color} flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5`}>
-                  {s.n}
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">How one round works</h2>
+          <div className="grid sm:grid-cols-2 gap-4 relative">
+            {/* Connecting lines between steps */}
+            <svg className="hidden sm:block absolute inset-0 w-full h-full pointer-events-none z-0" aria-hidden="true">
+              {/* Horizontal connector: step 1 → step 2 */}
+              <line x1="50%" y1="25%" x2="50%" y2="25%" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 3" />
+              {/* Vertical connector: step 1 → step 3 */}
+              <line x1="25%" y1="50%" x2="25%" y2="50%" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 3" />
+              {/* Vertical connector: step 2 → step 4 */}
+              <line x1="75%" y1="50%" x2="75%" y2="50%" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 3" />
+              {/* Horizontal connector: step 3 → step 4 */}
+              <line x1="50%" y1="75%" x2="50%" y2="75%" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 3" />
+            </svg>
+            {STEPS.map((s, i) => (
+              <div key={s.n} className="relative z-10">
+                <div className="rounded-xl border border-slate-200 bg-white p-5 flex gap-4 items-start">
+                  <div className={`w-7 h-7 rounded-full ${s.color} flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5`}>
+                    {s.n}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800">{s.title}</div>
+                    <div className="text-xs text-slate-500 mt-1 leading-relaxed">{s.what}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-800">{s.title}</div>
-                  <div className="text-xs text-slate-500 mt-1 leading-relaxed">{s.what}</div>
-                </div>
+                {/* Arrow connectors */}
+                {i < 3 && (
+                  <div className={`hidden sm:flex absolute text-slate-300 text-sm font-light ${
+                    i === 0 ? '-right-3 top-1/2 -translate-y-1/2' :
+                    i === 1 ? 'left-1/2 -bottom-3 -translate-x-1/2' :
+                    '-right-3 top-1/2 -translate-y-1/2'
+                  }`}>
+                    {i === 1 ? '↓' : '→'}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -100,7 +123,7 @@ export default function HomePage() {
                   {f.icon}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">{f.title}</div>
+                  <div className="text-[15px] font-semibold text-slate-800">{f.title}</div>
                   <div className="text-xs text-slate-500 mt-1 leading-relaxed">{f.detail}</div>
                 </div>
               </div>
@@ -121,6 +144,11 @@ export default function HomePage() {
             ))}
           </div>
         </nav>
+
+        {/* ── Footer ── */}
+        <footer className="text-center text-[11px] text-slate-400 pt-4 border-t border-slate-100">
+          Anastasia Cattaneo · Imperial College London · 2025
+        </footer>
 
       </div>
     </div>

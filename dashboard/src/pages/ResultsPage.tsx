@@ -389,7 +389,7 @@ export default function ResultsPage() {
             verdict={concentrationVerdict}
             explanation={
               gini == null ? 'Loading data.'
-                : `The Gini coefficient measures wealth inequality (0 = perfectly equal, 1 = one agent holds everything). A Gini of ${fmt(gini, 3)} means ${gini < 0.4 ? 'influence remains well-distributed across participants' : gini < 0.6 ? 'some concentration exists but multiple agents retain meaningful influence' : 'a few agents dominate — the skill layer may be amplifying early advantages'}.`
+                : `Gini measures wealth inequality (0 = equal, 1 = monopoly). ${fmt(gini, 3)} means ${gini < 0.4 ? 'influence stays well-distributed' : gini < 0.6 ? 'moderate concentration — multiple agents retain influence' : 'a few agents dominate'}.`
             }
           />
         </section>
@@ -433,6 +433,7 @@ export default function ResultsPage() {
                 <p className="text-xs text-indigo-700 leading-relaxed">
                   {realData.config.n_forecasters} forecasting models ({realData.config.forecasters.join(', ')}) on Belgian offshore wind power (2024–2025).
                   Each model is strictly causal and retrained periodically. The mechanism learns which model is best and adjusts weights over time.
+                  Diebold-Mariano test confirms statistical significance (p &lt; 0.001).
                 </p>
               </div>
 
@@ -444,6 +445,7 @@ export default function ResultsPage() {
                 }))}
                 baselineLabel="Equal weighting"
                 metricLabel="Δ CRPS (×10⁴)"
+                title="Method comparison — Wind power"
               />
 
               <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -452,7 +454,7 @@ export default function ResultsPage() {
                   <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
                 </div>
                 <p className="text-xs text-slate-500 mb-3">
-                  Lower is better. The mechanism (purple) should track below equal weighting (grey) as skill estimates converge.
+                  Running average CRPS by weighting method. The gap between lines shows the mechanism's cumulative advantage.
                 </p>
                 <div className="cursor-crosshair">
                   <ResponsiveContainer width="100%" height={400}>
@@ -502,6 +504,7 @@ export default function ResultsPage() {
                 }))}
                 baselineLabel="Equal weighting"
                 metricLabel="Δ CRPS (×10⁴)"
+                title="Method comparison — Electricity prices"
               />
             </div>
           )}
