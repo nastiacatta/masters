@@ -32,12 +32,14 @@ import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
 import {
+  AGENT_PALETTE,
   AXIS_STROKE,
   AXIS_TICK,
   BRUSH_PROPS,
   CHART_MARGIN_LABELED,
   GRID_PROPS,
   TOOLTIP_STYLE,
+  agentName,
   downsample,
   fmt,
 } from '@/components/lab/shared';
@@ -318,6 +320,17 @@ export default function ResultsPage() {
     })).sort((a, b) => a.gini - b.gini),
     [demoMethods]);
 
+  // Weight convergence from the blended (skill×stake) demo pipeline
+  const weightConvergence = useMemo(() => {
+    const traces = demoBlended.pipeline.traces;
+    const raw = traces.map((t, i) => {
+      const pt: Record<string, number> = { round: i + 1 };
+      for (let j = 0; j < DEMO_N; j++) pt[`F${j + 1}`] = t.weights[j];
+      return pt;
+    });
+    return downsample(raw, 300);
+  }, [demoBlended]);
+
   // Precompute cumulative CRPS for real-data chart (O(n) instead of O(n²))
   const realCumCrps = useMemo(() => {
     if (!realData?.per_round?.length) return [];
@@ -480,6 +493,31 @@ export default function ResultsPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+              </div>
+
+              {/* Weight convergence */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight convergence</h3>
+                <p className="text-xs text-slate-500 mb-3">
+                  How the mechanism's learned weights evolve over time. Better forecasters receive higher weights as the skill layer learns from realised performance.
+                </p>
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']}
+                      label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                    <Tooltip content={<SmartTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                    {Array.from({ length: DEMO_N }, (_, i) => (
+                      <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
+                    ))}
+                    <ReferenceLine y={1 / DEMO_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                    <Brush dataKey="round" {...BRUSH_PROPS} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}
@@ -679,6 +717,31 @@ export default function ResultsPage() {
                         strokeOpacity={m.key === 'blended' ? 1 : 0.6}
                         isAnimationActive={true} animationDuration={300} />
                     ))}
+                    <Brush dataKey="round" {...BRUSH_PROPS} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Weight convergence (demo) */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight convergence</h3>
+                <p className="text-xs text-slate-500 mb-3">
+                  The mechanism learns to assign higher weights to more accurate forecasters. The dashed line shows equal weighting (1/{DEMO_N}).
+                </p>
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']}
+                      label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                    <Tooltip content={<SmartTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                    {Array.from({ length: DEMO_N }, (_, i) => (
+                      <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
+                    ))}
+                    <ReferenceLine y={1 / DEMO_N} stroke="#94a3b8" strokeDasharray="4 4" />
                     <Brush dataKey="round" {...BRUSH_PROPS} />
                   </LineChart>
                 </ResponsiveContainer>
