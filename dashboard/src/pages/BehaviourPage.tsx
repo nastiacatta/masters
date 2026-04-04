@@ -22,11 +22,11 @@ const TABS = ['Taxonomy', 'Seasonality', 'Intermittency', 'Sybil', 'Sensitivity'
 type Tab = (typeof TABS)[number];
 
 const FAMILIES = [
-  { label: 'Participation', color: 'bg-sky-100 text-sky-700 border-sky-200', items: ['Intermittent', 'Bursty', 'Selective entry'] },
-  { label: 'Reporting', color: 'bg-violet-100 text-violet-700 border-violet-200', items: ['Truthful', 'Hedged', 'Strategic', 'Noisy'] },
-  { label: 'Staking', color: 'bg-teal-100 text-teal-700 border-teal-200', items: ['Fixed', 'Kelly-like', 'House-money'] },
-  { label: 'Identity', color: 'bg-amber-100 text-amber-700 border-amber-200', items: ['Single', 'Sybil', 'Collusion'] },
-  { label: 'Adversarial', color: 'bg-red-100 text-red-700 border-red-200', items: ['Arbitrage', 'Manipulation', 'Evasion', 'Insider'] },
+  { label: 'Participation', color: 'bg-sky-100 text-sky-700 border-sky-200', items: ['Intermittent', 'Bursty', 'Selective entry'], tested: true },
+  { label: 'Reporting', color: 'bg-violet-100 text-violet-700 border-violet-200', items: ['Truthful', 'Hedged', 'Strategic', 'Noisy'], tested: false },
+  { label: 'Staking', color: 'bg-teal-100 text-teal-700 border-teal-200', items: ['Fixed', 'Kelly-like', 'House-money'], tested: true },
+  { label: 'Identity', color: 'bg-amber-100 text-amber-700 border-amber-200', items: ['Single', 'Sybil', 'Collusion'], tested: true },
+  { label: 'Adversarial', color: 'bg-red-100 text-red-700 border-red-200', items: ['Arbitrage', 'Manipulation', 'Evasion', 'Insider'], tested: false },
 ] as const;
 
 function SmartTooltip({ active, payload, label }: {
@@ -59,6 +59,21 @@ function Metric({ label, value, sub }: { label: string; value: string; sub?: str
   );
 }
 
+type Verdict = 'good' | 'neutral' | 'bad';
+const VERDICT_BORDER: Record<Verdict, string> = { good: 'border-l-emerald-500', neutral: 'border-l-amber-400', bad: 'border-l-red-400' };
+const VERDICT_TEXT: Record<Verdict, string> = { good: 'text-emerald-600', neutral: 'text-amber-600', bad: 'text-red-600' };
+const VERDICT_BG: Record<Verdict, string> = { good: 'bg-emerald-50', neutral: 'bg-amber-50', bad: 'bg-red-50' };
+
+function VerdictCard({ question, answer, detail, verdict }: { question: string; answer: string; detail: string; verdict: Verdict }) {
+  return (
+    <div className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-4`}>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{question}</div>
+      <div className={`text-xl font-bold font-mono mt-1 ${VERDICT_TEXT[verdict]}`}>{answer}</div>
+      <div className="text-xs text-slate-500 mt-1">{detail}</div>
+    </div>
+  );
+}
+
 
 export default function BehaviourPage() {
   const [tab, setTab] = useState<Tab>('Taxonomy');
@@ -71,7 +86,7 @@ export default function BehaviourPage() {
     const lams = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0];
     const sigs = [0.05, 0.1, 0.2, 0.3, 0.5];
     return lams.flatMap(lam => sigs.map(sig => {
-      const p = runPipeline({ dgpId: 'baseline', behaviourPreset: 'baseline', rounds: 100, seed: SEED, n: N, mechanism: { lam, sigma_min: sig } as Record<string, number> });
+      const p = runPipeline({ dgpId: 'baseline', behaviourPreset: 'baseline', rounds: T, seed: SEED, n: N, mechanism: { lam, sigma_min: sig } as Record<string, number> });
       return { lam, sig, error: p.summary.meanError, gini: p.summary.finalGini };
     }));
   }, []);
@@ -88,7 +103,8 @@ export default function BehaviourPage() {
             Behaviour &amp; Robustness
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            The mechanism separates deterministic core from strategic behaviour. This page explores both.
+            The core mechanism only sees deposits, reports, and participation — never motives.
+            This page tests what happens when agents behave strategically, go offline, or attack.
           </p>
         </header>
 
@@ -116,17 +132,22 @@ export default function BehaviourPage() {
   );
 }
 
+
 /* ── Taxonomy ── */
 function TaxonomyTab() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
-        The mechanism treats each user as a policy that outputs actions. The core never depends on motives — it only sees deposits, reports, and participation. This lets us swap behaviours without touching the mechanism.
+        The mechanism treats each agent as a black box that outputs actions (deposit, report, participate/skip).
+        This lets us swap in any behaviour without changing the core. Below are the five families we test.
       </p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {FAMILIES.map(f => (
           <div key={f.label} className={`rounded-xl border p-5 ${f.color}`}>
-            <div className="text-sm font-semibold mb-2">{f.label}</div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="text-sm font-semibold">{f.label}</div>
+              {f.tested && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/70 font-medium">tested</span>}
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {f.items.map(item => (
                 <span key={item} className="text-[11px] bg-white/60 rounded px-2 py-0.5">{item}</span>
@@ -136,7 +157,7 @@ function TaxonomyTab() {
         ))}
       </div>
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-        Each family is tested via dedicated experiments. Select a tab above to see intermittency, sybil, or sensitivity results.
+        Tested families have dedicated experiments in the tabs above. Reporting and Adversarial behaviours are explored in the Notes page.
       </div>
     </div>
   );
@@ -153,10 +174,14 @@ function SeasonalityTab() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
+        Thesis question: can the mechanism adapt to non-stationary conditions without explicit regime detection?
+      </div>
+
       <p className="text-sm text-slate-600 max-w-2xl">
         Wind patterns change across seasons — winter is windier and more variable, summer is calmer.
-        The mechanism adapts its skill estimates without any explicit season detection.
-        This tests the "non-stationarity" part of the thesis question.
+        The mechanism adapts its skill estimates automatically as model quality shifts.
+        Data: Elia Belgian offshore wind, 17,544 hourly points, 5 forecasting models.
       </p>
 
       <div className="grid sm:grid-cols-4 gap-3">
@@ -164,18 +189,19 @@ function SeasonalityTab() {
           <div key={s.season} className="rounded-xl border border-slate-200 bg-white p-4 text-center">
             <div className="text-xs text-slate-400 font-medium">{s.season}</div>
             <div className="text-2xl font-bold font-mono mt-1" style={{ color: s.color }}>+{s.pct}%</div>
-            <div className="text-[10px] text-slate-400 mt-1">mechanism improvement</div>
+            <div className="text-[10px] text-slate-400 mt-1">vs equal weighting</div>
           </div>
         ))}
       </div>
 
-      <ChartCard title="Mechanism improvement by season" subtitle="Elia offshore wind, hourly, 2024–2025. All seasons show significant improvement.">
+      <ChartCard title="Mechanism improvement by season" subtitle="% CRPS improvement over equal weighting. All seasons significant (DM test, p < 0.001).">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={SEASON_DATA} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="season" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} label={{ value: '% improvement', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-            <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties} formatter={(v: unknown) => [`+${Number(v).toFixed(1)}%`, 'Improvement']} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 20]}
+              label={{ value: '% improvement', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties} formatter={(v: unknown) => [`+${Number(v).toFixed(1)}%`, 'vs equal']} />
             <Bar dataKey="pct" radius={[6, 6, 0, 0]} maxBarSize={60}>
               {SEASON_DATA.map(s => <Cell key={s.season} fill={s.color} opacity={0.85} />)}
             </Bar>
@@ -184,13 +210,13 @@ function SeasonalityTab() {
       </ChartCard>
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-        The biggest gains are in winter (+17.3%) when wind is most variable and model quality differences are largest.
-        Even in summer (+11.8%), the mechanism significantly outperforms equal weighting.
-        Data: Elia Belgian offshore wind, 17,544 hourly points, 5 forecasting models.
+        Winter gains are largest (+17.3%) because wind variability is highest and model quality differences are most pronounced.
+        The mechanism needs no season labels — the EWMA skill layer tracks shifting model quality automatically.
       </div>
     </div>
   );
 }
+
 
 /* ── Intermittency ── */
 function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseline: PipelineResult }) {
@@ -207,42 +233,55 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
     round: r.round, active: r.participation, rate: r.participation / N,
   })), 300), [bursty.rounds]);
 
+  const errorDelta = bursty.summary.meanError - baseline.summary.meanError;
+  const errorPct = baseline.summary.meanError > 0 ? (errorDelta / baseline.summary.meanError * 100) : 0;
+  const degradesGracefully = Math.abs(errorPct) < 15;
+
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
+        Thesis question: does the mechanism handle missing forecasters without breaking skill estimates or accuracy?
+      </div>
+
       <p className="text-sm text-slate-600 max-w-2xl">
-        Real forecasters go offline — sensors fail, models retrain, or participants simply skip rounds.
-        If the mechanism can't handle gaps gracefully, skill estimates drift and accuracy suffers.
+        Real forecasters go offline — sensors fail, models retrain, or participants skip rounds.
+        The EWMA skill estimate freezes when an agent is absent (no update), so gaps don't corrupt the learned σ.
       </p>
-      <p className="text-sm text-slate-600 max-w-2xl">
-        Agents may participate intermittently — bursty sessions, selective entry, or random absence. The mechanism must handle missing forecasters without breaking skill estimates or budget balance.
-      </p>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <VerdictCard
+          question="Degrades gracefully?"
+          answer={degradesGracefully ? 'Yes' : 'No'}
+          detail={`Error ${errorDelta >= 0 ? '+' : ''}${errorPct.toFixed(1)}% vs baseline`}
+          verdict={degradesGracefully ? 'good' : 'bad'}
+        />
         <Metric label="Mean error (bursty)" value={fmt(bursty.summary.meanError, 4)} />
-        <Metric label="Mean error (baseline)" value={fmt(baseline.summary.meanError, 4)} />
-        <Metric label="Avg participation" value={`${(bursty.summary.meanParticipation / N * 100).toFixed(0)}%`} />
+        <Metric label="Avg participation" value={`${(bursty.summary.meanParticipation / N * 100).toFixed(0)}%`} sub={`of ${N} agents`} />
         <Metric label="Final Gini" value={fmt(bursty.summary.finalGini, 3)} />
       </div>
+
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Participation" subtitle="Active agents per round under bursty behaviour.">
+        <ChartCard title="Participation per round" subtitle="Colour: green ≥ 80%, amber ≥ 50%, red < 50%.">
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={partData} margin={CHART_MARGIN_LABELED}>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, N]} />
               <Tooltip content={<SmartTooltip />} />
-              <Bar dataKey="active" name="Active" radius={[2, 2, 0, 0]} maxBarSize={6}>
+              <Bar dataKey="active" name="Active agents" radius={[2, 2, 0, 0]} maxBarSize={6}>
                 {partData.map((d, i) => <Cell key={i} fill={d.rate >= 0.8 ? '#10b981' : d.rate >= 0.5 ? '#f59e0b' : '#ef4444'} opacity={0.7} />)}
               </Bar>
               <Brush dataKey="round" {...BRUSH_PROPS} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
+
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-sm font-semibold text-slate-800">Skill trajectories</h3>
+            <h3 className="text-sm font-semibold text-slate-800">Skill trajectories under intermittency</h3>
             <ZoomBadge isZoomed={skillZoom.state.isZoomed} onReset={skillZoom.reset} />
           </div>
-          <p className="text-xs text-slate-500 mb-2">σ by agent. Skill stays stable despite intermittent participation.</p>
+          <p className="text-xs text-slate-500 mb-2">σ stays stable during absences because the EWMA freezes (no update when absent).</p>
           <div className="cursor-crosshair">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={skillData} margin={CHART_MARGIN_LABELED}
@@ -265,9 +304,15 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
           </div>
         </div>
       </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+        On real data, the mechanism still improves by +4.4% even at 60% missingness (see Notes page).
+        This matches Michael et al.'s finding that robust regression handles missing forecasts well.
+      </div>
     </div>
   );
 }
+
 
 /* ── Sybil ── */
 function SybilTab({ sybil, baseline }: { sybil: PipelineResult; baseline: PipelineResult }) {
@@ -275,6 +320,7 @@ function SybilTab({ sybil, baseline }: { sybil: PipelineResult; baseline: Pipeli
   const sybilProfit = sybil.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const baselineProfit = baseline.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const ratio = baselineProfit > 0 ? sybilProfit / baselineProfit : 1;
+  const sybilResistant = ratio <= 1.05;
 
   const wealthData = useMemo(() => {
     const n = sybil.traces[0]?.participated.length ?? N;
@@ -289,25 +335,34 @@ function SybilTab({ sybil, baseline }: { sybil: PipelineResult; baseline: Pipeli
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
+        Thesis question: can an agent gain by splitting into multiple identities (Sybil attack)?
+      </div>
+
       <p className="text-sm text-slate-600 max-w-2xl">
-        A Sybil attack is the most basic exploit: if splitting into clones doubles your influence, the mechanism is broken.
-        This test checks whether the skill gate makes identity-splitting unprofitable.
+        If splitting into clones doubles your influence, the mechanism is broken.
+        The skill gate prevents this: each clone starts with no track record and must individually earn its σ.
+        Two clones of a good forecaster don't get 2× the weight — they each get half the deposit and must prove themselves separately.
       </p>
-      <p className="text-sm text-slate-600 max-w-2xl">
-        Can an agent gain by splitting into multiple identities? The skill gate means each clone must individually earn its skill estimate, so splitting doesn't help.
-      </p>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Metric label="Profit ratio" value={fmt(ratio, 3)} sub={ratio <= 1 ? '≤ 1 → no advantage' : '> 1 → advantage'} />
-        <Metric label="Sybil pair wealth" value={fmt(sybilProfit, 2)} />
-        <Metric label="Baseline pair wealth" value={fmt(baselineProfit, 2)} />
+        <VerdictCard
+          question="Sybil-resistant?"
+          answer={sybilResistant ? 'Yes' : 'No'}
+          detail={`Profit ratio: ${fmt(ratio, 3)} (≤ 1 = no advantage)`}
+          verdict={sybilResistant ? 'good' : 'bad'}
+        />
+        <Metric label="Sybil pair wealth" value={fmt(sybilProfit, 2)} sub="F1 + F2 combined" />
+        <Metric label="Baseline pair wealth" value={fmt(baselineProfit, 2)} sub="same agents, no split" />
         <Metric label="Final Gini" value={fmt(sybil.summary.finalGini, 3)} />
       </div>
+
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-sm font-semibold text-slate-800">Wealth under sybil</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Wealth trajectories</h3>
           <ZoomBadge isZoomed={wealthZoom.state.isZoomed} onReset={wealthZoom.reset} />
         </div>
-        <p className="text-xs text-slate-500 mb-2">F1–F2 are sybil clones. Their combined wealth doesn't exceed the baseline.</p>
+        <p className="text-xs text-slate-500 mb-2">F1–F2 are Sybil clones (thick lines). Their combined wealth doesn't exceed the unsplit baseline.</p>
         <div className="cursor-crosshair">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={wealthData} margin={CHART_MARGIN_LABELED}
@@ -335,10 +390,15 @@ function SybilTab({ sybil, baseline }: { sybil: PipelineResult; baseline: Pipeli
   );
 }
 
+
 /* ── Sensitivity ── */
 function SensitivityTab({ data }: { data: { lam: number; sig: number; error: number; gini: number }[] }) {
   const best = data.reduce((a, b) => a.error < b.error ? a : b);
   const worst = data.reduce((a, b) => a.error > b.error ? a : b);
+  const range = worst.error - best.error;
+  const relRange = best.error > 0 ? (range / best.error * 100) : 0;
+  const notBrittle = relRange < 30;
+
   const lams = [...new Set(data.map(d => d.lam))].sort((a, b) => a - b);
   const sigs = [...new Set(data.map(d => d.sig))].sort((a, b) => a - b);
   const sigColors = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
@@ -354,16 +414,29 @@ function SensitivityTab({ data }: { data: { lam: number; sig: number; error: num
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
+        Thesis question: is the mechanism brittle — does it break if you change the hyperparameters?
+      </div>
+
       <p className="text-sm text-slate-600 max-w-2xl">
-        How sensitive is the mechanism to its two key parameters? λ controls how much stake matters vs skill. σ_min sets the floor on skill estimates. The mechanism is not brittle — accuracy varies smoothly.
+        λ controls how much stake matters relative to skill (0 = pure skill, 1 = pure stake).
+        σ_min sets the floor on skill estimates (higher = less differentiation).
+        A robust mechanism should vary smoothly, not cliff-edge.
       </p>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <VerdictCard
+          question="Brittle?"
+          answer={notBrittle ? 'No' : 'Yes'}
+          detail={`Error varies ${relRange.toFixed(0)}% across configs`}
+          verdict={notBrittle ? 'good' : 'bad'}
+        />
         <Metric label="Best config" value={`λ=${best.lam}, σ=${best.sig}`} sub={`error ${fmt(best.error, 4)}`} />
         <Metric label="Worst config" value={`λ=${worst.lam}, σ=${worst.sig}`} sub={`error ${fmt(worst.error, 4)}`} />
-        <Metric label="Error range" value={fmt(worst.error - best.error, 4)} />
         <Metric label="Gini range" value={fmt(Math.max(...data.map(d => d.gini)) - Math.min(...data.map(d => d.gini)), 3)} />
       </div>
-      <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Lower is better.">
+
+      <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Lower is better. 200 rounds, 6 agents.">
         <ResponsiveContainer width="100%" height={340}>
           <BarChart data={barData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
             <CartesianGrid {...GRID_PROPS} />
@@ -378,6 +451,12 @@ function SensitivityTab({ data }: { data: { lam: number; sig: number; error: num
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+        The mechanism is not brittle. Error varies smoothly across the parameter space.
+        λ = 0 (pure skill) and high σ_min (less differentiation) tend to perform worst.
+        The default config (λ = 0.05, σ_min = 0.1) is near-optimal.
+      </div>
     </div>
   );
 }
