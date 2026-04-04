@@ -157,6 +157,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [hasExpData, setHasExpData] = useState(false);
   const [realData, setRealData] = useState<RealDataResult | null>(null);
+  const [realDataElec, setRealDataElec] = useState<RealDataResult | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -176,9 +177,11 @@ export default function ResultsPage() {
         setAblationRows(ablation?.rows ?? []);
         setCalibration(cal);
         setHasExpData(mRows.length > 0);
-        // Load real-data comparison
+        // Load real-data comparisons
         const rd = await loadRealDataComparison('elia_wind').catch(() => null);
         if (!cancelled && rd) setRealData(rd);
+        const rdElec = await loadRealDataComparison('elia_electricity').catch(() => null);
+        if (!cancelled && rdElec) setRealDataElec(rdElec);
       } catch {
         if (!cancelled) setHasExpData(false);
       } finally {
@@ -540,6 +543,30 @@ export default function ResultsPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Electricity results */}
+          {activeTab === 'Real data' && realDataElec && (
+            <div className="space-y-6 mt-8">
+              <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-semibold">Dataset 2</span>
+                  <h3 className="text-sm font-semibold text-teal-900">Elia Imbalance Prices — {realDataElec.config.T.toLocaleString()} points</h3>
+                </div>
+                <p className="text-xs text-teal-700 leading-relaxed">
+                  Same 5 models on Belgian electricity imbalance prices (15-min, 2024). Prices are volatile with spikes — a harder forecasting task.
+                </p>
+              </div>
+              <DeltaBarChart
+                data={realDataElec.rows.map(r => ({
+                  label: r.method === 'uniform' ? 'Equal' : r.method === 'skill' ? 'Skill-only' : r.method === 'mechanism' ? 'Skill × stake' : r.method === 'best_single' ? 'Best single' : r.method,
+                  delta: r.delta_crps_vs_equal * 1e4,
+                  color: r.method === 'mechanism' ? '#6366f1' : r.method === 'skill' ? '#8b5cf6' : r.method === 'uniform' ? '#94a3b8' : '#f59e0b',
+                }))}
+                baselineLabel="Equal weighting"
+                metricLabel="Δ CRPS (×10⁴)"
+              />
             </div>
           )}
 
