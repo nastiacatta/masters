@@ -29,8 +29,6 @@ import type {
   MasterComparisonRow,
 } from '@/lib/types';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
-import { generateAggregation } from '@/lib/coreMechanism/dgpSimulator';
-import { normPpf } from '@/lib/coreMechanism/seededRng';
 import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
 import {
@@ -320,68 +318,6 @@ export default function ResultsPage() {
     })).sort((a, b) => a.gini - b.gini),
     [demoMethods]);
 
-  const method1ConvergenceData = useMemo(() => {
-    const T = 20000;
-    const n = 3;
-    const trueW = [0.8, 0.1, 0.5];
-    const sim = generateAggregation(42, T, n, 1, trueW, [0.3, 0.6, 1.0], 0.25, 0.98, 0.35, 1.0);
-
-    const yLatent = sim.rounds.map((r) => normPpf(r.y));
-    const reportsLatent = Array.from({ length: n }, (_, i) => sim.rounds.map((r) => normPpf(r.reports[i])));
-
-    const eta = 0.015;
-    const etaDecay = 1e-4;
-    const w = [1 / n, 1 / n, 1 / n];
-    const hist: number[][] = Array.from({ length: n }, () => new Array(T).fill(0));
-
-    for (let t = 0; t < T; t++) {
-      for (let i = 0; i < n; i++) hist[i][t] = w[i];
-      const etaT = eta / (1 + t * etaDecay);
-      const r0 = reportsLatent[0][t];
-      const r1 = reportsLatent[1][t];
-      const r2 = reportsLatent[2][t];
-      const yHat = w[0] * r0 + w[1] * r1 + w[2] * r2;
-      const err = yLatent[t] - yHat;
-      const g0 = -2 * err * r0;
-      const g1 = -2 * err * r1;
-      const g2 = -2 * err * r2;
-      w[0] = Math.max(0, w[0] - etaT * g0);
-      w[1] = Math.max(0, w[1] - etaT * g1);
-      w[2] = Math.max(0, w[2] - etaT * g2);
-    }
-
-    const smoothWindow = 800;
-    const smooth = (arr: number[]) => {
-      const out = new Array(arr.length).fill(0);
-      let acc = 0;
-      for (let i = 0; i < arr.length; i++) {
-        acc += arr[i];
-        if (i >= smoothWindow) acc -= arr[i - smoothWindow];
-        out[i] = i < smoothWindow - 1 ? arr[i] : acc / smoothWindow;
-      }
-      return out;
-    };
-    const s0 = smooth(hist[0]);
-    const s1 = smooth(hist[1]);
-    const s2 = smooth(hist[2]);
-
-    return downsample(
-      Array.from({ length: T }, (_, i) => ({
-        round: i + 1,
-        w0Raw: hist[0][i],
-        w1Raw: hist[1][i],
-        w2Raw: hist[2][i],
-        w0Smooth: s0[i],
-        w1Smooth: s1[i],
-        w2Smooth: s2[i],
-        w0Target: trueW[0],
-        w1Target: trueW[1],
-        w2Target: trueW[2],
-      })),
-      700,
-    );
-  }, []);
-
   // Precompute cumulative CRPS for real-data chart (O(n) instead of O(n²))
   const realCumCrps = useMemo(() => {
     if (!realData?.per_round?.length) return [];
@@ -418,7 +354,7 @@ export default function ResultsPage() {
         {/* ── Header ── */}
         <header>
           <div className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-semibold tracking-wide mb-4">
-            {useExp ? 'Experiment-backed' : 'Interactive demo'}
+            {realData ? 'Real data' : useExp ? 'Synthetic' : 'Demo'}
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Results</h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -431,7 +367,7 @@ export default function ResultsPage() {
         {/* ── Headline cards ── */}
         <section className="grid sm:grid-cols-2 gap-4">
           <AnswerCard
-            question="Does adding skill to stake improve forecast accuracy?"
+            question="Does skill improve accuracy?"
             answer={deltaCrps == null ? '—' : deltaCrps < 0 ? 'Yes' : 'No'}
             detail={deltaCrps == null ? '' : `Δ = ${deltaCrps >= 0 ? '+' : ''}${fmt(deltaCrps, 4)} mean error${useExp ? ` (${expSeedCount} seeds)` : ''}`}
             verdict={accuracyVerdict}
@@ -447,7 +383,7 @@ export default function ResultsPage() {
             }
           />
           <AnswerCard
-            question="Does skill weighting concentrate too much influence?"
+            question="Is influence concentrated?"
             answer={gini == null ? '—' : gini < 0.4 ? 'Low' : gini < 0.6 ? 'Moderate' : 'High'}
             detail={gini == null ? '' : `Gini = ${fmt(gini, 3)}`}
             verdict={concentrationVerdict}
@@ -800,37 +736,6 @@ export default function ResultsPage() {
 
           </motion.div>
           </AnimatePresence>
-        </section>
-
-        {/* ── Weight learning sanity check ── */}
-        <section className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">
-            Endogenous DGP check: weight recovery
-          </h2>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={method1ConvergenceData} margin={CHART_MARGIN_LABELED}>
-              <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']} />
-              <Tooltip content={<SmartTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-
-              <Line type="monotone" dataKey="w0Raw" stroke={METHOD.blended.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
-              <Line type="monotone" dataKey="w1Raw" stroke={METHOD.skill_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
-              <Line type="monotone" dataKey="w2Raw" stroke={METHOD.stake_only.color} strokeOpacity={0.15} dot={false} strokeWidth={0.8} legendType="none" />
-
-              <Line type="monotone" dataKey="w0Smooth" name="F0 (w=0.8)" stroke={METHOD.blended.color} dot={false} strokeWidth={2} />
-              <Line type="monotone" dataKey="w1Smooth" name="F1 (w=0.1)" stroke={METHOD.skill_only.color} dot={false} strokeWidth={2} />
-              <Line type="monotone" dataKey="w2Smooth" name="F2 (w=0.5)" stroke={METHOD.stake_only.color} dot={false} strokeWidth={2} />
-
-              <Line type="monotone" dataKey="w0Target" stroke={METHOD.blended.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
-              <Line type="monotone" dataKey="w1Target" stroke={METHOD.skill_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
-              <Line type="monotone" dataKey="w2Target" stroke={METHOD.stake_only.color} strokeDasharray="4 4" dot={false} strokeWidth={1.3} legendType="none" />
-            </LineChart>
-          </ResponsiveContainer>
-          <p className="text-[10px] text-slate-400 mt-2 text-center">
-            Solid = smoothed learned weight · Dashed = true structural weight
-          </p>
         </section>
 
       </div>
