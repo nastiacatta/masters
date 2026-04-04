@@ -224,10 +224,10 @@ export default function NotesPage() {
               </thead>
               <tbody>
                 {[
-                  { ds: 'Wind 1h-ahead', delta: '-0.0196', pct: '+21.1%', dm: '41.85', p: '< 0.001' },
-                  { ds: 'Wind 4h-ahead', delta: '-0.0086', pct: '+6.7%', dm: '11.53', p: '< 0.001' },
-                  { ds: 'Wind day-ahead', delta: '-0.0018', pct: '+1.1%', dm: '3.28', p: '0.001' },
-                  { ds: 'Electricity 1h', delta: '-0.0001', pct: '+0.4%', dm: '11.93', p: '< 0.001' },
+                  { ds: 'Wind 1h-ahead', delta: '-0.0196', pct: '+21.1%', dm: '70.87', p: '< 0.001' },
+                  { ds: 'Wind 4h-ahead', delta: '-0.0086', pct: '+6.7%', dm: '47.87', p: '< 0.001' },
+                  { ds: 'Wind day-ahead', delta: '-0.0018', pct: '+1.1%', dm: '4.38', p: '< 0.001' },
+                  { ds: 'Electricity 1h', delta: '-0.0001', pct: '+0.4%', dm: '16.64', p: '< 0.001' },
                 ].map(r => (
                   <tr key={r.ds} className="border-b border-slate-100">
                     <td className="py-1.5 pr-3 text-slate-600">{r.ds}</td>
