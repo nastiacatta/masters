@@ -201,11 +201,45 @@ export default function NotesPage() {
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-2">Methodology</h3>
           <p className="text-xs text-slate-500 leading-relaxed">
-            All experiments use the latent-fixed DGP with 10 heterogeneous forecasters (τ ∈ [0.15, 1.0]),
+            Synthetic experiments use the latent-fixed DGP with 10 heterogeneous forecasters (τ ∈ [0.15, 1.0]),
             T=500 rounds, 20% missingness, and CRPS scoring. Each seed generates the same truth, reports,
-            and missingness pattern — only the weighting rule changes. Deltas are paired (same seed, different method).
-            Significance tested via paired t-test at 5% level.
+            and missingness pattern — only the weighting rule changes. Significance tested via paired t-test.
           </p>
+          <p className="text-xs text-slate-500 leading-relaxed mt-2">
+            Real-data experiments use 5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on
+            Elia Belgian data. All models are strictly causal and retrained periodically. Statistical
+            significance tested via the Diebold-Mariano test (HAC variance, Newey-West), which accounts
+            for autocorrelation in loss differences.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-1.5 pr-3 text-slate-400 font-medium">Dataset</th>
+                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">Δ CRPS</th>
+                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">% improv</th>
+                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">DM stat</th>
+                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">p-value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { ds: 'Wind 1h-ahead', delta: '-0.0196', pct: '+21.1%', dm: '41.85', p: '< 0.001' },
+                  { ds: 'Wind 4h-ahead', delta: '-0.0086', pct: '+6.7%', dm: '11.53', p: '< 0.001' },
+                  { ds: 'Wind day-ahead', delta: '-0.0018', pct: '+1.1%', dm: '3.28', p: '0.001' },
+                  { ds: 'Electricity 1h', delta: '-0.0001', pct: '+0.4%', dm: '11.93', p: '< 0.001' },
+                ].map(r => (
+                  <tr key={r.ds} className="border-b border-slate-100">
+                    <td className="py-1.5 pr-3 text-slate-600">{r.ds}</td>
+                    <td className="text-right py-1.5 px-2 font-mono text-emerald-600">{r.delta}</td>
+                    <td className="text-right py-1.5 px-2 font-mono text-emerald-600">{r.pct}</td>
+                    <td className="text-right py-1.5 px-2 font-mono text-slate-600">{r.dm}</td>
+                    <td className="text-right py-1.5 px-2 font-mono text-slate-600">{r.p}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Link to="/results" className="inline-block mt-3 text-xs font-medium text-indigo-600 hover:text-indigo-800">
             ← Back to main results
           </Link>
