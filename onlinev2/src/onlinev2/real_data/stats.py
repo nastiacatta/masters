@@ -34,8 +34,8 @@ def diebold_mariano_test(
     mean_d = float(np.mean(d))
 
     # Newey-West HAC variance estimator
-    # Bandwidth = h - 1 for h-step-ahead forecasts
-    max_lag = max(1, h - 1)
+    # Bandwidth = h - 1 for h-step-ahead forecasts (0 for 1-step)
+    max_lag = max(0, h - 1)
     gamma_0 = float(np.mean((d - mean_d) ** 2))
     gamma_sum = 0.0
     for k in range(1, max_lag + 1):
