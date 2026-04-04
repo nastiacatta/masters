@@ -460,3 +460,43 @@ export async function loadBankrollAblation(): Promise<{ config: unknown; rows: B
   if (!raw?.rows?.length) return null;
   return { config: raw.config, rows: raw.rows };
 }
+
+/** Real-data comparison result (e.g., Elia wind). */
+export interface RealDataResult {
+  config: {
+    T: number;
+    n_forecasters: number;
+    warmup: number;
+    series_name: string;
+    forecasters: string[];
+  };
+  rows: Array<{
+    experiment: string;
+    method: string;
+    seed: number;
+    DGP: string;
+    preset: string;
+    mean_crps: number;
+    delta_crps_vs_equal: number;
+  }>;
+  per_round: Array<{
+    t: number;
+    y: number;
+    crps_uniform: number;
+    crps_skill: number;
+    crps_mechanism: number;
+    crps_best_single: number;
+  }>;
+}
+
+export async function loadRealDataComparison(seriesName: string = 'elia_wind'): Promise<RealDataResult | null> {
+  try {
+    const raw = await fetchJSON<RealDataResult>(
+      `${DATA_BASE}/real_data/${seriesName}/data/comparison.json`,
+    );
+    if (raw?.rows?.length) return raw;
+  } catch {
+    // Not available.
+  }
+  return null;
+}
