@@ -379,7 +379,21 @@ export default function ResultsPage() {
     );
   }, []);
 
-  // --- which mode ---
+  // Precompute cumulative CRPS for real-data chart (O(n) instead of O(n²))
+  const realCumCrps = useMemo(() => {
+    if (!realData?.per_round?.length) return [];
+    const pr = realData.per_round;
+    let sumU = 0, sumS = 0, sumM = 0, sumB = 0;
+    const out = pr.map((r, i) => {
+      sumU += r.crps_uniform;
+      sumS += r.crps_skill;
+      sumM += r.crps_mechanism;
+      sumB += r.crps_best_single;
+      const n = i + 1;
+      return { t: r.t, uniform: sumU / n, skill: sumS / n, mechanism: sumM / n, best: sumB / n };
+    });
+    return downsample(out, 600);
+  }, [realData]);
   const useExp = hasExpData && !loading && isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
 
@@ -504,13 +518,7 @@ export default function ResultsPage() {
                 <div className="cursor-crosshair">
                   <ResponsiveContainer width="100%" height={400}>
                     <LineChart
-                      data={downsample(realData.per_round.map((r, i) => ({
-                        t: r.t,
-                        uniform: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_uniform, 0) / (i + 1),
-                        mechanism: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_mechanism, 0) / (i + 1),
-                        skill: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_skill, 0) / (i + 1),
-                        best: realData.per_round.slice(0, i + 1).reduce((s, p) => s + p.crps_best_single, 0) / (i + 1),
-                      })), 500)}
+                      data={realCumCrps}
                       margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                       onMouseDown={cumErrorZoom.onMouseDown}
                       onMouseMove={cumErrorZoom.onMouseMove}
