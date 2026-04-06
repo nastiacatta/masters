@@ -283,6 +283,7 @@ function TaxonomyTab({ summary, depositFixed, depositBankroll, depositSigma }: {
    ══════════════════════════════════════════════════════════════════════ */
 function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseline: PipelineResult }) {
   const skillZoom = useChartZoom();
+  const cumZoomInter = useChartZoom();
   const { deltaPct } = compare(bursty, baseline);
   const degradesGracefully = Math.abs(deltaPct) < 15;
 
@@ -368,17 +369,22 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
         </div>
       </div>
 
-      <ChartCard title="Cumulative error: bursty vs baseline" subtitle="If lines track closely, intermittency doesn't hurt the aggregate.">
+      <ChartCard title="Cumulative error: bursty vs baseline" subtitle="If lines track closely, intermittency doesn't hurt the aggregate. Drag to zoom.">
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+          <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+            onMouseDown={cumZoomInter.onMouseDown} onMouseMove={cumZoomInter.onMouseMove} onMouseUp={cumZoomInter.onMouseUp}>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoomInter.state.left, cumZoomInter.state.right]} />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
               label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey="baseline" name="Baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="bursty" name="Bursty" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+            {cumZoomInter.state.refLeft && cumZoomInter.state.refRight && (
+              <ReferenceArea x1={cumZoomInter.state.refLeft} x2={cumZoomInter.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+            )}
+            <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -424,6 +430,8 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, baseline }: {
     round: i + 1, attacker: t.sigma_t[0], baseline_f1: baseline.traces[i]?.sigma_t[0] ?? 0,
   })), 300), [manipulator.traces, baseline.traces]);
 
+  const sigDecayZoom = useChartZoom();
+
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
@@ -462,17 +470,22 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, baseline }: {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Attacker skill decay (manipulator F1)" subtitle="σ of the manipulator vs honest F1. Misreporting erodes skill estimate.">
+        <ChartCard title="Attacker skill decay (manipulator F1)" subtitle="σ of the manipulator vs honest F1. Drag to zoom.">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={manipSigma} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+            <LineChart data={manipSigma} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+              onMouseDown={sigDecayZoom.onMouseDown} onMouseMove={sigDecayZoom.onMouseMove} onMouseUp={sigDecayZoom.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigDecayZoom.state.left, sigDecayZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
                 label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="baseline_f1" name="Honest F1" stroke="#94a3b8" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="attacker" name="Manipulator F1" stroke="#ef4444" strokeWidth={2} dot={false} />
+              {sigDecayZoom.state.refLeft && sigDecayZoom.state.refRight && (
+                <ReferenceArea x1={sigDecayZoom.state.refLeft} x2={sigDecayZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+              )}
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -493,6 +506,8 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, baseline }: {
    ══════════════════════════════════════════════════════════════════════ */
 function HedgingTab({ riskAverse, baseline }: { riskAverse: PipelineResult; baseline: PipelineResult }) {
   const { deltaPct } = compare(riskAverse, baseline);
+  const cumZoom = useChartZoom();
+  const sigZoom = useChartZoom();
 
   const cumData = useMemo(() => {
     let sB = 0, sH = 0;
@@ -530,32 +545,42 @@ function HedgingTab({ riskAverse, baseline }: { riskAverse: PipelineResult; base
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Cumulative error: hedged vs truthful" subtitle="Close tracking means hedging doesn't break the aggregate.">
+        <ChartCard title="Cumulative error: hedged vs truthful" subtitle="Close tracking means hedging doesn't break the aggregate. Drag to zoom.">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+            <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+              onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoom.state.left, cumZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
                 label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="baseline" name="Truthful" stroke="#94a3b8" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="hedged" name="Hedged" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+              {cumZoom.state.refLeft && cumZoom.state.refRight && (
+                <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+              )}
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Average skill estimate (σ)" subtitle="Hedged agents get lower σ because their reports are less accurate.">
+        <ChartCard title="Average skill estimate (σ)" subtitle="Hedged agents get lower σ because their reports are less accurate. Drag to zoom.">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={sigmaData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+            <LineChart data={sigmaData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+              onMouseDown={sigZoom.onMouseDown} onMouseMove={sigZoom.onMouseMove} onMouseUp={sigZoom.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigZoom.state.left, sigZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
                 label={{ value: 'Avg σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="baseline_avg" name="Truthful avg σ" stroke="#94a3b8" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="hedged_avg" name="Hedged avg σ" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+              {sigZoom.state.refLeft && sigZoom.state.refRight && (
+                <ReferenceArea x1={sigZoom.state.refLeft} x2={sigZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+              )}
+              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
