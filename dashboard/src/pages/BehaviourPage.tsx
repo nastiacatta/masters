@@ -18,15 +18,15 @@ const SEED = 42;
 const N = 6;
 const T = 200;
 
-const TABS = ['Taxonomy', 'Seasonality', 'Intermittency', 'Sybil', 'Sensitivity'] as const;
+const TABS = ['Taxonomy', 'Seasonality', 'Intermittency', 'Sybil', 'Adversarial', 'Hedging', 'Sensitivity'] as const;
 type Tab = (typeof TABS)[number];
 
 const FAMILIES = [
   { label: 'Participation', color: 'bg-sky-100 text-sky-700 border-sky-200', items: ['Intermittent', 'Bursty', 'Selective entry'], tested: true },
-  { label: 'Reporting', color: 'bg-violet-100 text-violet-700 border-violet-200', items: ['Truthful', 'Hedged', 'Strategic', 'Noisy'], tested: false },
+  { label: 'Reporting', color: 'bg-violet-100 text-violet-700 border-violet-200', items: ['Truthful', 'Hedged', 'Strategic', 'Noisy'], tested: true },
   { label: 'Staking', color: 'bg-teal-100 text-teal-700 border-teal-200', items: ['Fixed', 'Kelly-like', 'House-money'], tested: true },
   { label: 'Identity', color: 'bg-amber-100 text-amber-700 border-amber-200', items: ['Single', 'Sybil', 'Collusion'], tested: true },
-  { label: 'Adversarial', color: 'bg-red-100 text-red-700 border-red-200', items: ['Arbitrage', 'Manipulation', 'Evasion', 'Insider'], tested: false },
+  { label: 'Adversarial', color: 'bg-red-100 text-red-700 border-red-200', items: ['Arbitrage', 'Manipulation', 'Evasion', 'Insider'], tested: true },
 ] as const;
 
 function SmartTooltip({ active, payload, label }: {
@@ -81,6 +81,9 @@ export default function BehaviourPage() {
   const baseline = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'baseline', rounds: T, seed: SEED, n: N }), []);
   const bursty = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'bursty', rounds: T, seed: SEED, n: N }), []);
   const sybil = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'sybil', rounds: T, seed: SEED, n: N }), []);
+  const manipulator = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'manipulator', rounds: T, seed: SEED, n: N }), []);
+  const arbitrageur = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'arbitrageur', rounds: T, seed: SEED, n: N }), []);
+  const riskAverse = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'risk_averse', rounds: T, seed: SEED, n: N }), []);
 
   const sweep = useMemo(() => {
     const lams = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0];
@@ -124,6 +127,8 @@ export default function BehaviourPage() {
             {tab === 'Seasonality' && <SeasonalityTab />}
             {tab === 'Intermittency' && <IntermittencyTab bursty={bursty} baseline={baseline} />}
             {tab === 'Sybil' && <SybilTab sybil={sybil} baseline={baseline} />}
+            {tab === 'Adversarial' && <AdversarialTab manipulator={manipulator} arbitrageur={arbitrageur} baseline={baseline} />}
+            {tab === 'Hedging' && <HedgingTab riskAverse={riskAverse} baseline={baseline} />}
             {tab === 'Sensitivity' && <SensitivityTab data={sweep} />}
           </motion.div>
         </AnimatePresence>
@@ -390,6 +395,152 @@ function SybilTab({ sybil, baseline }: { sybil: PipelineResult; baseline: Pipeli
   );
 }
 
+
+/* ── Adversarial ── */
+function AdversarialTab({ manipulator, arbitrageur, baseline }: { manipulator: PipelineResult; arbitrageur: PipelineResult; baseline: PipelineResult }) {
+  // Manipulator: F1 tries to push the aggregate toward 0.5
+  const manipProfit = manipulator.finalState[0].wealth - 20; // initial wealth = 20
+  const baseProfit = baseline.finalState[0].wealth - 20;
+  const manipProfitable = manipProfit > baseProfit + 0.5;
+
+  // Arbitrageur: last agent tries to exploit dispersion
+  const arbIdx = arbitrageur.finalState.length - 1;
+  const arbProfit = arbitrageur.finalState[arbIdx].wealth - 20;
+  const arbBaseline = baseline.finalState[arbIdx].wealth - 20;
+  const arbProfitable = arbProfit > arbBaseline + 0.5;
+
+  const manipErrorDelta = manipulator.summary.meanError - baseline.summary.meanError;
+  const arbErrorDelta = arbitrageur.summary.meanError - baseline.summary.meanError;
+
+  const COMPARISON = [
+    { name: 'Baseline', error: baseline.summary.meanError, gini: baseline.summary.finalGini, color: '#94a3b8' },
+    { name: 'Manipulator', error: manipulator.summary.meanError, gini: manipulator.summary.finalGini, color: '#ef4444' },
+    { name: 'Arbitrageur', error: arbitrageur.summary.meanError, gini: arbitrageur.summary.finalGini, color: '#f59e0b' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
+        Thesis question: can strategic agents exploit the mechanism for guaranteed profit or degrade accuracy?
+      </div>
+
+      <p className="text-sm text-slate-600 max-w-2xl">
+        Two attack types from the thesis: a manipulator (F1) who pushes reports away from their belief to move the aggregate,
+        and an arbitrageur (F6) who only enters when forecast dispersion is high enough to guarantee profit.
+        The skill gate should penalise both — bad reports lower σ, reducing future influence.
+      </p>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <VerdictCard
+          question="Manipulation profitable?"
+          answer={manipProfitable ? 'Yes' : 'No'}
+          detail={`Attacker profit: ${fmt(manipProfit, 2)} vs ${fmt(baseProfit, 2)} baseline`}
+          verdict={manipProfitable ? 'bad' : 'good'}
+        />
+        <VerdictCard
+          question="Arbitrage profitable?"
+          answer={arbProfitable ? 'Yes' : 'No'}
+          detail={`Arb profit: ${fmt(arbProfit, 2)} vs ${fmt(arbBaseline, 2)} baseline`}
+          verdict={arbProfitable ? 'bad' : 'good'}
+        />
+        <Metric label="Accuracy impact (manip)" value={`${manipErrorDelta >= 0 ? '+' : ''}${fmt(manipErrorDelta, 4)}`} sub="Δ error vs baseline" />
+        <Metric label="Accuracy impact (arb)" value={`${arbErrorDelta >= 0 ? '+' : ''}${fmt(arbErrorDelta, 4)}`} sub="Δ error vs baseline" />
+      </div>
+
+      <ChartCard title="Impact on accuracy and concentration" subtitle="Comparing baseline, manipulator, and arbitrageur scenarios.">
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={COMPARISON} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
+            <CartesianGrid {...GRID_PROPS} />
+            <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
+            <Tooltip content={<SmartTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="error" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={40}>
+              {COMPARISON.map(d => <Cell key={d.name} fill={d.color} opacity={0.85} />)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+        The skill gate is the key defence: misreporting increases loss → lowers σ → reduces future influence.
+        Lambert (2008) proves sybilproofness formally; the skill layer extends this to repeated settings
+        where attackers must maintain a track record.
+      </div>
+    </div>
+  );
+}
+
+/* ── Hedging ── */
+function HedgingTab({ riskAverse, baseline }: { riskAverse: PipelineResult; baseline: PipelineResult }) {
+  const errorDelta = riskAverse.summary.meanError - baseline.summary.meanError;
+  const errorPct = baseline.summary.meanError > 0 ? (errorDelta / baseline.summary.meanError * 100) : 0;
+
+  // Compare cumulative errors over time
+  const cumData = useMemo(() => {
+    const maxLen = Math.min(baseline.rounds.length, riskAverse.rounds.length);
+    let sumB = 0, sumH = 0;
+    const raw = Array.from({ length: maxLen }, (_, i) => {
+      sumB += baseline.rounds[i].error;
+      sumH += riskAverse.rounds[i].error;
+      return { round: i + 1, baseline: sumB / (i + 1), hedged: sumH / (i + 1) };
+    });
+    return downsample(raw, 300);
+  }, [baseline.rounds, riskAverse.rounds]);
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
+        Thesis question: what happens when agents hedge — shrinking reports toward 0.5 and staking less?
+      </div>
+
+      <p className="text-sm text-slate-600 max-w-2xl">
+        Risk-averse agents report r = 0.7·belief + 0.3·0.5 (shrunk toward the centre) and stake 55% less.
+        This is rational under risk aversion — it reduces payoff variance at the cost of informativeness.
+        The mechanism should still work because the skill layer tracks actual accuracy, not boldness.
+      </p>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <VerdictCard
+          question="Accuracy hurt?"
+          answer={Math.abs(errorPct) < 5 ? 'Minimal' : errorPct > 0 ? 'Yes' : 'Improved'}
+          detail={`Error ${errorDelta >= 0 ? '+' : ''}${errorPct.toFixed(1)}% vs baseline`}
+          verdict={Math.abs(errorPct) < 5 ? 'good' : errorPct > 5 ? 'bad' : 'good'}
+        />
+        <Metric label="Mean error (hedged)" value={fmt(riskAverse.summary.meanError, 4)} />
+        <Metric label="Mean error (baseline)" value={fmt(baseline.summary.meanError, 4)} />
+        <Metric label="Final Gini (hedged)" value={fmt(riskAverse.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)} baseline`} />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-slate-800 mb-1">Cumulative error: hedged vs baseline</h3>
+        <p className="text-xs text-slate-500 mb-3">
+          If the lines track closely, hedging doesn't hurt the aggregate much — the mechanism is robust to cautious agents.
+        </p>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+            <CartesianGrid {...GRID_PROPS} />
+            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+              label={{ value: 'Cumulative mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+            <Tooltip content={<SmartTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+            <Line type="monotone" dataKey="baseline" name="Baseline (truthful)" stroke="#94a3b8" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="hedged" name="Hedged (risk-averse)" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+            <Brush dataKey="round" {...BRUSH_PROPS} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+        Hedging reduces individual payoff variance but slightly degrades informativeness.
+        The mechanism tolerates this because the skill layer measures actual forecast quality,
+        not how bold the report is. Hedged agents get lower σ (less influence) but don't break the system.
+      </div>
+    </div>
+  );
+}
 
 /* ── Sensitivity ── */
 function SensitivityTab({ data }: { data: { lam: number; sig: number; error: number; gini: number }[] }) {
