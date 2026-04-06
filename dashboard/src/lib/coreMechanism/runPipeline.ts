@@ -233,12 +233,12 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
   const builder = buildSelections(options.weighting, options.builder);
 
   const params: ComposableParams = {
-    lam: 0.5,
+    lam: 0.3,
     eta: 1,
-    sigma_min: 0.2,
-    gamma: 2,
-    rho: 0.15,
-    omegaMax: 1,
+    sigma_min: 0.1,
+    gamma: 4,
+    rho: 0.1,
+    omegaMax: 0.25,
     utilityPool: builder.settlementRule === 'skill_plus_utility' ? 2 : 0,
     scoreThreshold: 0.7,
     fixedDeposit: 1,
