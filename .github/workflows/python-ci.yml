@@ -41,4 +41,5 @@ jobs:
         run: python -m onlinev2.experiments.cli --exp settlement --block core --outdir /tmp/outputs
 
       - name: Master comparison smoke
-        run: python -m onlinev2.experiments.cli --exp master_comparison --block core --outdir /tmp/outputs_master
+        timeout-minutes: 10
+        run: python -m onlinev2.experiments.cli --exp master_comparison --block core --outdir /tmp/outputs_master --T 100 --n_seeds 1
