@@ -10,7 +10,6 @@ import type { BehaviourPresetId } from '@/lib/behaviour/hiddenAttributes';
 const SEED = 42;
 const N = 6;
 const T = 300;
-const W0 = 20;
 
 function fmt(v: number, d = 4): string { return v.toFixed(d); }
 function pct(v: number): string { return `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`; }
@@ -56,7 +55,7 @@ describe('Deep Behaviour Analysis — 18 Presets (excl. RL)', () => {
     const printGroup = (label: string, items: typeof sorted) => {
       if (!items.length) return;
       console.log(`\n  ${label}:`);
-      for (const [id, v] of items) {
+      for (const [, v] of items) {
         console.log(`    ${v.label.padEnd(25)} ${pct(v.delta).padStart(9)}  CRPS=${fmt(v.result.summary.meanError)}  Gini=${fmt(v.result.summary.finalGini, 3)}  N_eff=${fmt(v.result.summary.meanNEff, 1)}  Part=${(v.result.summary.meanParticipation / N * 100).toFixed(0)}%`);
       }
     };
@@ -142,8 +141,6 @@ describe('Deep Behaviour Analysis — 18 Presets (excl. RL)', () => {
     console.log(`     The skill gate downweights attackers to σ ≈ 0 within a few rounds.`);
 
     // 3. Multi-agent attacks are more dangerous
-    const multiAgent = ['sybil', 'collusion'];
-    const maxMultiDelta = Math.max(...multiAgent.map(id => results.get(id)!.delta));
     console.log(`\n  3. MULTI-AGENT ATTACKS ARE MORE DANGEROUS`);
     console.log(`     Sybil: ${pct(results.get('sybil')!.delta)}, Collusion: ${pct(results.get('collusion')!.delta)}`);
     console.log(`     Coordinated behaviour amplifies impact beyond what the skill gate can absorb.`);
@@ -159,7 +156,6 @@ describe('Deep Behaviour Analysis — 18 Presets (excl. RL)', () => {
     console.log(`     Budget-constrained: ${pct(budget.delta)} — finite wealth has minimal impact (no ruin in 300 rounds)`);
 
     // 5. Reporting distortions are absorbed
-    const reporting = ['noisy_reporter', 'reputation_gamer', 'sandbagger'];
     console.log(`\n  5. REPORTING DISTORTIONS ARE ABSORBED`);
     console.log(`     Noisy: ${pct(results.get('noisy_reporter')!.delta)}, Rep.gamer: ${pct(results.get('reputation_gamer')!.delta)}, Sandbagger: ${pct(results.get('sandbagger')!.delta)}`);
     console.log(`     The CRPS scoring rule correctly measures forecast quality regardless of intent.`);

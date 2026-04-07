@@ -31,7 +31,7 @@ export default function FamilyImpactChart({ data }: FamilyImpactChartProps) {
         />
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
-          formatter={(v: number) => [`${v > 0 ? '+' : ''}${v.toFixed(2)}%`, 'Worst Δ CRPS']}
+          formatter={(v: unknown) => [`${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(2)}%`, 'Worst Δ CRPS']}
         />
         <Bar dataKey="worstDeltaCrpsPct" radius={[0, 4, 4, 0]} {...GRID_PROPS}>
           {sorted.map((entry) => (

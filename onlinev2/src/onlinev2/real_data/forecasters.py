@@ -10,8 +10,10 @@ All models are strictly causal — they only see data up to t-1 when
 forecasting t. Models retrain periodically on a rolling window.
 """
 from __future__ import annotations
-import numpy as np
+
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 
 class BaseForecaster(ABC):

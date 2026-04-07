@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { PRESET_CONFIGS, ALL_PRESET_IDS } from '@/lib/behaviour/presetMeta';
 import { TAXONOMY_ITEMS } from '@/lib/behaviour/taxonomyData';
-import type { BehaviourFamily, BehaviourPresetId } from '@/lib/behaviour/hiddenAttributes';
+import type { BehaviourFamily } from '@/lib/behaviour/hiddenAttributes';
 
 const ALL_FAMILIES: BehaviourFamily[] = [
   'participation', 'information', 'reporting', 'staking',

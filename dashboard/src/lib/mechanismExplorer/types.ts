@@ -49,7 +49,17 @@ export type BehaviourVariant =
   | 'Arbitrageur'
   | 'Insider'
   | 'Collusion'
-  | 'Rep. reset';
+  | 'Rep. reset'
+  | 'Biased'
+  | 'Miscalibrated'
+  | 'Noisy reporter'
+  | 'Budget-constrained'
+  | 'House-money'
+  | 'Kelly sizer'
+  | 'Rep. gamer'
+  | 'Sandbagger'
+  | 'RL learner'
+  | 'Latency exploit';
 
 export interface MechanismConfig {
   skill: SkillVariant;

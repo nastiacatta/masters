@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document specifies requirements for a UI/UX redesign of the thesis dashboard for "Adaptive Skill and Stake in Forecast Markets." The current dashboard suffers from poor visual design, limited navigation affordances, static non-interactive charts, and insufficient presentation of experiment results. The redesign targets three areas: (1) improved navigation and information architecture, (2) more interactive and visually polished data visualisations, and (3) better showcasing of experiment results across the thesis story.
+This document specifies requirements for a UI/UX redesign of the thesis dashboard for "Adaptive Skill and Stake in Forecast Markets." The current dashboard suffers from poor visual design, limited navigation affordances, static non-interactive charts, and insufficient presentation of experiment results. The redesign targets five areas: (1) improved navigation and information architecture, (2) more interactive and visually polished data visualisations, (3) better showcasing of experiment results across the thesis story, (4) a stronger narrative flow that reads like a thesis — with clear findings, logical progression, and no filler text, and (5) PDF-sourced mathematical verification to ensure all formulas displayed in the dashboard match the thesis manuscripts exactly.
 
 ## Glossary
 
@@ -19,6 +19,20 @@ This document specifies requirements for a UI/UX redesign of the thesis dashboar
 - **Robustness_Page**: The `/robustness` route that presents invariant checks, adversarial tests, and failure modes.
 - **Mechanism_Page**: The `/mechanism` route that provides the step-by-step round walkthrough.
 - **Overview_Page**: The `/` route that frames the thesis research question and system overview.
+- **FormulaCard**: A UI component that displays a mathematical formula with its LaTeX source, label, and citation reference.
+- **MathBlock**: A KaTeX-rendered mathematical expression block used inline or as a display equation.
+- **VerdictCard**: A UI component that presents a yes/no finding with colour-coded verdict, metric value, and interpretation.
+- **Narrative_Lead**: The introductory paragraph at the top of each page that frames the question being answered.
+- **Formula_Registry**: A data structure mapping each formula to its LaTeX, source PDF, section reference, and usage location.
+- **Deep_Dive**: An expandable section within a page that reveals additional detail without cluttering the main narrative.
+- **Source_Citation**: A muted-text reference below a formula indicating the PDF and section where it originates.
+
+## Requirements*: The `/notes` route that presents all experiments and methodology notes.
+- **Narrative_Flow**: The logical progression of the dashboard story: research question → mechanism → does it work? → where does it break? → conclusions.
+- **PDF_Source**: One of the thesis PDF manuscripts in the repository root (MASTERS copy.pdf, Masters_notes (2) copy.pdf, NotesMasters copy.pdf, ESG (6) copy.pdf, Pierre_wagering copy.pdf, arbitrage copy.pdf) used as ground-truth references for mathematical formulas.
+- **Formula_Reference**: A citation annotation on a displayed formula indicating which PDF_Source and equation/section it corresponds to.
+- **Copy_Text**: Any descriptive, explanatory, or interpretive text displayed in the Dashboard (headings, descriptions, captions, findings, tooltips).
+- **Thesis_Point**: A single, specific claim or finding that an experiment or section is designed to demonstrate.
 
 ## Requirements
 
@@ -30,7 +44,7 @@ This document specifies requirements for a UI/UX redesign of the thesis dashboar
 
 1. THE Sidebar SHALL display navigation items with descriptive icons alongside text labels for each top-level route.
 2. THE Sidebar SHALL visually distinguish the currently active route using a highlighted background and accent-coloured indicator.
-3. THE Sidebar SHALL group navigation items into logical sections: primary routes (Overview, Mechanism, Results, Robustness) and secondary routes (Appendix, Experiments).
+3. THE Sidebar SHALL group navigation items into logical sections: primary routes (Overview, Mechanism, Results, Robustness) and secondary routes (Behaviour, Notes, Appendix).
 4. WHEN a user hovers over a Sidebar navigation item, THE Sidebar SHALL display a subtle hover state with background colour change within 100ms.
 5. THE Sidebar SHALL include the thesis title "Skill × Stake" and a short subtitle at the top as a branded header.
 6. WHEN the viewport width is below 768px, THE Sidebar SHALL collapse into a hamburger menu icon that opens a slide-out drawer on tap.
@@ -123,13 +137,6 @@ This document specifies requirements for a UI/UX redesign of the thesis dashboar
 **User Story:** As a thesis reader, I want to switch between light and dark colour themes, so that I can use the dashboard comfortably in different lighting conditions.
 
 #### Acceptance Criteria
-
-1. THE Dashboard SHALL provide a theme toggle button accessible from the Sidebar header area.
-2. WHEN a user activates dark mode, THE Dashboard SHALL switch all background colours to dark slate tones (slate-900 for main background, slate-800 for cards) and text colours to light tones (slate-100 for primary text, slate-400 for secondary text) within 150ms.
-3. WHEN a user activates dark mode, THE Chart components SHALL update axis colours, grid colours, and tooltip backgrounds to dark-theme equivalents.
-4. THE Dashboard SHALL persist the selected theme preference in localStorage and restore it on subsequent visits.
-5. THE Dashboard SHALL default to the user's operating system colour scheme preference (prefers-color-scheme media query) on first visit.
-
 ### Requirement 10: Page Loading and Data States
 
 **User Story:** As a thesis reader, I want clear feedback when data is loading or unavailable, so that I know the dashboard is working and what to expect.
@@ -140,3 +147,135 @@ This document specifies requirements for a UI/UX redesign of the thesis dashboar
 2. WHEN data loading completes, THE Dashboard SHALL transition from skeleton placeholders to actual content with a fade-in animation (200ms duration).
 3. IF a data file fails to load, THEN THE Dashboard SHALL display an inline error message within the affected component area, without breaking the rest of the page layout.
 4. WHILE no experiments are available, THE Dashboard SHALL display a friendly empty state message explaining that data is not yet linked, with a reference to the data setup instructions.
+
+### Requirement 11: Thesis Narrative Flow
+
+**User Story:** As a thesis reader, I want the dashboard to guide me through the research like a story — from question to evidence to conclusion — so that I can follow the argument without getting lost in disconnected charts.
+
+#### Acceptance Criteria
+
+1. THE Overview_Page SHALL present the research question prominently, followed by a visual roadmap showing the four-act structure: Understand → Does it work? → How? → When does it break?
+2. EACH page SHALL begin with a narrative lead-in paragraph (2–4 sentences) that states what question the page answers and why it matters in the thesis argument.
+3. THE Dashboard SHALL display "So what?" summary cards at the bottom of each major section, stating the key takeaway in one sentence and linking it back to the research question.
+4. WHEN a user completes a page, THE Dashboard SHALL display a "Next" prompt linking to the next page in the narrative sequence with a one-line preview of what comes next.
+5. THE Results_Page SHALL present findings in the order: headline verdict → supporting evidence → caveats, matching the thesis argument structure.
+
+### Requirement 12: Mathematical Formula Verification via PDF Sources
+
+**User Story:** As a thesis reader, I want mathematical formulas in the dashboard to be accurate and traceable to the thesis PDFs, so that I can trust the notation and cross-reference with the written thesis.
+
+#### Acceptance Criteria
+
+1. ALL mathematical formulas displayed in the Dashboard (KaTeX blocks) SHALL be cross-checked against the thesis PDF sources (MASTERS copy.pdf, Masters_notes (2) copy.pdf, NotesMasters copy.pdf) for notation accuracy.
+2. EACH FormulaCard and MathBlock component SHALL include a `source` prop indicating the PDF and page/section where the formula originates (e.g., "MASTERS §3.2, Eq. 7").
+3. WHEN a formula is displayed, THE Dashboard SHALL render a small source citation below the formula block in muted text.
+4. THE Mechanism_Page formulas (payoff, skill update, deposit, weight cap) SHALL match the exact notation used in the thesis PDFs, including variable names, subscripts, and operator conventions.
+5. THE Dashboard SHALL maintain a formula registry (a data file or constant map) listing each formula's LaTeX, source PDF, section reference, and the component where it is used.
+
+### Requirement 13: Copy and Text Quality Standards
+
+**User Story:** As a thesis reader, I want all text in the dashboard to be precise, informative, and free of generic filler, so that every sentence adds value and maintains academic credibility.
+
+#### Acceptance Criteria
+
+1. ALL descriptive text in the Dashboard (page intros, chart subtitles, card descriptions, tooltips) SHALL be specific to the thesis content — no placeholder or generic text (e.g., "This chart shows interesting results" is not acceptable).
+2. EACH chart subtitle SHALL state what the chart shows, what the axes represent, and how to interpret the key pattern in one to two sentences.
+3. EACH experiment description SHALL reference the specific thesis question it addresses and name the relevant literature (e.g., "Lambert (2008)", "Vitali & Pinson (2024)") where applicable.
+4. THE Dashboard SHALL avoid marketing language, superlatives, and vague qualifiers (e.g., "amazing", "cutting-edge", "state-of-the-art"). All claims SHALL be grounded in the data shown.
+5. EACH VerdictCard and answer card SHALL include a precise interpretation sentence that references the actual metric values and thresholds used to reach the verdict.
+
+### Requirement 14: Clear Main Findings Presentation
+
+**User Story:** As a thesis reader, I want the main findings to be immediately visible and unambiguous, so that I can quickly understand what the research proved.
+
+#### Acceptance Criteria
+
+1. THE Overview_Page SHALL display a "Key Findings" section with 3–5 headline findings, each stated as a single declarative sentence with the supporting metric value.
+2. THE Results_Page headline answer cards SHALL use a traffic-light colour system (green/amber/red) with explicit thresholds documented in the card (e.g., "Green: ΔCRPS < −5%").
+3. EACH finding SHALL be accompanied by a "Strength of evidence" indicator showing whether the result is based on synthetic data only, real data, or both.
+4. THE Dashboard SHALL present findings in decreasing order of importance: the primary research question answer first, then supporting evidence, then edge cases and limitations.
+5. WHEN experiment data supports a finding, THE Dashboard SHALL display the specific metric values, sample sizes, and seed counts that back the claim.
+
+### Requirement 15: Interactive Narrative Elements
+
+**User Story:** As a thesis reader, I want interactive elements that help me explore the argument at my own pace, so that I can dig deeper into areas I find interesting without losing the overall thread.
+
+#### Acceptance Criteria
+
+1. THE Dashboard SHALL provide expandable "Deep dive" sections within each page that reveal additional detail (extra charts, methodology notes, parameter sensitivity) without cluttering the main narrative.
+2. WHEN a user hovers over a technical term (e.g., "CRPS", "Gini", "EWMA", "sybilproof"), THE Dashboard SHALL display a tooltip with a concise definition (one to two sentences).
+3. THE Dashboard SHALL provide cross-reference links between related sections (e.g., a finding on the Results page links to the robustness test that validates it).
+4. EACH chart section SHALL include a collapsible "Methodology" note explaining the experimental setup: seed count, agent count, rounds, DGP, and what is held constant.
+5. THE Dashboard SHALL support keyboard navigation for all interactive elements (tabs, expandable sections, chart controls) to ensure accessibility.
+
+#### Acceptance Criteria
+
+1. WHILE experiment data is loading, THE Dashboard SHALL display skeleton placeholder elements (pulsing grey rectangles) matching the expected layout of charts and cards.
+2. WHEN data loading completes, THE Dashboard SHALL transition from skeleton placeholders to actual content with a fade-in animation (200ms duration).
+3. IF a data file fails to load, THEN THE Dashboard SHALL display an inline error message within the affected component area, without breaking the rest of the page layout.
+4. WHILE no experiments are available, THE Dashboard SHALL display a friendly empty state message explaining that data is not yet linked, with a reference to the data setup instructions.
+
+### Requirement 11: Thesis Narrative Flow and Story Structure
+
+**User Story:** As a thesis reader, I want the dashboard to read like a thesis — with a clear research question, logical progression through evidence, and explicit conclusions — so that I can follow the argument without jumping between disconnected pages.
+
+#### Acceptance Criteria
+
+1. THE Overview_Page SHALL present the thesis argument in a structured narrative: (a) research question, (b) why it matters (forecast markets context), (c) what the mechanism does (one-paragraph summary), (d) key findings (3 headline results with specific numbers), and (e) navigation prompts that frame each subsequent page as the next chapter of the argument.
+2. THE Overview_Page SHALL frame each navigation link with a thesis-relevant question (e.g., "Does skill × stake beat baselines?" for Results, "What happens under adversarial behaviour?" for Behaviour) rather than generic labels.
+3. WHEN a user navigates between pages, THE Dashboard SHALL maintain narrative continuity by displaying a contextual subtitle on each page header that states the specific thesis question that page answers.
+4. THE Results_Page SHALL present findings in a logical sequence: headline verdict first ("Yes, the mechanism improves accuracy by X%"), then supporting evidence (accuracy → concentration → calibration → ablation), then caveats.
+5. THE Behaviour_Page SHALL frame each behaviour experiment with a specific adversarial question (e.g., "Can a sybil attack gain advantage?") and a one-sentence verdict before showing the data.
+6. THE Notes_Page SHALL organise experiments into thesis chapters (Pure Forecasting Gain, Dynamic Robustness, Strategic Robustness, Real Data Validation) matching the thesis ladder structure, rather than a flat list.
+7. EACH page SHALL include a "What this means" summary section at the bottom that states the page's contribution to the overall thesis argument in 1–2 sentences.
+
+### Requirement 12: PDF-Sourced Mathematical Verification
+
+**User Story:** As a thesis reader, I want to know that every formula in the dashboard matches the thesis manuscripts exactly, so that I can trust the mathematical content and cross-reference with the written thesis.
+
+#### Acceptance Criteria
+
+1. THE Dashboard SHALL source all mathematical formulas from the thesis PDF manuscripts (MASTERS copy.pdf, Masters_notes (2) copy.pdf, NotesMasters copy.pdf, Pierre_wagering copy.pdf, arbitrage copy.pdf) as ground-truth references.
+2. EACH displayed formula (FormulaCard, MathBlock) SHALL include a Formula_Reference annotation indicating the source PDF and the equation number or section where the formula appears (e.g., "MASTERS §3.2, Eq. 7").
+3. THE Mechanism_Page SHALL display the five core formulas (scoring, effective wager, aggregation, settlement, skill update) with LaTeX notation that matches the thesis PDF notation character-for-character, including variable names, subscripts, and operator symbols.
+4. WHEN a formula is displayed, THE FormulaCard SHALL render a small citation badge showing the PDF source reference, visible without interaction.
+5. IF a formula in the codebase does not match a PDF source, THEN THE Dashboard SHALL flag the formula with a "Verify" indicator until the discrepancy is resolved.
+6. THE Dashboard SHALL maintain a formula registry (a data structure mapping each displayed formula to its PDF source, equation identifier, and LaTeX string) that can be audited for completeness.
+
+### Requirement 13: Copy and Text Quality Standards
+
+**User Story:** As a thesis reader, I want all text in the dashboard to be precise, specific, and academically meaningful — with no generic filler — so that every sentence adds information and the dashboard reads as a credible research presentation.
+
+#### Acceptance Criteria
+
+1. THE Dashboard SHALL use precise, quantified language in all finding descriptions (e.g., "improves CRPS by 21% on wind data, DM test p < 0.001" rather than "significantly improves accuracy").
+2. THE Dashboard SHALL avoid vague qualifiers ("significant", "substantial", "notable", "impressive") in all Copy_Text; every claim SHALL include the specific metric, dataset, and test that supports it.
+3. EACH Experiment_Card description SHALL state the specific question the experiment answers and the specific metric used to answer it, in one sentence.
+4. EACH Chart caption and axis label SHALL use the precise variable name and unit (e.g., "ΔCRPS vs equal weighting" not "Improvement", "Gini coefficient [0,1]" not "Concentration").
+5. THE Overview_Page key findings SHALL each cite the specific dataset, sample size, and statistical test (e.g., "21.1% improvement on Elia wind (n=17,544, DM p < 0.001)") rather than unattributed claims.
+6. THE Dashboard SHALL avoid filler sentences that do not convey information (e.g., "This section shows the results" or "The following chart displays the data"). Every sentence SHALL either state a finding, define a term, or explain a method.
+7. EACH tooltip help text (InfoToggle) SHALL explain what the chart measures, what the axes represent, and how to interpret the result — in domain-specific terms, not generic chart descriptions.
+
+### Requirement 14: Clear Main Findings Presentation
+
+**User Story:** As a thesis reader, I want the main findings to be immediately visible and unambiguous on the Overview and Results pages, so that I can grasp the thesis contribution within 30 seconds of landing on the dashboard.
+
+#### Acceptance Criteria
+
+1. THE Overview_Page SHALL display the three main findings as prominent cards with: (a) a one-line claim, (b) the key number, (c) the dataset and conditions, and (d) a verdict icon (confirmed/partial/rejected).
+2. THE Results_Page SHALL display a "Bottom Line" summary at the top — before any charts — stating the overall thesis verdict in one sentence with the primary metric (e.g., "The skill × stake mechanism improves forecast accuracy by 21.1% on real wind data").
+3. WHEN the Dashboard loads the Overview_Page, THE main findings cards SHALL be visible above the fold without scrolling on a 1080p display.
+4. THE main findings SHALL distinguish between synthetic and real-data results, displaying both with their respective sample sizes and significance levels.
+5. THE Results_Page headline answer cards SHALL use colour-coded verdict indicators: green for confirmed improvements (statistically significant), amber for partial or conditional results, red for no improvement or degradation.
+
+### Requirement 15: Interactive Narrative Elements
+
+**User Story:** As a thesis reader, I want interactive elements that let me explore the thesis argument at my own pace — expanding details, comparing scenarios, and drilling into evidence — so that the dashboard is more engaging than a static PDF.
+
+#### Acceptance Criteria
+
+1. WHEN a user clicks on a finding card on the Overview_Page, THE Dashboard SHALL expand the card to show supporting evidence (the specific experiment, chart preview, and link to the full results).
+2. THE Mechanism_Page SHALL provide interactive parameter exploration: WHEN a user adjusts a parameter (λ, η, σ_min) via a slider, THE Dashboard SHALL update the displayed formula output and show how the effective wager changes.
+3. THE Results_Page SHALL provide a "Compare methods" toggle that overlays multiple weighting methods on the same chart for direct visual comparison.
+4. WHEN a user hovers over a statistical claim (e.g., "p < 0.001"), THE Dashboard SHALL display a tooltip explaining the test used (e.g., "Diebold-Mariano test with HAC variance, Newey-West correction").
+5. THE Behaviour_Page SHALL provide a scenario selector that lets users switch between behaviour presets (baseline, sybil, collusion, intermittent) and see the impact on accuracy and concentration metrics update in the same view.

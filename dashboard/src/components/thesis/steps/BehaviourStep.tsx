@@ -55,6 +55,56 @@ const PRESET_EXPLAINERS: Record<BehaviourPresetId, { what: string; changes: stri
     changes: 'Phase 1: honest reports build high σ. Phase 2: biased reports exploit the built-up influence before σ decays.',
     matters: 'It tests the speed of the skill gate recovery — how quickly does σ drop once the agent starts misreporting?',
   },
+  biased: {
+    what: 'One agent adds a persistent directional bias to every report. The bias is constant across rounds.',
+    changes: 'Systematically shifted reports from the biased agent, potentially pulling the aggregate off-centre.',
+    matters: 'It tests whether the EWMA skill layer detects and downweights persistent directional errors.',
+  },
+  miscalibrated: {
+    what: 'An overconfident agent pushes reports away from 0.5, exaggerating deviations from the centre.',
+    changes: 'Reports with inflated confidence — further from 0.5 than the true signal warrants.',
+    matters: 'It tests whether CRPS scoring correctly penalises overconfidence and the skill layer adjusts.',
+  },
+  noisy_reporter: {
+    what: 'An agent adds random noise to truthful reports — sloppy rather than strategic.',
+    changes: 'Noisier reports from one agent, degrading their individual CRPS score.',
+    matters: 'It tests whether the skill layer detects lower signal quality and reduces the noisy agent\'s influence.',
+  },
+  budget_constrained: {
+    what: 'Agents have finite wealth that can run out, preventing further participation.',
+    changes: 'Agents with low initial budgets may reach ruin and stop participating entirely.',
+    matters: 'It tests whether wealth depletion creates adverse selection — removing agents from the pool.',
+  },
+  house_money: {
+    what: 'Agents increase risk-taking after gains and decrease after losses (house-money effect).',
+    changes: 'Deposit sizes fluctuate with recent profit/loss history, creating path-dependent staking.',
+    matters: 'It tests whether gain-dependent risk-taking concentrates influence in recent winners.',
+  },
+  kelly_sizer: {
+    what: 'Agents size deposits proportional to their estimated edge: σ × (1 − σ).',
+    changes: 'Adaptive deposit sizing that increases with skill estimate and decreases at extremes.',
+    matters: 'It tests whether edge-proportional staking improves or hurts aggregate accuracy.',
+  },
+  reputation_gamer: {
+    what: 'An agent anchors reports near the previous aggregate to minimise measured loss and inflate σ.',
+    changes: 'Reports that track the aggregate rather than the agent\'s private signal.',
+    matters: 'It tests whether aggregate-anchoring can fool the EWMA into overestimating skill.',
+  },
+  sandbagger: {
+    what: 'An agent deliberately adds large noise to underperform, lowering the mechanism\'s expectations.',
+    changes: 'Intentionally degraded reports from a skilled agent, reducing their measured σ.',
+    matters: 'It tests whether deliberate underperformance can be exploited later for outsized payoffs.',
+  },
+  reinforcement_learner: {
+    what: 'Agents adjust participation based on recent profits — more active after gains, less after losses.',
+    changes: 'Participation probability varies with wealth trajectory, creating feedback loops.',
+    matters: 'It tests whether profit-driven participation creates adverse selection in the agent pool.',
+  },
+  latency_exploiter: {
+    what: 'An agent submits reports with partial outcome information due to submission latency.',
+    changes: 'Reports blended with partial outcome knowledge, giving an unfair information advantage.',
+    matters: 'It tests whether latency-based information advantages concentrate wealth unfairly.',
+  },
 };
 
 function PresetExplainerCard({ presetId }: { presetId: BehaviourPresetId }) {
