@@ -241,7 +241,176 @@ Priority: charts → new chart components → results page → sidebar → exper
     - For each method key, verify colour in `tokens.ts` matches `formatters.ts`
     - **Validates: Requirements 4.1**
 
-- [ ] 11. Final checkpoint — Ensure all components compile and integrate
+- [ ] 11. Checkpoint — Ensure all original components compile and integrate
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 12. Implement thesis narrative flow and NarrativeNav component
+  - [ ] 12.1 Create `components/dashboard/NarrativeNav.tsx`
+    - Define `STORY_ACTS` array with route, label, and question for each act (Understand, Does it work?, How?, When does it break?, So what?)
+    - Props: `currentAct: number` (0-based index)
+    - Render two-column layout: "← Previous: {label}" on left, "Next: {label} →" on right
+    - Use React Router `<Link>` for navigation; hide prev on first act, hide next on last act
+    - _Requirements: 11.1, 11.3_
+
+  - [ ] 12.2 Add NarrativeNav to all main pages
+    - Add `<NarrativeNav currentAct={N} />` at the bottom of HomePage (act 0), ResultsPage (act 1), MechanismPage (act 2), RobustnessPage/BehaviourPage (act 3), and Results#findings (act 4)
+    - _Requirements: 11.1, 11.3_
+
+  - [ ] 12.3 Add contextual thesis-question subtitles to each page header
+    - Update PageHeader or page-level headers to include a subtitle stating the thesis question that page answers (e.g., "Does skill × stake beat baselines?" on Results)
+    - Frame navigation links on Overview with thesis-relevant questions instead of generic labels
+    - _Requirements: 11.2, 11.3_
+
+  - [ ] 12.4 Add "What this means" summary section to each page
+    - Add a bottom section on each page (before NarrativeNav) with 1–2 sentences stating the page's contribution to the thesis argument
+    - Style as a subtle callout (slate-50 background, left border accent)
+    - _Requirements: 11.7_
+
+  - [ ]* 12.5 Write property test for narrative nav links (Property 20)
+    - **Property 20: Narrative sequence with forward/backward navigation**
+    - Generate random story act index, render NarrativeNav, verify prev/next links present and correct
+    - **Validates: Requirements 11.1, 11.3**
+
+- [ ] 13. Implement formula registry and source citations
+  - [ ] 13.1 Create `public/data/formula_registry.json`
+    - Populate with all formulas used in the dashboard: effective wager, EWMA skill update, payoff, scoring rule, aggregation, settlement
+    - Each entry: `{ id, latex, sourcePdf, page, section, label, description? }`
+    - Cross-reference against thesis PDFs (MASTERS copy.pdf, Pierre_wagering copy.pdf, etc.)
+    - _Requirements: 12.1, 12.2, 12.6_
+
+  - [ ] 13.2 Create `hooks/useFormulaRegistry.ts`
+    - Fetch `formula_registry.json` once and cache in state
+    - Export `{ registry, lookup, lookupById, loading }` — `lookup` normalises whitespace before comparing LaTeX strings
+    - _Requirements: 12.6_
+
+  - [ ] 13.3 Enhance FormulaCard with `source` and `unverified` props
+    - Add optional `source: { pdf, page, section }` prop to FormulaCard
+    - When `source` is provided, render a small citation line below caption: "📄 {pdf}, {section}, p. {page}"
+    - When `unverified` is true, render an amber "⚠ Not in formula registry" badge
+    - _Requirements: 12.2, 12.4, 12.5_
+
+  - [ ] 13.4 Enhance MathBlock with optional `source` prop
+    - Add optional `source` prop with same structure as FormulaCard
+    - When provided, render a small superscript citation indicator that shows source on hover
+    - _Requirements: 12.2, 12.4_
+
+  - [ ] 13.5 Wire useFormulaRegistry into FormulaCard/MathBlock instances across pages
+    - On MechanismPage, BehaviourPage, and ResultsPage, use `useFormulaRegistry` to look up each formula and pass `source` prop
+    - Flag any formula not found in registry with `unverified={true}`
+    - _Requirements: 12.3, 12.5_
+
+  - [ ]* 13.6 Write property test for formula registry entry fields (Property 23)
+    - **Property 23: Formula registry entries have all required fields**
+    - Generate random registry entry, validate all required fields present and non-empty
+    - **Validates: Requirements 12.2**
+
+  - [ ]* 13.7 Write property test for formula source citation rendering (Property 24)
+    - **Property 24: Formula source citation rendering**
+    - Generate random FormulaCard props with/without source, check citation line presence
+    - **Validates: Requirements 12.1**
+
+  - [ ]* 13.8 Write property test for formula registry cross-check warning (Property 25)
+    - **Property 25: Formula registry cross-check warning**
+    - Generate random LaTeX string, check against mock registry, verify unverified warning presence matches lookup result
+    - **Validates: Requirements 12.3**
+
+- [ ] 14. Implement copy quality enforcement
+  - [ ] 14.1 Create `lib/copyGuard.ts` with FILLER_PATTERNS and validateCopy utility
+    - Define `FILLER_PATTERNS` regex array (lorem ipsum, TODO, placeholder, TBD, coming soon, foo, bar, baz)
+    - Export `validateCopy(text: string): { valid: boolean; violations: string[] }`
+    - _Requirements: 13.1, 13.6_
+
+  - [ ] 14.2 Audit and improve all ChartCard subtitles across pages
+    - Review every ChartCard instance on ResultsPage, BehaviourPage, MechanismPage, RobustnessPage
+    - Replace any vague subtitles with precise descriptions referencing specific metrics, axes, and interpretation guidance
+    - Ensure axis labels use precise variable names and units (e.g., "ΔCRPS vs equal weighting" not "Improvement")
+    - _Requirements: 13.2, 13.4, 13.7_
+
+  - [ ] 14.3 Audit and improve ExperimentCard descriptions and VerdictCard text
+    - Ensure each ExperimentCard description states the specific question and metric in one sentence
+    - Ensure each VerdictCard interpretation references actual metric values and thresholds
+    - Replace vague qualifiers with quantified language throughout
+    - _Requirements: 13.3, 13.5_
+
+  - [ ]* 14.4 Write property test for no filler text (Property 26)
+    - **Property 26: No filler text in rendered content**
+    - Generate random strings including known filler patterns, run through validateCopy, verify detection
+    - **Validates: Requirements 13.1**
+
+- [ ] 15. Implement clear main findings presentation
+  - [ ] 15.1 Create `components/dashboard/FindingCard.tsx`
+    - Props: `finding: KeyFinding`
+    - Render: title, traffic-light verdict border (green/amber/red for confirmed/partial/refuted), interpretation sentence, "so what" line in bolder text, evidence strength indicator (1–3 filled circles)
+    - Optional deep-dive toggle button when `finding.deepDive` is present
+    - _Requirements: 14.1, 14.5_
+
+  - [ ] 15.2 Create KeyFindingsSection on Overview page
+    - Extend existing `FINDINGS` array on HomePage to use `KeyFinding` interface with verdict, soWhat, evidenceStrength, supportingExperiments, evidenceRoute
+    - Render up to 5 FindingCards as prominent cards visible above the fold
+    - Distinguish between synthetic and real-data results with respective sample sizes
+    - _Requirements: 14.1, 14.3, 14.4_
+
+  - [ ] 15.3 Add "Bottom Line" summary to ResultsPage
+    - Display a one-sentence thesis verdict at the top of ResultsPage, before any charts
+    - Use colour-coded verdict indicators on headline answer cards (green/amber/red)
+    - _Requirements: 14.2, 14.5_
+
+  - [ ]* 15.4 Write property test for finding card fields including soWhat (Property 21)
+    - **Property 21: Finding cards contain all required fields including soWhat**
+    - Generate random KeyFinding data, render FindingCard, verify all 6 fields present
+    - **Validates: Requirements 11.2, 14.1**
+
+  - [ ]* 15.5 Write property test for verdict and evidence strength indicators (Property 22)
+    - **Property 22: Finding verdict and evidence strength visual indicators**
+    - Generate random verdict × evidence strength, render FindingCard, check border colour and filled circles count
+    - **Validates: Requirements 14.2, 14.3**
+
+- [ ] 16. Implement interactive narrative elements
+  - [ ] 16.1 Create `components/dashboard/DeepDive.tsx`
+    - Props: `content: DeepDiveContent`, `label?: string`
+    - Render a "Deep dive ▾" toggle button that expands a bordered panel with Framer Motion height animation (200ms)
+    - Expanded panel contains: MethodologyNote callout, optional extended chart, caveats as bulleted list, cross-reference links
+    - _Requirements: 15.1_
+
+  - [ ] 16.2 Create `components/dashboard/TermTooltip.tsx`
+    - Props: `term: string`, `definition?: string`, `children: ReactNode`
+    - Wrap term in `<span>` with dotted underline (`border-b border-dotted border-slate-400`)
+    - On hover (150ms delay), show tooltip with definition from `GLOSSARY_ENTRIES` in `tokens.ts`
+    - Fall back to "No definition available" if term not found and no override definition provided
+    - _Requirements: 15.4_
+
+  - [ ] 16.3 Create `components/dashboard/CrossReference.tsx`
+    - Props: `label, route, tab?, anchor?`
+    - Render as inline teal-600 link with arrow icon (→) and hover underline
+    - Use React Router `<Link>` for SPA navigation; include `tab` as URL search parameter if provided
+    - _Requirements: 15.3_
+
+  - [ ] 16.4 Create `components/dashboard/MethodologyNote.tsx`
+    - Props: `setup: string`, `controls?: string[]`, `limitations?: string[]`
+    - Render as rounded card with slate-50 background, indigo-500 left border (3px), "Methodology" header in uppercase tracking
+    - _Requirements: 15.1, 15.4_
+
+  - [ ] 16.5 Wire DeepDive into FindingCards and key result sections
+    - Add deep-dive content to KeyFinding entries on Overview page
+    - Add DeepDive panels to key chart sections on ResultsPage and BehaviourPage where methodology context is valuable
+    - _Requirements: 15.1_
+
+  - [ ]* 16.6 Write property test for deep-dive toggle (Property 27)
+    - **Property 27: Deep-dive toggle expands panel with methodology note**
+    - Generate random deep-dive content, simulate toggle click, check expanded state and methodology note presence
+    - **Validates: Requirements 15.1, 15.4**
+
+  - [ ]* 16.7 Write property test for term tooltip (Property 28)
+    - **Property 28: Term tooltip shows glossary definition on hover**
+    - Generate random glossary term from GLOSSARY_ENTRIES, simulate hover, check tooltip definition matches
+    - **Validates: Requirements 15.2**
+
+  - [ ]* 16.8 Write property test for cross-reference navigation (Property 29)
+    - **Property 29: Cross-reference links navigate to correct section**
+    - Generate random CrossReference with route/tab/anchor, simulate click, check navigation target
+    - **Validates: Requirements 15.3**
+
+- [ ] 17. Final checkpoint — Ensure all new components compile and integrate
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -252,3 +421,5 @@ Priority: charts → new chart components → results page → sidebar → exper
 - Each task references specific requirements for traceability
 - Property tests validate universal correctness properties from the design document
 - Checkpoints ensure incremental validation
+- Tasks 12–17 cover Requirements 11–15 (narrative flow, formula verification, copy quality, findings presentation, interactive elements)
+- The formula registry (task 13) should be populated early since it feeds into FormulaCard/MathBlock enhancements across multiple pages

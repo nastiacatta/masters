@@ -12,7 +12,9 @@ export type BehaviourPresetId =
   | 'manipulator'
   | 'sybil'
   | 'evader'
-  | 'arbitrageur';
+  | 'arbitrageur'
+  | 'collusion'
+  | 'reputation_reset';
 
 export interface ScenarioAgent {
   id: string;
@@ -115,6 +117,16 @@ export const PRESET_META: Record<
     label: 'Arbitrageur',
     description: 'Participates mainly when disagreement is large.',
     levers: ['conditional participation', 'opportunistic staking'],
+  },
+  collusion: {
+    label: 'Collusion',
+    description: 'Two agents coordinate participation, reports, and staking.',
+    levers: ['coordinated entry/exit', 'synchronised reports', 'concentrated staking'],
+  },
+  reputation_reset: {
+    label: 'Reputation reset',
+    description: 'Agent builds reputation honestly, then exploits it with manipulation.',
+    levers: ['phase switching', 'reputation exploitation', 'delayed attack'],
   },
 };
 

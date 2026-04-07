@@ -47,7 +47,9 @@ export type BehaviourVariant =
   | 'Evader'
   | 'Sybil'
   | 'Arbitrageur'
-  | 'Insider';
+  | 'Insider'
+  | 'Collusion'
+  | 'Rep. reset';
 
 export interface MechanismConfig {
   skill: SkillVariant;

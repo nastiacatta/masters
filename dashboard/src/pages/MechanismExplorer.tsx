@@ -64,6 +64,8 @@ function builderToConfig(
     sybil: 'Sybil',
     evader: 'Evader',
     arbitrageur: 'Arbitrageur',
+    collusion: 'Collusion',
+    reputation_reset: 'Rep. reset',
   };
   return {
     skill: skillVariant,
