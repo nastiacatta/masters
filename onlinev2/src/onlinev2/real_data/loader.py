@@ -5,8 +5,10 @@ Expects a CSV with at least a 'value' column (or a single numeric column).
 Optionally has a 'date' column for time indexing.
 """
 from __future__ import annotations
-import numpy as np
+
 import os
+
+import numpy as np
 
 
 def load_csv_series(path: str, column: str | None = None) -> np.ndarray:

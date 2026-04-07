@@ -7,10 +7,13 @@ feeds their forecasts into the mechanism, and compares weighting rules.
 Output format matches master_comparison for dashboard compatibility.
 """
 from __future__ import annotations
+
 import json
 import os
 import time
+
 import numpy as np
+
 from .forecasters import BaseForecaster, get_all_forecasters
 
 
@@ -93,9 +96,9 @@ def run_real_data_comparison(
     print(f"  Forecasting done in {elapsed:.1f}s")
 
     # Now run the mechanism comparison
-    from onlinev2.simulation import run_simulation
-    from onlinev2.core.scoring import crps_hat_from_quantiles
     from onlinev2.core.aggregation import aggregate_forecast
+    from onlinev2.core.scoring import crps_hat_from_quantiles
+    from onlinev2.simulation import run_simulation
 
     # Run simulation with the mechanism
     print("  Running mechanism simulation...")
