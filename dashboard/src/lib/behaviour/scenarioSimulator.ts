@@ -4,17 +4,10 @@
 import { runRoundExtended } from '@/lib/coreMechanism/runRoundExtended';
 import type { AgentState, AgentAction } from '@/lib/coreMechanism/runRound';
 import type { ExtendedParams } from '@/lib/coreMechanism/runRoundExtended';
+import type { BehaviourPresetId } from './hiddenAttributes';
 
-export type BehaviourPresetId =
-  | 'baseline'
-  | 'bursty'
-  | 'risk_averse'
-  | 'manipulator'
-  | 'sybil'
-  | 'evader'
-  | 'arbitrageur'
-  | 'collusion'
-  | 'reputation_reset';
+// Re-export the canonical 19-preset union from hiddenAttributes.ts
+export type { BehaviourPresetId } from './hiddenAttributes';
 
 export interface ScenarioAgent {
   id: string;
@@ -127,6 +120,57 @@ export const PRESET_META: Record<
     label: 'Reputation reset',
     description: 'Agent builds reputation honestly, then exploits it with manipulation.',
     levers: ['phase switching', 'reputation exploitation', 'delayed attack'],
+  },
+  // ── New 10 presets ───────────────────────────────────────────────────────
+  biased: {
+    label: 'Systematic bias',
+    description: 'One agent adds a persistent directional bias to every report.',
+    levers: ['biased report', 'skill downweighting'],
+  },
+  miscalibrated: {
+    label: 'Miscalibrated reporter',
+    description: 'Overconfident agent pushes reports away from 0.5, exaggerating deviations.',
+    levers: ['overconfidence factor', 'calibration distortion'],
+  },
+  noisy_reporter: {
+    label: 'Noisy reporter',
+    description: 'Agent adds random noise to truthful reports — sloppy rather than strategic.',
+    levers: ['noise scale', 'CRPS degradation'],
+  },
+  budget_constrained: {
+    label: 'Budget-constrained',
+    description: 'Agents have finite wealth that can run out, leading to ruin.',
+    levers: ['finite budget', 'ruin risk'],
+  },
+  house_money: {
+    label: 'House-money effect',
+    description: 'Agents increase risk-taking after gains, decrease after losses.',
+    levers: ['gain-dependent staking', 'wealth trajectory coupling'],
+  },
+  kelly_sizer: {
+    label: 'Kelly-like sizing',
+    description: 'Deposit proportional to estimated edge: σ × (1 − σ).',
+    levers: ['edge-proportional staking', 'Kelly fraction'],
+  },
+  reputation_gamer: {
+    label: 'Reputation gamer',
+    description: 'Sacrifices short-term accuracy to inflate skill estimate σ by reporting near the aggregate.',
+    levers: ['aggregate anchoring', 'σ inflation'],
+  },
+  sandbagger: {
+    label: 'Sandbagger',
+    description: 'Deliberately underperforms by adding large noise, lowering expectations.',
+    levers: ['deliberate noise', 'expectation manipulation'],
+  },
+  reinforcement_learner: {
+    label: 'Reinforcement learner',
+    description: 'Increases participation after profitable rounds, withdraws after losses.',
+    levers: ['profit-driven participation', 'adaptive entry'],
+  },
+  latency_exploiter: {
+    label: 'Latency exploiter',
+    description: 'Reports with partial outcome information due to submission latency.',
+    levers: ['partial outcome info', 'information advantage'],
   },
 };
 
