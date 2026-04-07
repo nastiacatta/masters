@@ -12,7 +12,7 @@ import {
   type RoundTrace,
   type InfluenceRule,
 } from './runRoundComposable';
-import type { BehaviourPresetId } from '@/lib/behaviour/scenarioSimulator';
+import type { BehaviourPresetId } from '@/lib/behaviour/hiddenAttributes';
 
 const DEFAULT_ROUNDS = 20000;
 const DEFAULT_SEED = 42;
@@ -152,6 +152,7 @@ function buildRoundBehaviour(
   previousAggregate: number,
   state: AgentState[],
   rng: () => number,
+  outcome?: number,
 ): BehaviourDecision[] {
   const centre = mean(baseReports);
   const dispersion = Math.sqrt(
@@ -238,6 +239,67 @@ function buildRoundBehaviour(
       }
     }
 
+    // ── New presets ────────────────────────────────────────────────────────
+
+    // Biased: agent 0 adds persistent directional bias to reports
+    if (preset === 'biased' && index === attackerIndex) {
+      report = clamp(baseReport + 0.15);
+    }
+
+    // Miscalibrated: agent 0 pushes reports away from 0.5 (overconfidence)
+    if (preset === 'miscalibrated' && index === attackerIndex) {
+      report = clamp(0.5 + (baseReport - 0.5) * 1.8);
+    }
+
+    // Noisy reporter: agent 0 adds random noise to truthful reports
+    if (preset === 'noisy_reporter' && index === attackerIndex) {
+      report = clamp(baseReport + normalSample(rng) * 0.15);
+    }
+
+    // Budget-constrained: agents 0–2 stop participating when wealth is too low
+    if (preset === 'budget_constrained' && index < 3) {
+      if (state[index].wealth < 0.1) {
+        participate = false;
+      } else {
+        // Slightly higher risk — need to earn back
+        riskFraction *= 1.15;
+      }
+    }
+
+    // House-money effect: all agents adjust riskFraction based on recent gains/losses
+    if (preset === 'house_money') {
+      const recentGain = state[index].wealth - 20;
+      riskFraction *= (1 + 0.8 * clamp(recentGain / 20, -0.5, 1));
+    }
+
+    // Kelly-like sizing: agents 0–2 size deposits proportional to estimated edge
+    if (preset === 'kelly_sizer' && index < 3) {
+      riskFraction = 0.5 * state[index].sigma * (1 - state[index].sigma);
+    }
+
+    // Reputation gamer: agent 0 anchors reports to previous aggregate to inflate σ
+    if (preset === 'reputation_gamer' && index === attackerIndex) {
+      report = clamp(0.7 * previousAggregate + 0.3 * baseReport);
+    }
+
+    // Sandbagger: agent 0 deliberately adds large noise to underperform
+    if (preset === 'sandbagger' && index === attackerIndex) {
+      report = clamp(baseReport + normalSample(rng) * 0.2);
+    }
+
+    // Reinforcement learner: agents 0–2 adjust participation based on recent profit
+    if (preset === 'reinforcement_learner' && index < 3) {
+      const recentProfit = state[index].wealth - 20;
+      const pPart = clamp(0.5 + 0.6 * clamp(recentProfit / 20, -1, 1), 0.1, 0.95);
+      participate = rng() < pPart;
+    }
+
+    // Latency exploiter: agent 0 blends base report with partial outcome info
+    if (preset === 'latency_exploiter' && index === attackerIndex) {
+      const y = outcome ?? previousAggregate;
+      report = clamp(0.15 * y + 0.85 * baseReport);
+    }
+
     if (!participate) {
       return {
         participate: false,
@@ -306,6 +368,7 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
       previousAggregate,
       state,
       rng,
+      y,
     );
 
     const { qReports: dgpQReports } = dgp.rounds[i];

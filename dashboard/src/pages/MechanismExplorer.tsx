@@ -66,6 +66,16 @@ function builderToConfig(
     arbitrageur: 'Arbitrageur',
     collusion: 'Collusion',
     reputation_reset: 'Rep. reset',
+    biased: 'Biased',
+    miscalibrated: 'Miscalibrated',
+    noisy_reporter: 'Noisy reporter',
+    budget_constrained: 'Budget-constrained',
+    house_money: 'House-money',
+    kelly_sizer: 'Kelly sizer',
+    reputation_gamer: 'Rep. gamer',
+    sandbagger: 'Sandbagger',
+    reinforcement_learner: 'RL learner',
+    latency_exploiter: 'Latency exploit',
   };
   return {
     skill: skillVariant,
@@ -114,6 +124,18 @@ function configToBuilderAndPreset(
     Evader: 'evader',
     Sybil: 'sybil',
     Arbitrageur: 'arbitrageur',
+    Collusion: 'collusion',
+    'Rep. reset': 'reputation_reset',
+    Biased: 'biased',
+    Miscalibrated: 'miscalibrated',
+    'Noisy reporter': 'noisy_reporter',
+    'Budget-constrained': 'budget_constrained',
+    'House-money': 'house_money',
+    'Kelly sizer': 'kelly_sizer',
+    'Rep. gamer': 'reputation_gamer',
+    Sandbagger: 'sandbagger',
+    'RL learner': 'reinforcement_learner',
+    'Latency exploit': 'latency_exploiter',
   };
   return {
     builder: {
