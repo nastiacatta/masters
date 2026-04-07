@@ -103,6 +103,9 @@ export default function BehaviourPage() {
   const manipulator = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'manipulator', rounds: T, seed: SEED, n: N }), []);
   const arbitrageur = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'arbitrageur', rounds: T, seed: SEED, n: N }), []);
   const riskAverse = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'risk_averse', rounds: T, seed: SEED, n: N }), []);
+  const collusion = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'collusion', rounds: T, seed: SEED, n: N }), []);
+  const repReset = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'reputation_reset', rounds: T, seed: SEED, n: N }), []);
+  const evader = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'evader', rounds: T, seed: SEED, n: N }), []);
 
   // ── Deposit policy comparison ──
   const depositFixed = useMemo(() => runPipeline({ dgpId: 'baseline', behaviourPreset: 'baseline', rounds: T, seed: SEED, n: N, builder: { depositPolicy: 'fixed_unit' } }), []);
@@ -128,6 +131,9 @@ export default function BehaviourPage() {
       { name: 'Manipulator', pipeline: manipulator, color: '#ef4444' },
       { name: 'Arbitrageur', pipeline: arbitrageur, color: '#f59e0b' },
       { name: 'Sybil', pipeline: sybil, color: '#f97316' },
+      { name: 'Collusion', pipeline: collusion, color: '#ec4899' },
+      { name: 'Rep. reset', pipeline: repReset, color: '#dc2626' },
+      { name: 'Evader', pipeline: evader, color: '#a855f7' },
     ];
     return runs.map(r => ({
       ...r,
@@ -137,7 +143,7 @@ export default function BehaviourPage() {
       participation: r.pipeline.summary.meanParticipation,
       ...compare(r.pipeline, baseline),
     }));
-  }, [baseline, bursty, riskAverse, manipulator, arbitrageur, sybil]);
+  }, [baseline, bursty, riskAverse, manipulator, arbitrageur, sybil, collusion, repReset, evader]);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -167,7 +173,7 @@ export default function BehaviourPage() {
           <motion.div key={tab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.15 }}>
             {tab === 'Taxonomy' && <TaxonomyTab summary={behaviourSummary} depositFixed={depositFixed} depositBankroll={depositBankroll} depositSigma={depositSigma} />}
             {tab === 'Intermittency' && <IntermittencyTab bursty={bursty} baseline={baseline} />}
-            {tab === 'Adversarial' && <AdversarialTab manipulator={manipulator} arbitrageur={arbitrageur} sybil={sybil} baseline={baseline} />}
+            {tab === 'Adversarial' && <AdversarialTab manipulator={manipulator} arbitrageur={arbitrageur} sybil={sybil} collusion={collusion} repReset={repReset} evader={evader} baseline={baseline} />}
             {tab === 'Hedging' && <HedgingTab riskAverse={riskAverse} baseline={baseline} />}
             {tab === 'Seasonality' && <SeasonalityTab />}
             {tab === 'Sensitivity' && <SensitivityTab data={sweep} />}
@@ -402,99 +408,170 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
 /* ══════════════════════════════════════════════════════════════════════
    ADVERSARIAL — manipulation, arbitrage, sybil
    ══════════════════════════════════════════════════════════════════════ */
-function AdversarialTab({ manipulator, arbitrageur, sybil, baseline }: {
-  manipulator: PipelineResult; arbitrageur: PipelineResult; sybil: PipelineResult; baseline: PipelineResult;
+function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, evader, baseline }: {
+  manipulator: PipelineResult; arbitrageur: PipelineResult; sybil: PipelineResult;
+  collusion: PipelineResult; repReset: PipelineResult; evader: PipelineResult; baseline: PipelineResult;
 }) {
-  const manipProfit = manipulator.finalState[0].wealth - 20;
-  const baseProfit0 = baseline.finalState[0].wealth - 20;
-  const manipProfitable = manipProfit > baseProfit0 + 0.5;
+  const sigDecayZoom = useChartZoom();
 
+  // Attacker profits (F1 = attacker for most, F6 = arbitrageur)
+  const W0 = 20;
+  const manipProfit = manipulator.finalState[0].wealth - W0;
+  const baseProfit0 = baseline.finalState[0].wealth - W0;
   const arbIdx = arbitrageur.finalState.length - 1;
-  const arbProfit = arbitrageur.finalState[arbIdx].wealth - 20;
-  const arbBaseline = baseline.finalState[arbIdx].wealth - 20;
-  const arbProfitable = arbProfit > arbBaseline + 0.5;
-
+  const arbProfit = arbitrageur.finalState[arbIdx].wealth - W0;
+  const arbBaseline = baseline.finalState[arbIdx].wealth - W0;
   const sybilProfit = sybil.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const baselinePairProfit = baseline.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const sybilRatio = baselinePairProfit > 0 ? sybilProfit / baselinePairProfit : 1;
 
   const attacks = [
     { name: 'Baseline', error: baseline.summary.meanError, gini: baseline.summary.finalGini, color: '#94a3b8' },
-    { name: 'Manipulator (F1)', error: manipulator.summary.meanError, gini: manipulator.summary.finalGini, color: '#ef4444' },
-    { name: 'Arbitrageur (F6)', error: arbitrageur.summary.meanError, gini: arbitrageur.summary.finalGini, color: '#f59e0b' },
-    { name: 'Sybil (F1+F2)', error: sybil.summary.meanError, gini: sybil.summary.finalGini, color: '#f97316' },
+    { name: 'Manipulator', error: manipulator.summary.meanError, gini: manipulator.summary.finalGini, color: '#ef4444' },
+    { name: 'Arbitrageur', error: arbitrageur.summary.meanError, gini: arbitrageur.summary.finalGini, color: '#f59e0b' },
+    { name: 'Sybil', error: sybil.summary.meanError, gini: sybil.summary.finalGini, color: '#f97316' },
+    { name: 'Collusion', error: collusion.summary.meanError, gini: collusion.summary.finalGini, color: '#ec4899' },
+    { name: 'Rep. reset', error: repReset.summary.meanError, gini: repReset.summary.finalGini, color: '#dc2626' },
+    { name: 'Evader', error: evader.summary.meanError, gini: evader.summary.finalGini, color: '#a855f7' },
   ];
 
-  // Attacker sigma over time (manipulator F1)
-  const manipSigma = useMemo(() => downsample(manipulator.traces.map((t, i) => ({
-    round: i + 1, attacker: t.sigma_t[0], baseline_f1: baseline.traces[i]?.sigma_t[0] ?? 0,
-  })), 300), [manipulator.traces, baseline.traces]);
-
-  const sigDecayZoom = useChartZoom();
+  // Sigma trajectories for manipulator and reputation reset (F1)
+  const sigmaTraces = useMemo(() => downsample(
+    Array.from({ length: Math.min(manipulator.traces.length, repReset.traces.length, baseline.traces.length) }, (_, i) => ({
+      round: i + 1,
+      honest: baseline.traces[i].sigma_t[0],
+      manipulator: manipulator.traces[i].sigma_t[0],
+      rep_reset: repReset.traces[i].sigma_t[0],
+      evader: evader.traces[i]?.sigma_t[0] ?? 0,
+    })), 300),
+  [manipulator.traces, repReset.traces, baseline.traces, evader.traces]);
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
-        Three attack types from the thesis. The weighted-score payoff (Lambert 2008) is:
+        Six attack types from the thesis, each optimised against the mechanism's rules.
+        The weighted-score payoff (Lambert 2008) is:
       </p>
       <MathBlock accent label="Payoff" latex="\\Pi_i = m_i\\left(1 + s(r_i, \\omega) - \\frac{\\sum_j m_j\\, s(r_j, \\omega)}{\\sum_j m_j}\\right)" />
       <p className="text-sm text-slate-600 max-w-2xl">
-        Chen et al. (2014) showed WSWMs admit an arbitrage interval. Our skill gate g(σ) mitigates this:
-        misreporting increases loss → lowers σ → reduces future m_i. The attacker's influence decays.
+        Chen et al. (2014) proved WSWMs admit an arbitrage interval: any prediction
+        within a certain range yields nonneg payoff for both outcomes.
+        The arbitrageur uses the simplest strategy: report the mean of others' reports.
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <VerdictCard question="Manipulation profitable?" answer={manipProfitable ? 'Yes' : 'No'}
-          detail={`F1 profit: ${fmt(manipProfit, 2)} vs ${fmt(baseProfit0, 2)} honest`}
-          verdict={manipProfitable ? 'bad' : 'good'} />
-        <VerdictCard question="Arbitrage profitable?" answer={arbProfitable ? 'Yes' : 'No'}
-          detail={`F6 profit: ${fmt(arbProfit, 2)} vs ${fmt(arbBaseline, 2)} honest`}
-          verdict={arbProfitable ? 'bad' : 'good'} />
+        <VerdictCard question="Manipulation profitable?" answer={manipProfit > baseProfit0 + 0.5 ? 'Yes' : 'No'}
+          detail={`F1: ${fmt(manipProfit, 2)} vs ${fmt(baseProfit0, 2)} honest`}
+          verdict={manipProfit > baseProfit0 + 0.5 ? 'bad' : 'good'} />
+        <VerdictCard question="Arbitrage profitable?" answer={arbProfit > arbBaseline + 0.5 ? 'Yes' : 'No'}
+          detail={`F6: ${fmt(arbProfit, 2)} vs ${fmt(arbBaseline, 2)} honest`}
+          verdict={arbProfit > arbBaseline + 0.5 ? 'bad' : 'good'} />
         <VerdictCard question="Sybil-resistant?" answer={sybilRatio <= 1.05 ? 'Yes' : 'No'}
-          detail={`Clone pair / baseline pair: ${fmt(sybilRatio, 3)}`}
+          detail={`Clone pair ratio: ${fmt(sybilRatio, 3)}`}
           verdict={sybilRatio <= 1.05 ? 'good' : 'bad'} />
       </div>
 
+      {/* Attack comparison table */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-slate-800 mb-1">Attack impact comparison</h3>
+        <p className="text-xs text-slate-500 mb-3">
+          Each attack runs on the same DGP/seed. Only the attacker's behaviour changes.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-2 pr-3 text-slate-400 font-medium">Attack</th>
+                <th className="text-right py-2 px-2 text-slate-400 font-medium">Mean CRPS</th>
+                <th className="text-right py-2 px-2 text-slate-400 font-medium">Δ vs base</th>
+                <th className="text-right py-2 px-2 text-slate-400 font-medium">Gini</th>
+                <th className="text-left py-2 px-2 text-slate-400 font-medium">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { ...attacks[0], desc: 'All agents truthful' },
+                { ...attacks[1], desc: 'F1 pushes aggregate toward 0.5' },
+                { ...attacks[2], desc: 'F6 reports mean of others (Chen arb.)' },
+                { ...attacks[3], desc: 'F1–F2 clone with split deposit' },
+                { ...attacks[4], desc: 'F1–F2 coordinate participation + reports' },
+                { ...attacks[5], desc: 'F1 honest 100 rounds, then manipulates' },
+                { ...attacks[6], desc: 'F1 adapts misreport to dispersion' },
+              ].map((r, i) => {
+                const delta = i === 0 ? 0 : (r.error - attacks[0].error) / attacks[0].error * 100;
+                return (
+                  <tr key={r.name} className="border-b border-slate-50">
+                    <td className="py-2 pr-3 font-medium" style={{ color: r.color }}>{r.name}</td>
+                    <td className="text-right py-2 px-2 font-mono">{fmt(r.error, 4)}</td>
+                    <td className={`text-right py-2 px-2 font-mono ${delta > 1 ? 'text-red-500' : delta < -1 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      {i === 0 ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`}
+                    </td>
+                    <td className="text-right py-2 px-2 font-mono">{fmt(r.gini, 3)}</td>
+                    <td className="py-2 px-2 text-slate-500">{r.desc}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Accuracy impact by attack" subtitle="Mean CRPS across all agents. Higher = worse aggregate forecast.">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={attacks} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
+        <ChartCard title="Accuracy impact by attack" subtitle="Mean CRPS. Higher = worse aggregate.">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={attacks} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} />
+              <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} angle={-20} textAnchor="end" />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
-              <Bar dataKey="error" name="Mean CRPS" radius={[4, 4, 0, 0]} maxBarSize={40}>
+              <Bar dataKey="error" name="Mean CRPS" radius={[4, 4, 0, 0]} maxBarSize={36}>
                 {attacks.map(d => <Cell key={d.name} fill={d.color} opacity={0.85} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Attacker skill decay (manipulator F1)" subtitle="σ of the manipulator vs honest F1. Drag to zoom.">
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={manipSigma} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
-              onMouseDown={sigDecayZoom.onMouseDown} onMouseMove={sigDecayZoom.onMouseMove} onMouseUp={sigDecayZoom.onMouseUp}>
-              <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigDecayZoom.state.left, sigDecayZoom.state.right]} />
-              <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
-                label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-              <Tooltip content={<SmartTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="baseline_f1" name="Honest F1" stroke="#94a3b8" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="attacker" name="Manipulator F1" stroke="#ef4444" strokeWidth={2} dot={false} />
-              {sigDecayZoom.state.refLeft && sigDecayZoom.state.refRight && (
-                <ReferenceArea x1={sigDecayZoom.state.refLeft} x2={sigDecayZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
-              )}
-              <Brush dataKey="round" {...BRUSH_PROPS} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold text-slate-800">Attacker σ decay</h3>
+            <ZoomBadge isZoomed={sigDecayZoom.state.isZoomed} onReset={sigDecayZoom.reset} />
+          </div>
+          <p className="text-xs text-slate-500 mb-2">F1's skill estimate under different attacks. Misreporting erodes σ. Drag to zoom.</p>
+          <div className="cursor-crosshair">
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={sigmaTraces} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+                onMouseDown={sigDecayZoom.onMouseDown} onMouseMove={sigDecayZoom.onMouseMove} onMouseUp={sigDecayZoom.onMouseUp}>
+                <CartesianGrid {...GRID_PROPS} />
+                <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigDecayZoom.state.left, sigDecayZoom.state.right]} />
+                <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                  label={{ value: 'σ (F1)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                <Tooltip content={<SmartTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 9 }} />
+                <Line type="monotone" dataKey="honest" name="Honest" stroke="#94a3b8" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="manipulator" name="Manipulator" stroke="#ef4444" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="rep_reset" name="Rep. reset" stroke="#dc2626" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
+                <Line type="monotone" dataKey="evader" name="Evader" stroke="#a855f7" strokeWidth={1.5} dot={false} />
+                {sigDecayZoom.state.refLeft && sigDecayZoom.state.refRight && (
+                  <ReferenceArea x1={sigDecayZoom.state.refLeft} x2={sigDecayZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                )}
+                <Brush dataKey="round" {...BRUSH_PROPS} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-        Lambert (2008) proves sybilproofness for the one-shot case. In the repeated setting,
-        the skill gate extends this: clones must each earn σ independently, and misreporting
-        erodes σ over time. The arbitrageur's selective participation is handled by the EWMA freeze.
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 space-y-2">
+        <p>
+          The skill gate is the primary defence. Misreporting increases CRPS loss → raises L → lowers σ → reduces m_i.
+          The reputation reset attack (honest then exploit) shows the mechanism recovers: once F1 starts manipulating,
+          σ drops within ~20 rounds (EWMA half-life ≈ 7 rounds with ρ = 0.1).
+        </p>
+        <p>
+          The Chen arbitrageur reports the mean of others' predictions — guaranteed nonneg payoff per round.
+          But in the repeated setting, this strategy earns mediocre scores (it can't beat the best forecaster),
+          so σ stays moderate and the arbitrageur doesn't dominate.
+        </p>
       </div>
     </div>
   );

@@ -193,18 +193,49 @@ function buildRoundBehaviour(
     }
 
     if (preset === 'arbitrageur' && index === arbitrageurIndex) {
-      participate = dispersion > 0.09;
-      const direction = Math.sign(baseReport - previousAggregate || 1);
-      report = clamp(
-        previousAggregate + direction * Math.max(Math.abs(baseReport - previousAggregate), 0.08),
-      );
-      riskFraction = participate ? 0.34 : 0.03;
+      // Chen et al. (2014): report = weighted avg of others' reports → guaranteed nonneg payoff
+      // p_hat_i = sum_{j≠i} w_j * p_j / sum_{j≠i} w_j
+      // In our setting, we approximate with equal weights over other agents' reports
+      const othersSum = baseReports.reduce((s, r, j) => j !== index ? s + r : s, 0);
+      const othersCount = baseReports.length - 1;
+      const arbReport = othersCount > 0 ? othersSum / othersCount : 0.5;
+      // Only enter when there's disagreement (dispersion > threshold)
+      participate = dispersion > 0.05;
+      report = clamp(arbReport);
+      riskFraction = participate ? 0.30 : 0.03;
     }
 
     if (preset === 'sybil' && index < sybilCount) {
       report = clamp(baseReports[0] + normalSample(rng) * 0.005);
       riskFraction *= 0.55;
       depositMultiplier = 1 / sybilCount;
+    }
+
+    // Collusion: F1 and F2 coordinate — appear together, submit correlated reports,
+    // concentrate stake in rounds where they have high sigma
+    if (preset === 'collusion' && index < 2) {
+      // Coordinated participation: both in or both out
+      const collusionActive = (round % 5 !== 0); // skip every 5th round together
+      participate = collusionActive;
+      // Report synchronisation: both submit the average of their beliefs
+      const collusionReport = (baseReports[0] + baseReports[1]) / 2;
+      report = clamp(collusionReport + normalSample(rng) * 0.002);
+      // Concentrate stake when sigma is high (reputation grooming payoff)
+      riskFraction = state[index].sigma > 0.5 ? 0.35 : 0.10;
+    }
+
+    // Reputation reset: F1 plays honestly for first 100 rounds to build sigma,
+    // then switches to manipulation. Tests whether the skill gate can recover.
+    if (preset === 'reputation_reset' && index === attackerIndex) {
+      if (round <= 100) {
+        // Phase 1: honest play to build reputation
+        report = clamp(baseReport);
+      } else {
+        // Phase 2: exploit built-up sigma with manipulation
+        const direction = Math.sign(0.5 - previousAggregate || 1);
+        report = clamp(baseReport + 0.25 * direction);
+        riskFraction *= 1.5;
+      }
     }
 
     if (!participate) {

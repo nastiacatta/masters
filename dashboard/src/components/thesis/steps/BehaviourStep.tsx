@@ -45,6 +45,16 @@ const PRESET_EXPLAINERS: Record<BehaviourPresetId, { what: string; changes: stri
     changes: 'Conditional, selective participation; higher information content per submission but many missing rounds.',
     matters: 'It tests whether the mechanism rewards information-rich selective participation, and whether skill estimates remain accurate with highly intermittent but high-quality submissions.',
   },
+  collusion: {
+    what: 'Two agents coordinate: they appear and disappear together, submit correlated reports (average of their beliefs), and concentrate stake when their skill estimates are high.',
+    changes: 'Coordinated participation patterns, synchronised reports, concentrated staking in favourable rounds.',
+    matters: 'It tests whether coordinated behaviour can amplify influence beyond what individual honest play would achieve.',
+  },
+  reputation_reset: {
+    what: 'An agent plays honestly for the first 100 rounds to build a high skill estimate, then switches to manipulation. This tests whether accumulated reputation can be exploited.',
+    changes: 'Phase 1: honest reports build high σ. Phase 2: biased reports exploit the built-up influence before σ decays.',
+    matters: 'It tests the speed of the skill gate recovery — how quickly does σ drop once the agent starts misreporting?',
+  },
 };
 
 function PresetExplainerCard({ presetId }: { presetId: BehaviourPresetId }) {

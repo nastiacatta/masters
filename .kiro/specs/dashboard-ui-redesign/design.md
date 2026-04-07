@@ -9,12 +9,19 @@ The redesign addresses three core problems:
 2. Charts are functional but lack interactive polish (no drag-zoom on most pages, inconsistent tooltips, no series toggles on results charts)
 3. Experiment results are not presented with the narrative structure the thesis demands: "does it work?" → "where?" → "why?" → "when does it break?"
 
+Additionally, the redesign introduces:
+4. A thesis narrative flow with "So what?" cards connecting findings to the research question, and guided forward/backward navigation between story acts
+5. A formula registry that cross-checks every mathematical formula against the thesis PDFs, with source citations on FormulaCard and MathBlock components
+6. Copy quality enforcement — no filler text, precise chart subtitles, proper author-year literature citations
+7. A dedicated key findings presentation with traffic-light verdicts and strength-of-evidence indicators
+8. Interactive narrative elements: deep-dive expandable panels, inline term tooltips from the glossary, cross-reference links between sections, and methodology notes
+
 The thesis research question drives every design decision:
 > Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation?
 
 ### Narrative Flow
 
-The dashboard tells a story in four acts, each mapped to a route:
+The dashboard tells a story in five acts, each mapped to a route:
 
 | Act | Route | Question | Key Charts |
 |-----|-------|----------|------------|
@@ -22,6 +29,9 @@ The dashboard tells a story in four acts, each mapped to a route:
 | 2. Does it work? | `/results` | Does skill×stake beat baselines? | Master comparison bars, cumulative CRPS lines, calibration |
 | 3. How? | `/mechanism` | How does one round work? | Interactive pipeline, skill/wealth/error timelines |
 | 4. When does it break? | `/robustness` | Where are the limits? | Intermittency, sybil, sensitivity, behaviour experiments |
+| 5. So what? | `/results#findings` | What does this mean? | Key findings with verdicts, evidence strength, cross-refs |
+
+Each page includes a `NarrativeNav` component at the bottom with forward/backward links to adjacent story acts, creating a guided reading path.
 
 ### Standardised 4-Panel Output
 
@@ -67,12 +77,17 @@ graph TD
         DS[tokens.ts + theme.ts] --> TH[ThemeProvider]
         TH --> ALL[All Components]
     end
+    subgraph Formula Verification - New
+        FR[formula_registry.json] -->|useFormulaRegistry| FC[FormulaCard / MathBlock]
+        CG[copyGuard.ts] --> ALL
+    end
     subgraph Navigation - Enhanced
         S[Sidebar] -->|icons, groups, responsive| NAV[React Router]
         BC[Breadcrumb] --> NAV
+        NN[NarrativeNav] --> NAV
     end
     subgraph Pages - Enhanced
-        NAV --> P1[HomePage]
+        NAV --> P1[HomePage + KeyFindings]
         NAV --> P2[ResultsPage]
         NAV --> P3[MechanismPage]
         NAV --> P4[RobustnessPage]
@@ -84,6 +99,13 @@ graph TD
         CH --> TG[Series toggles]
         CH --> AN[Animated transitions]
         CH --> FP[FourPanelLayout]
+    end
+    subgraph Interactive Narrative - New
+        DD[DeepDive] --> P1
+        DD --> P2
+        TT[TermTooltip] --> ALL
+        CR[CrossReference] --> NAV
+        MN[MethodologyNote] --> DD
     end
 ```
 
@@ -316,6 +338,58 @@ type Theme = 'light' | 'dark';
 // Applied as class on <html> element
 ```
 
+#### Formula Registry Entry
+
+```typescript
+interface FormulaRegistryEntry {
+  id: string;
+  latex: string;
+  sourcePdf: string;
+  page: number;
+  section: string;
+  label: string;
+  description?: string;
+}
+```
+
+#### Key Finding
+
+```typescript
+interface KeyFinding {
+  id: string;
+  title: string;
+  verdict: 'confirmed' | 'partial' | 'refuted';
+  interpretation: string;
+  soWhat: string;
+  evidenceStrength: 'strong' | 'moderate' | 'weak';
+  supportingExperiments: number;
+  evidenceRoute: string;
+  deepDive?: DeepDiveContent;
+}
+```
+
+#### Deep Dive Content
+
+```typescript
+interface DeepDiveContent {
+  methodology: string;
+  extendedChart?: React.ReactNode;
+  caveats: string[];
+  crossRefs?: CrossReference[];
+}
+```
+
+#### Cross Reference
+
+```typescript
+interface CrossReference {
+  label: string;
+  route: string;
+  tab?: string;
+  anchor?: string;
+}
+```
+
 #### Sidebar Responsive State
 
 ```typescript
@@ -350,6 +424,37 @@ type HiddenSeries = Set<string>;
 interface ExperimentGridState {
   blockFilter: 'all' | 'core' | 'behaviour' | 'experiments';
   searchQuery: string;
+}
+```
+
+#### Formula Registry State
+
+```typescript
+interface FormulaRegistryState {
+  entries: FormulaRegistryEntry[];
+  loading: boolean;
+  error: string | null;
+}
+```
+
+#### Narrative State
+
+```typescript
+interface NarrativeState {
+  /** Current story act index */
+  currentAct: number;
+  /** Deep-dive panels that are currently expanded */
+  expandedDeepDives: Set<string>;
+}
+```
+
+#### Key Findings State
+
+```typescript
+interface KeyFindingsState {
+  findings: KeyFinding[];
+  /** Which finding's deep-dive is expanded */
+  expandedFindingId: string | null;
 }
 ```
 
@@ -523,6 +628,375 @@ Chart components reference these variables via the `shared.ts` constants, which 
 
 **Validates: Requirements 10.3**
 
+### Property 20: Narrative sequence with forward/backward navigation
+
+*For any* page in the story acts sequence, the page should render a NarrativeNav component containing a link to the previous act (if not the first) and a link to the next act (if not the last), and clicking either link should navigate to the correct route.
+
+**Validates: Requirements 11.1, 11.3**
+
+### Property 21: Finding cards contain all required fields including soWhat
+
+*For any* KeyFinding object, the rendered FindingCard should contain: a title, a traffic-light verdict border, an interpretation sentence, a "so what" connection to the research question, and an evidence strength indicator. No field may be empty or missing.
+
+**Validates: Requirements 11.2, 14.1**
+
+### Property 22: Finding verdict and evidence strength visual indicators
+
+*For any* verdict value (confirmed, partial, refuted), the FindingCard should render the correct traffic-light border colour (green, amber, red respectively). *For any* evidence strength value (strong, moderate, weak), the card should render the corresponding indicator (3, 2, or 1 filled circles respectively).
+
+**Validates: Requirements 14.2, 14.3**
+
+### Property 23: Formula registry entries have all required fields
+
+*For any* entry in the formula registry JSON, the entry should contain all required fields: id (non-empty string), latex (non-empty string), sourcePdf (matching one of the known thesis PDFs), page (positive integer), section (non-empty string), and label (non-empty string).
+
+**Validates: Requirements 12.2**
+
+### Property 24: Formula source citation rendering
+
+*For any* FormulaCard or MathBlock with a `source` prop provided, the rendered output should contain a citation line displaying the PDF filename, section reference, and page number. When no `source` prop is provided, no citation line should appear.
+
+**Validates: Requirements 12.1**
+
+### Property 25: Formula registry cross-check warning
+
+*For any* LaTeX string rendered in a FormulaCard, if the LaTeX does not match any entry in the formula registry (after whitespace normalisation), the component should display an "unverified" warning indicator. If it does match, no warning should appear.
+
+**Validates: Requirements 12.3**
+
+### Property 26: No filler text in rendered content
+
+*For any* user-visible text string rendered in the dashboard, the text should not match any pattern in the FILLER_PATTERNS list (lorem ipsum, TODO, placeholder, TBD, coming soon). The `validateCopy` function should return `valid: true` for all rendered text.
+
+**Validates: Requirements 13.1**
+
+### Property 27: Deep-dive toggle expands panel with methodology note
+
+*For any* component with a deep-dive toggle, clicking the toggle should transition the panel from collapsed to expanded (or vice versa), and the expanded panel should contain a MethodologyNote element with non-empty setup text.
+
+**Validates: Requirements 15.1, 15.4**
+
+### Property 28: Term tooltip shows glossary definition on hover
+
+*For any* technical term wrapped in a TermTooltip component, hovering over the term should display a tooltip containing the term's definition as found in GLOSSARY_ENTRIES. The definition text in the tooltip should exactly match the glossary entry.
+
+**Validates: Requirements 15.2**
+
+### Property 29: Cross-reference links navigate to correct section
+
+*For any* CrossReference component with a given route and optional tab/anchor, clicking the link should trigger navigation to the specified route. If a tab is specified, it should be included as a URL parameter.
+
+**Validates: Requirements 15.3**
+
+
+### 6. Narrative Flow Components (Requirements 11, 14)
+
+#### Story Structure
+
+The dashboard narrative is extended from four acts to five, adding a concluding "So what?" act:
+
+| Act | Route | Question | Key Content |
+|-----|-------|----------|-------------|
+| 1. Understand | `/` Overview | What is this mechanism? | System architecture, round timeline, key findings |
+| 2. Does it work? | `/results` | Does skill×stake beat baselines? | Master comparison, cumulative CRPS, calibration |
+| 3. How? | `/mechanism` | How does one round work? | Interactive pipeline, skill/wealth/error timelines |
+| 4. When does it break? | `/robustness` | Where are the limits? | Intermittency, sybil, sensitivity, behaviour |
+| 5. So what? | `/results#findings` | What does this mean for the thesis? | Key findings with verdicts, evidence strength, cross-refs |
+
+Each page includes forward/backward navigation links at the bottom connecting to the adjacent story acts, creating a guided reading path through the thesis narrative.
+
+#### NarrativeNav (New: `components/dashboard/NarrativeNav.tsx`)
+
+Bottom-of-page navigation linking to previous and next story acts.
+
+```typescript
+interface NarrativeNavProps {
+  /** Current act index (0-based) in the STORY_ACTS array */
+  currentAct: number;
+}
+
+const STORY_ACTS = [
+  { route: '/',            label: 'Understand',         question: 'What is this mechanism?' },
+  { route: '/results',     label: 'Does it work?',      question: 'Does skill×stake beat baselines?' },
+  { route: '/mechanism',   label: 'How?',               question: 'How does one round work?' },
+  { route: '/robustness',  label: 'When does it break?', question: 'Where are the limits?' },
+  { route: '/results#findings', label: 'So what?',      question: 'What does this mean?' },
+] as const;
+```
+
+Renders a two-column layout: "← Previous: {label}" on the left, "Next: {label} →" on the right. Uses React Router `<Link>` for navigation.
+
+#### KeyFindingsSection (Enhanced: on Overview page)
+
+The existing `FINDINGS` array on `HomePage.tsx` is extended to a richer data structure:
+
+```typescript
+interface KeyFinding {
+  id: string;
+  title: string;
+  /** Traffic-light verdict */
+  verdict: 'confirmed' | 'partial' | 'refuted';
+  /** One-sentence interpretation */
+  interpretation: string;
+  /** Connection back to the research question */
+  soWhat: string;
+  /** Evidence strength: 'strong' | 'moderate' | 'weak' */
+  evidenceStrength: 'strong' | 'moderate' | 'weak';
+  /** Number of supporting experiments */
+  supportingExperiments: number;
+  /** Route to the detailed evidence */
+  evidenceRoute: string;
+  /** Optional deep-dive content */
+  deepDive?: DeepDiveContent;
+}
+```
+
+Visual design:
+- Traffic-light left border: green (`emerald-500`) for confirmed, amber (`amber-400`) for partial, red (`red-400`) for refuted
+- Evidence strength shown as 1–3 filled circles (●●○ for moderate)
+- "So what?" line rendered in slightly bolder text below the interpretation
+- Max 5 findings displayed
+
+#### FindingCard (New: `components/dashboard/FindingCard.tsx`)
+
+```typescript
+interface FindingCardProps {
+  finding: KeyFinding;
+}
+```
+
+Renders: title, verdict colour border, metric value, interpretation, soWhat line, evidence strength indicator, and optional deep-dive toggle.
+
+### 7. Formula Registry and Source Citations (Requirement 12)
+
+#### Formula Registry Data Model
+
+A new static JSON file at `public/data/formula_registry.json` maps every formula used in the dashboard to its thesis source:
+
+```typescript
+interface FormulaRegistryEntry {
+  /** Unique formula ID, e.g. "effective_wager" */
+  id: string;
+  /** LaTeX representation */
+  latex: string;
+  /** Source PDF filename from repo root */
+  sourcePdf: string;
+  /** Page number in the PDF */
+  page: number;
+  /** Section reference, e.g. "§3.2" */
+  section: string;
+  /** Human-readable label */
+  label: string;
+  /** Optional brief description */
+  description?: string;
+}
+```
+
+Example entries:
+
+```json
+[
+  {
+    "id": "effective_wager",
+    "latex": "m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1-\\lambda)\\sigma^\\eta",
+    "sourcePdf": "MASTERS copy.pdf",
+    "page": 34,
+    "section": "§3.2",
+    "label": "Effective wager",
+    "description": "Deposit filtered through the skill gate function"
+  },
+  {
+    "id": "ewma_skill",
+    "latex": "L_{i,t} = (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t}",
+    "sourcePdf": "MASTERS copy.pdf",
+    "page": 37,
+    "section": "§3.3",
+    "label": "EWMA skill update"
+  },
+  {
+    "id": "payoff",
+    "latex": "\\Pi_i = m_i\\left(1 + s(r_i, \\omega) - \\frac{\\sum_j m_j\\, s(r_j, \\omega)}{\\sum_j m_j}\\right)",
+    "sourcePdf": "Pierre_wagering copy.pdf",
+    "page": 12,
+    "section": "§2.1",
+    "label": "Weighted-score payoff"
+  }
+]
+```
+
+The thesis PDFs in the repo root are: `ESG (6) copy.pdf`, `MASTERS copy.pdf`, `Masters_notes (2) copy.pdf`, `NotesMasters copy.pdf`, `Pierre_wagering copy.pdf`, `arbitrage copy.pdf`.
+
+#### FormulaCard Enhancement
+
+The existing `FormulaCard` component gains an optional `source` prop:
+
+```typescript
+interface FormulaCardProps {
+  title: string;
+  latex?: string;
+  formula?: string;
+  caption: string;
+  /** Source citation from formula registry */
+  source?: {
+    pdf: string;
+    page: number;
+    section: string;
+  };
+  /** If true, show a warning that formula is not in registry */
+  unverified?: boolean;
+}
+```
+
+When `source` is provided, a small citation line renders below the caption:
+```
+📄 MASTERS copy.pdf, §3.2, p. 34
+```
+
+When `unverified` is true, a subtle amber warning badge appears: `⚠ Not in formula registry`.
+
+#### MathBlock Enhancement
+
+The existing `MathBlock` component gains an optional `source` prop with the same structure. When provided, a small superscript citation indicator appears that shows the source on hover.
+
+#### useFormulaRegistry Hook (New: `hooks/useFormulaRegistry.ts`)
+
+```typescript
+function useFormulaRegistry(): {
+  registry: FormulaRegistryEntry[];
+  lookup: (latex: string) => FormulaRegistryEntry | undefined;
+  lookupById: (id: string) => FormulaRegistryEntry | undefined;
+  loading: boolean;
+}
+```
+
+Fetches `formula_registry.json` once and caches it. The `lookup` function normalises whitespace before comparing LaTeX strings.
+
+### 8. Copy Quality Guidelines (Requirement 13)
+
+#### Text Patterns and Anti-Patterns
+
+All user-visible text in the dashboard must follow these rules:
+
+1. **No filler text**: No "Lorem ipsum", "TODO", "placeholder", "TBD", "coming soon", or empty strings in any rendered text element
+2. **Precise chart subtitles**: Every `ChartCard` subtitle must describe what the chart shows and how to read it, referencing specific metrics or axes. Example: "Cumulative CRPS over 300 rounds. Lower = better. Mechanism (indigo) vs equal weights (grey)." Anti-example: "Chart showing results."
+3. **Author-year citations**: All literature references use "Author Year" format (e.g., "Lambert 2008", "Chen et al. 2014", "Vitali & Pinson 2024"). No "see paper" or "as described in the literature."
+
+These are enforced via:
+- A `FILLER_PATTERNS` constant in `lib/copyGuard.ts` containing regex patterns for known filler text
+- A `validateCopy(text: string): { valid: boolean; violations: string[] }` utility function
+- Unit tests that scan all rendered text for filler patterns
+
+```typescript
+// lib/copyGuard.ts
+export const FILLER_PATTERNS = [
+  /lorem\s+ipsum/i,
+  /\bTODO\b/,
+  /\bplaceholder\b/i,
+  /\bTBD\b/,
+  /\bcoming\s+soon\b/i,
+  /\bfoo\b/i,
+  /\bbar\b/i,
+  /\bbaz\b/i,
+];
+
+export function validateCopy(text: string): { valid: boolean; violations: string[] } {
+  const violations = FILLER_PATTERNS
+    .filter(p => p.test(text))
+    .map(p => p.source);
+  return { valid: violations.length === 0, violations };
+}
+```
+
+### 9. Interactive Narrative Elements (Requirement 15)
+
+#### DeepDive (New: `components/dashboard/DeepDive.tsx`)
+
+An expandable inline panel that reveals additional methodology details, extended charts, and caveats.
+
+```typescript
+interface DeepDiveContent {
+  /** Methodology note: experimental setup, controls, limitations */
+  methodology: string;
+  /** Optional extended chart (ReactNode) */
+  extendedChart?: React.ReactNode;
+  /** Caveats and limitations */
+  caveats: string[];
+  /** Cross-references to other sections */
+  crossRefs?: CrossReference[];
+}
+
+interface DeepDiveProps {
+  content: DeepDiveContent;
+  /** Label for the toggle button */
+  label?: string;
+}
+```
+
+Visual: A "Deep dive ▾" button that expands a bordered panel below the parent card. Uses Framer Motion `AnimatePresence` with height animation (200ms). The panel contains:
+1. A "Methodology" callout box (slate-50 background, left border accent)
+2. Optional extended chart
+3. Caveats as a bulleted list
+4. Cross-reference links
+
+#### TermTooltip (New: `components/dashboard/TermTooltip.tsx`)
+
+Inline tooltip that appears on hover over technical terms, showing the glossary definition.
+
+```typescript
+interface TermTooltipProps {
+  /** The technical term to display */
+  term: string;
+  /** Override definition (defaults to GLOSSARY_ENTRIES lookup) */
+  definition?: string;
+  children: React.ReactNode;
+}
+```
+
+Implementation:
+- Wraps the term text in a `<span>` with a dotted underline (`border-b border-dotted border-slate-400`)
+- On hover, shows a small tooltip (positioned above) with the definition from `GLOSSARY_ENTRIES` in `tokens.ts`
+- Uses `onMouseEnter`/`onMouseLeave` with a 150ms delay to avoid flicker
+- Falls back to the existing `StickyGlossary` if the term is not found
+
+The existing `GLOSSARY_ENTRIES` in `tokens.ts` already contains definitions for CRPS, Gini, N_eff, and key symbols. New terms are added as needed.
+
+#### CrossReference (New: `components/dashboard/CrossReference.tsx`)
+
+A clickable inline link that navigates to another section or experiment.
+
+```typescript
+interface CrossReference {
+  /** Display label */
+  label: string;
+  /** Target route */
+  route: string;
+  /** Optional target tab on the destination page */
+  tab?: string;
+  /** Optional anchor within the page */
+  anchor?: string;
+}
+
+interface CrossReferenceProps extends CrossReference {}
+```
+
+Visual: Rendered as an inline link with a small arrow icon (→), styled in teal-600 with hover underline. Uses React Router `<Link>` for SPA navigation. If `tab` is provided, it's passed as a URL search parameter.
+
+#### MethodologyNote (New: `components/dashboard/MethodologyNote.tsx`)
+
+A styled callout box for methodology details within deep-dive panels.
+
+```typescript
+interface MethodologyNoteProps {
+  /** Setup description */
+  setup: string;
+  /** Controls used */
+  controls?: string[];
+  /** Known limitations */
+  limitations?: string[];
+}
+```
+
+Visual: Rounded card with slate-50 background, indigo-500 left border (3px), small "Methodology" header in uppercase tracking. Compact text layout.
 
 ## Error Handling
 
@@ -556,6 +1030,18 @@ The dashboard loads experiment data from static files in `public/data/`. Errors 
 
 - **Unknown routes**: The existing catch-all `<Route path="*" element={<Navigate to="/" replace />} />` handles unknown routes.
 - **Breadcrumb on unknown paths**: The Breadcrumb component gracefully handles paths not in the route config by showing only the segments it can resolve.
+
+### Formula Registry Errors
+
+- **Registry file not found**: If `formula_registry.json` fails to load, the `useFormulaRegistry` hook returns an empty registry. FormulaCard and MathBlock render normally without source citations — no crash, no warning.
+- **Malformed registry entries**: Entries missing required fields are skipped during parsing. A console warning is logged in dev mode.
+- **LaTeX mismatch**: When a formula's LaTeX doesn't match any registry entry, the `unverified` warning is shown as a subtle amber indicator — informational, not blocking.
+
+### Narrative and Deep-Dive Errors
+
+- **Missing deep-dive content**: If a FindingCard has no `deepDive` content, the "Deep dive" toggle button is not rendered. No error state needed.
+- **Broken cross-references**: If a CrossReference targets a route that doesn't exist, React Router's catch-all redirect handles it gracefully. The link still renders but navigates to `/`.
+- **Missing glossary term**: If a TermTooltip references a term not in `GLOSSARY_ENTRIES`, the tooltip shows the `definition` prop if provided, or falls back to "No definition available."
 
 ## Testing Strategy
 
@@ -601,6 +1087,16 @@ The testing strategy uses both unit tests and property-based tests:
 | P17: Theme persistence | Generate random theme, set it, read from localStorage, check match | `fc.constantFrom('light', 'dark')` |
 | P18: Theme OS default | Generate random OS preference, clear localStorage, check theme matches | `fc.constantFrom('light', 'dark')` |
 | P19: Error isolation | Generate random component to fail, simulate fetch error, check other components render | `fc.constantFrom(...COMPONENT_IDS)` |
+| P20: Narrative nav links | Generate random story act index, render NarrativeNav, check prev/next links present and correct | `fc.integer({min: 0, max: STORY_ACTS.length - 1})` |
+| P21: Finding card fields | Generate random KeyFinding data, render FindingCard, check all 6 fields present (title, verdict, interpretation, soWhat, evidenceStrength, metric) | Custom `keyFindingArb` with `fc.record(...)` |
+| P22: Verdict/evidence indicators | Generate random verdict × evidence strength, render FindingCard, check border colour and filled circles count | `fc.constantFrom('confirmed','partial','refuted')` × `fc.constantFrom('strong','moderate','weak')` |
+| P23: Formula registry fields | Generate random registry entry, validate all required fields present and non-empty | Custom `formulaRegistryEntryArb` |
+| P24: Formula source citation | Generate random FormulaCard props with/without source, check citation line presence | `fc.option(sourceArb)` |
+| P25: Formula registry cross-check | Generate random LaTeX string, check against mock registry, verify warning presence matches lookup result | `fc.string()` combined with mock registry |
+| P26: No filler text | Generate random strings, run through `validateCopy`, verify filler patterns are detected | `fc.oneof(fc.string(), fc.constantFrom(...FILLER_STRINGS))` |
+| P27: Deep-dive toggle | Generate random deep-dive content, simulate toggle click, check expanded state and methodology note | Custom `deepDiveContentArb` |
+| P28: Term tooltip | Generate random glossary term from GLOSSARY_ENTRIES, simulate hover, check tooltip definition matches | `fc.constantFrom(...GLOSSARY_ENTRIES.map(e => e.symbol))` |
+| P29: Cross-reference nav | Generate random CrossReference with route/tab/anchor, simulate click, check navigation target | Custom `crossRefArb` |
 
 #### Unit Tests (Examples and Edge Cases)
 
@@ -617,4 +1113,17 @@ The testing strategy uses both unit tests and property-based tests:
 | Skeleton loading state | Set loading=true, check skeleton elements rendered | Req 10.1 |
 | Empty experiment state | Set experiments=[], check empty state message | Req 10.4 |
 | Card grid columns at breakpoints | Render grid at 500px, 800px, 1200px, check column counts 1, 2, 3+ | Req 7.5 |
+| NarrativeNav first act has no prev | Render NarrativeNav with currentAct=0, check no "Previous" link | Req 11.3 |
+| NarrativeNav last act has no next | Render NarrativeNav with currentAct=4, check no "Next" link | Req 11.3 |
+| Formula registry loads valid JSON | Fetch formula_registry.json, parse, check array of entries | Req 12.2 |
+| FormulaCard unverified warning | Render FormulaCard with unverified=true, check amber warning badge | Req 12.3 |
+| validateCopy rejects lorem ipsum | Call validateCopy("Lorem ipsum dolor"), check valid=false | Req 13.1 |
+| validateCopy accepts clean text | Call validateCopy("Cumulative CRPS over 300 rounds"), check valid=true | Req 13.1 |
+| Chart subtitles are non-empty | Render each page, check all ChartCard subtitles are non-empty strings | Req 13.2 |
+| Literature refs use author-year | Scan rendered text for citation patterns, verify "Author Year" format | Req 13.3 |
+| FindingCard max 5 findings | Render KeyFindingsSection with 7 findings, check only 5 rendered | Req 14.1 |
+| DeepDive collapsed by default | Render DeepDive, check panel is not visible initially | Req 15.1 |
+| TermTooltip fallback for unknown term | Render TermTooltip with unknown term, check "No definition available" | Req 15.2 |
+| CrossReference with tab param | Render CrossReference with tab="Accuracy", check link includes tab param | Req 15.3 |
+| MethodologyNote renders setup | Render MethodologyNote with setup text, check text is present | Req 15.4 |
 
