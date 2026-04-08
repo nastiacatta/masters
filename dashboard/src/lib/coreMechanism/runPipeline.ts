@@ -143,6 +143,7 @@ interface BehaviourDecision {
   report: number | null;
   riskFraction: number;
   depositMultiplier: number;
+  qReportShift?: number; // additive shift applied to all quantile reports
 }
 
 function buildRoundBehaviour(
@@ -168,6 +169,7 @@ function buildRoundBehaviour(
     let report = clamp(baseReport);
     let riskFraction = clamp(0.16 + 0.12 * state[index].sigma, 0.05, 0.45);
     let depositMultiplier = 1;
+    let qReportShift: number | undefined;
 
     if (preset === 'bursty') {
       const wave = 0.5 + 0.5 * Math.sin((round + index * 1.7) / 3.5);
@@ -244,16 +246,19 @@ function buildRoundBehaviour(
     // Biased: agent 0 adds persistent directional bias to reports
     if (preset === 'biased' && index === attackerIndex) {
       report = clamp(baseReport + 0.15);
+      qReportShift = report - baseReport;
     }
 
     // Miscalibrated: agent 0 pushes reports away from 0.5 (overconfidence)
     if (preset === 'miscalibrated' && index === attackerIndex) {
       report = clamp(0.5 + (baseReport - 0.5) * 1.8);
+      qReportShift = report - baseReport;
     }
 
     // Noisy reporter: agent 0 adds random noise to truthful reports
     if (preset === 'noisy_reporter' && index === attackerIndex) {
       report = clamp(baseReport + normalSample(rng) * 0.15);
+      qReportShift = report - baseReport;
     }
 
     // Budget-constrained: agents 0–2 stop participating when wealth is too low
@@ -280,11 +285,13 @@ function buildRoundBehaviour(
     // Reputation gamer: agent 0 anchors reports to previous aggregate to inflate σ
     if (preset === 'reputation_gamer' && index === attackerIndex) {
       report = clamp(0.7 * previousAggregate + 0.3 * baseReport);
+      qReportShift = report - baseReport;
     }
 
     // Sandbagger: agent 0 deliberately adds large noise to underperform
     if (preset === 'sandbagger' && index === attackerIndex) {
       report = clamp(baseReport + normalSample(rng) * 0.2);
+      qReportShift = report - baseReport;
     }
 
     // Reinforcement learner: agents 0–2 adjust participation based on recent profit
@@ -298,6 +305,7 @@ function buildRoundBehaviour(
     if (preset === 'latency_exploiter' && index === attackerIndex) {
       const y = outcome ?? previousAggregate;
       report = clamp(0.15 * y + 0.85 * baseReport);
+      qReportShift = report - baseReport;
     }
 
     if (!participate) {
@@ -306,6 +314,7 @@ function buildRoundBehaviour(
         report: null,
         riskFraction,
         depositMultiplier,
+        qReportShift,
       };
     }
 
@@ -314,6 +323,7 @@ function buildRoundBehaviour(
       report,
       riskFraction,
       depositMultiplier,
+      qReportShift,
     };
   });
 }
@@ -376,14 +386,28 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
     const trace = runComposableRound(
       roundNumber,
       state,
-      behaviour.map((decision, index) => ({
-        accountId: index,
-        participate: decision.participate,
-        report: decision.report,
-        qReport: decision.participate ? dgpQReports[index] : null,
-        riskFraction: decision.riskFraction,
-        depositMultiplier: decision.depositMultiplier,
-      })),
+      behaviour.map((decision, index) => {
+        let qReport = decision.participate ? dgpQReports[index] : null;
+        // Apply behaviour-driven quantile shift
+        if (qReport && decision.qReportShift) {
+          const shift = decision.qReportShift;
+          qReport = qReport.map(q => Math.max(0, Math.min(1, q + shift)));
+          // Enforce monotonicity: q[k] >= q[k-1]
+          for (let k = 1; k < qReport.length; k++) {
+            if (qReport[k] < qReport[k - 1]) {
+              qReport[k] = qReport[k - 1];
+            }
+          }
+        }
+        return {
+          accountId: index,
+          participate: decision.participate,
+          report: decision.report,
+          qReport,
+          riskFraction: decision.riskFraction,
+          depositMultiplier: decision.depositMultiplier,
+        };
+      }),
       y,
       params,
     );

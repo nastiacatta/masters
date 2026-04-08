@@ -361,48 +361,48 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       tier: 'CRITICAL', emoji: '🔴', borderColor: 'border-l-red-500', bgColor: 'bg-red-50', textColor: 'text-red-700', labelColor: 'text-red-800',
       rule: 'Δ > 10%',
       presets: [
-        { label: 'Bursty', delta: '+791%', interpretation: 'Participation collapse at 55% attendance dominates all other effects' },
-        { label: 'Sybil', delta: '+14.3%', interpretation: 'Identity splitting amplifies influence beyond deposit-splitting defence' },
+        { label: 'Bursty', delta: '+934%', interpretation: 'Participation collapse at 54% attendance dominates all other effects' },
+        { label: 'Rep. gamer', delta: '+28%', interpretation: 'Aggregate anchoring inflates σ while distorting quantile forecasts' },
+        { label: 'Sandbagger', delta: '+22%', interpretation: 'Deliberate noise in quantile forecasts degrades aggregate calibration' },
+        { label: 'Noisy reporter', delta: '+18%', interpretation: 'Random noise propagates through quantile reports to the aggregate' },
+        { label: 'Bias', delta: '+17%', interpretation: 'Persistent directional bias shifts all quantile levels systematically' },
+        { label: 'Kelly sizing', delta: '+14%', interpretation: 'Overconfident edge-proportional staking amplifies forecast errors' },
+        { label: 'Miscalibrated', delta: '+13%', interpretation: 'Overconfidence distorts quantile spread, degrading CRPS' },
+        { label: 'Sybil', delta: '+10%', interpretation: 'Identity splitting amplifies influence beyond deposit-splitting defence' },
       ],
     },
     {
       tier: 'MODERATE', emoji: '🟠', borderColor: 'border-l-orange-400', bgColor: 'bg-orange-50', textColor: 'text-orange-700', labelColor: 'text-orange-800',
       rule: '2–10%',
       presets: [
-        { label: 'Kelly', delta: '+8.8%', interpretation: 'Overconfident edge-proportional sizing amplifies errors' },
-        { label: 'Collusion', delta: '+5.1%', interpretation: 'Coordinated agents amplify impact beyond individual attacks' },
-        { label: 'Arbitrageur', delta: '+4.1%', interpretation: 'Chen arbitrage interval exploited but σ stays moderate' },
+        { label: 'Collusion', delta: '+8%', interpretation: 'Coordinated agents amplify impact beyond individual attacks' },
+        { label: 'Arbitrageur', delta: '+5%', interpretation: 'Chen arbitrage interval exploited; σ stays moderate but aggregate shifts' },
       ],
     },
     {
       tier: 'MILD', emoji: '🟡', borderColor: 'border-l-yellow-400', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', labelColor: 'text-yellow-800',
       rule: '0.5–2%',
       presets: [
-        { label: 'Rep. reset', delta: '+1.5%', interpretation: 'Build-then-exploit strategy detected within ~20 rounds' },
-        { label: 'Risk-averse', delta: '+1.2%', interpretation: 'Hedged reports lose informativeness but don\'t break aggregate' },
-        { label: 'Manipulator', delta: '+1.1%', interpretation: 'Worst single-agent attack — skill gate downweights within rounds' },
-        { label: 'Budget', delta: '+0.9%', interpretation: 'Ruin removes agents but remaining pool compensates' },
+        { label: 'Rep. reset', delta: '+1.3%', interpretation: 'Build-then-exploit strategy detected within ~20 rounds by EWMA' },
+        { label: 'Risk-averse', delta: '+1.3%', interpretation: 'Hedged reports lose informativeness but don\'t break aggregate' },
+        { label: 'Manipulator', delta: '+1.1%', interpretation: 'Point-forecast manipulation contained; quantiles unaffected' },
       ],
     },
     {
       tier: 'NEGLIGIBLE', emoji: '⚪', borderColor: 'border-l-slate-300', bgColor: 'bg-slate-50', textColor: 'text-slate-600', labelColor: 'text-slate-700',
       rule: '|Δ| ≤ 0.5%',
       presets: [
-        { label: 'Evader', delta: '~0%', interpretation: 'Stealth evasion slows detection but doesn\'t escape EWMA' },
+        { label: 'Budget', delta: '+0.5%', interpretation: 'Finite wealth causes no ruin in 300 rounds; pool compensates' },
+        { label: 'Evader', delta: '+0.3%', interpretation: 'Stealth evasion slows detection but doesn\'t escape EWMA' },
         { label: 'Baseline', delta: '0%', interpretation: 'Reference: truthful, full-participation agents' },
-        { label: 'Bias', delta: '~0%', interpretation: 'Persistent directional error absorbed by skill downweighting' },
-        { label: 'Miscal.', delta: '~0%', interpretation: 'Overconfidence distortion absorbed by CRPS self-correction' },
-        { label: 'Noisy', delta: '~0%', interpretation: 'Random noise averaged out; skill layer detects lower quality' },
-        { label: 'Rep. gamer', delta: '~0%', interpretation: 'Aggregate anchoring earns mediocre σ, no influence gain' },
-        { label: 'Sandbagger', delta: '~0%', interpretation: 'Deliberate underperformance correctly downweighted' },
-        { label: 'Latency', delta: '~0%', interpretation: 'Partial outcome info creates small advantage, not systemic' },
       ],
     },
     {
       tier: 'BENEFICIAL', emoji: '🟢', borderColor: 'border-l-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', labelColor: 'text-emerald-800',
       rule: 'Δ < -0.5%',
       presets: [
-        { label: 'House-money', delta: '-1.3%', interpretation: 'Winners get more influence — aligns incentives with accuracy' },
+        { label: 'House-money', delta: '-1.1%', interpretation: 'Winners get more influence — aligns incentives with accuracy' },
+        { label: 'Latency exploit', delta: '-2.9%', interpretation: 'Partial outcome info actually improves the aggregate forecast' },
       ],
     },
   ];
@@ -411,32 +411,32 @@ function OverviewTab({ summary, familyImpact, setTab }: {
   const INSIGHTS: Array<{ title: string; detail: string; verdict: Verdict }> = [
     {
       title: 'Participation dominates accuracy',
-      detail: 'Bursty at 55% participation degrades CRPS by 791%. Missing agents can\'t be compensated.',
+      detail: 'Bursty at 54% participation degrades CRPS by 934%. Missing agents = missing information. The mechanism preserves σ but can\'t compensate for absent signals.',
       verdict: 'bad',
     },
     {
-      title: 'Single-agent attacks are contained',
-      detail: 'Worst single-agent impact: +1.1% (manipulator). Skill gate downweights attackers within rounds.',
+      title: 'Quantile distortions are the real threat',
+      detail: 'Reporting attacks that distort quantile forecasts (rep. gamer +28%, sandbagger +22%, noisy +18%, bias +17%) are far more damaging than point-forecast manipulation (+1.1%).',
+      verdict: 'bad',
+    },
+    {
+      title: 'Point-forecast attacks are contained',
+      detail: 'Manipulator (+1.1%), evader (+0.3%), rep. reset (+1.3%): the skill gate downweights point-forecast attackers within rounds. EWMA half-life ≈ 7 rounds.',
       verdict: 'good',
     },
     {
-      title: 'Multi-agent attacks are more dangerous',
-      detail: 'Sybil +14.3%, Collusion +5.1%. Coordination amplifies impact. But sybil-resistant (ratio 1.003).',
+      title: 'Multi-agent coordination amplifies impact',
+      detail: 'Sybil +10%, Collusion +8%. Coordinated behaviour exceeds what the skill gate absorbs. But sybil-resistant (clone pair wealth ratio ≤ 1.05).',
       verdict: 'neutral',
     },
     {
-      title: 'Staking strategy matters',
-      detail: 'Kelly +8.8% (overconfident sizing), House-money -1.3% (winners get more influence), Budget +0.9% (no ruin).',
+      title: 'Staking strategy has mixed effects',
+      detail: 'Kelly +14% (overconfident sizing hurts), House-money -1.1% (winners get more influence helps), Budget +0.5% (no ruin in 300 rounds).',
       verdict: 'neutral',
     },
     {
-      title: 'Reporting distortions are absorbed',
-      detail: 'Noisy, rep. gamer, sandbagger all ~0%. CRPS scoring self-corrects.',
-      verdict: 'good',
-    },
-    {
-      title: 'Information quality distortions are negligible',
-      detail: 'Bias, miscalibration ~0% with 1/6 agents affected.',
+      title: 'Latency exploitation is beneficial',
+      detail: 'Partial outcome info (-2.9%) actually improves the aggregate. The exploiter\'s better-informed quantiles help everyone.',
       verdict: 'good',
     },
   ];
@@ -470,9 +470,12 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       <div className="rounded-xl border-2 border-slate-300 bg-white p-5 shadow-sm">
         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Thesis verdict</div>
         <p className="text-sm text-slate-800 leading-relaxed">
-          The mechanism is robust to strategic behaviour. The skill gate (EWMA + σ mapping) effectively
-          contains single-agent attacks, reporting distortions, and information quality issues. The main
-          vulnerability is participation — missing agents directly reduce aggregate quality.
+          The mechanism is partially robust to strategic behaviour. Point-forecast attacks (manipulation,
+          evasion, reputation reset) are well-contained by the skill gate — the EWMA detects misreporting
+          within ~7 rounds. However, quantile-level distortions (bias +17%, noise +18%, reputation gaming +28%)
+          propagate to the aggregate CRPS because the skill layer downweights slowly when the distortion
+          affects all quantile levels simultaneously. The dominant vulnerability remains participation:
+          missing agents directly reduce aggregate quality and cannot be compensated.
         </p>
       </div>
 
