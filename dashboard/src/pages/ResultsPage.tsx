@@ -336,7 +336,8 @@ export default function ResultsPage() {
       rounds: CONV_T,
       seed: DEMO_SEED,
       n: CONV_N,
-      builder: { influenceRule: 'skill_stake', depositPolicy: 'fixed_unit' },
+      builder: { influenceRule: 'skill_stake', depositPolicy: 'wealth_fraction' },
+      mechanism: { omegaMax: 1.0 },
     }),
   []);
 
