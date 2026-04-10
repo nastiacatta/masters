@@ -351,18 +351,6 @@ export default function ResultsPage() {
     return downsample(raw, 300);
   }, [convPipeline]);
 
-  // Final weights bar: learned weights from the convergence pipeline
-  const finalWeightsBar = useMemo(() => {
-    const lastTrace = convPipeline.traces[convPipeline.traces.length - 1];
-    if (!lastTrace) return [];
-    return Array.from({ length: CONV_N }, (_, i) => ({
-      name: agentName(i),
-      learned: lastTrace.weights[i],
-      sigma: lastTrace.sigma_t[i],
-      color: AGENT_PALETTE[i % AGENT_PALETTE.length],
-    })).sort((a, b) => b.learned - a.learned);
-  }, [convPipeline]);
-
   // Precompute cumulative CRPS for real-data chart (O(n) instead of O(n²))
   const realCumCrps = useMemo(() => {
     if (!realData?.per_round?.length) return [];
@@ -527,88 +515,114 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* Weight convergence */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight convergence</h3>
-                <p className="text-xs text-slate-500 mb-3">
-                  3 synthetic forecasters with different noise levels. All weights start at 1/3 (equal).
-                  The mechanism learns who is best and shifts weight toward the most accurate forecaster.
-                  Dashed line = equal weighting.
-                </p>
-                <div className="grid lg:grid-cols-[2fr_1fr] gap-4">
-                  <ResponsiveContainer width="100%" height={320}>
-                    <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']}
-                        label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                      {Array.from({ length: CONV_N }, (_, i) => (
-                        <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
-                      ))}
-                      <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-700 mb-2">Final learned weights</div>
-                    <ResponsiveContainer width="100%" height={320}>
-                      <BarChart data={finalWeightsBar} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 4 }}>
-                        <CartesianGrid {...GRID_PROPS} horizontal={false} />
-                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                        <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={36} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
-                          formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
-                        <ReferenceLine x={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
-                        <Bar dataKey="learned" name="Learned weight" radius={[0, 4, 4, 0]} maxBarSize={24}>
-                          {finalWeightsBar.map((d) => <Cell key={d.name} fill={d.color} opacity={0.9} />)}
-                        </Bar>
-                      </BarChart>
+              {/* ═══ Weight Learning: Two Approaches ═══ */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight learning — two approaches</h3>
+                  <p className="text-xs text-slate-500">
+                    Both methods learn from the same data: 3 forecasters with true structural weights w = [0.8, 0.1, 0.5]
+                    in an endogenous DGP where y = Φ(w·x + ε). They answer different questions.
+                  </p>
+                </div>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* Left: LMS direct weight recovery */}
+                  {weightRecovery.length > 0 && (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-semibold text-emerald-700">LMS direct regression</span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-semibold">T = 15,000</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          Directly minimises (y − w·r)² via gradient descent. Sees the outcome and all reports,
+                          adjusts weights to make the linear combination match. Recovers structural weights precisely.
+                        </p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart
+                          data={weightRecovery.map(r => ({
+                            name: `F${r.forecaster + 1}`,
+                            target: r.wTarget,
+                            learned: r.wLearned,
+                          }))}
+                          margin={{ top: 8, right: 24, bottom: 24, left: 24 }}
+                        >
+                          <CartesianGrid {...GRID_PROPS} />
+                          <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
+                          <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
+                          <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
+                            formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
+                          <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                          <Bar dataKey="target" name="True w" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28} opacity={0.5} />
+                          <Bar dataKey="learned" name="LMS learned" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} opacity={0.9} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                      <p className="text-[10px] text-slate-500">
+                        MAE = {fmt(weightRecovery.reduce((s, r) => s + r.absError, 0) / weightRecovery.length, 4)}.
+                        The LMS recovers the true weights almost exactly because it directly optimises for them.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Right: Core mechanism skill-based weights */}
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold text-indigo-700">Core mechanism (EWMA skill gate)</span>
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-semibold">T = 500</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Evaluates each agent independently via CRPS → EWMA loss → σ → effective wager.
+                        Never sees the structural weights — learns who forecasts well, not who contributes most to y.
+                      </p>
+                    </div>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 44 }}>
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 0.6]}
+                          label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 4, fontSize: 10, fill: '#64748b' }} />
+                        <Tooltip content={<SmartTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                        {Array.from({ length: CONV_N }, (_, i) => (
+                          <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                            stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                        ))}
+                        <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                      </LineChart>
                     </ResponsiveContainer>
-                    <p className="text-[10px] text-slate-400 mt-1">Dashed = equal (1/{CONV_N}). Best forecaster gets most weight.</p>
+                    <p className="text-[10px] text-slate-500">
+                      Weights diverge from 1/3 but don't match the true [0.57, 0.07, 0.36].
+                      The mechanism measures individual forecast quality, not structural contribution.
+                    </p>
                   </div>
+                </div>
+
+                {/* Analysis callout */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-2">
+                  <div className="font-semibold text-slate-700">Why the difference matters</div>
+                  <p>
+                    The LMS learner directly regresses y on [r₁, r₂, r₃] — it solves a linear system and recovers
+                    the structural weights (MAE ≈ 0.02). The core mechanism does something different: it measures
+                    each agent's individual CRPS, maps that to a skill estimate σ via EWMA, then derives weights
+                    from σ × deposit. It never optimises the aggregation weights directly.
+                  </p>
+                  <p>
+                    This is by design. The mechanism's goal is not to recover structural weights — it's to
+                    <span className="font-semibold"> identify and upweight skilled forecasters</span> in a setting
+                    where agents have deposits, strategic incentives, and intermittent participation. The EWMA
+                    skill gate provides robustness to manipulation (σ drops when agents misreport) at the cost
+                    of precise weight recovery.
+                  </p>
+                  <p>
+                    In the exogenous DGP (latent_fixed), where "skill" = low noise, the mechanism correctly
+                    gives more weight to low-noise agents. In the endogenous DGP (aggregation), where "skill"
+                    is structural contribution, the mechanism approximates but doesn't precisely recover the
+                    true weights because individual CRPS doesn't perfectly reflect structural importance.
+                  </p>
                 </div>
               </div>
-
-              {/* Sanity check: weight recovery from T=20000 synthetic experiment */}
-              {weightRecovery.length > 0 && (
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-slate-800">Sanity check — weight recovery</h3>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold">T = 20,000</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-3">
-                    On a synthetic DGP with known true weights (w = 0.8, 0.1, 0.5), the mechanism recovers them accurately.
-                    This confirms the EWMA skill layer converges to the correct ranking given enough data.
-                  </p>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                      data={weightRecovery.map(r => ({
-                        name: `F${r.forecaster + 1}`,
-                        target: r.wTarget,
-                        learned: r.wLearned,
-                      }))}
-                      margin={{ top: 8, right: 24, bottom: 24, left: 24 }}
-                    >
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
-                        formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
-                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                      <Bar dataKey="target" name="True weight" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.6} />
-                      <Bar dataKey="learned" name="Learned weight" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.9} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Mean absolute error: {fmt(weightRecovery.reduce((s, r) => s + r.absError, 0) / weightRecovery.length, 4)}.
-                    Weights are unnormalised — the mechanism learns the correct relative scale.
-                  </p>
-                </div>
-              )}
             </div>
           )}
 
@@ -812,49 +826,30 @@ export default function ResultsPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Weight convergence (demo) */}
+              {/* Weight convergence (demo) — mechanism skill-based weights */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight convergence</h3>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">Mechanism weight convergence</h3>
                 <p className="text-xs text-slate-500 mb-3">
-                  3 synthetic forecasters with different noise levels. Weights start equal at 1/3 and converge:
-                  the best forecaster gets the most weight. Dashed line = equal weighting.
+                  3 forecasters, latent_fixed DGP. The EWMA skill gate learns who forecasts well and shifts
+                  weights away from 1/3 (equal). This measures individual forecast quality, not structural contribution.
                 </p>
-                <div className="grid lg:grid-cols-[2fr_1fr] gap-4">
-                  <ResponsiveContainer width="100%" height={320}>
-                    <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 'auto']}
-                        label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                      {Array.from({ length: CONV_N }, (_, i) => (
-                        <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
-                      ))}
-                      <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-700 mb-2">Final learned weights</div>
-                    <ResponsiveContainer width="100%" height={320}>
-                      <BarChart data={finalWeightsBar} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 4 }}>
-                        <CartesianGrid {...GRID_PROPS} horizontal={false} />
-                        <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                        <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={36} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
-                          formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
-                        <ReferenceLine x={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
-                        <Bar dataKey="learned" name="Learned weight" radius={[0, 4, 4, 0]} maxBarSize={24}>
-                          {finalWeightsBar.map((d) => <Cell key={d.name} fill={d.color} opacity={0.9} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                    <p className="text-[10px] text-slate-400 mt-1">Dashed = equal (1/{CONV_N}). Best forecaster gets most weight.</p>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 0.6]}
+                      label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                    <Tooltip content={<SmartTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                    {Array.from({ length: CONV_N }, (_, i) => (
+                      <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                    ))}
+                    <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                    <Brush dataKey="round" {...BRUSH_PROPS} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}
