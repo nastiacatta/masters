@@ -905,16 +905,7 @@ export default function ResultsPage() {
                   should track below the others if the online skill layer adds value.
                   Drag to zoom into a time range.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3 mt-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Reading this chart</div>
-                  <MathBlock latex="\\bar{\\ell}_t = \\frac{1}{t}\\sum_{s=1}^{t} \\text{CRPS}(y_s, \\hat{F}_s^{\\text{method}})" label="Cumulative mean CRPS" caption="Lower = more accurate aggregate forecast" />
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Four weighting methods run on the same DGP and seed — only the influence rule differs.
-                    Early rounds are noisy because the EWMA hasn't converged (half-life = ln(2)/ρ ≈ 7 rounds).
-                    After ~50 rounds the ranking stabilises. If Skill × stake stays below Equal, the online
-                    skill layer adds value. The gap between lines is the cumulative accuracy gain from skill-weighting.
-                  </p>
-                </div>
+
               </div>
               <div className="cursor-crosshair">
                 <ResponsiveContainer width="100%" height={400}>
@@ -994,39 +985,7 @@ export default function ResultsPage() {
                   Left: σ separates agents by forecast quality (Good → high σ, Bad → low σ).
                   Right: weights diverge from 1/3 via the skill gate g(σ) = λ + (1−λ)σ. Dashed = steady state.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4 mt-3">
-                  <div className="text-xs font-semibold text-slate-700">How this experiment works</div>
 
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Data generating process</div>
-                    <MathBlock latex="Z \\sim \\mathcal{N}(0,1), \\quad y = \\Phi(Z), \\quad X_i = Z + \\tau_i \\varepsilon_i, \\quad r_i = \\Phi\\!\\left(\\frac{\\sigma_Z^2}{\\sigma_Z^2 + \\tau_i^2}(X_i)\\right)" label="Latent-fixed DGP" />
-                    <p className="text-[11px] text-slate-500">
-                      Each agent observes a noisy signal of the latent state Z. The noise level τ_i is the only
-                      difference between agents — it determines their intrinsic forecast quality.
-                      Good: τ = 0.2, Okay: τ = 0.6, Bad: τ = 1.5.
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Mechanism chain</div>
-                    <MathBlock latex="\\ell_i = \\text{CRPS}(y, \\hat{F}_i) \\;\\longrightarrow\\; L_i = (1{-}\\rho)L_{i} + \\rho\\,\\ell_i \\;\\longrightarrow\\; \\sigma_i = \\sigma_{\\min} + (1{-}\\sigma_{\\min})e^{-\\gamma L_i}" label="Loss → Skill" />
-                    <MathBlock latex="g(\\sigma_i) = \\lambda + (1{-}\\lambda)\\sigma_i^\\eta \\;\\longrightarrow\\; m_i = b_i \\cdot g(\\sigma_i) \\;\\longrightarrow\\; w_i = \\frac{m_i}{\\sum_j m_j}" label="Skill → Weight" />
-                    <p className="text-[11px] text-slate-500">
-                      Parameters: ρ = 0.1 (EWMA decay), γ = 4 (loss sensitivity), λ = 0.3 (skill floor), σ_min = 0.1, η = 1.
-                      With fixed deposits b = 1, weight differences come entirely from g(σ).
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Why separation is modest</div>
-                    <p className="text-[11px] text-slate-500">
-                      The skill gate floor λ = 0.3 means even the worst agent retains 30% of maximum influence:
-                      g(σ) ∈ [0.3, 1.0]. This limits weight separation to ~0.32–0.35 with 3 agents.
-                      The floor is intentional — it prevents complete exclusion of agents who might recover
-                      after a regime change, trading convergence speed for robustness.
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -1044,13 +1003,7 @@ export default function ResultsPage() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">Wealth concentration by method</h3>
-                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
-                  The accuracy–concentration trade-off: better weighting methods give more influence to skilled agents,
-                  which improves accuracy but concentrates wealth. Gini measures inequality (0 = equal, 1 = monopoly).
-                  N_eff is the effective number of agents with meaningful influence (1/HHI).
-                  Equal weighting has Gini ≈ 0 but wastes information. Skill × stake has higher Gini but better CRPS.
-                  The mechanism's job is to find the sweet spot: enough concentration to reward skill, not so much that one agent dominates.
-                </p>
+
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3 mt-2">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -1097,52 +1050,6 @@ export default function ResultsPage() {
                   The question: how does the deposit rule affect the accuracy–concentration trade-off?
                 </p>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800">How deposit rules affect outcomes</h3>
-                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
-                  The deposit rule determines how agents convert wealth into stake. Three options:
-                  Fixed amount (b=1): isolates the skill signal — weight differences come only from σ.
-                  Fraction of wealth (b=f·W): creates a feedback loop — winners deposit more, amplifying skill differences.
-                  Wealth × confidence (b=f·W·σ): agents who think they're skilled stake more, strongest amplification.
-                  The trade-off: stronger deposit rules improve accuracy (better agents get more influence faster)
-                  but increase concentration (wealth inequality grows). Fixed deposits are fairest; σ-scaled are most accurate.
-                </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4 mt-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Deposit rules in detail</div>
-                  <MathBlock latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta" label="Effective wager" caption="The deposit b_i determines how much of the skill signal reaches the aggregate" />
-
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    <div className="rounded-lg border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold text-slate-700 mb-1">Fixed (b = 1)</div>
-                      <MathBlock latex="b_i = 1 \\;\\; \\forall i" />
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        Isolates skill signal. Weight differences come only from σ. Fairest — no wealth feedback.
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold text-slate-700 mb-1">Wealth fraction</div>
-                      <MathBlock latex="b_i = f \\cdot W_i, \\quad f \\approx 0.18" />
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        Feedback loop: winners deposit more → more weight → more profit. Amplifies skill differences.
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold text-slate-700 mb-1">σ-scaled</div>
-                      <MathBlock latex="b_i = f \\cdot W_i \\cdot (0.25 + 0.85\\,\\sigma_i)" />
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        Strongest amplification: confident agents stake more. Most accurate but highest concentration.
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    The chart shows mean CRPS (accuracy, lower = better) and Gini (concentration, lower = fairer)
-                    for each rule. The thesis uses wealth_fraction as the default — it balances accuracy improvement
-                    against concentration risk. Fixed deposits are used for the skill recognition experiment above
-                    to isolate the pure skill signal without wealth confounds.
-                  </p>
-                </div>
-              </div>
               <ResponsiveContainer width="100%" height={340}>
                 <BarChart data={demoDeposits} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
@@ -1154,6 +1061,41 @@ export default function ResultsPage() {
                   <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.wealth.main} opacity={0.85} />
                 </BarChart>
               </ResponsiveContainer>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Deposit rules in detail</div>
+                <MathBlock latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta" label="Effective wager" caption="The deposit b_i determines how much of the skill signal reaches the aggregate" />
+
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold text-slate-700 mb-1">Fixed (b = 1)</div>
+                    <MathBlock latex="b_i = 1 \\;\\; \\forall i" />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Isolates skill signal. Weight differences come only from σ. Fairest — no wealth feedback.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold text-slate-700 mb-1">Wealth fraction</div>
+                    <MathBlock latex="b_i = f \\cdot W_i, \\quad f \\approx 0.18" />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Feedback loop: winners deposit more → more weight → more profit. Amplifies skill differences.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold text-slate-700 mb-1">σ-scaled</div>
+                    <MathBlock latex="b_i = f \\cdot W_i \\cdot (0.25 + 0.85\\,\\sigma_i)" />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Strongest amplification: confident agents stake more. Most accurate but highest concentration.
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  The chart shows mean CRPS (accuracy, lower = better) and Gini (concentration, lower = fairer)
+                  for each rule. The thesis uses wealth_fraction as the default — it balances accuracy improvement
+                  against concentration risk. Fixed deposits are used for the skill recognition experiment above
+                  to isolate the pure skill signal without wealth confounds.
+                </p>
+              </div>
             </div>
           )}
 
