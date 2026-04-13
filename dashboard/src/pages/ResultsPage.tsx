@@ -351,6 +351,16 @@ export default function ResultsPage() {
     return downsample(raw, 300);
   }, [convPipeline]);
 
+  // Compute steady-state target weights from the last 100 rounds (average weights)
+  const targetWeights = useMemo(() => {
+    const traces = convPipeline.traces;
+    const last100 = traces.slice(-100);
+    return Array.from({ length: CONV_N }, (_, j) => {
+      const avg = last100.reduce((s, t) => s + t.weights[j], 0) / last100.length;
+      return avg;
+    });
+  }, [convPipeline]);
+
   // Precompute cumulative CRPS for real-data chart (O(n) instead of O(n²))
   const realCumCrps = useMemo(() => {
     if (!realData?.per_round?.length) return [];
@@ -577,7 +587,7 @@ export default function ResultsPage() {
                         Never sees the structural weights — learns who forecasts well, not who contributes most to y.
                       </p>
                     </div>
-                    <ResponsiveContainer width="100%" height={200}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 44 }}>
                         <CartesianGrid {...GRID_PROPS} />
                         <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
@@ -589,12 +599,18 @@ export default function ResultsPage() {
                           <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                             stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
                         ))}
-                        <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                        {/* Dashed target lines — steady-state weights the mechanism converges to */}
+                        {targetWeights.map((tw, i) => (
+                          <ReferenceLine key={`target-${i}`} y={tw}
+                            stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                            strokeDasharray="6 3" strokeOpacity={0.5} />
+                        ))}
+                        <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                       </LineChart>
                     </ResponsiveContainer>
                     <p className="text-[10px] text-slate-500">
-                      Weights diverge from 1/3 but don't match the true [0.57, 0.07, 0.36].
-                      The mechanism measures individual forecast quality, not structural contribution.
+                      Solid lines = learned weights over time. Dashed lines = steady-state targets (avg of last 100 rounds).
+                      Thin dashed = equal weight (1/3). The mechanism separates agents by individual forecast quality.
                     </p>
                   </div>
                 </div>
@@ -846,10 +862,18 @@ export default function ResultsPage() {
                       <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                         stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
                     ))}
-                    <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="4 4" />
+                    {targetWeights.map((tw, i) => (
+                      <ReferenceLine key={`target-${i}`} y={tw}
+                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                        strokeDasharray="6 3" strokeOpacity={0.5} />
+                    ))}
+                    <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                     <Brush dataKey="round" {...BRUSH_PROPS} />
                   </LineChart>
                 </ResponsiveContainer>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Solid = learned weights. Dashed = steady-state targets. Thin dashed = equal (1/3).
+                </p>
               </div>
             </div>
           )}
