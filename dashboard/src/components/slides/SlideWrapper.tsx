@@ -1,12 +1,17 @@
 interface SlideWrapperProps {
   children: React.ReactNode;
   className?: string;
+  dark?: boolean;
 }
 
-export default function SlideWrapper({ children, className = '' }: SlideWrapperProps) {
+export default function SlideWrapper({
+  children,
+  className = '',
+  dark,
+}: SlideWrapperProps) {
   return (
     <section
-      className={`w-full rounded-xl border border-slate-200 bg-white p-8 ${className}`.trim()}
+      className={`flex min-h-[calc(100vh-6rem)] w-full shrink-0 snap-start snap-always flex-col rounded-xl border border-slate-200 p-10 ${dark ? 'bg-slate-900' : 'bg-white'} ${className}`.trim()}
     >
       {children}
     </section>
