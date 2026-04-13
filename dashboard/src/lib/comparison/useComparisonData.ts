@@ -24,9 +24,9 @@ export function useComparisonData<T>(
       .then((text) => {
         // Sanitize Python-style NaN/Infinity which are not valid JSON
         const sanitized = text
-          .replace(/:\s*NaN/g, ': null')
-          .replace(/:\s*Infinity/g, ': null')
-          .replace(/:\s*-Infinity/g, ': null');
+          .replace(/\bNaN\b/g, 'null')
+          .replace(/\b-Infinity\b/g, 'null')
+          .replace(/\bInfinity\b/g, 'null');
         return JSON.parse(sanitized) as unknown;
       })
       .then((json: unknown) => {
