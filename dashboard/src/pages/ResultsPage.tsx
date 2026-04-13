@@ -152,6 +152,101 @@ function seFinite(values: Array<number | undefined | null>): number | null {
   return Math.sqrt(variance / xs.length);
 }
 
+const EXPERIMENT_DESCRIPTIONS = [
+  {
+    title: 'Real data — Elia Offshore Wind',
+    tab: 'Real data',
+    setup: '5 causal forecasting models on 17,544 hourly Belgian wind power observations (2024–2025). Online: each hour the mechanism scores, updates skills, and re-weights.',
+    compared: '4 weighting rules: Equal (1/N), Skill-only (w ∝ g(σ)), Stake-only (w ∝ deposit), Skill × stake (full mechanism). Plus Best single (oracle).',
+    lookFor: 'Δ CRPS bar chart: negative = better than equal. CRPS-over-time: gap between lines = cumulative accuracy gain. DM test p < 0.001.',
+  },
+  {
+    title: 'Real data — Elia Electricity Prices',
+    tab: 'Real data',
+    setup: 'Same 5 models on Belgian electricity imbalance prices (15-min, 2024). More volatile with spikes — harder forecasting task.',
+    compared: 'Same 4 weighting rules. Tests whether the mechanism generalises beyond wind.',
+    lookFor: 'Does Skill × stake still beat Equal on a different domain?',
+  },
+  {
+    title: 'Weight learning — LMS vs Core mechanism',
+    tab: 'Real data',
+    setup: 'LMS: T=15k, endogenous DGP, true w=[0.8, 0.1, 0.5]. Core: T=500, exogenous DGP, 3 agents with τ=[0.2, 0.6, 1.5], fixed deposits.',
+    compared: 'LMS directly minimises (y−w·r)². Core uses CRPS → EWMA → σ → g(σ) → weight. Different objectives.',
+    lookFor: 'LMS recovers structural weights (MAE≈0.02). Core gets ranking right but modest separation (~0.32–0.35) due to skill floor λ=0.3.',
+  },
+  {
+    title: 'Cumulative forecast error',
+    tab: 'Accuracy',
+    setup: '6 synthetic agents, baseline DGP (y~U(0,1)), 200 rounds, seed 42. All agents truthful, full participation.',
+    compared: '4 weighting methods on identical data — only the influence rule changes.',
+    lookFor: 'Lines diverge after ~50 rounds (EWMA half-life ≈ 7). Skill × stake should stay below Equal. Gap at round 200 = total accuracy gain.',
+  },
+  {
+    title: 'Skill recognition',
+    tab: 'Accuracy',
+    setup: '3 agents: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5). Latent-fixed DGP, 500 rounds, fixed deposits (b=1), no weight cap.',
+    compared: 'σ trajectory (left) and weight trajectory (right). Dashed = steady-state targets.',
+    lookFor: 'Good agent gets highest σ and weight. Bad agent gets lowest. Separation is modest due to skill floor λ=0.3.',
+  },
+  {
+    title: 'Wealth concentration',
+    tab: 'Concentration',
+    setup: 'Same 6 agents, 200 rounds. Measures Gini (wealth inequality) and N_eff (effective participants) per method.',
+    compared: '4 weighting methods. Equal: Gini≈0, N_eff=6. Skill×stake: higher Gini, lower N_eff.',
+    lookFor: 'The accuracy–concentration trade-off. More concentration = better accuracy but less fairness.',
+  },
+  {
+    title: 'Deposit policy comparison',
+    tab: 'Deposit policy',
+    setup: 'Same 6 agents, 200 rounds, all Skill×stake. Only the deposit rule changes.',
+    compared: 'Fixed (b=1), Wealth fraction (b=0.18·W), σ-scaled (b=f·W·σ). Mean CRPS and Gini for each.',
+    lookFor: 'Stronger deposit rules improve accuracy but increase concentration. Wealth fraction is the default trade-off.',
+  },
+];
+
+function ExperimentGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+      <button type="button" onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50 transition-colors">
+        <div>
+          <span className="text-xs font-semibold text-slate-700">Experiment guide</span>
+          <span className="text-[10px] text-slate-400 ml-2">7 experiments explained</span>
+        </div>
+        <span className={`text-slate-400 text-sm transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+      {open && (
+        <div className="px-5 pb-5 space-y-4 border-t border-slate-100">
+          {EXPERIMENT_DESCRIPTIONS.map((exp, i) => (
+            <div key={i} className="rounded-lg border border-slate-100 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-white bg-slate-500 rounded-full w-5 h-5 flex items-center justify-center shrink-0">{i + 1}</span>
+                <span className="text-xs font-semibold text-slate-700">{exp.title}</span>
+                <span className="text-[10px] text-slate-400 ml-auto">{exp.tab}</span>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Setup</div>
+                  <p className="text-slate-600 leading-relaxed">{exp.setup}</p>
+                </div>
+                <div>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What's compared</div>
+                  <p className="text-slate-600 leading-relaxed">{exp.compared}</p>
+                </div>
+                <div>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What to look for</div>
+                  <p className="text-slate-600 leading-relaxed">{exp.lookFor}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('Real data');
 
@@ -450,6 +545,9 @@ export default function ResultsPage() {
           </p>
         </header>
 
+        {/* ── Experiment guide (collapsible) ── */}
+        <ExperimentGuide />
+
         {/* ── Headline cards ── */}
         <section className="grid sm:grid-cols-2 gap-4">
           <AnswerCard
@@ -634,9 +732,10 @@ export default function ResultsPage() {
                         3 agents with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
                         Fixed deposits (b=1) isolate the skill signal.
                       </p>
-                      <div className="text-[10px] font-mono text-slate-500 bg-slate-50 rounded p-2 leading-relaxed">
-                        CRPS loss ℓ<sub>i</sub> → EWMA L<sub>i</sub> = (1−ρ)L + ρℓ → σ<sub>i</sub> = σ<sub>min</sub> + (1−σ<sub>min</sub>)e<sup>−γL</sup> → g(σ) = λ + (1−λ)σ<sup>η</sup> → m<sub>i</sub> = b·g(σ) → w<sub>i</sub> = m<sub>i</sub>/Σm
-                      </div>
+                      <MathBlock
+                        latex="\\ell_i \\;\\xrightarrow{\\text{CRPS}}\\; L_i = (1{-}\\rho)L + \\rho\\ell \\;\\xrightarrow{\\text{EWMA}}\\; \\sigma_i = \\sigma_{\\min} + (1{-}\\sigma_{\\min})e^{-\\gamma L} \\;\\xrightarrow{\\text{gate}}\\; g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta \\;\\xrightarrow{\\text{wager}}\\; w_i = \\frac{b_i \\cdot g(\\sigma_i)}{\\sum_j b_j \\cdot g(\\sigma_j)}"
+                        caption="The mechanism chain: CRPS loss → EWMA smoothing → skill estimate → skill gate → normalised weight"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {/* σ trajectory */}
@@ -1008,7 +1107,7 @@ export default function ResultsPage() {
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <MathBlock latex="\\text{Gini} = \\frac{2\\sum_{i=1}^{n} i \\cdot w_{(i)} - (n+1)\\sum w_i}{n \\sum w_i}" label="Gini coefficient" caption="0 = equal, 1 = monopoly" />
+                      <MathBlock latex="\\text{Gini} = \\frac{\\sum_{i<j} |w_i - w_j|}{n \\sum w_i}" label="Gini coefficient" caption="0 = equal, 1 = monopoly" />
                     </div>
                     <div>
                       <MathBlock latex="N_{\\text{eff}} = \\frac{1}{\\text{HHI}} = \\frac{1}{\\sum_i \\hat{w}_i^2}" label="Effective participants" caption="How many agents have real influence" />
