@@ -55,6 +55,7 @@ import FourPanelLayout from '@/components/charts/FourPanelLayout';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
 import Breadcrumb from '@/components/dashboard/Breadcrumb';
+import MathBlock from '@/components/dashboard/MathBlock';
 import Skeleton from '@/components/dashboard/Skeleton';
 
 const DEMO_SEED = 42;
@@ -893,13 +894,15 @@ export default function ResultsPage() {
                   should track below the others if the online skill layer adds value.
                   Drag to zoom into a time range.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500 leading-relaxed mt-2">
-                  The y-axis shows cumulative mean CRPS up to round t: (1/t)·Σℓ_t. Four weighting methods run on the
-                  same DGP and seed — only the influence rule differs. Equal weighting (1/N) is the baseline.
-                  Stake-only uses deposits without skill. Skill-only uses σ without deposits. Skill × stake (the full
-                  mechanism) combines both. Early rounds are noisy because the EWMA hasn't converged — with ρ=0.1 the
-                  half-life is ln(2)/0.1 ≈ 7 rounds, so the first ~20 rounds are dominated by the initial σ (equal for all).
-                  After ~50 rounds the ranking stabilises and the gap between methods reflects their true relative accuracy.
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3 mt-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Reading this chart</div>
+                  <MathBlock latex="\\bar{\\ell}_t = \\frac{1}{t}\\sum_{s=1}^{t} \\text{CRPS}(y_s, \\hat{F}_s^{\\text{method}})" label="Cumulative mean CRPS" caption="Lower = more accurate aggregate forecast" />
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Four weighting methods run on the same DGP and seed — only the influence rule differs.
+                    Early rounds are noisy because the EWMA hasn't converged (half-life = ln(2)/ρ ≈ 7 rounds).
+                    After ~50 rounds the ranking stabilises. If Skill × stake stays below Equal, the online
+                    skill layer adds value. The gap between lines is the cumulative accuracy gain from skill-weighting.
+                  </p>
                 </div>
               </div>
               <div className="cursor-crosshair">
@@ -980,31 +983,38 @@ export default function ResultsPage() {
                   Left: σ separates agents by forecast quality (Good → high σ, Bad → low σ).
                   Right: weights diverge from 1/3 via the skill gate g(σ) = λ + (1−λ)σ. Dashed = steady state.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-2 mt-3">
-                  <div className="font-semibold text-slate-700">How this experiment works</div>
-                  <p>
-                    We generate a latent-fixed DGP where the true outcome is y = Φ(Z), Z ~ N(0,1). Each agent observes
-                    a noisy signal X_i = Z + τ_i·ε_i and reports their Bayesian posterior Φ(μ_i). The noise level τ_i
-                    is the only thing that differs between agents — it determines their intrinsic forecast quality.
-                  </p>
-                  <p>
-                    The mechanism never sees τ. It only observes each agent's quantile forecast and the realised outcome.
-                    From these, it computes CRPS loss per round, smooths it via EWMA (L_i = (1−ρ)L + ρ·ℓ_i, ρ=0.1),
-                    maps loss to skill (σ_i = 0.1 + 0.9·exp(−4·L_i)), applies the skill gate (g = 0.3 + 0.7·σ),
-                    and derives weights from g(σ)·deposit / Σ(g·deposit).
-                  </p>
-                  <p>
-                    With fixed deposits (b=1 for all), the only source of weight differentiation is σ. The Good agent
-                    (τ=0.2) has lower CRPS → lower L → higher σ → higher g(σ) → higher weight. The Bad agent (τ=1.5)
-                    has higher CRPS → higher L → lower σ → lower g(σ) → lower weight. The mechanism correctly ranks
-                    agents by forecast quality without knowing their noise levels.
-                  </p>
-                  <p>
-                    The separation is modest (weights range ~0.32–0.35) because the skill gate g(σ) = 0.3 + 0.7·σ
-                    has a floor of λ=0.3 — even the worst agent retains 30% of their maximum influence. This is
-                    intentional: the floor prevents complete exclusion of agents who might recover (e.g., after a
-                    regime change). The trade-off is slower convergence for more robustness.
-                  </p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4 mt-3">
+                  <div className="text-xs font-semibold text-slate-700">How this experiment works</div>
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Data generating process</div>
+                    <MathBlock latex="Z \\sim \\mathcal{N}(0,1), \\quad y = \\Phi(Z), \\quad X_i = Z + \\tau_i \\varepsilon_i, \\quad r_i = \\Phi\\!\\left(\\frac{\\sigma_Z^2}{\\sigma_Z^2 + \\tau_i^2}(X_i)\\right)" label="Latent-fixed DGP" />
+                    <p className="text-[11px] text-slate-500">
+                      Each agent observes a noisy signal of the latent state Z. The noise level τ_i is the only
+                      difference between agents — it determines their intrinsic forecast quality.
+                      Good: τ = 0.2, Okay: τ = 0.6, Bad: τ = 1.5.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Mechanism chain</div>
+                    <MathBlock latex="\\ell_i = \\text{CRPS}(y, \\hat{F}_i) \\;\\longrightarrow\\; L_i = (1{-}\\rho)L_{i} + \\rho\\,\\ell_i \\;\\longrightarrow\\; \\sigma_i = \\sigma_{\\min} + (1{-}\\sigma_{\\min})e^{-\\gamma L_i}" label="Loss → Skill" />
+                    <MathBlock latex="g(\\sigma_i) = \\lambda + (1{-}\\lambda)\\sigma_i^\\eta \\;\\longrightarrow\\; m_i = b_i \\cdot g(\\sigma_i) \\;\\longrightarrow\\; w_i = \\frac{m_i}{\\sum_j m_j}" label="Skill → Weight" />
+                    <p className="text-[11px] text-slate-500">
+                      Parameters: ρ = 0.1 (EWMA decay), γ = 4 (loss sensitivity), λ = 0.3 (skill floor), σ_min = 0.1, η = 1.
+                      With fixed deposits b = 1, weight differences come entirely from g(σ).
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Why separation is modest</div>
+                    <p className="text-[11px] text-slate-500">
+                      The skill gate floor λ = 0.3 means even the worst agent retains 30% of maximum influence:
+                      g(σ) ∈ [0.3, 1.0]. This limits weight separation to ~0.32–0.35 with 3 agents.
+                      The floor is intentional — it prevents complete exclusion of agents who might recover
+                      after a regime change, trading convergence speed for robustness.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1021,13 +1031,23 @@ export default function ResultsPage() {
                   Equal weighting has Gini ≈ 0 but wastes information. Skill × stake has higher Gini but better CRPS.
                   The mechanism's job is to find the sweet spot: enough concentration to reward skill, not so much that one agent dominates.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500 leading-relaxed mt-2">
-                  Gini is computed from final wealth: Gini = (2·Σ(i·w_i) − (n+1)·Σw_i) / (n·Σw_i). A Gini of 0.15
-                  means mild inequality — the best agent has ~2× the worst agent's wealth. N_eff = 1/HHI where
-                  HHI = Σ(weight_i²). With 6 equal agents, N_eff = 6. If one agent dominates (weight ≈ 1), N_eff → 1.
-                  The mechanism targets N_eff ≈ 4–5: enough concentration to reward skill, but no single agent controls
-                  the aggregate. This is Lambert's (2008) key design property — the settlement rule ensures that
-                  skilled agents profit while the aggregate remains diversified.
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3 mt-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <MathBlock latex="\\text{Gini} = \\frac{2\\sum_{i=1}^{n} i \\cdot w_{(i)} - (n+1)\\sum w_i}{n \\sum w_i}" label="Gini coefficient" caption="0 = equal, 1 = monopoly" />
+                    </div>
+                    <div>
+                      <MathBlock latex="N_{\\text{eff}} = \\frac{1}{\\text{HHI}} = \\frac{1}{\\sum_i \\hat{w}_i^2}" label="Effective participants" caption="How many agents have real influence" />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Equal weighting: Gini ≈ 0, N_eff = N — fair but ignores skill differences.
+                    Skill × stake: higher Gini, lower N_eff — concentrates influence in skilled agents, improving accuracy.
+                    The mechanism targets N_eff ≈ 4–5 out of 6: enough concentration to reward skill,
+                    not so much that one agent controls the aggregate. This is Lambert's (2008) design property —
+                    the settlement rule ensures skilled agents profit while the aggregate stays diversified.
+                  </p>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={340}>
@@ -1058,29 +1078,39 @@ export default function ResultsPage() {
                   The trade-off: stronger deposit rules improve accuracy (better agents get more influence faster)
                   but increase concentration (wealth inequality grows). Fixed deposits are fairest; σ-scaled are most accurate.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500 leading-relaxed mt-2 space-y-2">
-                  <p>
-                    The effective wager is m_i = b_i · g(σ_i), where b_i is the deposit and g(σ) = λ + (1−λ)σ^η is the
-                    skill gate. The deposit rule controls b_i:
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-600">Fixed (b=1):</span> Every agent deposits the same amount regardless of wealth.
-                    Weight differences come entirely from σ. This is the cleanest test of the skill layer — no wealth feedback.
-                    But it means a wealthy agent with poor skill has the same deposit as a poor agent with high skill.
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-600">Wealth fraction (b=f·W):</span> Agents deposit a fixed fraction (f≈0.18) of their current wealth.
-                    This creates a positive feedback loop: good forecasters earn more → accumulate wealth → deposit more → get more weight → earn more.
-                    The loop amplifies skill differences but also amplifies luck — an agent who gets lucky early can dominate.
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-600">σ-scaled (b=f·W·σ):</span> Deposit scales with both wealth and the agent's own skill estimate.
-                    Agents who believe they're skilled (high σ) stake more. This is the strongest amplification — it combines
-                    the wealth feedback with a confidence signal. Most accurate but highest concentration risk.
-                  </p>
-                  <p>
-                    The chart shows mean CRPS (accuracy) and Gini (concentration) for each rule. The thesis production
-                    config uses wealth_fraction as the default — it balances accuracy improvement against concentration risk.
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4 mt-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Deposit rules in detail</div>
+                  <MathBlock latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta" label="Effective wager" caption="The deposit b_i determines how much of the skill signal reaches the aggregate" />
+
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="text-[10px] font-semibold text-slate-700 mb-1">Fixed (b = 1)</div>
+                      <MathBlock latex="b_i = 1 \\;\\; \\forall i" />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Isolates skill signal. Weight differences come only from σ. Fairest — no wealth feedback.
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="text-[10px] font-semibold text-slate-700 mb-1">Wealth fraction</div>
+                      <MathBlock latex="b_i = f \\cdot W_i, \\quad f \\approx 0.18" />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Feedback loop: winners deposit more → more weight → more profit. Amplifies skill differences.
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="text-[10px] font-semibold text-slate-700 mb-1">σ-scaled</div>
+                      <MathBlock latex="b_i = f \\cdot W_i \\cdot (0.25 + 0.85\\,\\sigma_i)" />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Strongest amplification: confident agents stake more. Most accurate but highest concentration.
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    The chart shows mean CRPS (accuracy, lower = better) and Gini (concentration, lower = fairer)
+                    for each rule. The thesis uses wealth_fraction as the default — it balances accuracy improvement
+                    against concentration risk. Fixed deposits are used for the skill recognition experiment above
+                    to isolate the pure skill signal without wealth confounds.
                   </p>
                 </div>
               </div>
