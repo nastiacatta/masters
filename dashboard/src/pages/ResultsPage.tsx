@@ -539,7 +539,10 @@ export default function ResultsPage() {
                   <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
                 </div>
                 <p className="text-xs text-slate-500 mb-3">
-                  Running average CRPS by weighting method. The gap between lines shows the mechanism's cumulative advantage.
+                  Running average CRPS (lower = better) for each weighting method over {realData.config.T.toLocaleString()} hourly rounds.
+                  If the Skill × stake line stays below Equal weighting, the online skill layer adds value.
+                  The gap between lines grows over time as the mechanism learns — early rounds are noisy because
+                  the EWMA hasn't converged yet (half-life ≈ 7 rounds with ρ = 0.1). After ~50 rounds the ranking stabilises.
                 </p>
                 <div className="cursor-crosshair">
                   <ResponsiveContainer width="100%" height={400}>
@@ -572,8 +575,10 @@ export default function ResultsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight learning — two approaches</h3>
                   <p className="text-xs text-slate-500">
-                    Both methods learn from the same data: 3 forecasters with true structural weights w = [0.8, 0.1, 0.5]
-                    in an endogenous DGP where y = Φ(w·x + ε). They answer different questions.
+                    The core question: does the mechanism correctly identify who is skilled? We test two approaches.
+                    The LMS learner (left) directly recovers structural weights from an endogenous DGP (w = [0.8, 0.1, 0.5]).
+                    The core mechanism (right) uses EWMA skill estimation on an exogenous DGP with 3 agents of known quality:
+                    Good (τ=0.2, low noise), Okay (τ=0.6, medium), Bad (τ=1.5, high). All start equal — the mechanism must learn the ranking.
                   </p>
                 </div>
 
@@ -976,9 +981,11 @@ export default function ResultsPage() {
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">Wealth concentration by method</h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
-                  The Gini coefficient measures how unequally wealth is distributed (0 = perfectly equal, 1 = one agent holds everything).
-                  N_eff is the effective number of participants with meaningful influence.
-                  A good mechanism keeps Gini low and N_eff high — accuracy without letting anyone dominate.
+                  The accuracy–concentration trade-off: better weighting methods give more influence to skilled agents,
+                  which improves accuracy but concentrates wealth. Gini measures inequality (0 = equal, 1 = monopoly).
+                  N_eff is the effective number of agents with meaningful influence (1/HHI).
+                  Equal weighting has Gini ≈ 0 but wastes information. Skill × stake has higher Gini but better CRPS.
+                  The mechanism's job is to find the sweet spot: enough concentration to reward skill, not so much that one agent dominates.
                 </p>
               </div>
               <ResponsiveContainer width="100%" height={340}>
@@ -1002,10 +1009,12 @@ export default function ResultsPage() {
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">How deposit rules affect outcomes</h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
-                  The deposit policy determines how much each agent stakes per round.
-                  "Fixed" means everyone stakes the same amount. "Fraction of wealth" scales with bankroll.
-                  "Wealth × skill" also factors in the agent's skill estimate.
-                  Lower bars are better for both metrics.
+                  The deposit rule determines how agents convert wealth into stake. Three options:
+                  Fixed amount (b=1): isolates the skill signal — weight differences come only from σ.
+                  Fraction of wealth (b=f·W): creates a feedback loop — winners deposit more, amplifying skill differences.
+                  Wealth × confidence (b=f·W·σ): agents who think they're skilled stake more, strongest amplification.
+                  The trade-off: stronger deposit rules improve accuracy (better agents get more influence faster)
+                  but increase concentration (wealth inequality grows). Fixed deposits are fairest; σ-scaled are most accurate.
                 </p>
               </div>
               <ResponsiveContainer width="100%" height={340}>
