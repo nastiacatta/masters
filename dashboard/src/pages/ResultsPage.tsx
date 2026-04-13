@@ -882,6 +882,17 @@ export default function ResultsPage() {
 
           {!useExp && !loading && activeTab === 'Accuracy' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+              {/* Experiment setup */}
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  {DEMO_N} synthetic agents, baseline DGP (y ~ U(0,1), reports = y + agent-specific noise), {DEMO_T} rounds, seed {DEMO_SEED}.
+                  Four weighting methods run on identical data — only the influence rule changes.
+                  Equal (w = 1/N), Stake-only (w ∝ deposit), Skill-only (w ∝ g(σ)), Skill × stake (w ∝ deposit · g(σ)).
+                  All agents participate every round and report truthfully. This isolates the effect of the weighting rule.
+                </p>
+              </div>
+
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-sm font-semibold text-slate-800">Cumulative forecast error over time</h3>
@@ -1022,6 +1033,15 @@ export default function ResultsPage() {
 
           {!useExp && !loading && activeTab === 'Concentration' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+              {/* Experiment setup */}
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  Same {DEMO_N} agents and {DEMO_T} rounds as the Accuracy tab. For each weighting method, we measure
+                  final wealth Gini (how unequally wealth is distributed) and mean N_eff (how many agents have meaningful
+                  influence). The question: does skill-weighting concentrate wealth too much?
+                </p>
+              </div>
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">Wealth concentration by method</h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
@@ -1068,6 +1088,15 @@ export default function ResultsPage() {
 
           {!useExp && !loading && activeTab === 'Deposit policy' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+              {/* Experiment setup */}
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  Same {DEMO_N} agents and {DEMO_T} rounds. All use Skill × stake influence rule — only the deposit policy changes.
+                  Three deposit rules tested: Fixed (b=1), Wealth fraction (b=0.18·W), σ-scaled (b=f·W·(0.25+0.85σ)).
+                  The question: how does the deposit rule affect the accuracy–concentration trade-off?
+                </p>
+              </div>
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">How deposit rules affect outcomes</h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mt-1">
