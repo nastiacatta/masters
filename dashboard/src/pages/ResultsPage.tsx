@@ -336,7 +336,7 @@ export default function ResultsPage() {
       rounds: CONV_T,
       seed: DEMO_SEED,
       n: CONV_N,
-      builder: { influenceRule: 'skill_stake', depositPolicy: 'wealth_fraction' },
+      builder: { influenceRule: 'skill_stake', depositPolicy: 'fixed_unit' },
       mechanism: { omegaMax: 1.0 },
     }),
   []);
@@ -582,16 +582,18 @@ export default function ResultsPage() {
                         <span className="text-xs font-semibold text-indigo-700">Core mechanism (EWMA skill gate)</span>
                         <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-semibold">T = 500</span>
                       </div>
-                      <p className="text-[11px] text-slate-500">
-                        Evaluates each agent independently via CRPS → EWMA loss → σ → effective wager.
-                        Never sees the structural weights — learns who forecasts well, not who contributes most to y.
+                      <p className="text-[11px] text-slate-500 mb-1">
+                        Fixed deposits (b=1) isolate the skill signal. The chain:
                       </p>
+                      <div className="text-[10px] font-mono text-slate-500 bg-slate-50 rounded p-2 leading-relaxed">
+                        CRPS loss ℓ<sub>i</sub> → EWMA L<sub>i</sub> = (1−ρ)L + ρℓ → σ<sub>i</sub> = σ<sub>min</sub> + (1−σ<sub>min</sub>)e<sup>−γL</sup> → g(σ) = λ + (1−λ)σ<sup>η</sup> → m<sub>i</sub> = b·g(σ) → w<sub>i</sub> = m<sub>i</sub>/Σm
+                      </div>
                     </div>
                     <ResponsiveContainer width="100%" height={240}>
                       <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 44 }}>
                         <CartesianGrid {...GRID_PROPS} />
                         <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 0.6]}
+                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0.25, 0.42]}
                           label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 4, fontSize: 10, fill: '#64748b' }} />
                         <Tooltip content={<SmartTooltip />} />
                         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
@@ -599,7 +601,6 @@ export default function ResultsPage() {
                           <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                             stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
                         ))}
-                        {/* Dashed target lines — steady-state weights the mechanism converges to */}
                         {targetWeights.map((tw, i) => (
                           <ReferenceLine key={`target-${i}`} y={tw}
                             stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
@@ -609,8 +610,8 @@ export default function ResultsPage() {
                       </LineChart>
                     </ResponsiveContainer>
                     <p className="text-[10px] text-slate-500">
-                      Solid lines = learned weights over time. Dashed lines = steady-state targets (avg of last 100 rounds).
-                      Thin dashed = equal weight (1/3). The mechanism separates agents by individual forecast quality.
+                      Solid = learned weights. Dashed = steady-state targets. Y-axis zoomed to [0.25, 0.42] to show separation.
+                      With fixed deposits, weight differences come purely from the skill gate g(σ).
                     </p>
                   </div>
                 </div>
