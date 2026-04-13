@@ -31,6 +31,9 @@ import type {
   WeightRecoveryRow,
 } from '@/lib/types';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
+import { generateLatentFixed } from '@/lib/coreMechanism/dgpSimulator';
+import { runComposableRound, type ComposableParams, type RoundTrace } from '@/lib/coreMechanism/runRoundComposable';
+import type { AgentState } from '@/lib/coreMechanism/runRound';
 import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
 import {
@@ -41,7 +44,6 @@ import {
   CHART_MARGIN_LABELED,
   GRID_PROPS,
   TOOLTIP_STYLE,
-  agentName,
   downsample,
   fmt,
 } from '@/components/lab/shared';
@@ -325,25 +327,59 @@ export default function ResultsPage() {
     })).sort((a, b) => a.gini - b.gini),
     [demoMethods]);
 
-  // Weight convergence: 3 agents with very different skill levels
-  // so you can clearly see weights start at 1/3 and converge to the best forecaster
+  // Skill convergence: 3 agents with controlled noise levels
+  // Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5) — the mechanism should rank them correctly
   const CONV_N = 3;
   const CONV_T = 500;
-  const convPipeline = useMemo(() =>
-    runPipeline({
-      dgpId: 'latent_fixed',
-      behaviourPreset: 'baseline',
-      rounds: CONV_T,
-      seed: DEMO_SEED,
-      n: CONV_N,
-      builder: { influenceRule: 'skill_stake', depositPolicy: 'fixed_unit' },
-      mechanism: { omegaMax: 1.0 },
-    }),
-  []);
+  const CONV_TAU = [0.2, 0.6, 1.5]; // Good, Okay, Bad
+  const CONV_LABELS = ['Good (τ=0.2)', 'Okay (τ=0.6)', 'Bad (τ=1.5)'];
 
+  const convPipeline = useMemo(() => {
+    // Generate DGP with controlled noise levels
+    const dgp = generateLatentFixed(DEMO_SEED, CONV_T, CONV_N, 1, CONV_TAU);
+    // Run the mechanism manually using runComposableRound
+    const params: ComposableParams = {
+      lam: 0.3, eta: 1, sigma_min: 0.1, gamma: 4, rho: 0.1,
+      omegaMax: 1.0, utilityPool: 0, scoreThreshold: 0.7,
+      fixedDeposit: 1, baseDepositFraction: 0.18, sigmaDepositScale: 0.85,
+      builder: { depositPolicy: 'fixed_unit', influenceRule: 'skill_stake', aggregationRule: 'linear', settlementRule: 'skill_only' },
+    };
+    const initialL = 0.5;
+    let state: AgentState[] = Array.from({ length: CONV_N }, (_, i) => ({
+      accountId: i, L: initialL,
+      sigma: params.sigma_min + (1 - params.sigma_min) * Math.exp(-params.gamma * initialL),
+      wealth: 20,
+    }));
+    const traces: RoundTrace[] = [];
+    for (let i = 0; i < dgp.rounds.length; i++) {
+      const { y, qReports } = dgp.rounds[i];
+      const decisions = state.map((_s, j) => ({
+        accountId: j, participate: true,
+        report: dgp.rounds[i].reports[j],
+        qReport: qReports[j],
+      }));
+      const trace = runComposableRound(i + 1, state, decisions, y, params);
+      traces.push(trace);
+      state = state.map((_s, j) => ({
+        accountId: j, L: trace.L_new[j], sigma: trace.sigma_new[j], wealth: trace.wealth_after[j],
+      }));
+    }
+    return { traces, finalState: state, tauTrue: CONV_TAU };
+  }, []);
+
+  // Skill (σ) trajectory — shows the mechanism learning who is good/okay/bad
+  const skillConvergence = useMemo(() => {
+    const raw = convPipeline.traces.map((t, i) => {
+      const pt: Record<string, number> = { round: i + 1 };
+      for (let j = 0; j < CONV_N; j++) pt[`F${j + 1}`] = t.sigma_t[j];
+      return pt;
+    });
+    return downsample(raw, 300);
+  }, [convPipeline]);
+
+  // Weight trajectory — derived from σ via the skill gate
   const weightConvergence = useMemo(() => {
-    const traces = convPipeline.traces;
-    const raw = traces.map((t, i) => {
+    const raw = convPipeline.traces.map((t, i) => {
       const pt: Record<string, number> = { round: i + 1 };
       for (let j = 0; j < CONV_N; j++) pt[`F${j + 1}`] = t.weights[j];
       return pt;
@@ -351,13 +387,19 @@ export default function ResultsPage() {
     return downsample(raw, 300);
   }, [convPipeline]);
 
-  // Compute steady-state target weights from the last 100 rounds (average weights)
+  // Steady-state target weights from the last 100 rounds
   const targetWeights = useMemo(() => {
-    const traces = convPipeline.traces;
-    const last100 = traces.slice(-100);
+    const last100 = convPipeline.traces.slice(-100);
     return Array.from({ length: CONV_N }, (_, j) => {
-      const avg = last100.reduce((s, t) => s + t.weights[j], 0) / last100.length;
-      return avg;
+      return last100.reduce((s, t) => s + t.weights[j], 0) / last100.length;
+    });
+  }, [convPipeline]);
+
+  // Steady-state target σ from the last 100 rounds
+  const targetSigmas = useMemo(() => {
+    const last100 = convPipeline.traces.slice(-100);
+    return Array.from({ length: CONV_N }, (_, j) => {
+      return last100.reduce((s, t) => s + t.sigma_t[j], 0) / last100.length;
     });
   }, [convPipeline]);
 
@@ -583,36 +625,62 @@ export default function ResultsPage() {
                         <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-semibold">T = 500</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mb-1">
-                        Fixed deposits (b=1) isolate the skill signal. The chain:
+                        3 agents with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
+                        Fixed deposits (b=1) isolate the skill signal.
                       </p>
                       <div className="text-[10px] font-mono text-slate-500 bg-slate-50 rounded p-2 leading-relaxed">
                         CRPS loss ℓ<sub>i</sub> → EWMA L<sub>i</sub> = (1−ρ)L + ρℓ → σ<sub>i</sub> = σ<sub>min</sub> + (1−σ<sub>min</sub>)e<sup>−γL</sup> → g(σ) = λ + (1−λ)σ<sup>η</sup> → m<sub>i</sub> = b·g(σ) → w<sub>i</sub> = m<sub>i</sub>/Σm
                       </div>
                     </div>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 44 }}>
-                        <CartesianGrid {...GRID_PROPS} />
-                        <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
-                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0.25, 0.42]}
-                          label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 4, fontSize: 10, fill: '#64748b' }} />
-                        <Tooltip content={<SmartTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
-                        {Array.from({ length: CONV_N }, (_, i) => (
-                          <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                            stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
-                        ))}
-                        {targetWeights.map((tw, i) => (
-                          <ReferenceLine key={`target-${i}`} y={tw}
-                            stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                            strokeDasharray="6 3" strokeOpacity={0.5} />
-                        ))}
-                        <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                    <p className="text-[10px] text-slate-500">
-                      Solid = learned weights. Dashed = steady-state targets. Y-axis zoomed to [0.25, 0.42] to show separation.
-                      With fixed deposits, weight differences come purely from the skill gate g(σ).
-                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* σ trajectory */}
+                      <div>
+                        <div className="text-[10px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
+                        <ResponsiveContainer width="100%" height={180}>
+                          <LineChart data={skillConvergence} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} domain={[0, 1]}
+                              label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 10, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            {Array.from({ length: CONV_N }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {targetSigmas.map((ts, i) => (
+                              <ReferenceLine key={`ts-${i}`} y={ts}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4} />
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[9px] text-slate-400">Good → high σ, Bad → low σ. Dashed = steady state.</p>
+                      </div>
+                      {/* Weight trajectory */}
+                      <div>
+                        <div className="text-[10px] font-semibold text-slate-600 mb-1">Normalised weight</div>
+                        <ResponsiveContainer width="100%" height={180}>
+                          <LineChart data={weightConvergence} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} domain={[0.2, 0.5]}
+                              label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 10, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            {Array.from({ length: CONV_N }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {targetWeights.map((tw, i) => (
+                              <ReferenceLine key={`tw-${i}`} y={tw}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4} />
+                            ))}
+                            <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[9px] text-slate-400">Weights start at 1/3, diverge via g(σ). Dashed = steady state.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -843,37 +911,61 @@ export default function ResultsPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Weight convergence (demo) — mechanism skill-based weights */}
+              {/* Skill convergence (demo) — mechanism skill-based weights */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 mb-1">Mechanism weight convergence</h3>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">Skill recognition</h3>
                 <p className="text-xs text-slate-500 mb-3">
-                  3 forecasters, latent_fixed DGP. The EWMA skill gate learns who forecasts well and shifts
-                  weights away from 1/3 (equal). This measures individual forecast quality, not structural contribution.
+                  3 forecasters with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
+                  The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
                 </p>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 0.6]}
-                      label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
-                    {Array.from({ length: CONV_N }, (_, i) => (
-                      <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
-                    ))}
-                    {targetWeights.map((tw, i) => (
-                      <ReferenceLine key={`target-${i}`} y={tw}
-                        stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                        strokeDasharray="6 3" strokeOpacity={0.5} />
-                    ))}
-                    <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
-                    <Brush dataKey="round" {...BRUSH_PROPS} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-4">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={skillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                        label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                      {Array.from({ length: CONV_N }, (_, i) => (
+                        <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                      ))}
+                      {targetSigmas.map((ts, i) => (
+                        <ReferenceLine key={`ts-${i}`} y={ts}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                          strokeDasharray="6 3" strokeOpacity={0.4} />
+                      ))}
+                      <Brush dataKey="round" {...BRUSH_PROPS} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0.2, 0.5]}
+                        label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                      {Array.from({ length: CONV_N }, (_, i) => (
+                        <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                      ))}
+                      {targetWeights.map((tw, i) => (
+                        <ReferenceLine key={`tw-${i}`} y={tw}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                          strokeDasharray="6 3" strokeOpacity={0.4} />
+                      ))}
+                      <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
+                      <Brush dataKey="round" {...BRUSH_PROPS} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
                 <p className="text-[10px] text-slate-500 mt-1">
-                  Solid = learned weights. Dashed = steady-state targets. Thin dashed = equal (1/3).
+                  Left: σ separates agents by forecast quality (Good → high σ, Bad → low σ).
+                  Right: weights diverge from 1/3 via the skill gate g(σ) = λ + (1−λ)σ. Dashed = steady state.
                 </p>
               </div>
             </div>
