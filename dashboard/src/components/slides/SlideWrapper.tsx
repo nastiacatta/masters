@@ -11,7 +11,7 @@ export default function SlideWrapper({
 }: SlideWrapperProps) {
   return (
     <section
-      className={`flex min-h-[calc(100vh-6rem)] w-full shrink-0 snap-start snap-always flex-col rounded-xl border border-slate-200 p-10 ${dark ? 'bg-slate-900' : 'bg-white'} ${className}`.trim()}
+      className={`flex min-h-[calc(100vh-6rem)] w-full shrink-0 flex-col rounded-xl border border-slate-200 p-10 ${dark ? 'bg-slate-900' : 'bg-white'} ${className}`.trim()}
     >
       {children}
     </section>

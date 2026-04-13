@@ -19,7 +19,15 @@ export function useComparisonData<T>(
     fetch(path, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`Failed to load data (${res.status})`);
-        return res.json();
+        return res.text();
+      })
+      .then((text) => {
+        // Sanitize Python-style NaN/Infinity which are not valid JSON
+        const sanitized = text
+          .replace(/:\s*NaN/g, ': null')
+          .replace(/:\s*Infinity/g, ': null')
+          .replace(/:\s*-Infinity/g, ': null');
+        return JSON.parse(sanitized) as unknown;
       })
       .then((json: unknown) => {
         if (validate && !validate(json)) {
