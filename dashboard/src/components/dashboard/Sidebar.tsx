@@ -52,6 +52,16 @@ const BeakerIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const SlidesIcon: FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="3" width="12" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M8 12V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M5 14H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M5 6.5H11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M5 9H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+);
+
 const NAV_ITEMS: NavItem[] = [
   /* Primary — thesis story flow */
   { to: '/',           label: 'Overview',            icon: HomeIcon,     group: 'primary' },
@@ -61,6 +71,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/notes',      label: 'Notes',              icon: BookIcon,     group: 'secondary' },
   { to: '/mechanism',  label: 'Mechanism',           icon: CogIcon,      group: 'secondary' },
   { to: '/appendix',   label: 'Appendix',            icon: BeakerIcon,   group: 'secondary' },
+  { to: '/slides',     label: 'Slides',              icon: SlidesIcon,   group: 'secondary' },
 ];
 
 /* ------------------------------------------------------------------ */
