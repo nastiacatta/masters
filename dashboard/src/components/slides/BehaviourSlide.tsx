@@ -341,7 +341,7 @@ export function BehaviourThreatSlide() {
 
 export function BehaviourInsightsSlide() {
   return (
-    <SlideWrapper gradient="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+    <SlideWrapper dark>
       <div className="-mx-10 -mt-10 mb-6 h-1.5 rounded-t-2xl bg-gradient-to-r from-violet-400 to-fuchsia-400" />
 
       <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/70">
