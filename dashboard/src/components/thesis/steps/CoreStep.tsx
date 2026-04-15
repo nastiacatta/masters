@@ -55,14 +55,11 @@ export default function CoreStep() {
           <p className="text-sm text-slate-700">
             Individual forecasts are combined into the aggregate using weights that blend <strong>stake</strong> and <strong>learned performance score</strong>.
           </p>
-          <MathBlock
-            accent
-            label="Effective influence and aggregation"
-            latex="m_{i,t} = b_{i,t} \\bigl( \\lambda + (1-\\lambda) \\sigma_{i,t}^\\eta \\bigr),\\quad \\hat{m}_{i,t} = m_{i,t} / \\sum_j m_{j,t}"
-          />
+          <MathBlock accent label="Effective wager" latex="m_{i,t} = b_{i,t} \\cdot g(\\sigma_{i,t})" />
+          <MathBlock label="Normalised weight" latex="\\hat{m}_{i,t} = \\frac{m_{i,t}}{\\sum_j m_{j,t}}" />
           <MathBlock label="Aggregate forecast" latex="\\hat{r}_t = \\sum_i \\hat{m}_{i,t} r_{i,t}" />
           <p className="text-xs text-slate-500">
-            Stake enters via <MathBlock inline latex="b_{i,t}" />; skill enters via <MathBlock inline latex="\\sigma_{i,t}" /> (from the online update). Weights are capped by <MathBlock inline latex="\\omega_{\\max}" /> for concentration control.
+            Stake enters via the deposit b. Skill enters via σ (from the online update). Weights are capped by ω_max for concentration control.
           </p>
         </div>
       )}

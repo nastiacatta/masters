@@ -822,9 +822,14 @@ export default function ResultsPage() {
                         3 agents with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
                         Fixed deposits (b=1) isolate the skill signal.
                       </p>
+                      <div className="space-y-2">
+                        <MathBlock accent label="1. CRPS loss" latex="\\ell_{i,t} = \\frac{2}{K} \\sum_{k=1}^{K} L^{\\tau_k}(y_t, q_{i,t}^{(k)})" />
+                        <MathBlock accent label="2. EWMA smoothing" latex="L_{i,t} = (1 - \\rho)\\, L_{i,t-1} + \\rho\\, \\ell_{i,t}" />
+                        <MathBlock accent label="3. Skill estimate" latex="\\sigma_{i,t} = \\sigma_{\\min} + (1 - \\sigma_{\\min})\\, e^{-\\gamma L_{i,t}}" />
+                        <MathBlock accent label="4. Normalised weight" latex="w_{i,t} = \\frac{b_{i,t} \\cdot g(\\sigma_{i,t})}{\\sum_j b_{j,t} \\cdot g(\\sigma_{j,t})}, \\quad g(\\sigma) = \\lambda + (1-\\lambda)\\sigma^\\eta" />
+                      </div>
                       <MathBlock
-                        latex="\\ell_i \\;\\xrightarrow{\\text{CRPS}}\\; L_i = (1{-}\\rho)L + \\rho\\ell \\;\\xrightarrow{\\text{EWMA}}\\; \\sigma_i = \\sigma_{\\min} + (1{-}\\sigma_{\\min})e^{-\\gamma L} \\;\\xrightarrow{\\text{gate}}\\; g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta \\;\\xrightarrow{\\text{wager}}\\; w_i = \\frac{b_i \\cdot g(\\sigma_i)}{\\sum_j b_j \\cdot g(\\sigma_j)}"
-                        caption="The mechanism chain: CRPS loss → EWMA smoothing → skill estimate → skill gate → normalised weight"
+                        caption="The mechanism chain: each round, CRPS loss feeds into EWMA smoothing, which produces a skill estimate σ that gates the effective wager."
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
