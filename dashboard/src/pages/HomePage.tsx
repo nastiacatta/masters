@@ -7,9 +7,10 @@ const NAV = [
 ] as const;
 
 const FINDINGS = [
-  { icon: '✓', color: 'bg-emerald-500', title: 'Skill improves accuracy', detail: 'The online skill layer improves forecast aggregation by up to 21% on real wind data (DM test, p < 0.001). Confirmed on two datasets.' },
-  { icon: '↔', color: 'bg-indigo-500', title: 'Robust across conditions', detail: 'Works at all horizons (1h to day-ahead), in all seasons, and under 60% missingness. No long burn-in needed.' },
-  { icon: '⚖', color: 'bg-amber-500', title: 'Deposit policy matters', detail: 'The deposit policy determines how much skill signal reaches the aggregate. Fixed deposits isolate skill best; noisy deposits dilute it.' },
+  { icon: '✓', color: 'bg-emerald-500', title: '21% CRPS improvement on real wind data', detail: 'The online skill layer improves forecast aggregation by 21% on Elia offshore wind (DM test, p < 0.001). Confirmed on two real-world datasets.' },
+  { icon: '⚖', color: 'bg-indigo-500', title: 'Deposit policy is the key lever', detail: 'The mechanism\'s value depends on deposit quality. With informative deposits (correlated with skill), blended weighting achieves near-oracle accuracy. With random deposits, equal weighting is hard to beat.' },
+  { icon: '🔒', color: 'bg-amber-500', title: 'Mathematically sound', detail: 'Budget-balanced to machine precision (gap < 10⁻¹⁴). Sybil-proof: splitting identity provides zero advantage. Arbitrage-free across all parameter settings.' },
+  { icon: '↔', color: 'bg-slate-500', title: 'Equal weighting is a strong baseline', detail: 'Uniform weights are surprisingly competitive, especially under non-stationarity or small panels. The mechanism helps most when forecasters have heterogeneous skill and enough rounds for learning to converge.' },
 ] as const;
 
 const STEPS = [
@@ -45,7 +46,7 @@ export default function HomePage() {
             Skill × Stake
           </h1>
           <p className="text-lg text-slate-500 mt-3 max-w-xl leading-relaxed">
-            Can an online skill layer improve forecast aggregation?
+            Can an online skill layer, combined with stake-based deposits, improve probabilistic forecast aggregation under non-stationarity and strategic behaviour?
           </p>
         </header>
 
@@ -147,7 +148,7 @@ export default function HomePage() {
 
         {/* ── Footer ── */}
         <footer className="text-center text-[11px] text-slate-400 pt-4 border-t border-slate-100">
-          Anastasia Cattaneo · Imperial College London · 2025
+          Anastasia Cattaneo · Imperial College London · © 2025
         </footer>
 
       </div>

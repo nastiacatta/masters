@@ -4,10 +4,11 @@
     "displayName": "Skill × Wager",
     "description": "Tests the interaction between online skill learning and deposit-driven effective wagers across agents with different forecast quality.",
     "block": "experiments",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 3,
-    "rounds": 50,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "timeseries": "timeseries.csv", "summary": "summary.csv" }
   },
   {
@@ -15,10 +16,11 @@
     "displayName": "Forecast Aggregation",
     "description": "Compares aggregate forecast quality across weighting rules: uniform, deposit-only, skill-only, and the full mechanism.",
     "block": "experiments",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 6,
-    "rounds": 500,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "crps_timeseries": "crps_timeseries.csv" }
   },
   {
@@ -29,7 +31,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 200,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "behaviour_matrix": "behaviour_matrix.csv" }
   },
   {
@@ -37,10 +40,11 @@
     "displayName": "Parameter Sweep",
     "description": "Sweeps over λ and σ_min to map the Pareto frontier between forecast quality and concentration.",
     "block": "experiments",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
-    "nAgents": 6,
-    "rounds": 500,
+    "nAgents": 10,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "sweep": "sweep.csv" }
   },
   {
@@ -48,10 +52,11 @@
     "displayName": "Calibration",
     "description": "Evaluates the calibration of the aggregate forecast by checking quantile coverage against nominal levels.",
     "block": "core",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 6,
-    "rounds": 300,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "reliability": "reliability.csv" }
   },
   {
@@ -59,10 +64,11 @@
     "displayName": "Settlement Sanity",
     "description": "Verifies that the settlement mechanism is budget-balanced and payouts are non-negative.",
     "block": "core",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 500,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "series": "series.csv", "summary": "summary.csv", "hist": "hist.csv" }
   },
   {
@@ -70,10 +76,11 @@
     "displayName": "Fixed Deposit",
     "description": "Examines skill evolution when all agents make identical fixed deposits each round.",
     "block": "experiments",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 4,
-    "rounds": 200,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "timeseries": "timeseries.csv" }
   },
   {
@@ -84,18 +91,20 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 200,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "intermittency_stress": "intermittency_stress.csv" }
   },
   {
     "name": "sybil",
     "displayName": "Sybil Attack",
-    "description": "Tests whether sybil splitting gains an advantage under the mechanism.",
+    "description": "Tests whether sybil splitting gains an advantage under the mechanism across three scenarios: identical, diversified, and strategic deposit splitting.",
     "block": "experiments",
     "dgp": "baseline",
     "scoringMode": "CRPS",
-    "nAgents": 6,
-    "rounds": 200,
+    "nAgents": 10,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "sybil": "sybil.csv" }
   },
   {
@@ -106,7 +115,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "arbitrage_scan": "arbitrage_scan.csv" }
   },
   {
@@ -118,6 +128,7 @@
     "scoringMode": "CRPS",
     "nAgents": 3,
     "rounds": 20000,
+    "nSeeds": 20,
     "dataFiles": { "summary": "summary.json", "config": "config.json" }
   },
   {
@@ -125,10 +136,11 @@
     "displayName": "Skill Recovery",
     "description": "Tests whether skill estimates recover after perturbation across CRPS and MAE scoring.",
     "block": "experiments",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 6,
-    "rounds": 500,
+    "rounds": 2000,
+    "nSeeds": 20,
     "dataFiles": { "quantiles_crps_summary": "quantiles_crps_summary.csv", "point_mae_summary": "point_mae_summary.csv" }
   },
   {
@@ -139,7 +151,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "detection_adaptation": "detection_adaptation.csv" }
   },
   {
@@ -150,7 +163,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 200,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "preference_stress": "preference_stress.csv" }
   },
   {
@@ -161,7 +175,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 11,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "collusion_stress": "collusion_stress.csv", "detection_metrics": "detection_metrics.csv" }
   },
   {
@@ -172,7 +187,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 9,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "insider_advantage": "insider_advantage.csv" }
   },
   {
@@ -183,7 +199,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 9,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "wash_activity_gaming": "wash_activity_gaming.csv" }
   },
   {
@@ -194,7 +211,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 9,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "strategic_reporting": "strategic_reporting.csv" }
   },
   {
@@ -205,7 +223,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 8,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "identity_attack_matrix": "identity_attack_matrix.csv" }
   },
   {
@@ -216,7 +235,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 8,
-    "rounds": 200,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "drift_adaptation": "drift_adaptation.csv" }
   },
   {
@@ -227,7 +247,8 @@
     "dgp": "baseline",
     "scoringMode": "CRPS",
     "nAgents": 8,
-    "rounds": 150,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "stake_policy_matrix": "stake_policy_matrix.csv" }
   },
   {
@@ -235,10 +256,11 @@
     "displayName": "Deposit Policy Comparison",
     "description": "Compares deposit policies to understand their effect on market concentration and forecast quality.",
     "block": "experiments",
-    "dgp": "baseline",
+    "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 6,
-    "rounds": 200,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "deposit_policy_comparison": "deposit_policy_comparison.csv" }
   },
   {
@@ -249,7 +271,8 @@
     "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 10,
-    "rounds": 500,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "master_comparison": "master_comparison.json" }
   },
   {
@@ -260,7 +283,8 @@
     "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 6,
-    "rounds": 400,
+    "rounds": 1000,
+    "nSeeds": 20,
     "dataFiles": { "summary": "summary.json", "bankroll_ablation": "bankroll_ablation.csv" }
   }
 ]

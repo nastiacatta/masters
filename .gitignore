@@ -31,6 +31,8 @@ dashboard/public/data/behaviour
 # Local editor state
 .vscode/
 .idea/
+.cursor/
+.kiro/
 
 # Legacy top-level dirs (deprecated)
 onlinev1

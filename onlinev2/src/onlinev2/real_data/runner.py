@@ -72,6 +72,8 @@ def run_real_data_comparison(
         y_all[t] = y_t
         history = norm_series[:t]  # strictly causal
 
+        # Causality invariant: predict() and predict_quantiles() use data up to t-1.
+        # update_residuals() incorporates the round-t outcome AFTER predictions are made.
         for i, fc in enumerate(forecasters):
             # Retrain if needed
             if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
@@ -81,7 +83,7 @@ def run_real_data_comparison(
             point = fc.predict()
             point = float(np.clip(point, 0, 1))
             reports[i, t] = point
-            q_reports[i, t, :] = np.clip(fc.predict_quantiles(taus), 0, 1)
+            q_reports[i, t, :] = fc.predict_quantiles(taus)
 
             # Update residuals for quantile estimation
             fc.update_residuals(y_t, point)

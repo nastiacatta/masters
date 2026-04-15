@@ -4,8 +4,9 @@ Auto-written experiment summary: summary.json and summary.md in every experiment
 from __future__ import annotations
 
 import json
+import math
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
 
 EXPERIMENT_DESCRIPTIONS: Dict[str, str] = {
     "behaviour_matrix": (
@@ -58,17 +59,83 @@ EXPERIMENT_DESCRIPTIONS: Dict[str, str] = {
 }
 
 
+def _sanitise_value(v: Any) -> Any:
+    """Replace NaN/Inf with None for JSON serialisation. Recurse into dicts and lists."""
+    if isinstance(v, float):
+        if math.isnan(v) or math.isinf(v):
+            return None
+        return v
+    if isinstance(v, dict):
+        return {k: _sanitise_value(val) for k, val in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [_sanitise_value(item) for item in v]
+    # numpy scalars
+    try:
+        import numpy as np
+        if isinstance(v, (np.floating, np.integer)):
+            fv = float(v)
+            if math.isnan(fv) or math.isinf(fv):
+                return None
+            return fv
+        if isinstance(v, np.ndarray):
+            return _sanitise_value(v.tolist())
+    except ImportError:
+        pass
+    return v
+
+
+def _metric_with_ci(
+    values: List[float],
+) -> Dict[str, Optional[float]]:
+    """Compute mean, se, ci_low, ci_high from a list of finite values.
+
+    Returns a dict with keys ``mean``, ``se``, ``ci_low``, ``ci_high``.
+    Non-finite values are filtered out. If no finite values remain, all fields
+    are ``None``.
+    """
+    import numpy as np
+
+    arr = np.array(values, dtype=np.float64)
+    finite = arr[np.isfinite(arr)]
+    if finite.size == 0:
+        return {"mean": None, "se": None, "ci_low": None, "ci_high": None}
+    mean_val = float(np.mean(finite))
+    if finite.size > 1:
+        se_val = float(np.std(finite, ddof=1) / np.sqrt(finite.size))
+    else:
+        se_val = 0.0
+    return {
+        "mean": mean_val,
+        "se": se_val,
+        "ci_low": mean_val - 1.96 * se_val,
+        "ci_high": mean_val + 1.96 * se_val,
+    }
+
+
 def write_experiment_summary(
     paths: Any,
     config: Dict[str, Any],
     logs: Dict[str, Any],
 ) -> None:
-    """
-    Write summary.json and summary.md in the experiment folder.
+    """Write ``summary.json`` and ``summary.md`` in the experiment folder.
 
-    paths: object with .root (experiment root directory).
-    config: DGP name, T, n_users/n_accounts, behaviour preset, mechanism params (lam, eta, sigma_min, omega_max), etc.
-    logs: headline metrics (mean CRPS/MAE, participation, concentration, wealth, attacker stats if any).
+    Parameters
+    ----------
+    paths
+        Object with ``.root`` (experiment root directory).
+    config
+        Experiment configuration. Expected keys include ``experiment_name``,
+        ``dgp_name``, ``T``, ``n_forecasters`` / ``n_users`` / ``n_accounts``,
+        ``n_seeds``, ``scoring_mode``, and mechanism parameters.
+    logs
+        Headline metrics. Values may be single floats or lists of per-seed
+        values. When a list is provided, ``mean``, ``se``, ``ci_low``, and
+        ``ci_high`` are computed automatically.
+
+    The resulting ``summary.json`` contains:
+    - ``mean``, ``se``, ``ci_low``, ``ci_high`` for each headline metric
+    - Experiment configuration (DGP name, T, n_forecasters, n_seeds, scoring mode)
+    - Valid JSON with all values finite (NaN/Inf replaced with ``null``)
     """
     root = getattr(paths, "root", None)
     if not root:
@@ -78,48 +145,65 @@ def write_experiment_summary(
     exp_name = config.get("experiment_name", "experiment")
     description = EXPERIMENT_DESCRIPTIONS.get(exp_name, "No description available.")
 
-    # Headline results from logs
-    headline = {}
-    if "mean_crps" in logs:
-        headline["mean_crps"] = logs["mean_crps"]
-    if "mean_mae" in logs:
-        headline["mean_mae"] = logs["mean_mae"]
-    if "final_rolling_score" in logs:
-        headline["final_rolling_score"] = logs["final_rolling_score"]
-    if "mean_N_t" in logs:
-        headline["mean_N_t"] = logs["mean_N_t"]
-    if "mean_gap" in logs:
-        headline["mean_gap"] = logs["mean_gap"]
-    if "mean_HHI" in logs:
-        headline["mean_HHI"] = logs["mean_HHI"]
-    if "mean_N_eff" in logs:
-        headline["mean_N_eff"] = logs["mean_N_eff"]
-    if "mean_top1_share" in logs:
-        headline["mean_top1_share"] = logs["mean_top1_share"]
-    if "final_gini" in logs:
-        headline["final_gini"] = logs["final_gini"]
-    if "final_ruin_rate" in logs:
-        headline["final_ruin_rate"] = logs["final_ruin_rate"]
-    if "max_wealth_share" in logs:
-        headline["max_wealth_share"] = logs["max_wealth_share"]
-    if "attacker_weight_share" in logs:
-        headline["attacker_weight_share"] = logs["attacker_weight_share"]
-    if "attacker_cumulative_profit" in logs:
-        headline["attacker_cumulative_profit"] = logs["attacker_cumulative_profit"]
-    if "distortion_vs_baseline" in logs:
-        headline["distortion_vs_baseline"] = logs["distortion_vs_baseline"]
+    # Build headline results with CI where possible
+    headline: Dict[str, Any] = {}
+    _known_metric_keys = [
+        "mean_crps", "mean_mae", "final_rolling_score", "mean_N_t",
+        "mean_gap", "mean_HHI", "mean_N_eff", "mean_top1_share",
+        "final_gini", "final_ruin_rate", "max_wealth_share",
+        "attacker_weight_share", "attacker_cumulative_profit",
+        "distortion_vs_baseline",
+    ]
+    for k in _known_metric_keys:
+        if k not in logs:
+            continue
+        v = logs[k]
+        if isinstance(v, (list, tuple)):
+            headline[k] = _metric_with_ci(v)
+        elif isinstance(v, (int, float)):
+            headline[k] = {"mean": v, "se": None, "ci_low": None, "ci_high": None}
+        else:
+            headline[k] = v
+
+    # Also include any extra keys not in the known list
+    for k, v in logs.items():
+        if k in _known_metric_keys or k in headline:
+            continue
+        if isinstance(v, (list, tuple)):
+            headline[k] = _metric_with_ci(v)
+        elif isinstance(v, (int, float)):
+            headline[k] = {"mean": v, "se": None, "ci_low": None, "ci_high": None}
+        else:
+            headline[k] = v
+
+    # Build experiment configuration block
+    experiment_config = {
+        "dgp_name": config.get("dgp_name", config.get("experiment_name", "N/A")),
+        "T": config.get("T", "N/A"),
+        "n_forecasters": config.get(
+            "n_forecasters",
+            config.get("n_users", config.get("n_accounts", "N/A")),
+        ),
+        "n_seeds": config.get("n_seeds", config.get("nSeeds", "N/A")),
+        "scoring_mode": config.get("scoring_mode", "N/A"),
+    }
 
     summary_dict = {
         "experiment_name": exp_name,
         "description": description,
-        "config": config,
+        "config": experiment_config,
+        "full_config": config,
         "headline_results": headline,
     }
 
+    # Sanitise: replace NaN/Inf with None
+    summary_dict = _sanitise_value(summary_dict)
+
     json_path = os.path.join(root, "summary.json")
     with open(json_path, "w") as f:
-        json.dump(summary_dict, f, indent=2)
+        json.dump(summary_dict, f, indent=2, default=str)
 
+    # --- Markdown summary ---
     md_lines = [
         "# Experiment summary",
         "",
@@ -129,9 +213,11 @@ def write_experiment_summary(
         "",
         "## Configuration",
         "",
-        f"- DGP / setup: {config.get('dgp_name', config.get('experiment_name', 'N/A'))}",
-        f"- Rounds: {config.get('T', 'N/A')}",
-        f"- Users / accounts: {config.get('n_users', config.get('n_accounts', config.get('n_forecasters', 'N/A')))}",
+        f"- DGP / setup: {experiment_config['dgp_name']}",
+        f"- Rounds: {experiment_config['T']}",
+        f"- Forecasters / users: {experiment_config['n_forecasters']}",
+        f"- Seeds: {experiment_config['n_seeds']}",
+        f"- Scoring mode: {experiment_config['scoring_mode']}",
         f"- Behaviour preset: {config.get('behaviour_preset', 'N/A')}",
         f"- Mechanism: λ={config.get('lam', 'N/A')}, η={config.get('eta', 'N/A')}, σ_min={config.get('sigma_min', 'N/A')}, ω_max={config.get('omega_max', 'N/A')}",
         "",
@@ -139,7 +225,16 @@ def write_experiment_summary(
         "",
     ]
     for k, v in headline.items():
-        if v is not None and isinstance(v, (int, float)):
+        if isinstance(v, dict) and "mean" in v:
+            mean_str = f"{v['mean']:.4g}" if v["mean"] is not None else "N/A"
+            if v.get("se") is not None and v["se"] > 0:
+                md_lines.append(
+                    f"- **{k}**: {mean_str} ± {v['se']:.4g} "
+                    f"[{v.get('ci_low', 'N/A'):.4g}, {v.get('ci_high', 'N/A'):.4g}]"
+                )
+            else:
+                md_lines.append(f"- **{k}**: {mean_str}")
+        elif v is not None and isinstance(v, (int, float)):
             md_lines.append(f"- **{k}**: {v:.4g}")
         else:
             md_lines.append(f"- **{k}**: {v}")

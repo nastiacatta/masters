@@ -114,3 +114,137 @@ def unit_latent_generator_determinism(seed=99, T=30, n=3, tol=1e-15):
         T=T, n=n, tau_i=tau, taus=taus_q, seed=seed
     )
     return bool(np.allclose(yq1, yq2, atol=tol) and np.allclose(q1, q2, atol=tol))
+
+
+def _sanitise_for_json(v):
+    """Replace NaN/Inf with None for JSON serialisation. Recurse into containers."""
+    import math
+
+    if isinstance(v, float):
+        if math.isnan(v) or math.isinf(v):
+            return None
+        return v
+    if isinstance(v, dict):
+        return {k: _sanitise_for_json(val) for k, val in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [_sanitise_for_json(item) for item in v]
+    if isinstance(v, np.floating):
+        fv = float(v)
+        if math.isnan(fv) or math.isinf(fv):
+            return None
+        return fv
+    if isinstance(v, np.integer):
+        return int(v)
+    if isinstance(v, np.ndarray):
+        return _sanitise_for_json(v.tolist())
+    return v
+
+
+def write_standardised_output(
+    ep: ExperimentPaths,
+    rows: list[dict],
+    config: dict,
+    baseline_method: str = "equal",
+) -> None:
+    """Write canonical output files for a multi-method experiment.
+
+    Produces three files in ``ep.data_dir``:
+
+    ``summary.csv``
+        One row per (method, seed) with columns: ``method``, ``seed``,
+        ``mean_crps``, ``delta_crps_vs_equal``.
+
+    ``paired_delta.csv``
+        One row per (method, seed) with columns: ``method``, ``seed``,
+        ``delta_crps_vs_equal``, ``delta_gini_vs_equal``,
+        ``delta_hhi_vs_equal``, ``delta_n_eff_vs_equal``.
+
+    ``config.json``
+        All experiment parameters for reproducibility.
+
+    Parameters
+    ----------
+    ep : ExperimentPaths
+        Experiment output directory paths.
+    rows : list[dict]
+        Per-(method, seed) result rows. Each dict should contain at least
+        ``method``, ``seed``, ``mean_crps``. Optional keys:
+        ``delta_crps_vs_equal``, ``delta_gini_vs_equal``,
+        ``delta_hhi_vs_equal``, ``delta_n_eff_vs_equal``,
+        ``mean_HHI``, ``mean_N_eff``, ``final_gini``.
+        If ``delta_crps_vs_equal`` is missing, it is computed as
+        ``mean_crps - crps_equal`` for the same seed.
+    config : dict
+        Experiment parameters (T, n_forecasters, dgp_name, seeds, etc.).
+    baseline_method : str
+        Method name used as the baseline for delta computation (default: "equal").
+
+    Notes
+    -----
+    All numeric values are validated: NaN and Inf are replaced with ``None``
+    in JSON output and left as empty strings in CSV output.
+    """
+    import json
+    import math
+
+    # Build lookup: seed -> baseline CRPS
+    baseline_crps = {}
+    baseline_gini = {}
+    baseline_hhi = {}
+    baseline_n_eff = {}
+    for r in rows:
+        if r.get("method") == baseline_method:
+            s = r.get("seed")
+            baseline_crps[s] = r.get("mean_crps", np.nan)
+            baseline_gini[s] = r.get("final_gini", np.nan)
+            baseline_hhi[s] = r.get("mean_HHI", np.nan)
+            baseline_n_eff[s] = r.get("mean_N_eff", np.nan)
+
+    # Ensure delta columns exist
+    for r in rows:
+        s = r.get("seed")
+        mc = r.get("mean_crps", np.nan)
+        if "delta_crps_vs_equal" not in r or not np.isfinite(r.get("delta_crps_vs_equal", np.nan)):
+            bc = baseline_crps.get(s, np.nan)
+            r["delta_crps_vs_equal"] = mc - bc if np.isfinite(mc) and np.isfinite(bc) else np.nan
+        if "delta_gini_vs_equal" not in r:
+            bg = baseline_gini.get(s, np.nan)
+            fg = r.get("final_gini", np.nan)
+            r["delta_gini_vs_equal"] = (fg - bg) if np.isfinite(fg) and np.isfinite(bg) else np.nan
+        if "delta_hhi_vs_equal" not in r:
+            bh = baseline_hhi.get(s, np.nan)
+            mh = r.get("mean_HHI", np.nan)
+            r["delta_hhi_vs_equal"] = (mh - bh) if np.isfinite(mh) and np.isfinite(bh) else np.nan
+        if "delta_n_eff_vs_equal" not in r:
+            bn = baseline_n_eff.get(s, np.nan)
+            mn = r.get("mean_N_eff", np.nan)
+            r["delta_n_eff_vs_equal"] = (mn - bn) if np.isfinite(mn) and np.isfinite(bn) else np.nan
+
+    def _csv_val(v):
+        """Format a value for CSV: NaN/Inf become empty string."""
+        if v is None:
+            return ""
+        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+            return ""
+        return v
+
+    # --- summary.csv ---
+    summary_cols = ["method", "seed", "mean_crps", "delta_crps_vs_equal"]
+    summary_rows = [{k: _csv_val(r.get(k)) for k in summary_cols} for r in rows]
+    write_csv(ep.data("summary.csv"), summary_cols, summary_rows)
+
+    # --- paired_delta.csv ---
+    delta_cols = [
+        "method", "seed",
+        "delta_crps_vs_equal", "delta_gini_vs_equal",
+        "delta_hhi_vs_equal", "delta_n_eff_vs_equal",
+    ]
+    delta_rows = [{k: _csv_val(r.get(k)) for k in delta_cols} for r in rows]
+    write_csv(ep.data("paired_delta.csv"), delta_cols, delta_rows)
+
+    # --- config.json ---
+    sanitised_config = _sanitise_for_json(config)
+    config_path = ep.data("config.json")
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    with open(config_path, "w") as f:
+        json.dump(sanitised_config, f, indent=2, default=str)

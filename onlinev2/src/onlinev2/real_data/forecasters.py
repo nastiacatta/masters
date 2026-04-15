@@ -12,17 +12,31 @@ forecasting t. Models retrain periodically on a rolling window.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import numpy as np
+from scipy.optimize import isotonic_regression
+from scipy.stats import norm
 
 
 class BaseForecaster(ABC):
     """Base class for all forecasters."""
 
-    def __init__(self, name: str, retrain_every: int = 50, window: int = 200):
+    def __init__(
+        self,
+        name: str,
+        retrain_every: int = 50,
+        window: int = 200,
+        residual_window: int = 200,
+        min_residuals: int = 10,
+        default_scale: float = 0.05,
+    ):
         self.name = name
         self.retrain_every = retrain_every
         self.window = window
+        self.residual_window = residual_window
+        self.min_residuals = min_residuals
+        self.default_scale = default_scale
         self._residuals: list[float] = []
         self._fitted = False
 
@@ -37,27 +51,79 @@ class BaseForecaster(ABC):
         ...
 
     def predict_quantiles(self, taus: np.ndarray) -> np.ndarray:
-        """Quantile forecasts from point forecast + residual distribution."""
+        """Layered quantile pipeline: generate → clip → monotonize.
+
+        This method is NOT overridden by subclasses. Subclasses override
+        _generate_quantiles() instead.
+        """
+        # Step 1: Generate raw quantiles
+        if len(self._residuals) < self.min_residuals:
+            raw = self._fallback_quantiles(taus)
+        else:
+            raw = self._generate_quantiles(taus)
+
+        # Step 2: Clip to [0, 1]
+        clipped = np.clip(raw, 0.0, 1.0)
+
+        # Step 3: Enforce monotonicity via isotonic regression
+        return self._enforce_monotonicity(clipped)
+
+    def _generate_quantiles(self, taus: np.ndarray) -> np.ndarray:
+        """Default quantile generation via residual bootstrap.
+
+        Computes quantiles as point forecast + empirical residual quantile
+        for each tau level. Subclasses (ARIMA, XGBoost) override this to
+        provide native distributional quantile estimates.
+        """
         point = self.predict()
-        if len(self._residuals) < 5:
-            # Not enough residuals yet — return point for all quantiles
-            return np.full(len(taus), point)
-        resid = np.array(self._residuals[-self.window:])
+        resid = np.array(self._residuals[-self.residual_window:])
         quantiles = np.array([point + np.quantile(resid, tau) for tau in taus])
         return quantiles
+
+    def _fallback_quantiles(self, taus: np.ndarray) -> np.ndarray:
+        """Early-round fallback: point + default_scale * Φ⁻¹(tau).
+
+        Used when len(self._residuals) < self.min_residuals to produce
+        a well-spread quantile vector instead of collapsing to the point.
+        """
+        point = self.predict()
+        return point + self.default_scale * norm.ppf(taus)
+
+    @staticmethod
+    def _enforce_monotonicity(q: np.ndarray) -> np.ndarray:
+        """Enforce monotone non-decreasing order via isotonic regression.
+
+        Uses scipy's pool-adjacent-violators algorithm with equal weights
+        across quantile levels to preserve the median as closely as possible.
+
+        Handles edge cases:
+        - Single element: returned unchanged.
+        - Already monotone: returned unchanged (PAV is a no-op).
+        """
+        if len(q) <= 1:
+            return q
+        result = isotonic_regression(q)
+        return result.x
 
     def update_residuals(self, y_true: float, y_pred: float) -> None:
         """Track residuals for quantile estimation."""
         self._residuals.append(y_true - y_pred)
-        if len(self._residuals) > self.window * 2:
-            self._residuals = self._residuals[-self.window:]
+        if len(self._residuals) > self.residual_window:
+            self._residuals = self._residuals[-self.residual_window:]
 
 
 class NaiveForecaster(BaseForecaster):
     """Forecast = last observed value. Hard to beat on random walks."""
 
-    def __init__(self):
-        super().__init__("Naive (last value)", retrain_every=1, window=100)
+    def __init__(self, residual_window: int = 100):
+        # Naive retrains every step, so a short residual window (100)
+        # keeps the bootstrap responsive to recent regime changes.
+        super().__init__(
+            "Naive (last value)",
+            retrain_every=1,
+            window=100,
+            residual_window=residual_window,
+        )
         self._last = 0.5
 
     def fit(self, history: np.ndarray) -> None:
@@ -72,8 +138,15 @@ class NaiveForecaster(BaseForecaster):
 class MovingAverageForecaster(BaseForecaster):
     """Forecast = mean of last `ma_window` values."""
 
-    def __init__(self, ma_window: int = 20):
-        super().__init__(f"Moving Average ({ma_window})", retrain_every=1, window=200)
+    def __init__(self, ma_window: int = 20, residual_window: int = 200):
+        # MA retrains every step with a moderate smoothing window;
+        # residual_window=200 (default) balances recency and stability.
+        super().__init__(
+            f"Moving Average ({ma_window})",
+            retrain_every=1,
+            window=200,
+            residual_window=residual_window,
+        )
         self.ma_window = ma_window
         self._history: np.ndarray = np.array([])
 
@@ -91,8 +164,16 @@ class MovingAverageForecaster(BaseForecaster):
 class ARIMAForecaster(BaseForecaster):
     """ARIMA(p,d,q) model. Retrains periodically on rolling window."""
 
-    def __init__(self, order: tuple[int, int, int] = (2, 1, 1)):
-        super().__init__(f"ARIMA{order}", retrain_every=50, window=300)
+    def __init__(self, order: tuple[int, int, int] = (2, 1, 1), residual_window: int = 300):
+        # ARIMA retrains every 50 steps on a 300-point window; a larger
+        # residual_window=300 matches the training window so the bootstrap
+        # covers the same horizon the model was fitted on.
+        super().__init__(
+            f"ARIMA{order}",
+            retrain_every=50,
+            window=300,
+            residual_window=residual_window,
+        )
         self.order = order
         self._model = None
         self._last_pred = 0.5
@@ -113,6 +194,35 @@ class ARIMAForecaster(BaseForecaster):
             self._last_pred = float(history[-1])
         self._fitted = True
 
+    def _generate_quantiles(self, taus: np.ndarray) -> np.ndarray:
+        """Use statsmodels get_forecast().summary_frame() for native intervals.
+
+        For each tau, compute alpha = 2 * min(tau, 1 - tau).
+        - tau < 0.5  → use mean_ci_lower
+        - tau > 0.5  → use mean_ci_upper
+        - tau == 0.5 → use point forecast
+
+        Falls back to residual bootstrap on any failure.
+        """
+        if self._model is not None:
+            try:
+                fcast = self._model.get_forecast(steps=1)
+                quantiles = np.empty(len(taus))
+                for i, tau in enumerate(taus):
+                    if abs(tau - 0.5) < 1e-9:
+                        quantiles[i] = self._last_pred
+                    else:
+                        alpha = 2.0 * min(tau, 1.0 - tau)
+                        sf = fcast.summary_frame(alpha=alpha)
+                        if tau < 0.5:
+                            quantiles[i] = float(sf['mean_ci_lower'].iloc[0])
+                        else:
+                            quantiles[i] = float(sf['mean_ci_upper'].iloc[0])
+                return quantiles
+            except Exception:
+                pass
+        return super()._generate_quantiles(taus)
+
     def predict(self) -> float:
         return self._last_pred
 
@@ -120,12 +230,22 @@ class ARIMAForecaster(BaseForecaster):
 class XGBoostForecaster(BaseForecaster):
     """XGBoost with lag features. Retrains periodically."""
 
-    def __init__(self, n_lags: int = 10):
-        super().__init__("XGBoost", retrain_every=50, window=300)
+    def __init__(self, n_lags: int = 10, taus: np.ndarray | None = None, residual_window: int = 300):
+        # XGBoost retrains every 50 steps on a 300-point window; a larger
+        # residual_window=300 matches the training window so the fallback
+        # bootstrap covers the same data horizon as the fitted model.
+        super().__init__(
+            "XGBoost",
+            retrain_every=50,
+            window=300,
+            residual_window=residual_window,
+        )
         self.n_lags = n_lags
         self._model = None
         self._last_pred = 0.5
         self._history: np.ndarray = np.array([])
+        self._taus = taus
+        self._quantile_models: dict[float, Any] = {}
 
     def _make_features(self, series: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Create lag features from a 1D series."""
@@ -156,8 +276,25 @@ class XGBoostForecaster(BaseForecaster):
             self._model.fit(X, y)
             last_features = history[-self.n_lags:].reshape(1, -1)
             self._last_pred = float(self._model.predict(last_features)[0])
+
+            # Train per-tau quantile models
+            if self._taus is not None:
+                self._quantile_models = {}
+                for tau in self._taus:
+                    try:
+                        q_model = xgb.XGBRegressor(
+                            n_estimators=50, max_depth=3, learning_rate=0.1,
+                            objective='reg:quantileerror', quantile_alpha=float(tau),
+                            verbosity=0, n_jobs=1,
+                        )
+                        q_model.fit(X, y)
+                        self._quantile_models[float(tau)] = q_model
+                    except Exception:
+                        self._quantile_models = {}
+                        break
         except Exception:
             self._last_pred = float(history[-1])
+            self._quantile_models = {}
         self._fitted = True
 
     def predict(self) -> float:
@@ -169,12 +306,33 @@ class XGBoostForecaster(BaseForecaster):
                 pass
         return self._last_pred
 
+    def _generate_quantiles(self, taus: np.ndarray) -> np.ndarray:
+        """Query per-tau XGBoost quantile models. Falls back to residual bootstrap."""
+        if self._quantile_models and len(self._history) >= self.n_lags:
+            try:
+                features = self._history[-self.n_lags:].reshape(1, -1)
+                return np.array([
+                    float(self._quantile_models[float(tau)].predict(features)[0])
+                    for tau in taus
+                ])
+            except Exception:
+                pass
+        return super()._generate_quantiles(taus)
+
 
 class MLPForecaster(BaseForecaster):
     """Small MLP neural network with lag features. Retrains periodically."""
 
-    def __init__(self, n_lags: int = 10, hidden: int = 16):
-        super().__init__("Neural Net (MLP)", retrain_every=50, window=300)
+    def __init__(self, n_lags: int = 10, hidden: int = 16, residual_window: int = 300):
+        # MLP retrains every 50 steps on a 300-point window; a larger
+        # residual_window=300 matches the training window so the fallback
+        # bootstrap covers the same data horizon as the fitted model.
+        super().__init__(
+            "Neural Net (MLP)",
+            retrain_every=50,
+            window=300,
+            residual_window=residual_window,
+        )
         self.n_lags = n_lags
         self.hidden = hidden
         self._model = None
@@ -250,11 +408,28 @@ class MLPForecaster(BaseForecaster):
 
 
 def get_all_forecasters() -> list[BaseForecaster]:
-    """Return all 5 forecasters with default settings."""
+    """Return all 5 forecasters with documented residual window choices.
+
+    Residual windows are set per-forecaster to balance the bias-variance
+    trade-off in residual-bootstrap quantile estimation:
+
+    - Naive (100): Retrains every step, so a short window keeps the
+      bootstrap responsive to recent regime changes.
+    - Moving Average (200): Moderate smoothing; the default window
+      balances recency and stability for a simple averaging model.
+    - ARIMA (300): Retrains every 50 steps on a 300-point training
+      window; matching residual_window to the training window ensures
+      the bootstrap covers the same data horizon as the fitted model.
+    - XGBoost (300): Same rationale as ARIMA — the model retrains on
+      a 300-point window, so the residual buffer should span the same
+      horizon for consistent fallback quantile estimation.
+    - MLP (300): Same rationale as ARIMA/XGBoost — periodic retraining
+      on a 300-point window warrants a matching residual buffer.
+    """
     return [
-        NaiveForecaster(),
-        MovingAverageForecaster(ma_window=20),
-        ARIMAForecaster(order=(2, 1, 1)),
-        XGBoostForecaster(n_lags=10),
-        MLPForecaster(n_lags=10, hidden=16),
+        NaiveForecaster(residual_window=100),           # fast-adapting, short buffer
+        MovingAverageForecaster(ma_window=20, residual_window=200),  # default, moderate
+        ARIMAForecaster(order=(2, 1, 1), residual_window=300),       # matches training window
+        XGBoostForecaster(n_lags=10, residual_window=300),           # matches training window
+        MLPForecaster(n_lags=10, hidden=16, residual_window=300),    # matches training window
     ]

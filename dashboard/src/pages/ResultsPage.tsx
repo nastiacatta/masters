@@ -247,6 +247,91 @@ function ExperimentGuide() {
   );
 }
 
+/* ── Deposit Sensitivity Panel (real wind data) ── */
+
+interface DepositSensEntry {
+  uniform: number;
+  skill: number;
+  mechanism: number;
+  delta_skill: number;
+  delta_mech: number;
+  pct_skill: number;
+  pct_mech: number;
+}
+
+interface DepositSensData {
+  deposit_sensitivity: Record<string, DepositSensEntry>;
+}
+
+function DepositSensitivityPanel() {
+  const [data, setData] = useState<DepositSensData | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}data/real_data/elia_wind/data/deposit_sensitivity.json`)
+      .then((r) => r.json())
+      .then((d: DepositSensData) => setData(d))
+      .catch(() => {});
+  }, []);
+
+  if (!data) return null;
+
+  const policies = ['fixed', 'exponential', 'bankroll'] as const;
+  const policyLabels: Record<string, string> = { fixed: 'Fixed', exponential: 'Exponential', bankroll: 'Bankroll' };
+  const methods = ['uniform', 'skill', 'mechanism'] as const;
+  const methodLabels: Record<string, string> = { uniform: 'Equal', skill: 'Skill-only', mechanism: 'Skill × stake' };
+  const methodColors: Record<string, string> = { uniform: '#94a3b8', skill: '#8b5cf6', mechanism: '#6366f1' };
+
+  const chartData = policies.map((p) => {
+    const entry = data.deposit_sensitivity[p];
+    return {
+      policy: policyLabels[p],
+      uniform: entry.uniform,
+      skill: entry.skill,
+      mechanism: entry.mechanism,
+      pct_mech: entry.pct_mech,
+    };
+  });
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-800">How deposit policy affects accuracy (Elia Wind)</h3>
+        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+          Fixed deposits give the mechanism the most room to work — a 21% CRPS improvement over equal weighting.
+          Exponential deposits reduce the advantage to 15%, and bankroll-fraction deposits to just 5%.
+          The deposit policy determines how much of the skill signal reaches the aggregate weights.
+        </p>
+      </div>
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={chartData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
+          <CartesianGrid {...GRID_PROPS} />
+          <XAxis dataKey="policy" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE}
+            label={{ value: 'Deposit policy', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+          <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+            label={{ value: 'Mean CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+          <Tooltip content={<SmartTooltip />} />
+          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+          {methods.map((m) => (
+            <Bar key={m} dataKey={m} name={methodLabels[m]} fill={methodColors[m]}
+              radius={[4, 4, 0, 0]} maxBarSize={36} opacity={0.85} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+      <div className="grid sm:grid-cols-3 gap-3">
+        {policies.map((p) => {
+          const entry = data.deposit_sensitivity[p];
+          return (
+            <div key={p} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div className="text-[10px] font-semibold text-slate-700">{policyLabels[p]}</div>
+              <div className="text-lg font-bold font-mono text-indigo-600">−{entry.pct_mech.toFixed(0)}%</div>
+              <div className="text-[10px] text-slate-500">CRPS improvement vs equal</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('Real data');
 
@@ -668,6 +753,11 @@ export default function ResultsPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
+
+              {/* ═══ Deposit sensitivity on real wind data ═══ */}
+              {realData && (
+                <DepositSensitivityPanel />
+              )}
 
               {/* ═══ Weight Learning: Two Approaches ═══ */}
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-6">
