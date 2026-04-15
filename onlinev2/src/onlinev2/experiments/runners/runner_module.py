@@ -3088,9 +3088,9 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
     from onlinev2.behaviour.policies.reporting import HedgedReporting, TruthfulReporting
     from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.core.scoring import TAUS_COARSE
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
-    from onlinev2.core.scoring import TAUS_COARSE
 
     cfg = get_experiment_config("preference_stress_test")
     if seeds is None:
