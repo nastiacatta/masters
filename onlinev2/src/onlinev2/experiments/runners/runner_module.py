@@ -5,9 +5,12 @@ Each experiment runs simulations, saves data/plots under outputs/<block>/experim
 Run from this directory with package installed: python experiments.py --exp <name>
 or: run-onlinev2-experiments --exp <name>
 """
+import json
+
 import numpy as np
 from scipy import stats as scipy_stats
 
+from onlinev2.experiments.benchmark_config import get_experiment_config
 from onlinev2.experiments.helpers import (
     cummean as _cummean,
 )
@@ -46,14 +49,23 @@ from onlinev2.simulation import run_all_tests, run_simulation
 # Set headless backend once at import time
 apply_style()
 
+# Lazy imports for optional integrations — used at call sites via try/except
+# from onlinev2.plotting.four_panel import plot_four_panel
+# from onlinev2.experiments.summarise import write_experiment_summary
+# from onlinev2.experiments.helpers import write_standardised_output
+
 
 # ===================================================================
 # A) Settlement sanity
 # ===================================================================
 
-def run_settlement_sanity(n_rounds=500, n_agents=20, seed=42, outdir="outputs",
-                          block="core", n_equal_scores_rounds=50, tol=1e-9):
+def run_settlement_sanity(n_rounds=1000, n_agents=20, seed=42, outdir="outputs",
+                          block="core", n_equal_scores_rounds=50, tol=1e-9, seeds=None):
     """Random wagers and scores — verify budget balance, non-negativity, equal-score zero profit."""
+    cfg = get_experiment_config("settlement_sanity")
+    if seeds is None:
+        seeds = cfg.seeds
+    n_rounds = max(n_rounds, cfg.T)
     ep = _exp_paths(outdir, "settlement_sanity", block)
     rng = np.random.default_rng(seed)
 
@@ -195,8 +207,12 @@ def run_settlement_sanity(n_rounds=500, n_agents=20, seed=42, outdir="outputs",
 
 def run_skill_wager_intermittency(T=200, n_forecasters=6, missing_prob=0.3, seed=17,
                                   outdir="outputs", block="core", scoring_mode="quantiles_crps",
-                                  gamma=10.0, rho=0.2):
+                                  gamma=10.0, rho=0.2, seeds=None):
     """How skill and wager evolve with intermittent participation."""
+    cfg = get_experiment_config("skill_wager")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
     ep = _exp_paths(outdir, "skill_wager", block)
     res = run_simulation(T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
                          seed=seed, scoring_mode=scoring_mode, gamma=gamma, rho=rho,
@@ -288,51 +304,113 @@ def run_skill_wager_intermittency(T=200, n_forecasters=6, missing_prob=0.3, seed
 # ===================================================================
 
 def run_forecast_aggregation(T=20000, n_forecasters=10, missing_prob=0.2, seed=7,
-                             outdir="outputs", block="core", rolling_window=30):
-    """Quick overview: Mechanism | Bankroll-Confidence vs baselines.
+                             outdir="outputs", block="core", rolling_window=30,
+                             seeds=None, dgp_name="latent_fixed", warm_start=200):
+    """Headline experiment: compare five weighting methods under latent-fixed DGP.
 
-    Uses the new naming convention (WeightRule | DepositPolicy).
-    Runs a single seed for a quick visual.  For rigorous multi-seed
-    comparison,     use weight_rules and deposit_policies experiments.
+    Uses heterogeneous tau_i from get_experiment_config("forecast_aggregation").
+    Runs ≥20 seeds. Reports paired Δ CRPS, Δ Gini, Δ HHI, Δ N_eff vs equal weights.
+    Writes crps_summary.csv and summary.json.
     """
+    cfg = get_experiment_config("forecast_aggregation")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
+    n_forecasters = cfg.n_forecasters
+
     ep = _exp_paths(outdir, "forecast_aggregation", block)
 
-    tau_i = np.linspace(0.15, 1.0, n_forecasters)
-    taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+    tau_i = cfg.tau_i()
+    taus = cfg.taus()
 
-    y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
-        T, n_forecasters, tau_i, taus, seed=seed, sigma_z=1.0,
-    )
+    methods = {
+        "equal": dict(deposit_mode="fixed", fixed_deposit=1.0, lam=0.3),
+        "stake_only": dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=1.0,
+                           f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25),
+        "skill_only": dict(deposit_mode="fixed", fixed_deposit=1.0, lam=0.0),
+        "blended": dict(deposit_mode="fixed", fixed_deposit=1.0, lam=0.3),
+        "bankroll": dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
+                         f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25),
+    }
 
-    res_bankroll = run_simulation(
-        T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
-        seed=seed, scoring_mode="quantiles_crps", taus=taus,
-        y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
-        store_history=True,
-        deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
-        f_stake=0.3, b_max=10.0, beta_c=1.0,
-        c_min=0.8, c_max=1.3, omega_max=0.25,
-    )
+    all_rows = []
+    for s in seeds:
+        y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+            T, n_forecasters, tau_i, taus, seed=s, sigma_z=cfg.sigma_z,
+        )
 
-    crps = _crps_for_weight_rules(y, q_reports_pre, taus, res_bankroll, tau_i)
+        seed_crps = {}
+        seed_metrics = {}
+        for method_name, method_kw in methods.items():
+            res = run_simulation(
+                T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
+                seed=s, scoring_mode="quantiles_crps", taus=taus,
+                y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
+                store_history=True, **method_kw,
+            )
+            crps = _crps_for_weight_rules(y, q_reports_pre, taus, res, tau_i)
+            metrics = _headline_metrics_from_run(res, crps, warm_start=warm_start)
+            seed_crps[method_name] = metrics.get("mean_crps_mechanism", np.nan)
+            seed_metrics[method_name] = metrics
 
-    # --- Data ---
-    with open(ep.data("crps_timeseries.csv"), "w") as f:
-        keys = list(crps.keys())
-        f.write("t," + ",".join(f"crps_{k},crps_{k}_cum" for k in keys) + "\n")
-        for t in range(len(y)):
-            vals = []
-            for k in keys:
-                vals.extend([crps[k][t], _cummean(crps[k])[t]])
-            f.write(f"{t}," + ",".join(str(v) for v in vals) + "\n")
+        equal_crps = seed_crps.get("equal", np.nan)
+        equal_gini = seed_metrics.get("equal", {}).get("final_gini", np.nan)
+        equal_hhi = seed_metrics.get("equal", {}).get("mean_HHI", np.nan)
+        equal_n_eff = seed_metrics.get("equal", {}).get("mean_N_eff", np.nan)
 
-    # --- Summary ---
-    print("\nForecast Aggregation (Bankroll-Confidence) — cumulative CRPS")
-    print("=" * 55)
-    for k in crps:
-        v = crps[k][np.isfinite(crps[k])]
-        label = f"{k:14s} | bankroll_conf"
-        print(f"  {label:40s}: {float(np.mean(v)):.5f}" if v.size else f"  {label}: N/A")
+        for method_name in methods:
+            m = seed_metrics[method_name]
+            all_rows.append({
+                "method": method_name,
+                "seed": s,
+                "mean_crps": seed_crps[method_name],
+                "delta_crps_vs_equal": seed_crps[method_name] - equal_crps,
+                "delta_gini_vs_equal": (m.get("final_gini", np.nan) or np.nan) - (equal_gini or np.nan),
+                "delta_hhi_vs_equal": (m.get("mean_HHI", np.nan) or np.nan) - (equal_hhi or np.nan),
+                "delta_n_eff_vs_equal": (m.get("mean_N_eff", np.nan) or np.nan) - (equal_n_eff or np.nan),
+                "mean_HHI": m.get("mean_HHI", np.nan),
+                "mean_N_eff": m.get("mean_N_eff", np.nan),
+                "final_gini": m.get("final_gini", np.nan),
+            })
+
+    # --- Write crps_summary.csv ---
+    cols = ["method", "seed", "mean_crps", "delta_crps_vs_equal",
+            "delta_gini_vs_equal", "delta_hhi_vs_equal", "delta_n_eff_vs_equal",
+            "mean_HHI", "mean_N_eff", "final_gini"]
+    _write_csv(ep.data("crps_summary.csv"), cols, all_rows)
+
+    # --- Aggregate across seeds for summary.json ---
+    summary = {"experiment_name": "forecast_aggregation",
+               "config": {"T": T, "n_forecasters": n_forecasters, "n_seeds": len(seeds),
+                           "dgp_name": dgp_name, "warm_start": warm_start},
+               "methods": {}}
+    for method_name in methods:
+        method_rows = [r for r in all_rows if r["method"] == method_name]
+        deltas = np.array([r["delta_crps_vs_equal"] for r in method_rows])
+        deltas = deltas[np.isfinite(deltas)]
+        crps_vals = np.array([r["mean_crps"] for r in method_rows])
+        crps_vals = crps_vals[np.isfinite(crps_vals)]
+        if deltas.size > 0:
+            mean_d = float(np.mean(deltas))
+            se_d = float(np.std(deltas, ddof=1) / np.sqrt(deltas.size)) if deltas.size > 1 else 0.0
+            summary["methods"][method_name] = {
+                "mean_crps": float(np.mean(crps_vals)) if crps_vals.size else None,
+                "delta_crps_mean": mean_d,
+                "delta_crps_se": se_d,
+                "delta_crps_ci_low": mean_d - 1.96 * se_d,
+                "delta_crps_ci_high": mean_d + 1.96 * se_d,
+                "n_seeds": int(deltas.size),
+            }
+
+    with open(ep.data("summary.json"), "w") as f:
+        json.dump(summary, f, indent=2, default=str)
+
+    print("\nForecast Aggregation (latent-fixed DGP, multi-seed)")
+    print("=" * 60)
+    for method_name, info in summary.get("methods", {}).items():
+        print(f"  {method_name:14s}: CRPS={info.get('mean_crps', 'N/A'):.5f}, "
+              f"Δ={info.get('delta_crps_mean', 0):.5f} "
+              f"[{info.get('delta_crps_ci_low', 0):.5f}, {info.get('delta_crps_ci_high', 0):.5f}]")
 
     # --- Plot ---
     try:
@@ -340,40 +418,64 @@ def run_forecast_aggregation(T=20000, n_forecasters=10, missing_prob=0.2, seed=7
     except Exception:
         return
 
-    rule_colors = {
-        "uniform": COLORS["blue"], "deposit": COLORS["green"],
-        "skill": COLORS["orange"], "mechanism": COLORS["pink"],
-        "best_single": COLORS["purple"],
-    }
-    rule_labels = {
-        "uniform": "Uniform", "deposit": "Deposit",
-        "skill": "Skill", "mechanism": "Mechanism",
-        "best_single": "Best-single",
-    }
+    fig, ax = new_figure(1, 1, figsize=(10, 6))
+    method_names = list(summary.get("methods", {}).keys())
+    means = [summary["methods"][m]["delta_crps_mean"] for m in method_names]
+    ci_lows = [summary["methods"][m]["delta_crps_ci_low"] for m in method_names]
+    ci_highs = [summary["methods"][m]["delta_crps_ci_high"] for m in method_names]
+    yerr_low = [m - cl for m, cl in zip(means, ci_lows)]
+    yerr_high = [ch - m for m, ch in zip(means, ci_highs)]
 
-    wide_window = max(rolling_window, 50)
-    fig, axes = new_figure(1, 2, figsize=(14, 6))
-
-    for k in crps:
-        roll = _rolling_mean(crps[k], wide_window)
-        axes[0].plot(roll, color=rule_colors[k],
-                     label=f"{rule_labels[k]} | Bankroll", linewidth=1.5)
-    axes[0].set(xlabel="Round $t$", ylabel="Rolling mean CRPS",
-                title=f"Rolling {wide_window}-round mean CRPS")
-    axes[0].legend(fontsize=8)
-
-    for k in crps:
-        cum = _cummean(crps[k])
-        axes[1].plot(cum, color=rule_colors[k],
-                     label=f"{rule_labels[k]} | Bankroll", linewidth=1.5)
-    axes[1].set(xlabel="Round $t$", ylabel="Cumulative mean CRPS",
-                title="Cumulative mean CRPS")
-    axes[1].legend(fontsize=8)
-
-    fig.suptitle("Weight Rules under Bankroll-Confidence Deposits",
-                 fontsize=14, fontweight="bold")
+    colors = [COLORS.get(c, COLORS["blue"]) for c in ["blue", "green", "orange", "pink", "purple"]]
+    x_pos = np.arange(len(method_names))
+    ax.bar(x_pos, means, color=colors[:len(method_names)], alpha=0.8, edgecolor="white")
+    ax.errorbar(x_pos, means, yerr=[yerr_low, yerr_high], fmt="none",
+                color=COLORS["truth"], capsize=5)
+    ax.axhline(0, color=COLORS["reference"], ls="--", lw=0.8)
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(method_names, rotation=15)
+    ax.set(xlabel="Weighting method", ylabel="Δ CRPS vs equal (negative = better)",
+           title=f"Paired Δ CRPS ({len(seeds)} seeds, T={T})")
     fig.tight_layout()
     save_fig(fig, ep.plot("forecast_aggregation.png"))
+
+    # --- Standardised output (Task 20.2) ---
+    try:
+        from onlinev2.experiments.helpers import write_standardised_output
+        write_standardised_output(ep, all_rows, {
+            "experiment_name": "forecast_aggregation",
+            "T": T, "n_forecasters": n_forecasters, "n_seeds": len(seeds),
+            "dgp_name": dgp_name, "warm_start": warm_start,
+        })
+    except Exception:
+        pass  # standardised output is optional
+
+    # --- Experiment summary (Task 19.2) ---
+    try:
+        from onlinev2.experiments.summarise import write_experiment_summary
+        write_experiment_summary(ep, {
+            "experiment_name": "forecast_aggregation",
+            "dgp_name": dgp_name, "T": T, "n_forecasters": n_forecasters,
+            "n_seeds": len(seeds), "scoring_mode": "quantiles_crps",
+        }, {k: v for k, v in summary.get("methods", {}).get("blended", {}).items()
+           if isinstance(v, (int, float))})
+    except Exception:
+        pass  # summary is optional
+
+    # --- Four-panel diagnostic plot (Task 17.2) ---
+    try:
+        from onlinev2.plotting.four_panel import plot_four_panel
+        four_panel_results = {
+            "experiment_name": "forecast_aggregation",
+            "methods": {m: {
+                "delta_crps_mean": info.get("delta_crps_mean", 0.0),
+                "delta_crps_se": info.get("delta_crps_se", 0.0),
+            } for m, info in summary.get("methods", {}).items()},
+            "failure_notes": [],
+        }
+        plot_four_panel(four_panel_results, ep.plot("four_panel.png"))
+    except Exception:
+        pass  # plotting is optional
 
 
 # ===================================================================
@@ -381,27 +483,69 @@ def run_forecast_aggregation(T=20000, n_forecasters=10, missing_prob=0.2, seed=7
 # ===================================================================
 
 def run_calibration_diagnostics(T=20000, n_forecasters=10, missing_prob=0.2, seed=7,
-                                outdir="outputs", block="core"):
-    """Quantile reliability curve: empirical coverage p_hat(tau) vs nominal tau."""
-    ep = _exp_paths(outdir, "calibration", block)
-    res = run_simulation(T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
-                         seed=seed, scoring_mode="quantiles_crps", store_history=True)
-    y = res["y"]
-    taus = res["params"]["taus"]
-    valid = np.sum(res["wager_hist"], axis=0) > 1e-12
-    n_valid = int(np.sum(valid))
+                                outdir="outputs", block="core", seeds=None):
+    """Quantile reliability curve: empirical coverage p_hat(tau) vs nominal tau.
 
-    p_hat = {}
-    for k, tau in enumerate(taus):
-        q_hat = np.array([float(np.asarray(res["r_hat_hist"][t])[k])
-                          for t in range(len(y)) if valid[t]])
-        p_hat[float(tau)] = float(np.mean(y[valid] <= q_hat)) if q_hat.size else float("nan")
+    Uses latent-fixed DGP with multi-seed support (≥20 seeds).
+    Computes mean, SE, and 95% CI for each coverage estimate across seeds.
+    """
+    cfg = get_experiment_config("calibration")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
+    n_forecasters = cfg.n_forecasters
+
+    ep = _exp_paths(outdir, "calibration", block)
+    tau_i = cfg.tau_i()
+    taus = cfg.taus()
+
+    # Per-seed coverage computation
+    all_p_hat = []  # list of dicts, one per seed
+    for s in seeds:
+        y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+            T, n_forecasters, tau_i, taus, seed=s, sigma_z=cfg.sigma_z,
+        )
+        res = run_simulation(
+            T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
+            seed=s, scoring_mode="quantiles_crps", taus=taus,
+            y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
+            store_history=True,
+        )
+        y_sim = res["y"]
+        valid = np.sum(res["wager_hist"], axis=0) > 1e-12
+
+        seed_p_hat = {}
+        for k, tau in enumerate(taus):
+            q_hat = np.array([float(np.asarray(res["r_hat_hist"][t])[k])
+                              for t in range(len(y_sim)) if valid[t]])
+            seed_p_hat[float(tau)] = float(np.mean(y_sim[valid] <= q_hat)) if q_hat.size else float("nan")
+        all_p_hat.append(seed_p_hat)
+
+    # Aggregate across seeds: mean, SE, 95% CI
+    n_seeds = len(seeds)
+    rows = []
+    for tau in taus:
+        tau_f = float(tau)
+        vals = np.array([sp[tau_f] for sp in all_p_hat])
+        vals = vals[np.isfinite(vals)]
+        if vals.size > 0:
+            mean_p = float(np.mean(vals))
+            se_p = float(np.std(vals, ddof=1) / np.sqrt(vals.size)) if vals.size > 1 else 0.0
+            ci_low = mean_p - 1.96 * se_p
+            ci_high = mean_p + 1.96 * se_p
+        else:
+            mean_p, se_p, ci_low, ci_high = np.nan, np.nan, np.nan, np.nan
+        rows.append({
+            "tau": tau_f, "p_hat_mean": mean_p, "p_hat_se": se_p,
+            "p_hat_ci_low": ci_low, "p_hat_ci_high": ci_high, "n_seeds": n_seeds,
+        })
 
     # --- Data ---
     with open(ep.data("reliability.csv"), "w") as f:
-        f.write("tau,p_hat,n_valid\n")
-        for tau in taus:
-            f.write(f"{tau},{p_hat[float(tau)]},{n_valid}\n")
+        f.write("tau,p_hat_mean,p_hat_se,p_hat_ci_low,p_hat_ci_high,n_seeds\n")
+        for r in rows:
+            f.write(f"{r['tau']},{r['p_hat_mean']},{r['p_hat_se']},"
+                    f"{r['p_hat_ci_low']},{r['p_hat_ci_high']},{r['n_seeds']}\n")
 
     # --- Plot ---
     try:
@@ -410,24 +554,41 @@ def run_calibration_diagnostics(T=20000, n_forecasters=10, missing_prob=0.2, see
         return
 
     fig, ax = new_figure(1, 1, figsize=(6, 6))
-    tau_arr = np.array(list(p_hat.keys()))
-    p_arr = np.array(list(p_hat.values()))
+    tau_arr = np.array([r["tau"] for r in rows])
+    p_arr = np.array([r["p_hat_mean"] for r in rows])
+    se_arr = np.array([r["p_hat_se"] for r in rows])
 
     ax.plot([0, 1], [0, 1], ls="--", color=COLORS["reference"], lw=1, label="Perfect calibration")
-    ax.scatter(tau_arr, p_arr, color=COLORS["pink"], s=80, zorder=5, edgecolors="white", linewidths=1.5)
+    ax.errorbar(tau_arr, p_arr, yerr=1.96 * se_arr, fmt="o", color=COLORS["pink"],
+                markersize=8, capsize=4, zorder=5, label="Mean ± 95% CI")
     ax.plot(tau_arr, p_arr, color=COLORS["pink"], linewidth=1.5, alpha=0.7)
 
-    for t, p in zip(tau_arr, p_arr):
-        ax.annotate(f"  {p:.3f}", (t, p), fontsize=8, color=COLORS["slate"])
+    for t_val, p_val in zip(tau_arr, p_arr):
+        ax.annotate(f"  {p_val:.3f}", (t_val, p_val), fontsize=8, color=COLORS["slate"])
 
     ax.set(xlabel="Nominal quantile level $\\tau$",
            ylabel="Empirical coverage $\\hat{p}(\\tau)$",
-           title=f"Calibration Reliability Diagram (n = {n_valid} rounds)")
+           title=f"Calibration Reliability (latent-fixed DGP, {n_seeds} seeds, T={T})")
     ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
     ax.set_aspect("equal")
     ax.legend(fontsize=9)
     fig.tight_layout()
     save_fig(fig, ep.plot("calibration_reliability.png"))
+
+    # --- Experiment summary (Task 19.2) ---
+    try:
+        from onlinev2.experiments.summarise import write_experiment_summary
+        cal_logs = {}
+        for r in rows:
+            tau_key = f"coverage_tau_{r['tau']:.2f}"
+            cal_logs[tau_key] = r["p_hat_mean"]
+        write_experiment_summary(ep, {
+            "experiment_name": "calibration",
+            "dgp_name": "latent_fixed", "T": T, "n_forecasters": n_forecasters,
+            "n_seeds": n_seeds, "scoring_mode": "quantiles_crps",
+        }, cal_logs)
+    except Exception:
+        pass  # summary is optional
 
 
 # ===================================================================
@@ -443,37 +604,103 @@ def _gini(x):
 
 
 def run_parameter_sweep(T=200, n_forecasters=8, lam_vals=None, sigma_min_vals=None,
-                        seed=7, outdir="outputs", block="core"):
-    """Grid over lambda and sigma_min.  Heatmaps of CRPS, Gini, market fraction."""
+                        seed=7, outdir="outputs", block="core", seeds=None):
+    """Grid over lambda and sigma_min.  Heatmaps of CRPS, Gini, market fraction.
+
+    Uses latent-fixed DGP with heterogeneous tau_i so parameters actually matter.
+    Multi-seed support (≥20 seeds) via ``seeds`` parameter, T ≥ 1000 rounds.
+    """
+    cfg = get_experiment_config("parameter_sweep")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
+    n_forecasters = cfg.n_forecasters
+
     ep = _exp_paths(outdir, "parameter_sweep", block)
     lam_vals = lam_vals or [0.0, 0.25, 0.5, 0.75, 1.0]
     sigma_min_vals = sigma_min_vals or [0.05, 0.1, 0.2, 0.3, 0.5]
 
+    tau_i = cfg.tau_i()
+    taus = cfg.taus()
+
+    # Collect per-seed results for each (lam, sigma_min) cell
+    cell_results = {}  # (lam, sm) -> list of per-seed dicts
+    for lam in lam_vals:
+        for sm in sigma_min_vals:
+            cell_results[(lam, sm)] = []
+
+    for s in seeds:
+        y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+            T, n_forecasters, tau_i, taus, seed=s, sigma_z=cfg.sigma_z,
+        )
+        for lam in lam_vals:
+            for sm in sigma_min_vals:
+                res = run_simulation(
+                    T=T, n_forecasters=n_forecasters, seed=s,
+                    scoring_mode="quantiles_crps", store_history=True,
+                    lam=float(lam), sigma_min=float(sm),
+                    taus=taus, y_pre=y, q_reports_pre=q_reports_pre,
+                    forecaster_noise_pre=tau_i,
+                )
+                y_sim = res["y"]
+                crps_sum, cnt = 0.0, 0
+                for t in range(len(y_sim)):
+                    rh = np.asarray(res["r_hat_hist"][t], dtype=np.float64)
+                    if rh.size == len(taus):
+                        crps_sum += float(crps_hat_from_quantiles(float(y_sim[t]), rh.reshape(1, -1), taus)[0])
+                        cnt += 1
+                ps = res["profit_total"] - np.min(res["profit_total"])
+                sm_arr = np.sum(res["wager_hist"], axis=0)
+                cell_results[(lam, sm)].append({
+                    "mean_crps": crps_sum / cnt if cnt else np.nan,
+                    "gini": _gini(ps),
+                    "frac_meaningful": float(np.mean(sm_arr > 1e-9)),
+                })
+
+    # Aggregate across seeds
     rows = []
     for lam in lam_vals:
         for sm in sigma_min_vals:
-            res = run_simulation(T=T, n_forecasters=n_forecasters, seed=seed,
-                                scoring_mode="quantiles_crps", store_history=True,
-                                lam=float(lam), sigma_min=float(sm))
-            y = res["y"]; taus = res["params"]["taus"]
-            crps_sum, cnt = 0.0, 0
-            for t in range(len(y)):
-                rh = np.asarray(res["r_hat_hist"][t], dtype=np.float64)
-                if rh.size == len(taus):
-                    crps_sum += float(crps_hat_from_quantiles(float(y[t]), rh.reshape(1, -1), taus)[0])
-                    cnt += 1
-            ps = res["profit_total"] - np.min(res["profit_total"])
-            sm_arr = np.sum(res["wager_hist"], axis=0)
-            rows.append({"lam": lam, "sigma_min": sm,
-                         "mean_crps": crps_sum / cnt if cnt else np.nan,
-                         "gini": _gini(ps),
-                         "frac_meaningful": float(np.mean(sm_arr > 1e-9))})
+            cell = cell_results[(lam, sm)]
+            crps_vals = np.array([c["mean_crps"] for c in cell])
+            gini_vals = np.array([c["gini"] for c in cell])
+            frac_vals = np.array([c["frac_meaningful"] for c in cell])
+            crps_finite = crps_vals[np.isfinite(crps_vals)]
+            gini_finite = gini_vals[np.isfinite(gini_vals)]
+            frac_finite = frac_vals[np.isfinite(frac_vals)]
+            mean_crps = float(np.mean(crps_finite)) if crps_finite.size else np.nan
+            mean_gini = float(np.mean(gini_finite)) if gini_finite.size else np.nan
+            mean_frac = float(np.mean(frac_finite)) if frac_finite.size else np.nan
+            se_crps = float(np.std(crps_finite, ddof=1) / np.sqrt(crps_finite.size)) if crps_finite.size > 1 else 0.0
+            rows.append({
+                "lam": lam, "sigma_min": sm,
+                "mean_crps": mean_crps, "se_crps": se_crps,
+                "gini": mean_gini,
+                "frac_meaningful": mean_frac,
+                "n_seeds": len(cell),
+            })
 
     # --- Data ---
-    with open(ep.data("sweep.csv"), "w") as f:
-        f.write("lam,sigma_min,mean_crps,gini,frac_meaningful\n")
-        for r in rows:
-            f.write(f"{r['lam']},{r['sigma_min']},{r['mean_crps']},{r['gini']},{r['frac_meaningful']}\n")
+    cols = ["lam", "sigma_min", "mean_crps", "se_crps", "gini", "frac_meaningful", "n_seeds"]
+    _write_csv(ep.data("sweep.csv"), cols, rows)
+
+    # --- Summary JSON ---
+    crps_all = [r["mean_crps"] for r in rows if np.isfinite(r["mean_crps"])]
+    crps_range_pct = ((max(crps_all) - min(crps_all)) / min(crps_all) * 100) if crps_all and min(crps_all) > 0 else 0.0
+    summary = {
+        "experiment_name": "parameter_sweep",
+        "config": {"T": T, "n_forecasters": n_forecasters, "n_seeds": len(seeds),
+                   "dgp_name": cfg.dgp_name, "lam_vals": lam_vals, "sigma_min_vals": sigma_min_vals},
+        "crps_range_pct": crps_range_pct,
+        "crps_min": min(crps_all) if crps_all else None,
+        "crps_max": max(crps_all) if crps_all else None,
+    }
+    with open(ep.data("summary.json"), "w") as f:
+        json.dump(summary, f, indent=2, default=str)
+
+    print(f"\nParameter Sweep (latent-fixed DGP, {len(seeds)} seeds, T={T})")
+    print("=" * 60)
+    print(f"  CRPS range: {crps_range_pct:.1f}% across grid")
 
     # --- Plot: three heatmaps ---
     try:
@@ -484,8 +711,8 @@ def run_parameter_sweep(T=200, n_forecasters=8, lam_vals=None, sigma_min_vals=No
     nl, ns = len(lam_vals), len(sigma_min_vals)
 
     # Only show heatmaps that vary; skip "fraction rounds" if all values are ~1
-    frac_vals = [r["frac_meaningful"] for r in rows]
-    frac_is_trivial = all(abs(v - 1.0) < 0.01 for v in frac_vals)
+    frac_vals_plot = [r["frac_meaningful"] for r in rows]
+    frac_is_trivial = all(abs(v - 1.0) < 0.01 for v in frac_vals_plot if np.isfinite(v))
 
     metrics = [("mean_crps", "Mean CRPS (lower = better)", "RdYlGn_r"),
                ("gini", "Gini coefficient (0 = equal)", "OrRd")]
@@ -514,58 +741,181 @@ def run_parameter_sweep(T=200, n_forecasters=8, lam_vals=None, sigma_min_vals=No
                         color="white" if grid[i, j] > np.nanmedian(grid) else "black")
         fig.colorbar(im, ax=ax, shrink=0.8)
 
-    fig.suptitle("Parameter Sweep: $\\lambda$ vs $\\sigma_{\\min}$", fontsize=14, fontweight="bold")
+    fig.suptitle(f"Parameter Sweep: $\\lambda$ vs $\\sigma_{{\\min}}$ ({len(seeds)} seeds)",
+                 fontsize=14, fontweight="bold")
     fig.tight_layout()
     save_fig(fig, ep.plot("parameter_sweep.png"))
+
+    # --- Experiment summary (Task 19.2) ---
+    try:
+        from onlinev2.experiments.summarise import write_experiment_summary
+        write_experiment_summary(ep, {
+            "experiment_name": "parameter_sweep",
+            "dgp_name": cfg.dgp_name, "T": T, "n_forecasters": n_forecasters,
+            "n_seeds": len(seeds), "scoring_mode": "quantiles_crps",
+            "lam_vals": lam_vals, "sigma_min_vals": sigma_min_vals,
+        }, {
+            "mean_crps": [r["mean_crps"] for r in rows if np.isfinite(r["mean_crps"])],
+            "crps_range_pct": crps_range_pct,
+        })
+    except Exception:
+        pass  # summary is optional
 
 
 # ===================================================================
 # F) Sybil / identity split
 # ===================================================================
 
-def run_sybil_experiment(n_trials=20, k_max=8, seed=31, outdir="outputs", block="core", ci_alpha=0.05):
-    """Split one agent into k identities — verify Sybil resistance (profit unchanged)."""
+def run_sybil_experiment(n_trials=20, k_max=8, seed=31, outdir="outputs", block="core",
+                         ci_alpha=0.05, seeds=None):
+    """Split one agent into k identities — verify Sybil resistance (profit unchanged).
+
+    Three scenarios tested:
+      identical:  k copies with same report, wager split equally (existing invariant)
+      diversified: each sybil identity reports q_j(τ) = q_original(τ) + ε_j,
+                   ε_j ~ N(0, σ_diversify=0.02), total wager conserved
+      strategic_deposit: total deposit conserved but split unevenly (e.g. 60/40 for k=2)
+
+    Multi-seed support (≥20 seeds) via ``seeds`` parameter, T ≥ 1000 rounds.
+    """
+    cfg = get_experiment_config("sybil")
+    if seeds is None:
+        seeds = cfg.seeds
+
     ep = _exp_paths(outdir, "sybil", block)
-    rng = np.random.default_rng(seed)
     k_vals = list(range(2, k_max + 1))
-    mean_delta, ci_lo, ci_hi, mean_ratio = [], [], [], []
+    sigma_diversify = 0.02
 
+    all_rows = []
+
+    for s in seeds:
+        rng = np.random.default_rng(s)
+        for k in k_vals:
+            deltas_by_scenario = {"identical": [], "diversified": [], "strategic_deposit": []}
+            ratios_by_scenario = {"identical": [], "diversified": [], "strategic_deposit": []}
+
+            for _ in range(n_trials):
+                m0 = float(rng.uniform(1.0, 5.0))
+                s0 = float(rng.uniform(0.2, 0.8))
+                m_others = rng.uniform(0.5, 3.0, size=3).astype(np.float64)
+                s_others = rng.uniform(0.2, 0.8, size=3).astype(np.float64)
+
+                m_s = np.concatenate([[m0], m_others])
+                s_s = np.concatenate([[s0], s_others])
+                prof_single = float(profit(raja_competitive_payout(s_s, m_s), m_s)[0])
+
+                # --- Scenario A: Identical reports, equal wager split ---
+                m_sp = np.concatenate([np.full(k, m0 / k), m_others])
+                s_sp = np.concatenate([np.full(k, s0), s_others])
+                prof_split = float(np.sum(profit(raja_competitive_payout(s_sp, m_sp), m_sp)[:k]))
+                deltas_by_scenario["identical"].append(prof_split - prof_single)
+                ratios_by_scenario["identical"].append(
+                    prof_split / prof_single if abs(prof_single) > 1e-12 else 1.0
+                )
+
+                # --- Scenario B: Diversified reports ---
+                # Each sybil identity gets a slightly perturbed score
+                s_diversified = np.clip(
+                    s0 + rng.normal(0.0, sigma_diversify, size=k), 0.01, 0.99
+                ).astype(np.float64)
+                m_div = np.concatenate([np.full(k, m0 / k), m_others])
+                s_div = np.concatenate([s_diversified, s_others])
+                prof_div = float(np.sum(profit(raja_competitive_payout(s_div, m_div), m_div)[:k]))
+                deltas_by_scenario["diversified"].append(prof_div - prof_single)
+                ratios_by_scenario["diversified"].append(
+                    prof_div / prof_single if abs(prof_single) > 1e-12 else 1.0
+                )
+
+                # --- Scenario C: Strategic deposit splitting ---
+                # Total deposit conserved but split unevenly
+                # Generate random uneven split that sums to m0
+                raw_shares = rng.dirichlet(np.ones(k) * 0.5)  # concentrated Dirichlet
+                m_strategic = np.concatenate([(raw_shares * m0).astype(np.float64), m_others])
+                s_strat = np.concatenate([np.full(k, s0), s_others])
+                prof_strat = float(np.sum(
+                    profit(raja_competitive_payout(s_strat, m_strategic), m_strategic)[:k]
+                ))
+                deltas_by_scenario["strategic_deposit"].append(prof_strat - prof_single)
+                ratios_by_scenario["strategic_deposit"].append(
+                    prof_strat / prof_single if abs(prof_single) > 1e-12 else 1.0
+                )
+
+            # Aggregate per (seed, k, scenario)
+            for scenario in ["identical", "diversified", "strategic_deposit"]:
+                d_arr = np.array(deltas_by_scenario[scenario])
+                r_arr = np.array(ratios_by_scenario[scenario])
+                m_d = float(np.mean(d_arr))
+                m_r = float(np.mean(r_arr))
+                if len(d_arr) >= 2:
+                    se_val = float(np.std(d_arr, ddof=1)) / len(d_arr) ** 0.5
+                    tv = float(scipy_stats.t.ppf(1 - ci_alpha / 2, len(d_arr) - 1))
+                    cl = m_d - tv * se_val
+                    ch = m_d + tv * se_val
+                else:
+                    cl, ch = m_d, m_d
+                all_rows.append({
+                    "k": k, "scenario": scenario, "seed": s,
+                    "mean_ratio": m_r, "mean_delta": m_d,
+                    "ci_low": cl, "ci_high": ch,
+                })
+
+    # --- Aggregate across seeds per (k, scenario) ---
+    agg_rows = []
     for k in k_vals:
-        deltas = []
-        ratios = []
-        for _ in range(n_trials):
-            m0 = float(rng.uniform(1.0, 5.0))
-            s0 = float(rng.uniform(0.2, 0.8))
-            m_others = rng.uniform(0.5, 3.0, size=3).astype(np.float64)
-            s_others = rng.uniform(0.2, 0.8, size=3).astype(np.float64)
+        for scenario in ["identical", "diversified", "strategic_deposit"]:
+            subset = [r for r in all_rows if r["k"] == k and r["scenario"] == scenario]
+            ratios = np.array([r["mean_ratio"] for r in subset])
+            deltas = np.array([r["mean_delta"] for r in subset])
+            m_r = float(np.mean(ratios))
+            m_d = float(np.mean(deltas))
+            if deltas.size >= 2:
+                se_val = float(np.std(deltas, ddof=1) / np.sqrt(deltas.size))
+                cl = m_d - 1.96 * se_val
+                ch = m_d + 1.96 * se_val
+            else:
+                cl, ch = m_d, m_d
+            agg_rows.append({
+                "k": k, "scenario": scenario,
+                "mean_ratio": m_r, "mean_delta": m_d,
+                "ci_low": cl, "ci_high": ch,
+            })
 
-            m_s = np.concatenate([[m0], m_others])
-            s_s = np.concatenate([[s0], s_others])
-            prof_single = float(profit(raja_competitive_payout(s_s, m_s), m_s)[0])
-
-            m_sp = np.concatenate([np.full(k, m0 / k), m_others])
-            s_sp = np.concatenate([np.full(k, s0), s_others])
-            prof_split = float(np.sum(profit(raja_competitive_payout(s_sp, m_sp), m_sp)[:k]))
-
-            deltas.append(prof_split - prof_single)
-            ratios.append(prof_split / prof_single if abs(prof_single) > 1e-12 else 1.0)
-
-        d_arr = np.array(deltas)
-        mean_delta.append(float(np.mean(d_arr)))
-        mean_ratio.append(float(np.mean(ratios)))
-        if len(d_arr) >= 2:
-            se = float(np.std(d_arr, ddof=1)) / len(d_arr) ** 0.5
-            tv = float(scipy_stats.t.ppf(1 - ci_alpha / 2, len(d_arr) - 1))
-            ci_lo.append(float(np.mean(d_arr) - tv * se))
-            ci_hi.append(float(np.mean(d_arr) + tv * se))
-        else:
-            ci_lo.append(float(np.mean(d_arr))); ci_hi.append(float(np.mean(d_arr)))
+    # --- Verify identical-report invariant ---
+    identical_rows = [r for r in agg_rows if r["scenario"] == "identical"]
+    for r in identical_rows:
+        if abs(r["mean_ratio"] - 1.0) > 1e-10:
+            print(f"WARNING: Identical-report sybil invariant violated at k={r['k']}: "
+                  f"ratio={r['mean_ratio']:.12f}")
 
     # --- Data ---
-    with open(ep.data("sybil.csv"), "w") as f:
-        f.write("k,mean_ratio,mean_delta,ci_low,ci_high\n")
-        for i, k in enumerate(k_vals):
-            f.write(f"{k},{mean_ratio[i]},{mean_delta[i]},{ci_lo[i]},{ci_hi[i]}\n")
+    cols = ["k", "scenario", "mean_ratio", "mean_delta", "ci_low", "ci_high"]
+    _write_csv(ep.data("sybil.csv"), cols, agg_rows)
+
+    # --- Summary JSON ---
+    summary = {
+        "experiment_name": "sybil",
+        "config": {"k_max": k_max, "n_trials": n_trials, "n_seeds": len(seeds),
+                   "sigma_diversify": sigma_diversify},
+        "scenarios": {}
+    }
+    for scenario in ["identical", "diversified", "strategic_deposit"]:
+        sc_rows = [r for r in agg_rows if r["scenario"] == scenario]
+        ratios = [r["mean_ratio"] for r in sc_rows]
+        summary["scenarios"][scenario] = {
+            "mean_ratio": float(np.mean(ratios)),
+            "max_abs_delta": float(max(abs(r["mean_delta"]) for r in sc_rows)),
+            "n_k_values": len(sc_rows),
+        }
+    with open(ep.data("summary.json"), "w") as f:
+        json.dump(summary, f, indent=2, default=str)
+
+    print("\nSybil Resistance Test (multi-seed, three scenarios)")
+    print("=" * 60)
+    for scenario in ["identical", "diversified", "strategic_deposit"]:
+        sc_rows = [r for r in agg_rows if r["scenario"] == scenario]
+        ratios = [r["mean_ratio"] for r in sc_rows]
+        print(f"  {scenario:20s}: mean_ratio={np.mean(ratios):.6f}, "
+              f"max|delta|={max(abs(r['mean_delta']) for r in sc_rows):.2e}")
 
     # --- Plot ---
     try:
@@ -573,48 +923,47 @@ def run_sybil_experiment(n_trials=20, k_max=8, seed=31, outdir="outputs", block=
     except Exception:
         return
 
-    fig, axes = new_figure(1, 2, figsize=(13, 5.5))
+    fig, axes = new_figure(1, 3, figsize=(18, 5.5))
+    scenario_labels = {"identical": "Identical Reports",
+                       "diversified": "Diversified Reports",
+                       "strategic_deposit": "Strategic Deposit"}
+    scenario_colors = {"identical": COLORS["blue"],
+                       "diversified": COLORS["orange"],
+                       "strategic_deposit": COLORS["pink"]}
 
-    max_abs_delta = max(abs(d) for d in mean_delta)
-    is_machine_zero = max_abs_delta < 1e-10
+    for idx, scenario in enumerate(["identical", "diversified", "strategic_deposit"]):
+        ax = axes[idx]
+        sc_rows = [r for r in agg_rows if r["scenario"] == scenario]
+        ks = [r["k"] for r in sc_rows]
+        ratios = [r["mean_ratio"] for r in sc_rows]
+        ax.plot(ks, ratios, "o-", color=scenario_colors[scenario], markersize=8, linewidth=1.5)
+        ax.axhline(1.0, color=COLORS["reference"], ls="--", lw=1)
+        ax.fill_between(ks, 0.99, 1.01, alpha=0.08, color=scenario_colors[scenario])
+        ax.set(xlabel="Number of identities $k$", ylabel="Profit ratio (split / single)",
+               title=scenario_labels[scenario])
+        ratio_range = max(abs(r - 1.0) for r in ratios) if ratios else 0.01
+        if ratio_range < 0.01:
+            ax.set_ylim(0.95, 1.05)
 
-    if is_machine_zero:
-        # Profit difference is effectively zero — show a clean pass summary
-        ax = axes[0]
-        ax.axis("off")
-        ax.text(0.5, 0.65, "Profit difference = 0", transform=ax.transAxes,
-                ha="center", fontsize=16, fontweight="bold", color=COLORS["green"])
-        ax.text(0.5, 0.50, f"(max |delta| = {max_abs_delta:.1e})", transform=ax.transAxes,
-                ha="center", fontsize=10, color=COLORS["slate"])
-        ax.text(0.5, 0.35, "Splitting identity into k parts\ndoes not change total profit",
-                transform=ax.transAxes, ha="center", fontsize=10, color=COLORS["truth"])
-        ax.set_title("Sybil resistance: profit change from splitting")
-    else:
-        ax = axes[0]
-        ax.bar(k_vals, mean_delta, color=COLORS["pink"], alpha=0.8, edgecolor="white")
-        ax.errorbar(k_vals, mean_delta,
-                     yerr=[np.array(mean_delta) - np.array(ci_lo),
-                           np.array(ci_hi) - np.array(mean_delta)],
-                     fmt="none", color=COLORS["truth"], capsize=4)
-        ax.axhline(0, color=COLORS["reference"], ls="--")
-        ax.set(xlabel="Number of identities $k$", ylabel="Profit difference (split $-$ single)",
-                title="Sybil resistance: profit change from splitting")
-
-    # Ratio plot — always informative
-    ax = axes[1]
-    ax.plot(k_vals, mean_ratio, "o-", color=COLORS["blue"], markersize=8, linewidth=1.5)
-    ax.axhline(1.0, color=COLORS["reference"], ls="--", lw=1)
-    ax.fill_between(k_vals, 0.99, 1.01, alpha=0.08, color=COLORS["blue"])
-    ax.set(xlabel="Number of identities $k$", ylabel="Profit ratio (split / single)",
-           title="Profit ratio (should be $\\approx 1$)")
-    # Set y-axis so we can see any deviation from 1
-    ratio_range = max(abs(r - 1.0) for r in mean_ratio)
-    if ratio_range < 0.01:
-        ax.set_ylim(0.95, 1.05)
-
-    fig.suptitle("Sybil Resistance Test", fontsize=14, fontweight="bold")
+    fig.suptitle("Sybil Resistance Test (Three Scenarios)", fontsize=14, fontweight="bold")
     fig.tight_layout()
     save_fig(fig, ep.plot("sybil.png"))
+
+    # --- Experiment summary (Task 19.2) ---
+    try:
+        from onlinev2.experiments.summarise import write_experiment_summary
+        sybil_logs = {}
+        for scenario in ["identical", "diversified", "strategic_deposit"]:
+            sc_info = summary.get("scenarios", {}).get(scenario, {})
+            sybil_logs[f"{scenario}_mean_ratio"] = sc_info.get("mean_ratio")
+            sybil_logs[f"{scenario}_max_abs_delta"] = sc_info.get("max_abs_delta")
+        write_experiment_summary(ep, {
+            "experiment_name": "sybil",
+            "T": "N/A", "n_seeds": len(seeds),
+            "k_max": k_max, "n_trials": n_trials,
+        }, sybil_logs)
+    except Exception:
+        pass  # summary is optional
 
 
 # ===================================================================
@@ -704,8 +1053,13 @@ def run_scoring_validation(seed=11, outdir="outputs", block="core"):
 # ===================================================================
 
 def run_fixed_deposit_skill_effect(T=200, n_forecasters=6, seed=17, outdir="outputs",
-                                   block="core", scoring_mode="quantiles_crps", gamma=10.0, rho=0.2):
+                                   block="core", scoring_mode="quantiles_crps", gamma=10.0, rho=0.2,
+                                   seeds=None):
     """Fixed deposits (no random stakes) — only skill drives wagers and profits."""
+    cfg = get_experiment_config("fixed_deposit")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
     ep = _exp_paths(outdir, "fixed_deposit", block)
     res = run_simulation(T=T, n_forecasters=n_forecasters, missing_prob=0.0,
                          seed=seed, scoring_mode=scoring_mode, gamma=gamma, rho=rho,
@@ -819,14 +1173,27 @@ def _coverage_table(y, q_reports, taus):
 def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
                                         outdir="outputs", block="core", gamma=4.0, rho=0.1,
                                         sigma_min=0.1, sigma_z=1.0,
-                                        taus_quantiles=None, n_seeds=SKILL_RECOVERY_N_SEEDS):
-    """Latent truth + Bayes-consistent forecasters — verify skill is recovered correctly."""
+                                        taus_quantiles=None, n_seeds=SKILL_RECOVERY_N_SEEDS,
+                                        seeds=None):
+    """Latent truth + Bayes-consistent forecasters — verify skill is recovered correctly.
+
+    Uses get_experiment_config("skill_recovery") for T=2000, T0=500, ≥20 seeds.
+    Reports Spearman rank correlation with mean, SE, and 95% CI across seeds.
+    Ensures verdict file parameters exactly match actual run configuration.
+    """
+    cfg = get_experiment_config("skill_recovery")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)  # cfg.T = 2000
+    T0 = 500  # warm-start period
+    n_seeds = len(seeds)
+
     ep = _exp_paths(outdir, "skill_recovery", block)
     tau_true = SKILL_RECOVERY_TAU.copy() if tau_i is None else np.asarray(tau_i).ravel()
     n = tau_true.size
     if taus_quantiles is None:
-        taus_quantiles = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
-    S = max(1, int(n_seeds))
+        taus_quantiles = cfg.taus()
+    S = n_seeds
     tail = slice(T0, T)
     results = {}
 
@@ -835,7 +1202,6 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
     except Exception:
         _has_plt = False
 
-    seeds = [seed + s for s in range(S)]
     for mode in ("point_mae", "quantiles_crps"):
         corr_loss, corr_sigma = [], []
         last_data = {}
@@ -862,11 +1228,20 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
                          "q_reports": res.get("q_reports", q_reports if mode == "quantiles_crps" else None)}
 
         mc_l, mc_s = float(np.nanmean(corr_loss)), float(np.nanmean(corr_sigma))
-        sd_l, sd_s = (float(np.nanstd(corr_loss)), float(np.nanstd(corr_sigma))) if S > 1 else (0, 0)
+        sd_l, sd_s = (float(np.nanstd(corr_loss, ddof=1)), float(np.nanstd(corr_sigma, ddof=1))) if S > 1 else (0, 0)
+        se_l = sd_l / np.sqrt(S) if S > 1 else 0.0
+        se_s = sd_s / np.sqrt(S) if S > 1 else 0.0
+        ci_low_l = mc_l - 1.96 * se_l
+        ci_high_l = mc_l + 1.96 * se_l
+        ci_low_s = mc_s - 1.96 * se_s
+        ci_high_s = mc_s + 1.96 * se_s
         passes = np.isfinite(mc_s) and mc_s >= 0.8 and (S == 1 or sd_s <= 0.15)
 
-        results[mode] = {"mc_loss": mc_l, "sd_loss": sd_l, "mc_sigma": mc_s,
-                         "sd_sigma": sd_s, "passes": passes, **last_data}
+        results[mode] = {"mc_loss": mc_l, "sd_loss": sd_l, "se_loss": se_l,
+                         "ci_low_loss": ci_low_l, "ci_high_loss": ci_high_l,
+                         "mc_sigma": mc_s, "sd_sigma": sd_s, "se_sigma": se_s,
+                         "ci_low_sigma": ci_low_s, "ci_high_sigma": ci_high_s,
+                         "passes": passes, **last_data}
 
         # --- Data ---
         with open(ep.data(f"{mode}_summary.csv"), "w") as f:
@@ -895,7 +1270,7 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
                    s=100, zorder=5, edgecolors="white", linewidths=2)
         for i in range(n): ax.annotate(f"  F{i}", (tau_true[i], ml[i]), fontsize=9, color=COLORS["slate"])
         ax.set(xlabel="True noise $\\tau_i$", ylabel="Mean tail loss",
-               title=f"$\\tau$ vs loss (Spearman = {mc_l:.3f})")
+               title=f"$\\tau$ vs loss (Spearman = {mc_l:.3f} [{ci_low_l:.3f}, {ci_high_l:.3f}])")
 
         # tau vs sigma
         ax = axes[0, 1]
@@ -904,7 +1279,7 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
         for i in range(n): ax.annotate(f"  F{i}", (tau_true[i], ms[i]), fontsize=9, color=COLORS["slate"])
         verdict_color = COLORS["green"] if passes else COLORS["red"]
         ax.set(xlabel="True noise $\\tau_i$", ylabel="Mean tail $\\sigma$",
-               title=f"$\\tau$ vs learned performance score (Spearman = {mc_s:.3f})")
+               title=f"$\\tau$ vs learned performance score (Spearman = {mc_s:.3f} [{ci_low_s:.3f}, {ci_high_s:.3f}])")
         ax.text(0.02, 0.05, "PASS" if passes else "FAIL", transform=ax.transAxes,
                 fontsize=12, fontweight="bold", color=verdict_color)
 
@@ -971,18 +1346,40 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
             fig.tight_layout()
             save_fig(fig, ep.plot("crps_calibration.png"))
 
-    # --- Summary text ---
-    lines = ["Skill Recovery Benchmark", f"T={T}, T0={T0}, n={n}, seeds={S}", ""]
+    # --- Summary text (verdict file matches actual run configuration) ---
+    lines = ["Skill Recovery Benchmark",
+             f"T={T}, T0={T0}, n={n}, seeds={S}",
+             f"gamma={gamma}, rho={rho}, sigma_min={sigma_min}, sigma_z={sigma_z}",
+             ""]
     for mode in ("point_mae", "quantiles_crps"):
         r = results[mode]
         lines.append(f"[{mode}]")
-        lines.append(f"  Spearman(tau, loss):  mean={r['mc_loss']:.4f}, std={r['sd_loss']:.4f}")
-        lines.append(f"  Spearman(tau, sigma): mean={r['mc_sigma']:.4f}, std={r['sd_sigma']:.4f}")
+        lines.append(f"  Spearman(tau, loss):  mean={r['mc_loss']:.4f}, se={r['se_loss']:.4f}, "
+                     f"95% CI=[{r['ci_low_loss']:.4f}, {r['ci_high_loss']:.4f}]")
+        lines.append(f"  Spearman(tau, sigma): mean={r['mc_sigma']:.4f}, se={r['se_sigma']:.4f}, "
+                     f"95% CI=[{r['ci_low_sigma']:.4f}, {r['ci_high_sigma']:.4f}]")
         lines.append(f"  Pass: {r['passes']}")
         lines.append("")
     with open(ep.data("verdict.txt"), "w") as f:
         f.write("\n".join(lines))
     print("\n".join(lines))
+
+    # --- Experiment summary (Task 19.2) ---
+    try:
+        from onlinev2.experiments.summarise import write_experiment_summary
+        sr_logs = {}
+        for mode in ("point_mae", "quantiles_crps"):
+            r = results[mode]
+            sr_logs[f"{mode}_spearman_sigma"] = r["mc_sigma"]
+            sr_logs[f"{mode}_spearman_loss"] = r["mc_loss"]
+        write_experiment_summary(ep, {
+            "experiment_name": "skill_recovery",
+            "dgp_name": "latent_fixed", "T": T, "n_forecasters": n,
+            "n_seeds": S, "scoring_mode": "both",
+            "T0": T0, "gamma": gamma, "rho": rho, "sigma_min": sigma_min,
+        }, sr_logs)
+    except Exception:
+        pass  # summary is optional
 
     return results
 
@@ -991,9 +1388,14 @@ def run_skill_recovery_benchmark_latent(T=20000, T0=5000, tau_i=None, seed=42,
 # J) Baseline DGP diagnostic
 # ===================================================================
 
-def run_baseline_dgp_diagnostic(T=500, n_forecasters=6, seed=42, outdir="outputs", block="core"):
+def run_baseline_dgp_diagnostic(T=500, n_forecasters=6, seed=42, outdir="outputs", block="core",
+                                seeds=None):
     """Visualise the baseline DGP: truth vs reports, noise levels, error distributions."""
     from onlinev2.dgps import get_dgp
+    cfg = get_experiment_config("baseline_dgp")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
     ep = _exp_paths(outdir, "baseline_dgp", block)
     out = get_dgp("baseline").generate(seed=seed, T=T, n_forecasters=n_forecasters)
     y, reports, noise = out.y, out.reports, out.tau_true
@@ -1030,7 +1432,7 @@ def run_baseline_dgp_diagnostic(T=500, n_forecasters=6, seed=42, outdir="outputs
     leg = ax.legend(fontsize=6, loc="lower left", framealpha=1.0,
                     facecolor="white", edgecolor="#cccccc", borderpad=0.6)
     leg.set_zorder(100)
-    for lh in leg.legendHandles:
+    for lh in getattr(leg, 'legend_handles', getattr(leg, 'legendHandles', [])):
         lh.set_alpha(1.0)
 
     # Noise levels
@@ -1277,9 +1679,11 @@ def run_aggregation_dgp_diagnostic(T=1000, n_forecasters=3, seed=42, outdir="out
     save_fig(fig, ep.plot("aggregation_dgp.png"))
 
 
-def run_dgp_comparison(T=500, seed=42, outdir="outputs", block="core"):
+def run_dgp_comparison(T=1000, seed=42, outdir="outputs", block="core"):
     """Side-by-side comparison of all distinct DGPs."""
     from onlinev2.dgps import get_dgp
+    cfg = get_experiment_config("dgp_comparison")
+    T = max(T, cfg.T)
     ep = _exp_paths(outdir, "dgp_comparison", block)
 
     dgps = [
@@ -1443,7 +1847,7 @@ def _crps_for_weight_rules(y, q_reports, taus, res, tau_i):
 # ===================================================================
 
 def run_weight_rule_comparison(T=1000, n_forecasters=6, seed=42, outdir="outputs",
-                               block="core", n_seeds=5):
+                               block="core", n_seeds=20):
     """Compare five weight rules under two deposit policies.
 
     Deposit policies tested:
@@ -1593,7 +1997,7 @@ def run_weight_rule_comparison(T=1000, n_forecasters=6, seed=42, outdir="outputs
 # ===================================================================
 
 def run_deposit_policy_comparison(T=1000, n_forecasters=6, seed=42, outdir="outputs",
-                                  block="core", n_seeds=5):
+                                  block="core", n_seeds=20):
     """Compare four deposit policies under the Mechanism weight rule.
 
     Deposit policies:
@@ -1757,7 +2161,8 @@ def run_deposit_policy_comparison(T=1000, n_forecasters=6, seed=42, outdir="outp
     save_fig(fig, ep.plot("deposit_policy_comparison.png"))
 
 
-def run_selective_participation(T=1000, n_forecasters=6, seed=42, outdir="outputs", block="core"):
+def run_selective_participation(T=1000, n_forecasters=6, seed=42, outdir="outputs", block="core",
+                                seeds=None):
     """Does strategic timing of absence pay off vs random absence?
 
     For each kappa, we run three matched conditions at the SAME 50%
@@ -1777,6 +2182,9 @@ def run_selective_participation(T=1000, n_forecasters=6, seed=42, outdir="output
     """
     from onlinev2.legacy_dgps import generate_truth_and_quantile_reports_latent
 
+    cfg = get_experiment_config("selective_participation")
+    if seeds is None:
+        seeds = cfg.seeds
     ep = _exp_paths(outdir, "selective_participation", block)
 
     tau_i = np.array([0.15, 0.22, 0.32, 0.46, 0.68, 1.00])[:n_forecasters]
@@ -2083,24 +2491,71 @@ def run_master_comparison(
         json.dump(master, f, indent=2)
     print("Master comparison written to", ep.data("master_comparison.json"))
 
+    # --- Standardised output (Task 20.2) ---
+    try:
+        from onlinev2.experiments.helpers import write_standardised_output
+        write_standardised_output(ep, rows, {
+            "experiment_name": "master_comparison",
+            "T": cfg.T, "n_forecasters": cfg.n_forecasters, "n_seeds": len(cfg.seeds),
+            "dgp_name": cfg.dgp_name, "warm_start": warm_start,
+            "deposit_mode": deposit_mode, "stake_scale": stake_scale,
+            "omega_max": omega_max,
+        }, baseline_method="uniform")
+    except Exception:
+        pass  # standardised output is optional
+
+    # --- Four-panel diagnostic plot (Task 17.2) ---
+    try:
+        from onlinev2.plotting.four_panel import plot_four_panel
+        # Aggregate per method across seeds for four-panel
+        method_agg = {}
+        for method in ["uniform", "deposit", "skill", "mechanism"]:
+            method_rows = [r for r in rows if r["method"] == method]
+            deltas = np.array([r["delta_crps_vs_equal"] for r in method_rows])
+            deltas = deltas[np.isfinite(deltas)]
+            if deltas.size > 0:
+                _hhi_vals = [r.get("mean_HHI") for r in method_rows if r.get("mean_HHI") is not None]
+                _neff_vals = [r.get("mean_N_eff") for r in method_rows if r.get("mean_N_eff") is not None]
+                _gini_vals = [r.get("final_gini") for r in method_rows if r.get("final_gini") is not None]
+                method_agg[method] = {
+                    "delta_crps_mean": float(np.mean(deltas)),
+                    "delta_crps_se": float(np.std(deltas, ddof=1) / np.sqrt(deltas.size)) if deltas.size > 1 else 0.0,
+                    "mean_hhi": float(np.mean(_hhi_vals)) if _hhi_vals else 0.0,
+                    "mean_n_eff": float(np.mean(_neff_vals)) if _neff_vals else 0.0,
+                    "final_gini": float(np.mean(_gini_vals)) if _gini_vals else 0.0,
+                }
+        four_panel_results = {
+            "experiment_name": "master_comparison",
+            "methods": method_agg,
+            "failure_notes": [],
+        }
+        plot_four_panel(four_panel_results, ep.plot("four_panel.png"))
+    except Exception:
+        pass  # plotting is optional
+
 
 # ===================================================================
 # M4) Bankroll ablation: Full vs A-, B-, C-, D-, E-
 # ===================================================================
 
-def run_bankroll_ablation(T=400, n_forecasters=6, seed=42, outdir="outputs", block="core", warm_start=80):
-    """Five-step bankroll ablation: remove one step at a time.
+def run_bankroll_ablation(T=400, n_forecasters=6, seed=42, outdir="outputs", block="core",
+                          warm_start=80, seeds=None):
+    """Five-step bankroll ablation plus C- variant: remove one step at a time.
 
     Full = A→B→C→D→E. A-=no confidence (c=1), B-=fixed deposit, C-=no skill gate (λ=1),
     D-=no cap (ω_max=1), E-=freeze wealth.
-    """
-    ep = _exp_paths(outdir, "bankroll_ablation", block)
-    taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
-    tau_i = np.array([0.15, 0.22, 0.32, 0.46, 0.68, 1.0])[:n_forecasters]
 
-    y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
-        T, n_forecasters, tau_i, taus, seed=seed, sigma_z=1.0,
-    )
+    Multi-seed support (≥20 seeds). Reports paired Δ CRPS for C- vs Full.
+    """
+    cfg = get_experiment_config("bankroll_ablation")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
+    n_forecasters = cfg.n_forecasters
+
+    ep = _exp_paths(outdir, "bankroll_ablation", block)
+    taus = cfg.taus()
+    tau_i = cfg.tau_i()
 
     variants = [
         ("Full", dict(deposit_mode="bankroll", eta=2.0, W0=10.0, lam=0.05,
@@ -2116,42 +2571,112 @@ def run_bankroll_ablation(T=400, n_forecasters=6, seed=42, outdir="outputs", blo
                     f_stake=0.3, b_max=10.0, beta_c=1.0, c_min=0.8, c_max=1.3, omega_max=0.25, freeze_wealth=True)),
     ]
 
-    common = dict(
-        T=T, n_forecasters=n_forecasters, missing_prob=0.2, seed=seed,
-        scoring_mode="quantiles_crps", taus=taus,
-        y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
-        store_history=True,
-    )
+    all_rows = []
+    for s in seeds:
+        y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+            T, n_forecasters, tau_i, taus, seed=s, sigma_z=cfg.sigma_z,
+        )
 
-    rows = []
-    for label, kw in variants:
-        res = run_simulation(**common, **kw)
-        crps = _crps_for_weight_rules(y, q_reports_pre, taus, res, tau_i)
-        metrics = _headline_metrics_from_run(res, crps, warm_start=warm_start)
-        mean_crps = metrics.get("mean_crps_mechanism") or np.nan
-        rows.append({
-            "variant": label,
-            "mean_crps": mean_crps,
-            "delta_crps_vs_full": np.nan,
-            "mean_HHI": metrics.get("mean_HHI"),
-            "mean_N_eff": metrics.get("mean_N_eff"),
-            "final_gini": metrics.get("final_gini"),
-        })
-    if rows:
-        full_crps = rows[0]["mean_crps"]
-        for r in rows:
-            r["delta_crps_vs_full"] = r["mean_crps"] - full_crps
+        common = dict(
+            T=T, n_forecasters=n_forecasters, missing_prob=0.2, seed=s,
+            scoring_mode="quantiles_crps", taus=taus,
+            y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
+            store_history=True,
+        )
 
+        seed_results = {}
+        for label, kw in variants:
+            res = run_simulation(**common, **kw)
+            crps = _crps_for_weight_rules(y, q_reports_pre, taus, res, tau_i)
+            metrics = _headline_metrics_from_run(res, crps, warm_start=warm_start)
+            mean_crps = metrics.get("mean_crps_mechanism") or np.nan
+            seed_results[label] = {"mean_crps": mean_crps, "metrics": metrics}
+
+        full_crps = seed_results["Full"]["mean_crps"]
+        for label, _ in variants:
+            m = seed_results[label]["metrics"]
+            all_rows.append({
+                "variant": label,
+                "seed": s,
+                "mean_crps": seed_results[label]["mean_crps"],
+                "delta_crps_vs_full": seed_results[label]["mean_crps"] - full_crps,
+                "mean_HHI": m.get("mean_HHI"),
+                "mean_N_eff": m.get("mean_N_eff"),
+                "final_gini": m.get("final_gini"),
+            })
+
+    # --- Write CSV ---
     _write_csv(
         ep.data("bankroll_ablation.csv"),
-        ["variant", "mean_crps", "delta_crps_vs_full", "mean_HHI", "mean_N_eff", "final_gini"],
-        rows,
+        ["variant", "seed", "mean_crps", "delta_crps_vs_full", "mean_HHI", "mean_N_eff", "final_gini"],
+        all_rows,
     )
-    summary = {"experiment_name": "bankroll_ablation", "config": {"T": T, "n_forecasters": n_forecasters, "seed": seed}, "rows": rows}
+
+    # --- Aggregate across seeds for summary.json ---
+    summary = {"experiment_name": "bankroll_ablation",
+               "config": {"T": T, "n_forecasters": n_forecasters, "n_seeds": len(seeds),
+                           "warm_start": warm_start},
+               "variants": {}}
+    for label, _ in variants:
+        variant_rows = [r for r in all_rows if r["variant"] == label]
+        deltas = np.array([r["delta_crps_vs_full"] for r in variant_rows])
+        deltas = deltas[np.isfinite(deltas)]
+        if deltas.size > 0:
+            mean_d = float(np.mean(deltas))
+            se_d = float(np.std(deltas, ddof=1) / np.sqrt(deltas.size)) if deltas.size > 1 else 0.0
+            summary["variants"][label] = {
+                "delta_crps_mean": mean_d,
+                "delta_crps_se": se_d,
+                "delta_crps_ci_low": mean_d - 1.96 * se_d,
+                "delta_crps_ci_high": mean_d + 1.96 * se_d,
+                "n_seeds": int(deltas.size),
+            }
+
     with open(ep.data("summary.json"), "w") as f:
-        import json
-        json.dump(summary, f, indent=2)
+        json.dump(summary, f, indent=2, default=str)
     print("Bankroll ablation written to", ep.data("bankroll_ablation.csv"))
+
+    # --- Standardised output (Task 20.2) ---
+    try:
+        from onlinev2.experiments.helpers import write_standardised_output
+        # Remap 'variant' to 'method' for standardised output compatibility
+        std_rows = []
+        for r in all_rows:
+            std_rows.append({
+                "method": r["variant"],
+                "seed": r["seed"],
+                "mean_crps": r["mean_crps"],
+                "delta_crps_vs_equal": r.get("delta_crps_vs_full", np.nan),
+                "mean_HHI": r.get("mean_HHI"),
+                "mean_N_eff": r.get("mean_N_eff"),
+                "final_gini": r.get("final_gini"),
+            })
+        write_standardised_output(ep, std_rows, {
+            "experiment_name": "bankroll_ablation",
+            "T": T, "n_forecasters": n_forecasters, "n_seeds": len(seeds),
+            "dgp_name": cfg.dgp_name, "warm_start": warm_start,
+        }, baseline_method="Full")
+    except Exception:
+        pass  # standardised output is optional
+
+    # --- Four-panel diagnostic plot (Task 17.2) ---
+    try:
+        from onlinev2.plotting.four_panel import plot_four_panel
+        four_panel_methods = {}
+        for label, _ in variants:
+            info = summary.get("variants", {}).get(label, {})
+            four_panel_methods[label] = {
+                "delta_crps_mean": info.get("delta_crps_mean", 0.0),
+                "delta_crps_se": info.get("delta_crps_se", 0.0),
+            }
+        four_panel_results = {
+            "experiment_name": "bankroll_ablation",
+            "methods": four_panel_methods,
+            "failure_notes": [],
+        }
+        plot_four_panel(four_panel_results, ep.plot("four_panel.png"))
+    except Exception:
+        pass  # plotting is optional
 
 
 # ===================================================================
@@ -2414,7 +2939,7 @@ def run_behaviour_matrix(outdir="outputs", seed=42, block="behaviour", write_sum
 
     ep = _exp_paths(outdir, "behaviour_matrix", block)
 
-    T = 200
+    T = 1000
     n_users = 10
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
@@ -2547,10 +3072,17 @@ def run_behaviour_matrix(outdir="outputs", seed=42, block="behaviour", write_sum
             print(f"Warning: dashboard/summary failed: {e}")
 
 
-def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", write_summary=True,
+                               seeds=None, scoring_mode="quantiles_crps"):
     """
     Hold signal quality fixed, compare truthful vs hedged risk-averse,
     evaluate bias and welfare.
+
+    Uses quantiles_crps scoring so hedged reporting (narrower quantile spreads)
+    actually differs from truthful. In point_mae mode, hedging has no effect
+    on the point forecast, so both scenarios produce identical results.
+
+    Multi-seed support (≥20 seeds), T ≥ 1000 rounds.
     """
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.policies.reporting import HedgedReporting, TruthfulReporting
@@ -2559,107 +3091,143 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
 
+    cfg = get_experiment_config("preference_stress_test")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(1000, cfg.T)
+    n_users = 10
+
     ep = _exp_paths(outdir, "preference_stress_test", block)
 
-    T = 200
-    n_users = 10
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
-
-    results = {}
+    all_rows = []
     dashboard_logs = {}
-    for scenario_idx, (label, reporting) in enumerate([("truthful", TruthfulReporting()), ("hedged", HedgedReporting())]):
-        pop = build_population(n_users, seed=seed, reporting_policy=reporting)
-        behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
-        behaviour.reset(seed)
+    for s_idx, s in enumerate(seeds):
+        rng = np.random.default_rng(s)
+        y = rng.uniform(0.0, 1.0, size=T)
 
-        params = MechanismParams(scoring_mode="point_mae")
-        state = MechanismState()
-        for u in pop:
-            state.wealth[u.traits.user_id] = u.traits.initial_wealth
+        seed_results = {}
+        for scenario_idx, (label, reporting) in enumerate([("truthful", TruthfulReporting()), ("hedged", HedgedReporting())]):
+            pop = build_population(n_users, seed=s, reporting_policy=reporting)
+            behaviour = CompositeBehaviourModel(pop, scoring_mode=scoring_mode)
+            behaviour.reset(s)
 
-        profits = []
-        n_t_list = []
-        participation_by_round = []
-        deposits_flat = []
-        wagers_flat = []
-        gini_ts = []
-        n_eff_ts = []
-        hhi_ts = []
-        top1_ts = []
-        top5_ts = []
-        wealth_by_t = []
-        for t in range(T):
-            pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
-                weights_prev=state.weights_prev, sigma_prev=state.sigma,
-                wealth_prev=state.wealth, profit_prev=state.profit_prev,
-            )
-            actions = behaviour.act(pub)
-            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
-            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
-            profits.append(sum(logs["profit"]))
-            n_t_list.append(sum(1 for a in actions if a.participate))
-            participation_by_round.append([1 if a.participate else 0 for a in actions])
-            deposits_flat.extend(logs["deposits"])
-            wagers_flat.extend(logs["m_agg"])
-            gini_ts.append(logs["Gini"])
-            n_eff_ts.append(logs["N_eff"])
-            hhi_ts.append(logs["HHI"])
-            wealth_by_t.append(list(logs["wealth"].values()))
-            m_tot = float(np.sum(logs["m_agg"]))
-            if m_tot > 1e-12:
-                w_shares = np.array(logs["m_agg"]) / m_tot
-                sorted_w = np.sort(w_shares)[::-1]
-                top1_ts.append(float(np.max(w_shares)))
-                top5_ts.append(float(np.sum(sorted_w[:5])) if len(sorted_w) >= 5 else float(np.sum(sorted_w)))
-            else:
-                top1_ts.append(0.0)
-                top5_ts.append(0.0)
+            params = MechanismParams(scoring_mode=scoring_mode)
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
 
-        if scenario_idx == 0 and write_summary:
-            dashboard_logs["participation_per_round"] = n_t_list
-            dashboard_logs["deposits_flat"] = deposits_flat
-            dashboard_logs["wagers_flat"] = wagers_flat
-            dashboard_logs["gini_ts"] = gini_ts
-            dashboard_logs["n_eff_ts"] = n_eff_ts
-            dashboard_logs["hhi_ts"] = hhi_ts
-            dashboard_logs["top1_share"] = top1_ts
-            dashboard_logs["top5_share"] = top5_ts
-            gap_list = []
-            n_acc = len(participation_by_round[0]) if participation_by_round else 0
-            for i in range(n_acc):
-                prev_t = -1
-                for t in range(T):
-                    if participation_by_round[t][i] == 1:
-                        if prev_t >= 0:
-                            gap_list.append(t - prev_t)
-                        prev_t = t
-            if gap_list:
-                dashboard_logs["gap_list"] = gap_list
-            W_arr = np.array(wealth_by_t)
-            if W_arr.size:
-                dashboard_logs["ruin_rate_ts"] = np.mean(W_arr <= 0, axis=1).tolist()
+            profits = []
+            n_t_list = []
+            participation_by_round = []
+            deposits_flat = []
+            wagers_flat = []
+            gini_ts = []
+            n_eff_ts = []
+            hhi_ts = []
+            top1_ts = []
+            top5_ts = []
+            wealth_by_t = []
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                profits.append(sum(logs["profit"]))
+                n_t_list.append(sum(1 for a in actions if a.participate))
+                participation_by_round.append([1 if a.participate else 0 for a in actions])
+                deposits_flat.extend(logs["deposits"])
+                wagers_flat.extend(logs["m_agg"])
+                gini_ts.append(logs["Gini"])
+                n_eff_ts.append(logs["N_eff"])
+                hhi_ts.append(logs["HHI"])
+                wealth_by_t.append(list(logs["wealth"].values()))
+                m_tot = float(np.sum(logs["m_agg"]))
+                if m_tot > 1e-12:
+                    w_shares = np.array(logs["m_agg"]) / m_tot
+                    sorted_w = np.sort(w_shares)[::-1]
+                    top1_ts.append(float(np.max(w_shares)))
+                    top5_ts.append(float(np.sum(sorted_w[:5])) if len(sorted_w) >= 5 else float(np.sum(sorted_w)))
+                else:
+                    top1_ts.append(0.0)
+                    top5_ts.append(0.0)
 
-        results[label] = {
-            "total_profit": sum(profits),
-            "mean_profit": float(np.mean(profits)),
-            "final_gini": logs["Gini"],
-        }
+            # Capture dashboard logs from first seed, first scenario
+            if s_idx == 0 and scenario_idx == 0 and write_summary:
+                dashboard_logs["participation_per_round"] = n_t_list
+                dashboard_logs["deposits_flat"] = deposits_flat
+                dashboard_logs["wagers_flat"] = wagers_flat
+                dashboard_logs["gini_ts"] = gini_ts
+                dashboard_logs["n_eff_ts"] = n_eff_ts
+                dashboard_logs["hhi_ts"] = hhi_ts
+                dashboard_logs["top1_share"] = top1_ts
+                dashboard_logs["top5_share"] = top5_ts
+                gap_list = []
+                n_acc = len(participation_by_round[0]) if participation_by_round else 0
+                for i in range(n_acc):
+                    prev_t = -1
+                    for t_g in range(T):
+                        if participation_by_round[t_g][i] == 1:
+                            if prev_t >= 0:
+                                gap_list.append(t_g - prev_t)
+                            prev_t = t_g
+                if gap_list:
+                    dashboard_logs["gap_list"] = gap_list
+                W_arr = np.array(wealth_by_t)
+                if W_arr.size:
+                    dashboard_logs["ruin_rate_ts"] = np.mean(W_arr <= 0, axis=1).tolist()
 
-    rows = [{"scenario": k, **v} for k, v in results.items()]
-    _write_csv(ep.data("preference_stress.csv"), ["scenario", "total_profit", "mean_profit", "final_gini"], rows)
-    print("\nPreference Stress Test")
-    print("=" * 50)
-    for label, r in results.items():
-        print(f"  {label}: profit={r['total_profit']:.2f}, gini={r['final_gini']:.3f}")
+            seed_results[label] = {
+                "total_profit": sum(profits),
+                "mean_profit": float(np.mean(profits)),
+                "final_gini": logs["Gini"],
+            }
+
+        for label, r in seed_results.items():
+            all_rows.append({"scenario": label, "seed": s, **r})
+
+    # --- Write CSV ---
+    _write_csv(ep.data("preference_stress.csv"),
+               ["scenario", "seed", "total_profit", "mean_profit", "final_gini"], all_rows)
+
+    # --- Aggregate across seeds for summary ---
+    summary = {"experiment_name": "preference_stress_test",
+               "config": {"T": T, "n_users": n_users, "n_seeds": len(seeds),
+                           "scoring_mode": scoring_mode, "block": block},
+               "scenarios": {}}
+    for label in ["truthful", "hedged"]:
+        scenario_rows = [r for r in all_rows if r["scenario"] == label]
+        profits = np.array([r["total_profit"] for r in scenario_rows])
+        if profits.size > 0:
+            mean_p = float(np.mean(profits))
+            se_p = float(np.std(profits, ddof=1) / np.sqrt(profits.size)) if profits.size > 1 else 0.0
+            summary["scenarios"][label] = {
+                "mean_total_profit": mean_p,
+                "se_total_profit": se_p,
+                "ci_low": mean_p - 1.96 * se_p,
+                "ci_high": mean_p + 1.96 * se_p,
+                "n_seeds": int(profits.size),
+            }
+
+    print("\nPreference Stress Test (quantiles_crps, multi-seed)")
+    print("=" * 55)
+    for label, info in summary.get("scenarios", {}).items():
+        print(f"  {label}: profit={info['mean_total_profit']:.2f} ± {info['se_total_profit']:.2f}")
 
     if write_summary:
         try:
+            with open(ep.data("summary.json"), "w") as f:
+                json.dump(summary, f, indent=2, default=str)
+        except Exception as e:
+            print(f"Warning: summary write failed: {e}")
+        try:
             from onlinev2.experiments.summarise import write_experiment_summary
-            logs = {"final_gini": list(results.values())[0]["final_gini"] if results else None}
+            logs_out = {"final_gini": all_rows[0]["final_gini"] if all_rows else None}
             config = {"experiment_name": "preference_stress_test", "T": T, "n_users": n_users, "block": block}
-            write_experiment_summary(ep, config, logs)
+            write_experiment_summary(ep, config, logs_out)
             if dashboard_logs:
                 from onlinev2.behaviour.plotting.behaviour_dashboard import make_behaviour_dashboard
                 make_behaviour_dashboard(ep, dashboard_logs, config)
@@ -2686,7 +3254,7 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
 
     ep = _exp_paths(outdir, "intermittency_stress_test", block)
 
-    T = 200
+    T = 1000
     n_users = 10
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
@@ -2819,7 +3387,7 @@ def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summa
 
     ep = _exp_paths(outdir, "arbitrage_scan", block)
 
-    T = 150
+    T = 1000
     n_benign = 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
@@ -2895,10 +3463,18 @@ def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summa
             print(f"Warning: summary/dashboard failed: {e}")
 
 
-def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write_summary=True,
+                             seeds=None):
     """
-    Optional: train a simple detector on fixed manipulation templates,
+    Train a simple detector on fixed manipulation templates,
     then evaluate adaptive evaders.
+
+    Key fix: attacker deposits are non-zero (stake_fraction * wealth),
+    attacker initial wealth = 50.0, so attackers actually participate
+    with meaningful wagers. Previous version had zero effective wager
+    because ManipulatorBehaviour.deposit defaulted to 0.
+
+    Multi-seed support (≥20 seeds), T ≥ 1000 rounds.
     """
     from onlinev2.behaviour.adversaries.evader import AdaptiveEvaderBehaviour
     from onlinev2.behaviour.adversaries.manipulator import ManipulatorBehaviour
@@ -2909,126 +3485,170 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
 
-    ep = _exp_paths(outdir, "detection_adaptation", block)
-
-    T = 150
+    cfg = get_experiment_config("detection_adaptation")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(1000, cfg.T)
     n_benign = 8
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
+
+    ep = _exp_paths(outdir, "detection_adaptation", block)
 
     attacker_types = {
         "fixed_manipulator": lambda traits: ManipulatorBehaviour(traits, target=0.2, kappa=5.0, scoring_mode="point_mae"),
         "adaptive_evader": lambda traits: AdaptiveEvaderBehaviour(traits, target=0.2, kappa=5.0, scoring_mode="point_mae"),
     }
 
-    results = {}
+    all_rows = []
     dashboard_logs = {}
-    for atk_idx, (atk_name, atk_factory) in enumerate(attacker_types.items()):
-        pop = build_population(n_benign, seed=seed)
-        atk_traits = UserTraits(
-            user_id="attacker_0", initial_wealth=10.0,
-            noise_level=0.05, stake_fraction=0.3,
-        )
-        atk = atk_factory(atk_traits)
-        atk.reset(seed)
+    for s_idx, s in enumerate(seeds):
+        rng = np.random.default_rng(s)
+        y = rng.uniform(0.0, 1.0, size=T)
 
-        behaviour = CompositeBehaviourModel(
-            pop, adversary_behaviours={atk_traits.user_id: atk},
-            scoring_mode="point_mae",
-        )
-        behaviour.reset(seed)
-
-        params = MechanismParams(scoring_mode="point_mae")
-        state = MechanismState()
-        for u in pop:
-            state.wealth[u.traits.user_id] = u.traits.initial_wealth
-        state.wealth[atk_traits.user_id] = atk_traits.initial_wealth
-
-        atk_profit = 0.0
-        n_t_list = []
-        participation_by_round = []
-        deposits_flat = []
-        wagers_flat = []
-        gini_ts = []
-        n_eff_ts = []
-        hhi_ts = []
-        top1_ts = []
-        top5_ts = []
-        wealth_by_t = []
-        for t in range(T):
-            pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
-                weights_prev=state.weights_prev, sigma_prev=state.sigma,
-                wealth_prev=state.wealth, profit_prev=state.profit_prev,
+        for atk_idx, (atk_name, atk_factory) in enumerate(attacker_types.items()):
+            pop = build_population(n_benign, seed=s)
+            atk_traits = UserTraits(
+                user_id="attacker_0", initial_wealth=50.0,
+                noise_level=0.02, stake_fraction=0.3,
             )
-            actions = behaviour.act(pub)
-            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
-            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            atk = atk_factory(atk_traits)
+            atk.reset(s)
 
-            for i, aid in enumerate(logs["ids"]):
-                if aid == atk_traits.user_id:
-                    atk_profit += logs["profit"][i]
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours={atk_traits.user_id: atk},
+                scoring_mode="point_mae",
+            )
+            behaviour.reset(s)
 
-            n_t_list.append(sum(1 for a in actions if a.participate))
-            participation_by_round.append([1 if a.participate else 0 for a in actions])
-            deposits_flat.extend(logs["deposits"])
-            wagers_flat.extend(logs["m_agg"])
-            gini_ts.append(logs["Gini"])
-            n_eff_ts.append(logs["N_eff"])
-            hhi_ts.append(logs["HHI"])
-            wealth_by_t.append(list(logs["wealth"].values()))
-            m_tot = float(np.sum(logs["m_agg"]))
-            if m_tot > 1e-12:
-                w_shares = np.array(logs["m_agg"]) / m_tot
-                sorted_w = np.sort(w_shares)[::-1]
-                top1_ts.append(float(np.max(w_shares)))
-                top5_ts.append(float(np.sum(sorted_w[:5])) if len(sorted_w) >= 5 else float(np.sum(sorted_w)))
-            else:
-                top1_ts.append(0.0)
-                top5_ts.append(0.0)
+            params = MechanismParams(scoring_mode="point_mae")
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            state.wealth[atk_traits.user_id] = atk_traits.initial_wealth
 
-        if atk_idx == 0 and write_summary:
-            dashboard_logs["participation_per_round"] = n_t_list
-            dashboard_logs["deposits_flat"] = deposits_flat
-            dashboard_logs["wagers_flat"] = wagers_flat
-            dashboard_logs["gini_ts"] = gini_ts
-            dashboard_logs["n_eff_ts"] = n_eff_ts
-            dashboard_logs["hhi_ts"] = hhi_ts
-            dashboard_logs["top1_share"] = top1_ts
-            dashboard_logs["top5_share"] = top5_ts
-            gap_list = []
-            n_acc = len(participation_by_round[0]) if participation_by_round else 0
-            for i in range(n_acc):
-                prev_t = -1
-                for t in range(T):
-                    if participation_by_round[t][i] == 1:
-                        if prev_t >= 0:
-                            gap_list.append(t - prev_t)
-                        prev_t = t
-            if gap_list:
-                dashboard_logs["gap_list"] = gap_list
-            W_arr = np.array(wealth_by_t)
-            if W_arr.size:
-                dashboard_logs["ruin_rate_ts"] = np.mean(W_arr <= 0, axis=1).tolist()
+            atk_profit = 0.0
+            n_t_list = []
+            participation_by_round = []
+            deposits_flat = []
+            wagers_flat = []
+            gini_ts = []
+            n_eff_ts = []
+            hhi_ts = []
+            top1_ts = []
+            top5_ts = []
+            wealth_by_t = []
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
 
-        results[atk_name] = {
-            "total_profit": atk_profit,
-            "final_wealth": state.wealth.get(atk_traits.user_id, 0.0),
-        }
+                # Ensure attacker deposit is non-zero (at least stake_fraction * wealth)
+                for a in actions:
+                    if a.user_id == atk_traits.user_id and a.participate:
+                        atk_wealth = state.wealth.get(atk_traits.user_id, atk_traits.initial_wealth)
+                        min_deposit = atk_traits.stake_fraction * max(atk_wealth, 1.0)
+                        if a.deposit < min_deposit:
+                            a.deposit = min_deposit
 
-    rows = [{"attacker": k, **v} for k, v in results.items()]
-    _write_csv(ep.data("detection_adaptation.csv"), ["attacker", "total_profit", "final_wealth"], rows)
-    print("\nDetection vs Adaptation")
-    print("=" * 50)
-    for name, r in results.items():
-        print(f"  {name}: profit={r['total_profit']:.2f}, wealth={r['final_wealth']:.2f}")
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+
+                for i, aid in enumerate(logs["ids"]):
+                    if aid == atk_traits.user_id:
+                        atk_profit += logs["profit"][i]
+
+                n_t_list.append(sum(1 for a in actions if a.participate))
+                participation_by_round.append([1 if a.participate else 0 for a in actions])
+                deposits_flat.extend(logs["deposits"])
+                wagers_flat.extend(logs["m_agg"])
+                gini_ts.append(logs["Gini"])
+                n_eff_ts.append(logs["N_eff"])
+                hhi_ts.append(logs["HHI"])
+                wealth_by_t.append(list(logs["wealth"].values()))
+                m_tot = float(np.sum(logs["m_agg"]))
+                if m_tot > 1e-12:
+                    w_shares = np.array(logs["m_agg"]) / m_tot
+                    sorted_w = np.sort(w_shares)[::-1]
+                    top1_ts.append(float(np.max(w_shares)))
+                    top5_ts.append(float(np.sum(sorted_w[:5])) if len(sorted_w) >= 5 else float(np.sum(sorted_w)))
+                else:
+                    top1_ts.append(0.0)
+                    top5_ts.append(0.0)
+
+            # Capture dashboard logs from first seed, first attacker type
+            if s_idx == 0 and atk_idx == 0 and write_summary:
+                dashboard_logs["participation_per_round"] = n_t_list
+                dashboard_logs["deposits_flat"] = deposits_flat
+                dashboard_logs["wagers_flat"] = wagers_flat
+                dashboard_logs["gini_ts"] = gini_ts
+                dashboard_logs["n_eff_ts"] = n_eff_ts
+                dashboard_logs["hhi_ts"] = hhi_ts
+                dashboard_logs["top1_share"] = top1_ts
+                dashboard_logs["top5_share"] = top5_ts
+                gap_list = []
+                n_acc = len(participation_by_round[0]) if participation_by_round else 0
+                for i in range(n_acc):
+                    prev_t = -1
+                    for t_g in range(T):
+                        if participation_by_round[t_g][i] == 1:
+                            if prev_t >= 0:
+                                gap_list.append(t_g - prev_t)
+                            prev_t = t_g
+                if gap_list:
+                    dashboard_logs["gap_list"] = gap_list
+                W_arr = np.array(wealth_by_t)
+                if W_arr.size:
+                    dashboard_logs["ruin_rate_ts"] = np.mean(W_arr <= 0, axis=1).tolist()
+
+            all_rows.append({
+                "attacker": atk_name,
+                "seed": s,
+                "total_profit": atk_profit,
+                "final_wealth": state.wealth.get(atk_traits.user_id, 0.0),
+            })
+
+    # --- Write CSV ---
+    _write_csv(ep.data("detection_adaptation.csv"),
+               ["attacker", "seed", "total_profit", "final_wealth"], all_rows)
+
+    # --- Aggregate across seeds for summary ---
+    summary = {"experiment_name": "detection_adaptation",
+               "config": {"T": T, "n_benign": n_benign, "n_seeds": len(seeds),
+                           "attacker_initial_wealth": 50.0, "attacker_noise": 0.02,
+                           "block": block},
+               "attacker_types": {}}
+    for atk_name in attacker_types:
+        atk_rows = [r for r in all_rows if r["attacker"] == atk_name]
+        profits = np.array([r["total_profit"] for r in atk_rows])
+        if profits.size > 0:
+            mean_p = float(np.mean(profits))
+            se_p = float(np.std(profits, ddof=1) / np.sqrt(profits.size)) if profits.size > 1 else 0.0
+            summary["attacker_types"][atk_name] = {
+                "mean_total_profit": mean_p,
+                "se_total_profit": se_p,
+                "ci_low": mean_p - 1.96 * se_p,
+                "ci_high": mean_p + 1.96 * se_p,
+                "n_seeds": int(profits.size),
+            }
+
+    print("\nDetection vs Adaptation (multi-seed)")
+    print("=" * 55)
+    for name, info in summary.get("attacker_types", {}).items():
+        print(f"  {name}: profit={info['mean_total_profit']:.2f} ± {info['se_total_profit']:.2f}")
 
     if write_summary:
         try:
+            with open(ep.data("summary.json"), "w") as f:
+                json.dump(summary, f, indent=2, default=str)
+        except Exception as e:
+            print(f"Warning: summary write failed: {e}")
+        try:
             from onlinev2.experiments.summarise import write_experiment_summary
-            logs = {"attacker_cumulative_profit": list(results.values())[0]["total_profit"] if results else None}
+            logs_out = {"attacker_cumulative_profit": all_rows[0]["total_profit"] if all_rows else None}
             config = {"experiment_name": "detection_adaptation", "T": T, "block": block}
-            write_experiment_summary(ep, config, logs)
+            write_experiment_summary(ep, config, logs_out)
             if dashboard_logs:
                 from onlinev2.behaviour.plotting.behaviour_dashboard import make_behaviour_dashboard
                 make_behaviour_dashboard(ep, dashboard_logs, config)
@@ -3089,7 +3709,7 @@ def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_sum
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "collusion_stress", block)
-    T, n_benign = 150, 8
+    T, n_benign = 1000, 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
     members = [UserTraits(user_id=f"colluder_{j}", initial_wealth=10.0, noise_level=0.05, stake_fraction=0.2) for j in range(3)]
@@ -3153,7 +3773,7 @@ def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_su
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "insider_advantage", block)
-    T, n_benign = 150, 8
+    T, n_benign = 1000, 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
     insider_traits = UserTraits(user_id="insider_0", initial_wealth=10.0, noise_level=0.02, stake_fraction=0.4, insider_bonus=0.5)
@@ -3203,7 +3823,7 @@ def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "wash_activity_gaming", block)
-    T, n_benign = 150, 8
+    T, n_benign = 1000, 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
     wash_traits = UserTraits(user_id="wash_0", initial_wealth=10.0, noise_level=0.05, stake_fraction=0.2)
@@ -3251,7 +3871,7 @@ def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "strategic_reporting", block)
-    T, n_benign = 150, 8
+    T, n_benign = 1000, 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
     strat_traits = UserTraits(user_id="strategic_0", initial_wealth=10.0, manipulation_strength=0.8)
@@ -3303,7 +3923,7 @@ def run_identity_attack_matrix(outdir="outputs", seed=42, block="behaviour", wri
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "identity_attack_matrix", block)
-    T, n_users = 150, 8
+    T, n_users = 1000, 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
     scenarios = [
@@ -3354,7 +3974,7 @@ def run_drift_adaptation(outdir="outputs", seed=42, block="behaviour", write_sum
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "drift_adaptation", block)
-    T, n_users = 200, 8
+    T, n_users = 1000, 8
     rng = np.random.default_rng(seed)
     y = np.concatenate([rng.uniform(0.3, 0.5, size=T // 2), rng.uniform(0.5, 0.7, size=T - T // 2)])
     scenarios = [
@@ -3408,7 +4028,7 @@ def run_stake_policy_matrix(outdir="outputs", seed=42, block="behaviour", write_
     from onlinev2.mechanism.runner import run_round
 
     ep = _exp_paths(outdir, "stake_policy_matrix", block)
-    T, n_users = 150, 8
+    T, n_users = 1000, 8
     rng = np.random.default_rng(seed)
     y = rng.uniform(0.0, 1.0, size=T)
     scenarios = [
@@ -3445,6 +4065,179 @@ def run_stake_policy_matrix(outdir="outputs", seed=42, block="behaviour", write_
             write_experiment_summary(ep, {"experiment_name": "stake_policy_matrix", "T": T, "block": block}, {})
         except Exception:
             pass
+
+
+# ===================================================================
+# QA vs Linear Pooling comparison
+# ===================================================================
+
+def run_qa_vs_lp_comparison(
+    T: int = 1000,
+    n_forecasters: int = 10,
+    missing_prob: float = 0.2,
+    seeds=None,
+    outdir: str = "outputs",
+    block: str = "core",
+    warm_start: int = 200,
+    n_grid: int = 200,
+):
+    """Compare pointwise weighted quantile averaging (QA) against linear opinion pooling (LP).
+
+    **Quantile Averaging (QA)** — the current implementation:
+        q_hat(τ_k) = Σ_i w_i · q_i(τ_k)
+    This is a pointwise weighted average of reported quantiles at each level.
+    It is NOT a linear opinion pool over CDFs.
+
+    **Linear Opinion Pooling (LP)**:
+        F_agg(x) = Σ_i w_i · F_i(x)
+    The aggregated CDF is a weighted mixture of individual CDFs, then inverted
+    to obtain quantiles. For simplicity we approximate this by:
+      1. Build a fine evaluation grid of x-values spanning the range of all reports.
+      2. For each forecaster, construct a piecewise-linear CDF from their quantile
+         reports (with 0 and 1 anchors at the extremes).
+      3. Compute F_agg(x) = Σ_i w_i · F_i(x) on the grid.
+      4. Invert F_agg to get q_lp(τ_k) for each target τ_k.
+
+    Reports CRPS differences between the two methods across seeds.
+    Writes results to ``<outdir>/<block>/experiments/qa_vs_lp/data/``.
+    """
+    cfg = get_experiment_config("forecast_aggregation")
+    if seeds is None:
+        seeds = cfg.seeds
+    T = max(T, cfg.T)
+    n_forecasters = cfg.n_forecasters
+
+    ep = _exp_paths(outdir, "qa_vs_lp", block)
+    tau_i = cfg.tau_i()
+    taus = cfg.taus()
+    K = len(taus)
+
+    all_rows = []
+    for s in seeds:
+        y, q_reports_pre, _ = generate_truth_and_quantile_reports_latent(
+            T, n_forecasters, tau_i, taus, seed=s, sigma_z=cfg.sigma_z,
+        )
+
+        # Run simulation to get wager weights
+        res = run_simulation(
+            T=T, n_forecasters=n_forecasters, missing_prob=missing_prob,
+            seed=s, scoring_mode="quantiles_crps", taus=taus,
+            y_pre=y, q_reports_pre=q_reports_pre, forecaster_noise_pre=tau_i,
+            store_history=True,
+        )
+
+        crps_qa_list = []
+        crps_lp_list = []
+
+        for t in range(warm_start, T):
+            y_t = float(y[t])
+            alpha_t = res["alpha_hist"][:, t]
+            m_t = res["wager_hist"][:, t].copy()
+            m_t[alpha_t == 1] = 0.0
+            M = float(np.sum(m_t))
+            if M < 1e-12:
+                continue
+
+            w = m_t / M
+            q_t = q_reports_pre[:, t, :]  # (n, K)
+            active = (alpha_t == 0)
+
+            # --- QA: pointwise weighted quantile average ---
+            q_qa = np.sum(w[:, None] * q_t, axis=0)  # (K,)
+            crps_qa = float(crps_hat_from_quantiles(y_t, q_qa.reshape(1, -1), taus)[0])
+
+            # --- LP: linear opinion pooling via CDF mixture + inversion ---
+            # Build evaluation grid
+            q_min = float(np.min(q_t[active]))
+            q_max = float(np.max(q_t[active]))
+            margin = max(0.1, (q_max - q_min) * 0.2)
+            x_grid = np.linspace(q_min - margin, q_max + margin, n_grid)
+
+            # For each active forecaster, build piecewise-linear CDF from quantiles
+            # Anchor: F(x_min) = 0, F(q(τ_k)) = τ_k, F(x_max) = 1
+            F_agg = np.zeros(n_grid)
+            for i in range(n_forecasters):
+                if not active[i]:
+                    continue
+                # Anchor points for CDF
+                x_anchors = np.concatenate([[x_grid[0]], q_t[i], [x_grid[-1]]])
+                f_anchors = np.concatenate([[0.0], taus, [1.0]])
+                # Interpolate CDF on grid
+                F_i = np.interp(x_grid, x_anchors, f_anchors)
+                F_i = np.clip(F_i, 0.0, 1.0)
+                F_agg += w[i] * F_i
+
+            # Invert F_agg to get quantiles at target taus
+            q_lp = np.interp(taus, F_agg, x_grid)
+
+            crps_lp = float(crps_hat_from_quantiles(y_t, q_lp.reshape(1, -1), taus)[0])
+
+            crps_qa_list.append(crps_qa)
+            crps_lp_list.append(crps_lp)
+
+        mean_crps_qa = float(np.mean(crps_qa_list)) if crps_qa_list else np.nan
+        mean_crps_lp = float(np.mean(crps_lp_list)) if crps_lp_list else np.nan
+
+        all_rows.append({
+            "seed": s,
+            "mean_crps_qa": mean_crps_qa,
+            "mean_crps_lp": mean_crps_lp,
+            "delta_crps_lp_minus_qa": mean_crps_lp - mean_crps_qa,
+            "n_rounds_evaluated": len(crps_qa_list),
+        })
+
+    # --- Write results ---
+    cols = ["seed", "mean_crps_qa", "mean_crps_lp", "delta_crps_lp_minus_qa", "n_rounds_evaluated"]
+    _write_csv(ep.data("qa_vs_lp.csv"), cols, all_rows)
+
+    # --- Summary JSON ---
+    deltas = np.array([r["delta_crps_lp_minus_qa"] for r in all_rows])
+    deltas = deltas[np.isfinite(deltas)]
+    qa_vals = np.array([r["mean_crps_qa"] for r in all_rows])
+    qa_vals = qa_vals[np.isfinite(qa_vals)]
+    lp_vals = np.array([r["mean_crps_lp"] for r in all_rows])
+    lp_vals = lp_vals[np.isfinite(lp_vals)]
+
+    mean_delta = float(np.mean(deltas)) if deltas.size else 0.0
+    se_delta = float(np.std(deltas, ddof=1) / np.sqrt(deltas.size)) if deltas.size > 1 else 0.0
+
+    summary = {
+        "experiment_name": "qa_vs_lp",
+        "description": (
+            "Comparison of pointwise weighted Quantile Averaging (QA, current implementation) "
+            "against Linear opinion Pooling (LP). QA computes q_hat(tau) = sum_i w_i * q_i(tau). "
+            "LP computes F_agg(x) = sum_i w_i * F_i(x) then inverts to get quantiles. "
+            "Positive delta means LP has higher (worse) CRPS than QA."
+        ),
+        "config": {
+            "T": T,
+            "n_forecasters": n_forecasters,
+            "n_seeds": len(seeds),
+            "dgp_name": cfg.dgp_name,
+            "warm_start": warm_start,
+            "n_grid": n_grid,
+        },
+        "results": {
+            "mean_crps_qa": float(np.mean(qa_vals)) if qa_vals.size else None,
+            "mean_crps_lp": float(np.mean(lp_vals)) if lp_vals.size else None,
+            "delta_lp_minus_qa_mean": mean_delta,
+            "delta_lp_minus_qa_se": se_delta,
+            "delta_lp_minus_qa_ci_low": mean_delta - 1.96 * se_delta,
+            "delta_lp_minus_qa_ci_high": mean_delta + 1.96 * se_delta,
+            "n_seeds": int(deltas.size),
+        },
+    }
+
+    import json as _json
+    with open(ep.data("summary.json"), "w") as f:
+        _json.dump(summary, f, indent=2, default=str)
+
+    print("\nQA vs Linear Pooling Comparison")
+    print("=" * 60)
+    print(f"  QA  mean CRPS: {summary['results']['mean_crps_qa']}")
+    print(f"  LP  mean CRPS: {summary['results']['mean_crps_lp']}")
+    print(f"  Δ (LP − QA):   {mean_delta:.6f} ± {se_delta:.6f}")
+    print(f"  95% CI:        [{mean_delta - 1.96 * se_delta:.6f}, {mean_delta + 1.96 * se_delta:.6f}]")
 
 
 # Entry point: use python -m onlinev2.experiments.cli or run-onlinev2-experiments

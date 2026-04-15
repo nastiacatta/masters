@@ -15,10 +15,14 @@ export const SEM = {
 } as const;
 
 export const METHOD = {
-  equal:      { color: '#94a3b8', label: 'Equal weight',    id: 'uniform'      as const },
-  skill_only: { color: '#8b5cf6', label: 'Skill-only',      id: 'skill_only'   as const },
-  blended:    { color: '#6366f1', label: 'Skill × stake',   id: 'skill_stake'  as const },
-  stake_only: { color: '#0d9488', label: 'Stake-only',      id: 'deposit_only' as const },
+  equal:      { color: '#64748b', label: 'Equal weight',  id: 'uniform'      as const, dash: undefined,   strokeWidth: 2 },
+  skill_only: { color: '#f97316', label: 'Skill-only',    id: 'skill_only'   as const, dash: '6 3',       strokeWidth: 2 },
+  blended:    { color: '#6366f1', label: 'Skill × stake', id: 'skill_stake'  as const, dash: undefined,   strokeWidth: 3 },
+  stake_only: { color: '#0d9488', label: 'Stake-only',    id: 'deposit_only' as const, dash: '2 3',       strokeWidth: 2 },
+} as const;
+
+export const METHOD_EXTRA = {
+  best_single: { color: '#eab308', label: 'Best single', id: 'best_single' as const, dash: '8 3 2 3', strokeWidth: 2 },
 } as const;
 
 export const GLOSSARY_ENTRIES = [

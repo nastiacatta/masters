@@ -22,6 +22,15 @@ Used only by core.runner.
 
 import numpy as np
 
+# Canonical quantile grids for CRPS approximation
+TAUS_COARSE = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+"""5-level non-equidistant grid (legacy). Adequate for quick checks."""
+
+TAUS_FINE = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+"""9-level equidistant grid. Provides better CRPS approximation quality
+because the trapezoidal rule used in CRPS_hat is exact for equidistant grids.
+Recommended for new experiments."""
+
 _DEBUG = __debug__
 
 

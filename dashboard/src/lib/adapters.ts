@@ -57,10 +57,8 @@ async function fetchJSON<T>(url: string): Promise<T> {
 const DATA_BASE = `${import.meta.env.BASE_URL}data`;
 
 function expPath(exp: Pick<ExperimentMeta, 'block' | 'name'>): string {
-  if (exp.block === 'experiments') {
-    return `${DATA_BASE}/experiments/${exp.name}`;
-  }
-  return `${DATA_BASE}/${exp.block}/experiments/${exp.name}`;
+  // All experiment data lives under experiments 2/ (canonical location)
+  return `${DATA_BASE}/experiments%202/${exp.name}`;
 }
 
 function dataFile(exp: ExperimentMeta, key: string, fallback: string): string {
@@ -429,24 +427,18 @@ export async function loadMasterComparison(): Promise<{
   config: { T: number; n_forecasters: number; seeds: number[]; warm_start?: number };
   rows: MasterComparisonRow[];
 } | null> {
-  const candidateUrls = [
-    `${DATA_BASE}/core/experiments/master_comparison/data/master_comparison.json`,
-    `${DATA_BASE}/core 2/experiments/master_comparison/data/master_comparison.json`,
-    `${DATA_BASE}/core 3/experiments/master_comparison/data/master_comparison.json`,
-  ];
+  const url = `${expPath({ block: 'core', name: 'master_comparison' })}/data/master_comparison.json`;
 
-  for (const url of candidateUrls) {
-    try {
-      const raw = await fetchJSON<{ config: unknown; rows: MasterComparisonRow[] }>(url);
-      if (raw?.rows?.length) {
-        return {
-          config: raw.config as { T: number; n_forecasters: number; seeds: number[]; warm_start?: number },
-          rows: raw.rows,
-        };
-      }
-    } catch {
-      // Try next candidate path.
+  try {
+    const raw = await fetchJSON<{ config: unknown; rows: MasterComparisonRow[] }>(url);
+    if (raw?.rows?.length) {
+      return {
+        config: raw.config as { T: number; n_forecasters: number; seeds: number[]; warm_start?: number },
+        rows: raw.rows,
+      };
     }
+  } catch {
+    // Data not available.
   }
 
   return null;
@@ -454,11 +446,15 @@ export async function loadMasterComparison(): Promise<{
 
 /** Load bankroll ablation (Full vs A-, B-, C-, D-, E-). */
 export async function loadBankrollAblation(): Promise<{ config: unknown; rows: BankrollAblationRow[] } | null> {
-  const raw = await fetchJSON<{ experiment_name: string; config: unknown; rows: BankrollAblationRow[] }>(
-    `${DATA_BASE}/core/experiments/bankroll_ablation/data/summary.json`,
-  );
-  if (!raw?.rows?.length) return null;
-  return { config: raw.config, rows: raw.rows };
+  try {
+    const raw = await fetchJSON<{ experiment_name: string; config: unknown; rows: BankrollAblationRow[] }>(
+      `${expPath({ block: 'core', name: 'bankroll_ablation' })}/data/summary.json`,
+    );
+    if (!raw?.rows?.length) return null;
+    return { config: raw.config, rows: raw.rows };
+  } catch {
+    return null;
+  }
 }
 
 /** Real-data comparison result (e.g., Elia wind). */

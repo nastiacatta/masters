@@ -9,6 +9,13 @@ import MechanismImprovementSlide from '../components/slides/comparison/Mechanism
 import BestSingleAnomalySlide from '../components/slides/comparison/BestSingleAnomalySlide';
 import TheoryValidationSlide from '../components/slides/comparison/TheoryValidationSlide';
 import WindExtendedSlide from '../components/slides/comparison/WindExtendedSlide';
+import {
+  BehaviourArchitectureSlide,
+  BehaviourMethodologySlide,
+  BehaviourGlossarySlide,
+  BehaviourThreatSlide,
+  BehaviourInsightsSlide,
+} from '../components/slides/BehaviourSlide';
 import KeyFindingsSlide from '../components/slides/KeyFindingsSlide';
 
 /* ── Slide index definition ─────────────────────────────────── */
@@ -34,6 +41,11 @@ const SLIDE_INDEX: SlideEntry[] = [
   { id: 'best-single-anomaly', label: 'Best-Single Anomaly', group: 'DGP Comparison' },
   { id: 'theory-validation', label: 'Theory Validation', group: 'DGP Comparison' },
   { id: 'wind-extended', label: 'Wind Extended', group: 'DGP Comparison' },
+  { id: 'behaviour-architecture', label: 'Architecture', group: 'Behaviour Analysis' },
+  { id: 'behaviour-methodology', label: 'Methodology', group: 'Behaviour Analysis' },
+  { id: 'behaviour-glossary', label: 'Preset Definitions', group: 'Behaviour Analysis' },
+  { id: 'behaviour-threats', label: 'Threat Classification', group: 'Behaviour Analysis' },
+  { id: 'behaviour-insights', label: 'Insights & Verdict', group: 'Behaviour Analysis' },
   { id: 'key-findings', label: 'Key Findings', group: 'Conclusion' },
 ];
 
@@ -174,6 +186,11 @@ export default function SlidesPage() {
           <div ref={refFor()} id="best-single-anomaly"><BestSingleAnomalySlide /></div>
           <div ref={refFor()} id="theory-validation"><TheoryValidationSlide /></div>
           <div ref={refFor()} id="wind-extended"><WindExtendedSlide /></div>
+          <div ref={refFor()} id="behaviour-architecture"><BehaviourArchitectureSlide /></div>
+          <div ref={refFor()} id="behaviour-methodology"><BehaviourMethodologySlide /></div>
+          <div ref={refFor()} id="behaviour-glossary"><BehaviourGlossarySlide /></div>
+          <div ref={refFor()} id="behaviour-threats"><BehaviourThreatSlide /></div>
+          <div ref={refFor()} id="behaviour-insights"><BehaviourInsightsSlide /></div>
           <div ref={refFor()} id="key-findings"><KeyFindingsSlide /></div>
         </div>
       </div>
