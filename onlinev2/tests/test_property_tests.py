@@ -27,7 +27,6 @@ from onlinev2.experiments.benchmark_config import (
     get_experiment_config,
 )
 
-
 # ---------------------------------------------------------------------------
 # Shared Hypothesis strategies
 # ---------------------------------------------------------------------------
@@ -399,7 +398,7 @@ class TestP8VerdictFileConsistency:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             test_seeds = [0, 1]
-            results = run_skill_recovery_benchmark_latent(
+            run_skill_recovery_benchmark_latent(
                 T=200, T0=50, seed=42, outdir=tmpdir, seeds=test_seeds,
             )
 

@@ -22,7 +22,6 @@ from onlinev2.core.michael_allocation import (
 from onlinev2.core.runner import run_round
 from onlinev2.core.types import MechanismParams, MechanismState, RoundInput
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -338,8 +337,6 @@ class TestMichaelRajaEquivalence:
 
     def test_delta_zero_uses_only_oos(self):
         """With delta_is=0, the IS component contributes nothing."""
-        n = 4
-        alpha = np.zeros(n, dtype=int)
         r_is = np.array([0.4, 0.3, 0.2, 0.1])
         r_oos = np.array([0.25, 0.25, 0.25, 0.25])
         U_tau = 10.0
