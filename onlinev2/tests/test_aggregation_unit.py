@@ -11,7 +11,6 @@ import pytest
 
 from onlinev2.core.aggregation import aggregate_forecast
 
-
 # ---------------------------------------------------------------------------
 # Weighted mean correctness
 # ---------------------------------------------------------------------------
