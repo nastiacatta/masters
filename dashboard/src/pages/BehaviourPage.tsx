@@ -24,6 +24,8 @@ import { TAXONOMY_ITEMS } from '@/lib/behaviour/taxonomyData';
 import { PRESET_CONFIGS } from '@/lib/behaviour/presetMeta';
 import { useMechanismMetrics } from '@/hooks/useMechanismMetrics';
 import type { BehaviourFamily, BehaviourPresetId } from '@/lib/behaviour/hiddenAttributes';
+import { FigureProvider } from '@/contexts/FigureContext';
+import { EquationProvider } from '@/contexts/EquationContext';
 
 const SEED = 42;
 const N = 6;
@@ -110,7 +112,7 @@ function SmartTooltip({ active, payload, label }: {
 function Metric({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
       <div className="text-lg font-bold font-mono text-slate-800 mt-1">{value}</div>
       {sub && <div className="text-[11px] text-slate-400 mt-0.5">{sub}</div>}
     </div>
@@ -125,7 +127,7 @@ const VBG: Record<Verdict, string> = { good: 'bg-emerald-50', neutral: 'bg-amber
 function VerdictCard({ question, answer, detail, verdict }: { question: string; answer: string; detail: string; verdict: Verdict }) {
   return (
     <div className={`rounded-xl border border-slate-200 border-l-4 ${VB[verdict]} ${VBG[verdict]} p-4`}>
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{question}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{question}</div>
       <div className={`text-xl font-bold font-mono mt-1 ${VT[verdict]}`}>{answer}</div>
       <div className="text-xs text-slate-500 mt-1">{detail}</div>
     </div>
@@ -238,12 +240,11 @@ export default function BehaviourPage() {
   }, [behaviourSummary]);
 
   return (
+    <FigureProvider>
+    <EquationProvider>
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
         <header>
-          <div className="inline-block px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-[11px] font-semibold tracking-wide mb-4">
-            Behaviour &amp; Robustness
-          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Behaviour &amp; Robustness</h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl">
             The core mechanism is a pure state machine: it sees deposits, reports, and participation — never motives.
@@ -285,11 +286,10 @@ export default function BehaviourPage() {
         </AnimatePresence>
       </div>
     </div>
+    </EquationProvider>
+    </FigureProvider>
   );
 }
-
-
-// PlaceholderTab removed — all tabs now have experiment-backed content
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -358,7 +358,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
     presets: Array<{ label: string; delta: string; interpretation: string }>;
   }> = [
     {
-      tier: 'CRITICAL', emoji: '🔴', borderColor: 'border-l-red-500', bgColor: 'bg-red-50', textColor: 'text-red-700', labelColor: 'text-red-800',
+      tier: 'CRITICAL', emoji: '', borderColor: 'border-l-red-500', bgColor: 'bg-red-50', textColor: 'text-red-700', labelColor: 'text-red-800',
       rule: 'Δ > 10%',
       presets: [
         { label: 'Bursty', delta: '+934%', interpretation: 'Participation collapse at 54% attendance dominates all other effects' },
@@ -372,7 +372,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       ],
     },
     {
-      tier: 'MODERATE', emoji: '🟠', borderColor: 'border-l-orange-400', bgColor: 'bg-orange-50', textColor: 'text-orange-700', labelColor: 'text-orange-800',
+      tier: 'MODERATE', emoji: '', borderColor: 'border-l-orange-400', bgColor: 'bg-orange-50', textColor: 'text-orange-700', labelColor: 'text-orange-800',
       rule: '2–10%',
       presets: [
         { label: 'Collusion', delta: '+8%', interpretation: 'Coordinated agents amplify impact beyond individual attacks' },
@@ -380,7 +380,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       ],
     },
     {
-      tier: 'MILD', emoji: '🟡', borderColor: 'border-l-yellow-400', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', labelColor: 'text-yellow-800',
+      tier: 'MILD', emoji: '', borderColor: 'border-l-yellow-400', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', labelColor: 'text-yellow-800',
       rule: '0.5–2%',
       presets: [
         { label: 'Rep. reset', delta: '+1.3%', interpretation: 'Build-then-exploit strategy detected within ~20 rounds by EWMA' },
@@ -389,7 +389,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       ],
     },
     {
-      tier: 'NEGLIGIBLE', emoji: '⚪', borderColor: 'border-l-slate-300', bgColor: 'bg-slate-50', textColor: 'text-slate-600', labelColor: 'text-slate-700',
+      tier: 'NEGLIGIBLE', emoji: '', borderColor: 'border-l-slate-300', bgColor: 'bg-slate-50', textColor: 'text-slate-600', labelColor: 'text-slate-700',
       rule: '|Δ| ≤ 0.5%',
       presets: [
         { label: 'Budget', delta: '+0.5%', interpretation: 'Finite wealth causes no ruin in 300 rounds; pool compensates' },
@@ -398,7 +398,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       ],
     },
     {
-      tier: 'BENEFICIAL', emoji: '🟢', borderColor: 'border-l-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', labelColor: 'text-emerald-800',
+      tier: 'BENEFICIAL', emoji: '', borderColor: 'border-l-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', labelColor: 'text-emerald-800',
       rule: 'Δ < -0.5%',
       presets: [
         { label: 'House-money', delta: '-1.1%', interpretation: 'Winners get more influence — aligns incentives with accuracy' },
@@ -468,7 +468,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
 
       {/* ── Thesis verdict ──────────────────────────────────────────── */}
       <div className="rounded-xl border-2 border-slate-300 bg-white p-5 shadow-sm">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Thesis verdict</div>
+        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Thesis verdict</div>
         <p className="text-sm text-slate-800 leading-relaxed">
           The mechanism is partially robust to strategic behaviour. Point-forecast attacks (manipulation,
           evasion, reputation reset) are well-contained by the skill gate — the EWMA detects misreporting
@@ -489,9 +489,8 @@ function OverviewTab({ summary, familyImpact, setTab }: {
           {THREAT_TIERS.map(tier => (
             <div key={tier.tier} className={`rounded-xl border border-slate-200 border-l-4 ${tier.borderColor} ${tier.bgColor} p-4`}>
               <div className="flex items-center gap-2 mb-2">
-                <span>{tier.emoji}</span>
                 <span className={`text-xs font-bold uppercase tracking-wider ${tier.labelColor}`}>{tier.tier}</span>
-                <span className="text-[10px] text-slate-400 ml-1">({tier.rule})</span>
+                <span className="text-[11px] text-slate-400 ml-1">({tier.rule})</span>
               </div>
               <div className="space-y-1">
                 {tier.presets.map(p => (
@@ -628,7 +627,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[skillZoom.state.left, skillZoom.state.right]} />
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
                 <Tooltip content={<SmartTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 9 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
                 {Array.from({ length: N }, (_, i) => (
                   <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                     stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
@@ -944,7 +943,7 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={attacks} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
               <CartesianGrid {...GRID_PROPS} />
-              <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} angle={-20} textAnchor="end" />
+              <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} angle={-20} textAnchor="end" />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
               <Bar dataKey="error" name="Mean CRPS" radius={[4, 4, 0, 0]} maxBarSize={36}>
@@ -969,7 +968,7 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
                   label={{ value: 'σ (F1)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                 <Tooltip content={<SmartTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 9 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Line type="monotone" dataKey="honest" name="Honest" stroke="#94a3b8" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="manipulator" name="Manipulator" stroke="#ef4444" strokeWidth={1.5} dot={false} />
                 <Line type="monotone" dataKey="rep_reset" name="Rep. reset" stroke="#dc2626" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
@@ -1406,7 +1405,7 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={depositPolicies} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} angle={-15} textAnchor="end" />
+            <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} angle={-15} textAnchor="end" />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
             <Tooltip content={<SmartTooltip />} />
             <Bar dataKey="crps" name="Mean CRPS" radius={[4, 4, 0, 0]} maxBarSize={36}>
@@ -1583,7 +1582,7 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
                 label={{ value: 'σ (agent 0)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="4 3" label={{ value: 'Attack onset', position: 'top', fontSize: 10, fill: '#ef4444' }} />
+              <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="4 3" label={{ value: 'Attack onset', position: 'top', fontSize: 11, fill: '#ef4444' }} />
               <Line type="monotone" dataKey="baseline" name="Honest baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="rep_reset" name="Rep. reset attacker" stroke="#dc2626" strokeWidth={2} dot={false} />
               {sigZoom.state.refLeft && sigZoom.state.refRight && (
@@ -1797,7 +1796,7 @@ function SensitivityTab({ data }: { data: { lam: number; sig: number; error: num
             <div key={s.season} className="rounded-xl border border-slate-200 bg-white p-4 text-center">
               <div className="text-xs text-slate-400 font-medium">{s.season}</div>
               <div className="text-2xl font-bold font-mono mt-1" style={{ color: s.color }}>+{s.pct}%</div>
-              <div className="text-[10px] text-slate-400 mt-1">vs equal weighting</div>
+              <div className="text-[11px] text-slate-400 mt-1">vs equal weighting</div>
             </div>
           ))}
         </div>

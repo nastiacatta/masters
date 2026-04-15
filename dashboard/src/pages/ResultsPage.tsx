@@ -57,6 +57,8 @@ import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundC
 import Breadcrumb from '@/components/dashboard/Breadcrumb';
 import MathBlock from '@/components/dashboard/MathBlock';
 import Skeleton from '@/components/dashboard/Skeleton';
+import { FigureProvider } from '@/contexts/FigureContext';
+import { EquationProvider } from '@/contexts/EquationContext';
 
 const DEMO_SEED = 42;
 const DEMO_N = 6;
@@ -205,14 +207,14 @@ const EXPERIMENT_DESCRIPTIONS = [
 ];
 
 function ExperimentGuide() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   return (
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
       <button type="button" onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50 transition-colors">
         <div>
           <span className="text-xs font-semibold text-slate-700">Experiment guide</span>
-          <span className="text-[10px] text-slate-400 ml-2">7 experiments explained</span>
+          <span className="text-[11px] text-slate-400 ml-2">7 experiments explained</span>
         </div>
         <span className={`text-slate-400 text-sm transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
@@ -221,21 +223,21 @@ function ExperimentGuide() {
           {EXPERIMENT_DESCRIPTIONS.map((exp, i) => (
             <div key={i} className="rounded-lg border border-slate-100 p-3 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-white bg-slate-500 rounded-full w-5 h-5 flex items-center justify-center shrink-0">{i + 1}</span>
+                <span className="text-[11px] font-bold text-white bg-slate-500 rounded-full w-5 h-5 flex items-center justify-center shrink-0">{i + 1}</span>
                 <span className="text-xs font-semibold text-slate-700">{exp.title}</span>
-                <span className="text-[10px] text-slate-400 ml-auto">{exp.tab}</span>
+                <span className="text-[11px] text-slate-400 ml-auto">{exp.tab}</span>
               </div>
               <div className="grid sm:grid-cols-3 gap-2 text-[11px]">
                 <div>
-                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Setup</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Setup</div>
                   <p className="text-slate-600 leading-relaxed">{exp.setup}</p>
                 </div>
                 <div>
-                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What's compared</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What's compared</div>
                   <p className="text-slate-600 leading-relaxed">{exp.compared}</p>
                 </div>
                 <div>
-                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What to look for</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What to look for</div>
                   <p className="text-slate-600 leading-relaxed">{exp.lookFor}</p>
                 </div>
               </div>
@@ -321,9 +323,9 @@ function DepositSensitivityPanel() {
           const entry = data.deposit_sensitivity[p];
           return (
             <div key={p} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-              <div className="text-[10px] font-semibold text-slate-700">{policyLabels[p]}</div>
+              <div className="text-[11px] font-semibold text-slate-700">{policyLabels[p]}</div>
               <div className="text-lg font-bold font-mono text-indigo-600">−{entry.pct_mech.toFixed(0)}%</div>
-              <div className="text-[10px] text-slate-500">CRPS improvement vs equal</div>
+              <div className="text-[11px] text-slate-500">CRPS improvement vs equal</div>
             </div>
           );
         })}
@@ -614,14 +616,13 @@ export default function ResultsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
+      <FigureProvider>
+      <EquationProvider>
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
         <Breadcrumb activeTab={activeTab} />
 
         {/* ── Header ── */}
         <header>
-          <div className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-semibold tracking-wide mb-4">
-            {realData ? 'Real data' : useExp ? 'Synthetic' : 'Demo'}
-          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Results</h1>
           <p className="text-sm text-slate-500 mt-1">
             {useExp
@@ -696,7 +697,7 @@ export default function ResultsPage() {
             <div className="space-y-6">
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-semibold">Real data</span>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-semibold">Real data</span>
                   <h3 className="text-sm font-semibold text-indigo-900">Elia Offshore Wind — {realData.config.T.toLocaleString()} hourly points</h3>
                 </div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
@@ -778,7 +779,7 @@ export default function ResultsPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-semibold text-emerald-700">LMS direct regression</span>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-semibold">T = 15,000</span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold">T = 15,000</span>
                         </div>
                         <p className="text-[11px] text-slate-500">
                           Directly minimises (y − w·r)² via gradient descent. Sees the outcome and all reports,
@@ -799,12 +800,12 @@ export default function ResultsPage() {
                           <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
                           <Tooltip contentStyle={TOOLTIP_STYLE as React.CSSProperties}
                             formatter={(v: unknown) => [fmt(Number(v), 4), '']} />
-                          <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
                           <Bar dataKey="target" name="True w" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28} opacity={0.5} />
                           <Bar dataKey="learned" name="LMS learned" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} opacity={0.9} />
                         </BarChart>
                       </ResponsiveContainer>
-                      <p className="text-[10px] text-slate-500">
+                      <p className="text-[11px] text-slate-500">
                         MAE = {fmt(weightRecovery.reduce((s, r) => s + r.absError, 0) / weightRecovery.length, 4)}.
                         The LMS recovers the true weights almost exactly because it directly optimises for them.
                       </p>
@@ -816,7 +817,7 @@ export default function ResultsPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-semibold text-indigo-700">Core mechanism (EWMA skill gate)</span>
-                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-semibold">T = 500</span>
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold">T = 500</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mb-1">
                         3 agents with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
@@ -835,13 +836,13 @@ export default function ResultsPage() {
                     <div className="grid grid-cols-2 gap-3">
                       {/* σ trajectory */}
                       <div>
-                        <div className="text-[10px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
                         <ResponsiveContainer width="100%" height={180}>
                           <LineChart data={skillConvergence} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
                             <CartesianGrid {...GRID_PROPS} />
-                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} />
-                            <YAxis tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} domain={[0, 1]}
-                              label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 10, fill: '#64748b' }} />
+                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} domain={[0, 1]}
+                              label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             {Array.from({ length: CONV_N }, (_, i) => (
                               <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
@@ -854,17 +855,17 @@ export default function ResultsPage() {
                             ))}
                           </LineChart>
                         </ResponsiveContainer>
-                        <p className="text-[9px] text-slate-400">Good → high σ, Bad → low σ. Dashed = steady state.</p>
+                        <p className="text-[11px] text-slate-400">Good → high σ, Bad → low σ. Dashed = steady state.</p>
                       </div>
                       {/* Weight trajectory */}
                       <div>
-                        <div className="text-[10px] font-semibold text-slate-600 mb-1">Normalised weight</div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Normalised weight</div>
                         <ResponsiveContainer width="100%" height={180}>
                           <LineChart data={weightConvergence} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
                             <CartesianGrid {...GRID_PROPS} />
-                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} />
-                            <YAxis tick={{ ...AXIS_TICK, fontSize: 9 }} stroke={AXIS_STROKE} domain={[0.2, 0.5]}
-                              label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 10, fill: '#64748b' }} />
+                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} domain={[0.2, 0.5]}
+                              label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             {Array.from({ length: CONV_N }, (_, i) => (
                               <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
@@ -878,7 +879,7 @@ export default function ResultsPage() {
                             <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                           </LineChart>
                         </ResponsiveContainer>
-                        <p className="text-[9px] text-slate-400">Weights start at 1/3, diverge via g(σ). Dashed = steady state.</p>
+                        <p className="text-[11px] text-slate-400">Weights start at 1/3, diverge via g(σ). Dashed = steady state.</p>
                       </div>
                     </div>
                   </div>
@@ -916,7 +917,7 @@ export default function ResultsPage() {
             <div className="space-y-6 mt-8">
               <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-semibold">Dataset 2</span>
+                  <span className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-[11px] font-semibold">Dataset 2</span>
                   <h3 className="text-sm font-semibold text-teal-900">Elia Imbalance Prices — {realDataElec.config.T.toLocaleString()} points</h3>
                 </div>
                 <p className="text-xs text-teal-700 leading-relaxed">
@@ -1043,7 +1044,7 @@ export default function ResultsPage() {
                     <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
                     <YAxis dataKey="pHat" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
                     <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                     <Line type="monotone" dataKey="ideal" name="Ideal (p̂=τ)" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
                     <Line type="monotone" dataKey="pHat" name="Empirical p̂" stroke="#0d9488" strokeWidth={2} dot={false} />
                   </LineChart>
@@ -1078,7 +1079,7 @@ export default function ResultsPage() {
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
               {/* Experiment setup */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
                   {DEMO_N} synthetic agents, baseline DGP (y ~ U(0,1), reports = y + agent-specific noise), {DEMO_T} rounds, seed {DEMO_SEED}.
                   Four weighting methods run on identical data — only the influence rule changes.
@@ -1139,7 +1140,7 @@ export default function ResultsPage() {
                       <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
                         label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                       <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
                       {Array.from({ length: CONV_N }, (_, i) => (
                         <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
                           stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
@@ -1160,7 +1161,7 @@ export default function ResultsPage() {
                       <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0.2, 0.5]}
                         label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                       <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
                       {Array.from({ length: CONV_N }, (_, i) => (
                         <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
                           stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
@@ -1175,7 +1176,7 @@ export default function ResultsPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-[11px] text-slate-500 mt-1">
                   Left: σ separates agents by forecast quality (Good → high σ, Bad → low σ).
                   Right: weights diverge from 1/3 via the skill gate g(σ) = λ + (1−λ)σ. Dashed = steady state.
                 </p>
@@ -1188,7 +1189,7 @@ export default function ResultsPage() {
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
               {/* Experiment setup */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
                   Same {DEMO_N} agents and {DEMO_T} rounds as the Accuracy tab. For each weighting method, we measure
                   final wealth Gini (how unequally wealth is distributed) and mean N_eff (how many agents have meaningful
@@ -1199,7 +1200,7 @@ export default function ResultsPage() {
                 <h3 className="text-sm font-semibold text-slate-800">Wealth concentration by method</h3>
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3 mt-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
                       <MathBlock latex="\\text{Gini} = \\frac{\\sum_{i<j} |w_i - w_j|}{n \\sum w_i}" label="Gini coefficient" caption="0 = equal, 1 = monopoly" />
@@ -1237,7 +1238,7 @@ export default function ResultsPage() {
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
               {/* Experiment setup */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
                   Same {DEMO_N} agents and {DEMO_T} rounds. All use Skill × stake influence rule — only the deposit policy changes.
                   Three deposit rules tested: Fixed (b=1), Wealth fraction (b=0.18·W), σ-scaled (b=f·W·(0.25+0.85σ)).
@@ -1256,28 +1257,28 @@ export default function ResultsPage() {
                 </BarChart>
               </ResponsiveContainer>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Deposit rules in detail</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Deposit rules in detail</div>
                 <MathBlock latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta" label="Effective wager" caption="The deposit b_i determines how much of the skill signal reaches the aggregate" />
 
                 <div className="grid sm:grid-cols-3 gap-3">
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[10px] font-semibold text-slate-700 mb-1">Fixed (b = 1)</div>
+                    <div className="text-[11px] font-semibold text-slate-700 mb-1">Fixed (b = 1)</div>
                     <MathBlock latex="b_i = 1 \\;\\; \\forall i" />
-                    <p className="text-[10px] text-slate-500 mt-1">
+                    <p className="text-[11px] text-slate-500 mt-1">
                       Isolates skill signal. Weight differences come only from σ. Fairest — no wealth feedback.
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[10px] font-semibold text-slate-700 mb-1">Wealth fraction</div>
+                    <div className="text-[11px] font-semibold text-slate-700 mb-1">Wealth fraction</div>
                     <MathBlock latex="b_i = f \\cdot W_i, \\quad f \\approx 0.18" />
-                    <p className="text-[10px] text-slate-500 mt-1">
+                    <p className="text-[11px] text-slate-500 mt-1">
                       Feedback loop: winners deposit more → more weight → more profit. Amplifies skill differences.
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[10px] font-semibold text-slate-700 mb-1">σ-scaled</div>
+                    <div className="text-[11px] font-semibold text-slate-700 mb-1">σ-scaled</div>
                     <MathBlock latex="b_i = f \\cdot W_i \\cdot (0.25 + 0.85\\,\\sigma_i)" />
-                    <p className="text-[10px] text-slate-500 mt-1">
+                    <p className="text-[11px] text-slate-500 mt-1">
                       Strongest amplification: confident agents stake more. Most accurate but highest concentration.
                     </p>
                   </div>
@@ -1298,6 +1299,8 @@ export default function ResultsPage() {
         </section>
 
       </div>
+      </EquationProvider>
+      </FigureProvider>
     </div>
   );
 }

@@ -13,7 +13,7 @@ import NotesPage from '@/pages/NotesPage';
 
 import LabPage from '@/pages/LabPage';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
-import SlidesPage from '@/pages/SlidesPage';
+
 
 export default function App() {
   return (
@@ -31,7 +31,7 @@ export default function App() {
                 <Route path="/notes" element={<NotesPage />} />
                 <Route path="/mechanism" element={<MechanismPage />} />
                 <Route path="/robustness" element={<RobustnessPage />} />
-                <Route path="/slides" element={<SlidesPage />} />
+                <Route path="/slides" element={<Navigate to="/" replace />} />
 
                 {/* Appendix: legacy interactive tools */}
                 <Route path="/appendix" element={<LabPage />} />

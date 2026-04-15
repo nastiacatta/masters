@@ -7,7 +7,9 @@ import {
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MathBlock from '@/components/dashboard/MathBlock';
-import StepSection from '@/components/dashboard/StepSection';
+import SectionHeader from '@/components/dashboard/SectionHeader';
+import { FigureProvider } from '@/contexts/FigureContext';
+import { EquationProvider } from '@/contexts/EquationContext';
 import {
   AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
@@ -49,7 +51,7 @@ function SmartTooltip({ active, payload, label }: {
   );
 }
 
-function SectionHeader({ title, question, takeaway }: { title: string; question: string; takeaway: string }) {
+function SectionIntro({ title, question, takeaway }: { title: string; question: string; takeaway: string }) {
   return (
     <div className="mb-4">
       <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
@@ -94,6 +96,8 @@ export default function RobustnessPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
+    <FigureProvider>
+    <EquationProvider>
     <div className="max-w-6xl mx-auto px-6 py-8">
       <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
       <div className="mb-8">
@@ -109,7 +113,11 @@ export default function RobustnessPage() {
 
       <RobustnessVerdictStrip bursty={burstyPipeline} baseline={baselinePipeline} sybil={sybilPipeline} sweep={sweepData} nAgents={N_AGENTS} />
 
-      <StepSection step={1} title="Choose a robustness test" description="Intermittency, Sybil, or parameter sensitivity.">
+      <p className="text-sm text-slate-600 mb-6 max-w-2xl leading-relaxed">
+        The following sections examine three dimensions of robustness: tolerance to intermittent participation, resistance to identity splitting (Sybil attacks), and sensitivity to key mechanism parameters.
+      </p>
+
+      <SectionHeader label="" title="Robustness tests" description="Intermittency, Sybil, or parameter sensitivity.">
       <div className="flex gap-1 mb-4 pb-6">
         {SECTIONS.map(s => (
           <button
@@ -125,7 +133,7 @@ export default function RobustnessPage() {
           </button>
         ))}
       </div>
-      </StepSection>
+      </SectionHeader>
 
       {activeSection === 'intermittency' && (
         <IntermittencySection bursty={burstyPipeline} baseline={baselinePipeline} />
@@ -137,6 +145,8 @@ export default function RobustnessPage() {
         <SensitivitySection data={sweepData} />
       )}
     </div>
+    </EquationProvider>
+    </FigureProvider>
     </div>
   );
 }
@@ -175,22 +185,22 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
 
   return (
     <div className="space-y-6">
-      <SectionHeader
+      <SectionIntro
         title="Intermittency"
         question="Do masking and skill bounds behave correctly when agents come and go?"
         takeaway="Under bursty participation, skill trajectories remain stable and m/b stays within [λ + (1−λ)σ_min^η, 1] bounds."
       />
 
-      <StepSection step={2} title="Headline metrics" description="Compare bursty vs baseline.">
+      <SectionHeader label="A" title="Headline metrics" description="Compare bursty vs baseline.">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
         <HeadlineCard label="Mean error (bursty)" value={fmt(bursty.summary.meanError, 4)} />
         <HeadlineCard label="Mean error (baseline)" value={fmt(baseline.summary.meanError, 4)} />
         <HeadlineCard label="Avg participation" value={`${(bursty.summary.meanParticipation / N * 100).toFixed(0)}%`} />
         <HeadlineCard label="Final Gini" value={fmt(bursty.summary.finalGini, 3)} />
       </div>
-      </StepSection>
+      </SectionHeader>
 
-      <StepSection step={3} title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom. Hover for values.">
+      <SectionHeader label="B" title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom. Hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <ChartCard title="Participation under intermittency" subtitle="Active agents per round. Use brush to pan. Hover for values.">
           <ResponsiveContainer width="100%" height={280}>
@@ -207,7 +217,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
                 ))}
               </Bar>
               <ReferenceLine y={N} stroke="#94a3b8" strokeDasharray="4 4">
-                <Label value="N" position="right" fill="#94a3b8" fontSize={9} />
+                <Label value="N" position="right" fill="#94a3b8" fontSize={11} />
               </ReferenceLine>
               <Brush dataKey="round" {...BRUSH_PROPS} />
             </BarChart>
@@ -236,7 +246,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
                 label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
               {Array.from({ length: N }, (_, i) => (
                 <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                   stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
@@ -273,10 +283,10 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]}
               label={{ value: 'm/b', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip content={<SmartTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
             <ReferenceLine y={1} stroke="#94a3b8" strokeDasharray="4 4" />
             <ReferenceLine y={0.3} stroke="#94a3b8" strokeDasharray="4 4">
-              <Label value="λ" position="left" fill="#94a3b8" fontSize={9} />
+              <Label value="λ" position="left" fill="#94a3b8" fontSize={11} />
             </ReferenceLine>
             {Array.from({ length: N }, (_, i) => (
               <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
@@ -290,7 +300,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
         </ResponsiveContainer>
         </div>
       </div>
-      </StepSection>
+      </SectionHeader>
     </div>
   );
 }
@@ -316,13 +326,13 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
 
   return (
     <div className="space-y-6">
-      <SectionHeader
+      <SectionIntro
         title="Sybil resistance"
         question="Can an agent gain by splitting into multiple identities?"
         takeaway="No measurable advantage from identity splitting in the tested setup."
       />
 
-      <StepSection step={2} title="Headline metrics" description="Sybil vs baseline wealth.">
+      <SectionHeader label="A" title="Headline metrics" description="Sybil vs baseline wealth.">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4 pb-6">
         <HeadlineCard label="Sybil profit ratio" value={fmt(profitRatio, 3)} sub={profitRatio <= 1 ? '≤ 1.0 → no advantage' : '> 1.0 → potential advantage'} />
         <HeadlineCard label="Sybil pair wealth" value={fmt(sybilProfit, 2)} />
@@ -330,9 +340,9 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
         <HeadlineCard label="Mean error (sybil)" value={fmt(sybil.summary.meanError, 4)} />
         <HeadlineCard label="Final Gini (sybil)" value={fmt(sybil.summary.finalGini, 3)} />
       </div>
-      </StepSection>
+      </SectionHeader>
 
-      <StepSection step={3} title="Charts & explanation" description="Wealth trajectories and why sybil fails. Drag to zoom, hover for values.">
+      <SectionHeader label="B" title="Charts & explanation" description="Wealth trajectories and why sybil fails. Drag to zoom, hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 mb-1">
@@ -356,9 +366,9 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
                 label={{ value: 'Wealth', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
               <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="4 4">
-                <Label value="W₀" position="right" fill="#94a3b8" fontSize={9} />
+                <Label value="W₀" position="right" fill="#94a3b8" fontSize={11} />
               </ReferenceLine>
               {Array.from({ length: N }, (_, i) => (
                 <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
@@ -395,7 +405,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
           </div>
         </div>
       </div>
-      </StepSection>
+      </SectionHeader>
     </div>
   );
 }
@@ -423,22 +433,22 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
 
   return (
     <div className="space-y-6">
-      <SectionHeader
+      <SectionIntro
         title="Parameter sensitivity"
         question="How do λ and σ_min affect accuracy and inequality?"
         takeaway="Lower λ and lower σ_min slightly improve accuracy but can increase inequality. The mechanism is not brittle."
       />
 
-      <StepSection step={2} title="Headline metrics" description="Best and worst configs.">
+      <SectionHeader label="A" title="Headline metrics" description="Best and worst configs.">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pb-6">
         <HeadlineCard label="Best config" value={`λ=${best.lam}, σ_min=${best.sigmaMin}`} sub={`error ${fmt(best.meanError, 4)}`} />
         <HeadlineCard label="Worst config" value={`λ=${worst.lam}, σ_min=${worst.sigmaMin}`} sub={`error ${fmt(worst.meanError, 4)}`} />
         <HeadlineCard label="Error range" value={fmt(worst.meanError - best.meanError, 4)} sub="max − min" />
         <HeadlineCard label="Gini range" value={fmt(Math.max(...data.map(d => d.gini)) - Math.min(...data.map(d => d.gini)), 3)} sub="max − min" />
       </div>
-      </StepSection>
+      </SectionHeader>
 
-      <StepSection step={3} title="Charts" description="Bar chart and scatter. Hover bars or points for values.">
+      <SectionHeader label="B" title="Charts" description="Bar chart and scatter. Hover bars or points for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
         <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Hover bars for values. Lower is better.">
           <ResponsiveContainer width="100%" height={320}>
@@ -449,7 +459,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
                 label={{ value: 'Mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
               <Tooltip content={<SmartTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
               {sigMins.map((sig, i) => (
                 <Bar key={sig} dataKey={`σ_min=${sig}`} name={`σ_min=${sig}`}
                   fill={sigColors[i % sigColors.length]} radius={[3, 3, 0, 0]} maxBarSize={20} />
@@ -487,10 +497,10 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
                         <text x={Math.min(x + 18, 274)} y={y - 14} fontSize="11" fill="#0f172a" fontWeight="600">
                           λ={d.lam} σ_min={d.sigmaMin}
                         </text>
-                        <text x={Math.min(x + 18, 274)} y={y + 4} fontSize="10" fill="#475569">
+                        <text x={Math.min(x + 18, 274)} y={y + 4} fontSize="11" fill="#475569">
                           Mean error: {fmt(d.meanError, 4)}
                         </text>
-                        <text x={Math.min(x + 18, 274)} y={y + 20} fontSize="10" fill="#475569">
+                        <text x={Math.min(x + 18, 274)} y={y + 20} fontSize="11" fill="#475569">
                           Gini: {fmt(d.gini, 3)}
                         </text>
                       </g>
@@ -513,7 +523,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
           downweighting — at the cost of higher concentration (Gini).
         </p>
       </div>
-      </StepSection>
+      </SectionHeader>
     </div>
   );
 }
@@ -578,7 +588,7 @@ function RobustnessVerdictStrip({ bursty, baseline, sybil, sweep, nAgents }: {
 function HeadlineCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
       <div className="text-lg font-bold font-mono text-slate-800 mt-1">{value}</div>
       {sub && <div className="text-[11px] text-slate-400 mt-0.5">{sub}</div>}
     </div>

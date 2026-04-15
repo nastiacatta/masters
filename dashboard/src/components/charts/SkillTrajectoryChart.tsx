@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { SkillWagerPoint, FixedDepositPoint } from '@/lib/types';
 import { AGENT_COLORS, agentDisplayName } from '@/lib/formatters';
 import ChartCard from '../dashboard/ChartCard';
@@ -9,6 +9,7 @@ interface Props {
   title?: string;
   yKey?: 'sigma' | 'cumProfit' | 'wager' | 'mOverB';
   yLabel?: string;
+  targetValues?: number[];
 }
 
 export default function SkillTrajectoryChart({
@@ -16,6 +17,7 @@ export default function SkillTrajectoryChart({
   title = 'Online Skill Trajectories',
   yKey = 'sigma',
   yLabel = 'σ (skill)',
+  targetValues,
 }: Props) {
   const agents = [...new Set(data.map(d => d.agent))];
   const maxT = Math.max(...data.map(d => d.t));
@@ -40,8 +42,6 @@ export default function SkillTrajectoryChart({
       return next;
     });
   }, []);
-
-  const initialStart = Math.max(0, chartData.length - 120);
 
   return (
     <ChartCard
@@ -85,14 +85,22 @@ export default function SkillTrajectoryChart({
               animationDuration={300}
             />
           ))}
-          <Brush
-            dataKey="t"
-            height={28}
-            startIndex={initialStart}
-            endIndex={chartData.length - 1}
-            travellerWidth={10}
-            stroke="#94a3b8"
-          />
+          {targetValues && targetValues.map((target, i) => {
+            if (i >= agents.length) return null;
+            const agentKey = `agent_${agents[i]}`;
+            if (hiddenAgents.has(agentKey)) return null;
+            const color = AGENT_COLORS[i % AGENT_COLORS.length];
+            return (
+              <ReferenceLine
+                key={`target_${agents[i]}`}
+                y={target}
+                stroke={color}
+                strokeOpacity={0.4}
+                strokeDasharray="4 4"
+                ifOverflow="extendDomain"
+              />
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
     </ChartCard>
