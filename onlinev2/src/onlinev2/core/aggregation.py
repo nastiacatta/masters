@@ -56,7 +56,7 @@ def aggregate_forecast(reports, m, alpha=None, eps=1e-12, fallback=None):
                     raise ValueError(
                         f"fallback must be scalar for point mode, got size {out.size}"
                     )
-            return float(out) if out.size == 1 else out
+            return out.item() if out.size == 1 else out
         return np.zeros_like(reports[0]) if reports.ndim > 1 else 0.0
 
     w = m / M
