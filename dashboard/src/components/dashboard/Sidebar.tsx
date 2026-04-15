@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 import type { FC } from 'react';
+import { useCollapsibleSidebar } from '@/hooks/useCollapsibleSidebar';
 
 /* ------------------------------------------------------------------ */
 /*  NavItem type & route configuration                                 */
@@ -59,27 +60,16 @@ const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const SlidesIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="2" y="3" width="12" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M8 12V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M5 14H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M5 6.5H11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    <path d="M5 9H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-  </svg>
-);
-
 const NAV_ITEMS: NavItem[] = [
   /* Primary — thesis story flow */
-  { to: '/',           label: 'Overview',            icon: HomeIcon,     group: 'primary' },
-  { to: '/results',    label: 'Results',             icon: ChartBarIcon, group: 'primary' },
-  { to: '/behaviour',  label: 'Behaviour',           icon: BeakerIcon,   group: 'primary' },
-  { to: '/robustness', label: 'Robustness',          icon: ShieldIcon,   group: 'primary' },
+  { to: '/',           label: 'Overview',   icon: HomeIcon,     group: 'primary' },
+  { to: '/results',    label: 'Results',    icon: ChartBarIcon, group: 'primary' },
+  { to: '/behaviour',  label: 'Behaviour',  icon: BeakerIcon,   group: 'primary' },
+  { to: '/robustness', label: 'Robustness', icon: ShieldIcon,   group: 'primary' },
   /* Secondary */
-  { to: '/notes',      label: 'Notes',              icon: BookIcon,     group: 'secondary' },
-  { to: '/mechanism',  label: 'Mechanism',           icon: CogIcon,      group: 'secondary' },
-  { to: '/appendix',   label: 'Appendix',            icon: BeakerIcon,   group: 'secondary' },
-  { to: '/slides',     label: 'Slides',              icon: SlidesIcon,   group: 'secondary' },
+  { to: '/notes',      label: 'Notes',      icon: BookIcon,     group: 'secondary' },
+  { to: '/mechanism',  label: 'Mechanism',  icon: CogIcon,      group: 'secondary' },
+  { to: '/appendix',   label: 'Appendix',   icon: BeakerIcon,   group: 'secondary' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -87,26 +77,80 @@ const NAV_ITEMS: NavItem[] = [
 /* ------------------------------------------------------------------ */
 
 export default function Sidebar() {
+  const {
+    isCollapsed,
+    isHoverExpanded,
+    effectiveWidth,
+    toggle,
+    onMouseEnter,
+    onMouseLeave,
+  } = useCollapsibleSidebar();
+
   const primary   = NAV_ITEMS.filter((n) => n.group === 'primary');
   const secondary = NAV_ITEMS.filter((n) => n.group === 'secondary');
 
+  /** Show text labels when expanded or hover-expanded */
+  const showLabels = !isCollapsed || isHoverExpanded;
+
   return (
-    <aside className="w-48 bg-white border-r border-slate-200 flex flex-col h-full shrink-0">
+    <aside
+      className="bg-white border-r border-slate-200 flex flex-col h-full shrink-0 overflow-hidden"
+      style={{
+        width: effectiveWidth,
+        transition: 'width 200ms ease',
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {/* Header */}
-      <div className="px-4 py-4 border-b border-slate-200">
-        <h1 className="text-sm font-bold text-slate-900 tracking-tight">
-          Skill × Stake
-        </h1>
-        <p className="text-[10px] text-slate-400 mt-0.5">Adaptive Forecast Markets</p>
+      <div className="px-3 py-3 border-b border-slate-200 flex items-center gap-2">
+        {/* Monogram */}
+        <div
+          className="bg-indigo-600 text-white rounded-md flex items-center justify-center shrink-0 font-bold"
+          style={{ width: 28, height: 28, fontSize: 11 }}
+        >
+          S×S
+        </div>
+        {showLabels && (
+          <h1 className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap overflow-hidden">
+            Skill × Stake
+          </h1>
+        )}
+        {/* Toggle button */}
+        <button
+          onClick={toggle}
+          className={clsx(
+            'flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100',
+            'transition-colors duration-100 shrink-0',
+            showLabels ? 'ml-auto' : 'mx-auto mt-1',
+          )}
+          style={{ minWidth: 32, minHeight: 32, width: 32, height: 32 }}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <span className="text-[14px] leading-none font-mono">
+            {isCollapsed ? '»' : '«'}
+          </span>
+        </button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-3 overflow-y-auto">
+        {/* Primary group label */}
+        {showLabels && (
+          <div
+            className="px-3 pb-1.5 text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap"
+            style={{ fontSize: 11 }}
+          >
+            Main
+          </div>
+        )}
+
         {/* Primary group */}
         <ul className="space-y-0.5">
           {primary.map((item) => (
             <li key={item.to}>
-              <SidebarLink item={item} />
+              <SidebarLink item={item} showLabel={showLabels} />
             </li>
           ))}
         </ul>
@@ -114,22 +158,25 @@ export default function Sidebar() {
         {/* Divider */}
         <div className="border-t border-slate-200 my-3" />
 
+        {/* Secondary group label */}
+        {showLabels && (
+          <div
+            className="px-3 pb-1.5 text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap"
+            style={{ fontSize: 11 }}
+          >
+            Reference
+          </div>
+        )}
+
         {/* Secondary group */}
         <ul className="space-y-0.5">
           {secondary.map((item) => (
             <li key={item.to}>
-              <SidebarLink item={item} />
+              <SidebarLink item={item} showLabel={showLabels} />
             </li>
           ))}
         </ul>
       </nav>
-
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-200">
-        <p className="text-[9px] text-slate-400 leading-relaxed">
-          MSc Thesis · 2025
-        </p>
-      </div>
     </aside>
   );
 }
@@ -138,25 +185,29 @@ export default function Sidebar() {
 /*  Individual nav link                                                */
 /* ------------------------------------------------------------------ */
 
-function SidebarLink({ item }: { item: NavItem }) {
+function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean }) {
   const Icon = item.icon;
 
   return (
     <NavLink
       to={item.to}
       end={item.to === '/' || item.to === '/appendix'}
+      title={showLabel ? undefined : item.label}
       className={({ isActive }) =>
         clsx(
-          'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium',
+          'flex items-center rounded-md text-[13px] font-medium',
           'transition-colors duration-100',
+          showLabel ? 'gap-2.5 px-3 py-2' : 'justify-center px-1 py-2',
           isActive
-            ? 'bg-teal-50 text-teal-700 border-l-[3px] border-teal-500 pl-[9px]'
+            ? 'bg-teal-50 text-teal-700'
             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
         )
       }
     >
       <Icon className="shrink-0" />
-      {item.label}
+      {showLabel && (
+        <span className="whitespace-nowrap overflow-hidden">{item.label}</span>
+      )}
     </NavLink>
   );
 }

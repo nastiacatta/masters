@@ -1,15 +1,30 @@
 import type { SweepPoint } from '@/lib/types';
 import ChartCard from '../dashboard/ChartCard';
 import MathBlock from '../dashboard/MathBlock';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import TabGroup from '../dashboard/TabGroup';
 import { fmtNum, sweepMetricLabel } from '@/lib/formatters';
+import { viridis, scaleToColour } from '@/lib/colourScales';
 
 // Note: Drag-to-zoom is not applicable for this table-based heatmap.
 // The heatmap uses HTML table cells, not Recharts, so useChartZoom cannot be applied.
 
 interface Props {
   data: SweepPoint[];
+}
+
+/**
+ * Builds a CSS linear-gradient string for the colour legend bar,
+ * sampling the viridis scale at evenly-spaced stops.
+ */
+function buildGradient(minVal: number, maxVal: number, stops = 16): string {
+  const colours: string[] = [];
+  for (let i = 0; i <= stops; i++) {
+    const t = i / stops;
+    const value = minVal + t * (maxVal - minVal);
+    colours.push(scaleToColour(value, minVal, maxVal, viridis));
+  }
+  return `linear-gradient(to right, ${colours.join(', ')})`;
 }
 
 export default function SweepHeatmap({ data }: Props) {
@@ -21,23 +36,12 @@ export default function SweepHeatmap({ data }: Props) {
   const values = data.map(d => d[metric]);
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
-  const range = maxVal - minVal || 1;
+  const midVal = (minVal + maxVal) / 2;
 
-  const getColor = (v: number) => {
-    const t = (v - minVal) / range;
-    if (metric === 'meanCrps') {
-      // Green (good) → Red (bad) for accuracy
-      const r = Math.round(16 + t * 223);
-      const g = Math.round(185 - t * 120);
-      const b = Math.round(129 - t * 60);
-      return `rgb(${r},${g},${b})`;
-    }
-    // Purple (low) → Orange (high) for Gini
-    const r = Math.round(99 + t * 146);
-    const g = Math.round(102 - t * 40);
-    const b = Math.round(241 - t * 170);
-    return `rgb(${r},${g},${b})`;
-  };
+  const legendGradient = useMemo(
+    () => buildGradient(minVal, maxVal),
+    [minVal, maxVal],
+  );
 
   const cellW = 72;
   const cellH = 40;
@@ -65,16 +69,16 @@ export default function SweepHeatmap({ data }: Props) {
         <table className="border-collapse">
           <thead>
             <tr>
-              <th className="text-[9px] text-slate-400 p-1"><MathBlock inline latex="\\lambda \\setminus \\sigma_{\\min}" /></th>
+              <th className="text-[11px] text-slate-400 p-1"><MathBlock inline latex="\\lambda \\setminus \\sigma_{\\min}" /></th>
               {sigmaMins.map(s => (
-                <th key={s} className="text-[10px] text-slate-600 font-medium p-1 text-center" style={{ width: cellW }}>{s}</th>
+                <th key={s} className="text-[11px] text-slate-600 font-medium p-1 text-center" style={{ width: cellW }}>{s}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {lams.map(l => (
               <tr key={l}>
-                <td className="text-[10px] text-slate-600 font-medium p-1 text-right pr-2">{l}</td>
+                <td className="text-[11px] text-slate-600 font-medium p-1 text-right pr-2">{l}</td>
                 {sigmaMins.map(s => {
                   const pt = data.find(d => d.lam === l && d.sigmaMin === s);
                   const val = pt ? pt[metric] : 0;
@@ -82,10 +86,14 @@ export default function SweepHeatmap({ data }: Props) {
                     <td key={s} className="p-0.5">
                       <div
                         className="rounded flex items-center justify-center"
-                        style={{ width: cellW, height: cellH, background: getColor(val) }}
+                        style={{
+                          width: cellW,
+                          height: cellH,
+                          background: scaleToColour(val, minVal, maxVal, viridis),
+                        }}
                         title={`λ=${l}, σ_min=${s}: ${sweepMetricLabel(metric)}=${fmtNum(val)}`}
                       >
-                        <span className="text-[10px] text-white font-mono font-medium">{fmtNum(val, 4)}</span>
+                        <span className="text-[11px] text-white font-mono font-medium">{fmtNum(val, 4)}</span>
                       </div>
                     </td>
                   );
@@ -94,6 +102,24 @@ export default function SweepHeatmap({ data }: Props) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Continuous colour legend */}
+      <div className="mt-3 flex flex-col items-start">
+        <div
+          className="rounded"
+          style={{
+            width: 200,
+            height: 16,
+            background: legendGradient,
+          }}
+          aria-label={`Colour legend: ${fmtNum(minVal)} to ${fmtNum(maxVal)}`}
+        />
+        <div className="flex justify-between" style={{ width: 200 }}>
+          <span className="text-[11px] text-slate-500">{fmtNum(minVal)}</span>
+          <span className="text-[11px] text-slate-500">{fmtNum(midVal)}</span>
+          <span className="text-[11px] text-slate-500">{fmtNum(maxVal)}</span>
+        </div>
       </div>
     </ChartCard>
   );

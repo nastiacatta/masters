@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush, ReferenceArea } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { ForecastSeriesPoint } from '@/lib/types';
 import { WEIGHTING_COLORS, metricLabel } from '@/lib/formatters';
 import ChartCard from '../dashboard/ChartCard';
@@ -28,8 +28,6 @@ export default function ForecastQualityChart({ data }: Props) {
       return next;
     });
   }, []);
-
-  const initialStart = Math.max(0, data.length - 120);
 
   return (
     <ChartCard
@@ -97,14 +95,6 @@ export default function ForecastQualityChart({ data }: Props) {
           {zoom.state.refLeft && zoom.state.refRight && (
             <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
           )}
-          <Brush
-            dataKey="t"
-            height={28}
-            startIndex={initialStart}
-            endIndex={data.length - 1}
-            travellerWidth={10}
-            stroke="#94a3b8"
-          />
         </LineChart>
       </ResponsiveContainer>
       </div>
