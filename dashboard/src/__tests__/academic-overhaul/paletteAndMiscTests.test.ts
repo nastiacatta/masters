@@ -3,7 +3,7 @@
  *
  * Uses fast-check with vitest. Each property runs ≥ 100 iterations.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 
 import { CB_PALETTE, VERDICT_COLOURS, contrastRatio } from '@/lib/palette';

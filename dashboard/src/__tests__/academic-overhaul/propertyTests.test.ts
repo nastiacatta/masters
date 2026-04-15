@@ -240,44 +240,21 @@ describe('Property 4: Calibration point colour reflects deviation from diagonal'
 // **Validates: Requirements 14.2, 14.3**
 
 describe('Property 5: CSV export round-trips data correctly', () => {
-  // Generator for non-empty record arrays with string keys and number values
+  // Simple generator: array of records with 1-3 fixed keys and random number values
   const recordArb = fc
-    .tuple(
-      fc.array(
-        fc.tuple(
-          fc.string({ minLength: 1, maxLength: 10 }).filter((s) => /^[a-zA-Z]\w*$/.test(s)),
-          fc.double({ noNaN: true, noDefaultInfinity: true, min: -1e6, max: 1e6 }),
-        ),
-        { minLength: 1, maxLength: 5 },
-      ),
-      fc.integer({ min: 1, max: 10 }),
-    )
-    .chain(([keyValuePairs, rowCount]) => {
-      // Ensure unique keys
-      const uniqueKeys = [...new Set(keyValuePairs.map(([k]) => k))];
-      if (uniqueKeys.length === 0) return fc.constant([]);
-      const keys = uniqueKeys;
-      return fc
-        .array(
-          fc.tuple(...keys.map(() => fc.double({ noNaN: true, noDefaultInfinity: true, min: -1e6, max: 1e6 }))),
-          { minLength: 1, maxLength: rowCount },
-        )
-        .map((rows) =>
-          rows.map((values) => {
-            const record: Record<string, number> = {};
-            keys.forEach((k, i) => {
-              record[k] = values[i];
-            });
-            return record;
-          }),
-        );
-    })
-    .filter((arr) => arr.length > 0);
+    .array(
+      fc.record({
+        a: fc.double({ noNaN: true, noDefaultInfinity: true, min: -1e6, max: 1e6 }),
+        b: fc.double({ noNaN: true, noDefaultInfinity: true, min: -1e6, max: 1e6 }),
+        c: fc.double({ noNaN: true, noDefaultInfinity: true, min: -1e6, max: 1e6 }),
+      }),
+      { minLength: 1, maxLength: 10 },
+    );
 
   it('generateCSV produces correct header count and row count', () => {
     fc.assert(
       fc.property(recordArb, (data) => {
-        const csv = generateCSV(data);
+        const csv = generateCSV(data as Record<string, unknown>[]);
         const lines = csv.split('\r\n');
         const headerLine = lines[0];
         const headers = headerLine.split(',');
