@@ -66,7 +66,7 @@ export default function TornadoChart({
       help={{
         term: 'Tornado Chart',
         definition:
-          'A horizontal diverging bar chart showing the magnitude and direction of each factor's effect relative to a baseline.',
+          'A horizontal diverging bar chart showing the magnitude and direction of each factor\'s effect relative to a baseline.',
         interpretation:
           'Bars extending left indicate improvements (negative Δ). Bars extending right indicate degradations (positive Δ). Factors are sorted by absolute impact, largest at top.',
         axes: { x: metricLabel, y: 'Factor' },
