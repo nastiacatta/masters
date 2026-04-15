@@ -3090,6 +3090,7 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
     from onlinev2.behaviour.protocol import RoundPublicState
     from onlinev2.mechanism.models import MechanismParams, MechanismState
     from onlinev2.mechanism.runner import run_round
+    from onlinev2.core.scoring import TAUS_COARSE
 
     cfg = get_experiment_config("preference_stress_test")
     if seeds is None:
@@ -3098,6 +3099,8 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
     n_users = 10
 
     ep = _exp_paths(outdir, "preference_stress_test", block)
+
+    taus = TAUS_COARSE if scoring_mode == "quantiles_crps" else None
 
     all_rows = []
     dashboard_logs = {}
@@ -3108,10 +3111,10 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
         seed_results = {}
         for scenario_idx, (label, reporting) in enumerate([("truthful", TruthfulReporting()), ("hedged", HedgedReporting())]):
             pop = build_population(n_users, seed=s, reporting_policy=reporting)
-            behaviour = CompositeBehaviourModel(pop, scoring_mode=scoring_mode)
+            behaviour = CompositeBehaviourModel(pop, scoring_mode=scoring_mode, taus=taus)
             behaviour.reset(s)
 
-            params = MechanismParams(scoring_mode=scoring_mode)
+            params = MechanismParams(scoring_mode=scoring_mode, taus=taus)
             state = MechanismState()
             for u in pop:
                 state.wealth[u.traits.user_id] = u.traits.initial_wealth
@@ -4110,7 +4113,6 @@ def run_qa_vs_lp_comparison(
     ep = _exp_paths(outdir, "qa_vs_lp", block)
     tau_i = cfg.tau_i()
     taus = cfg.taus()
-    K = len(taus)
 
     all_rows = []
     for s in seeds:

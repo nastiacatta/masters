@@ -91,7 +91,7 @@ def plot_four_panel(
         x_pos = np.arange(len(method_names))
         colors = [PALETTE[i % len(PALETTE)] for i in range(len(method_names))]
 
-        bars = ax1.bar(x_pos, means, color=colors, alpha=0.85, edgecolor="white")
+        ax1.bar(x_pos, means, color=colors, alpha=0.85, edgecolor="white")
         ax1.errorbar(
             x_pos, means,
             yerr=[np.array(ses) * 1.96, np.array(ses) * 1.96],
