@@ -197,8 +197,9 @@ export default function TradeOffScatter({
               const label = name === 'CRPS Improvement' ? 'CRPS Δ' : 'Gini';
               return [Number.isFinite(v) ? fmt(v, 4) : '—', label];
             }}
-            labelFormatter={(_label: unknown, payload: Array<{ payload?: TradeOffPoint }>) => {
-              const point = payload?.[0]?.payload;
+            labelFormatter={(_label, payload) => {
+              const items = payload as ReadonlyArray<{ payload?: TradeOffPoint }>;
+              const point = items?.[0]?.payload;
               return point?.label ?? '';
             }}
           />
