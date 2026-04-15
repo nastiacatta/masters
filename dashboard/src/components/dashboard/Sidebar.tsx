@@ -97,7 +97,7 @@ export default function Sidebar() {
         <h1 className="text-sm font-bold text-slate-900 tracking-tight">
           Skill × Stake
         </h1>
-        <p className="text-[10px] text-slate-400 mt-0.5">Thesis dashboard</p>
+        <p className="text-[10px] text-slate-400 mt-0.5">Adaptive Forecast Markets</p>
       </div>
 
       {/* Navigation */}
