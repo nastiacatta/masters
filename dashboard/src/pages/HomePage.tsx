@@ -4,6 +4,7 @@ const NAV = [
   { to: '/results',    label: 'Results',    desc: 'Accuracy & concentration', color: 'border-l-indigo-500 hover:bg-indigo-50' },
   { to: '/behaviour',  label: 'Behaviour',  desc: 'Strategies, attacks & robustness', color: 'border-l-violet-500 hover:bg-violet-50' },
   { to: '/notes',      label: 'Notes',      desc: 'All experiments & methodology', color: 'border-l-slate-400 hover:bg-slate-50' },
+  { to: '/robustness', label: 'Robustness', desc: 'Sybil resistance, arbitrage & invariants', color: 'border-l-emerald-500 hover:bg-emerald-50' },
 ] as const;
 
 const FINDINGS = [
@@ -114,6 +115,32 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ── Thesis contribution ── */}
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Thesis contribution</h2>
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-6 space-y-4">
+            <p className="text-sm text-indigo-900 leading-relaxed">
+              This thesis extends the Lambert (2008) self-financed wagering mechanism with an <span className="font-semibold">online skill layer</span>: 
+              each round, the mechanism observes forecaster accuracy via CRPS scoring, updates an EWMA loss estimate, 
+              and maps it to a skill weight σ<sub>i</sub> that gates the effective wager.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              <div className="rounded-lg bg-white border border-indigo-100 p-4">
+                <div className="text-xs font-semibold text-indigo-800 mb-1">What's new</div>
+                <div className="text-[11px] text-indigo-700 leading-relaxed">Online EWMA skill estimation + skill-gated effective wagers in a multi-round wagering mechanism</div>
+              </div>
+              <div className="rounded-lg bg-white border border-indigo-100 p-4">
+                <div className="text-xs font-semibold text-indigo-800 mb-1">What it enables</div>
+                <div className="text-[11px] text-indigo-700 leading-relaxed">Adaptive forecast aggregation that learns who is skilled without requiring prior knowledge of forecaster quality</div>
+              </div>
+              <div className="rounded-lg bg-white border border-indigo-100 p-4">
+                <div className="text-xs font-semibold text-indigo-800 mb-1">Key finding</div>
+                <div className="text-[11px] text-indigo-700 leading-relaxed">21% CRPS improvement on real wind data; deposit policy is the key lever determining mechanism value</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── Key findings ── */}
         <section>
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Key findings</h2>
@@ -135,7 +162,7 @@ export default function HomePage() {
         {/* ── Navigate ── */}
         <nav>
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Explore</h2>
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {NAV.map((l) => (
               <Link key={l.to} to={l.to}
                 className={`rounded-xl border border-slate-200 border-l-4 ${l.color} bg-white px-5 py-4 transition-colors`}>
