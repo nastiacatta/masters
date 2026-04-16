@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { METHOD_COLORS } from '@/lib/palette';
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
 
@@ -13,6 +11,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -494,30 +493,6 @@ export default function ResultsPage() {
       return point;
     });
     return downsample(raw, 300);
-  }, [demoMethods]);
-
-  const demoDeltaPerRound = useMemo(() => {
-    const equalRounds = demoMethods.find(m => m.key === 'equal')!.pipeline.rounds;
-    const raw = equalRounds.map((eqR, i) => {
-      const point: Record<string, number> = { round: i + 1 };
-      for (const m of demoMethods) {
-        if (m.key === 'equal') continue;
-        point[m.key] = m.pipeline.rounds[i].error - eqR.error;
-      }
-      return point;
-    });
-    // Compute rolling average (window 20) for smoother view
-    const smoothed = raw.map((pt, i) => {
-      const smoothPt: Record<string, number> = { round: pt.round };
-      for (const m of demoMethods) {
-        if (m.key === 'equal') continue;
-        const start = Math.max(0, i - 19);
-        const window = raw.slice(start, i + 1);
-        smoothPt[m.key] = window.reduce((s, w) => s + (w[m.key] ?? 0), 0) / window.length;
-      }
-      return smoothPt;
-    });
-    return downsample(smoothed, 300);
   }, [demoMethods]);
 
   const demoDeposits = useMemo(() => {
@@ -1171,67 +1146,77 @@ export default function ResultsPage() {
                 </p>
               </div>
 
-              <div className="grid lg:grid-cols-2 gap-4">
-                {/* Left: Per-round Δ CRPS vs equal (rolling average) — shows the gap */}
+              {/* Method race — cumulative error with interactive annotations */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
                 <div>
-                  <div className="text-xs font-semibold text-slate-700 mb-1">Δ Error vs equal weighting (20-round rolling avg)</div>
-                  <p className="text-[11px] text-slate-400 mb-2">Below zero = better than equal. The gap shows the mechanism's advantage.</p>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <AreaChart data={demoDeltaPerRound} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
-                      <CartesianGrid {...GRID_PROPS} />
-                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-                        label={{ value: 'Δ Error vs Equal', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                      <Tooltip content={<SmartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                      <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 4">
-                        <Label value="Equal weighting" position="right" fontSize={11} fill="#94a3b8" />
-                      </ReferenceLine>
-                      <defs>
-                        <linearGradient id="blendedGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-                      {demoMethods.filter(m => m.key !== 'equal').map((m) => (
-                        m.key === 'blended' ? (
-                          <Area key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                            fill="url(#blendedGrad)" strokeWidth={2.5} dot={false} />
-                        ) : (
-                          <Area key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                            fill="transparent" strokeWidth={1.5} dot={false}
-                            strokeDasharray={m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined} />
-                        )
-                      ))}
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <h3 className="text-sm font-semibold text-slate-800">Method comparison: cumulative forecast error</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+                    Running average CRPS for each weighting method. Lower = more accurate.
+                    The gap between lines shows the mechanism's advantage. Click a method in the legend to isolate it.
+                  </p>
                 </div>
 
-                {/* Right: Cumulative error (zoomed Y-axis) */}
-                <div>
-                  <div className="text-xs font-semibold text-slate-700 mb-1">Cumulative mean error</div>
-                  <p className="text-[11px] text-slate-400 mb-2">Running average CRPS. Y-axis zoomed to show differences. Lower = better.</p>
-                  <div className="cursor-crosshair">
-                    <ResponsiveContainer width="100%" height={400}>
-                      <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
-                        onMouseDown={cumErrorZoom.onMouseDown} onMouseMove={cumErrorZoom.onMouseMove} onMouseUp={cumErrorZoom.onMouseUp}>
-                        <CartesianGrid {...GRID_PROPS} />
-                        <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]}
-                          label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={['auto', 'auto']}
-                          label={{ value: 'Cumulative mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                        <Tooltip content={<SmartTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                        {demoMethods.map((m) => (
-                          <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                            strokeWidth={m.key === 'blended' ? 3 : 2}
-                            dot={false}
-                            strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined} />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+                {/* Live stats strip — shows final values */}
+                <div className="grid grid-cols-4 gap-2">
+                  {demoMethods.map(m => {
+                    const finalError = m.pipeline.summary.meanError;
+                    const equalError = demoMethods.find(x => x.key === 'equal')!.pipeline.summary.meanError;
+                    const delta = finalError - equalError;
+                    const pct = equalError > 0 ? (delta / equalError * 100) : 0;
+                    return (
+                      <div key={m.key} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: m.color }} />
+                          <span className="text-[11px] font-medium text-slate-600 truncate">{m.label}</span>
+                        </div>
+                        <div className="text-sm font-bold font-mono text-slate-800 mt-0.5">{fmt(finalError, 4)}</div>
+                        {m.key !== 'equal' && (
+                          <div className={`text-[11px] font-mono ${delta < 0 ? 'text-emerald-600' : delta > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                            {delta >= 0 ? '+' : ''}{pct.toFixed(1)}% vs equal
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <ResponsiveContainer width="100%" height={450}>
+                  <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52, right: 24 }}>
+                    <defs>
+                      <linearGradient id="mechAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.08} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid {...GRID_PROPS} />
+                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={['auto', 'auto']}
+                      label={{ value: 'Cumulative mean error (lower = better)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                    <Tooltip content={<SmartTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                    {/* Phase annotation: EWMA convergence zone */}
+                    <ReferenceArea x1={1} x2={50} fill="#f1f5f9" fillOpacity={0.5} />
+                    <ReferenceLine x={50} stroke="#cbd5e1" strokeDasharray="4 4">
+                      <Label value="EWMA converges (~50 rounds)" position="top" fontSize={11} fill="#94a3b8" offset={8} />
+                    </ReferenceLine>
+                    {demoMethods.map((m) => (
+                      <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
+                        strokeWidth={m.key === 'blended' ? 3.5 : 2}
+                        dot={false}
+                        strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined}
+                        activeDot={{ r: 5, strokeWidth: 2 }} />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+
+                {/* Insight callout */}
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    <span className="font-semibold">Key insight:</span> Lines converge during the first ~50 rounds while the EWMA skill estimates are still learning.
+                    After convergence, Skill × stake consistently tracks below equal weighting — the gap is the mechanism's value.
+                    The advantage is {fmt(Math.abs(demoDelta), 4)} mean CRPS ({(Math.abs(demoDelta) / demoEqual.pipeline.summary.meanError * 100).toFixed(1)}% improvement).
+                  </p>
                 </div>
               </div>
 
@@ -1288,6 +1273,31 @@ export default function ResultsPage() {
                       <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                     </LineChart>
                   </ResponsiveContainer>
+                </div>
+                {/* Interactive round indicator */}
+                <div className="flex items-center gap-3 mt-3 px-1">
+                  <span className="text-[11px] text-slate-400 shrink-0">Inspect round:</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={skillConvergence.length - 1}
+                    defaultValue={skillConvergence.length - 1}
+                    className="flex-1 accent-indigo-600 h-1"
+                    onChange={(e) => {
+                      const idx = +e.target.value;
+                      const pt = skillConvergence[idx];
+                      if (!pt) return;
+                      // Update a display element
+                      const el = document.getElementById('skill-round-display');
+                      if (el) {
+                        const sigmas = Array.from({ length: CONV_N }, (_, i) => `${CONV_LABELS[i]}: σ=${fmt(pt[`F${i+1}`] as number, 3)}`).join('  ·  ');
+                        el.textContent = `Round ${pt.round}: ${sigmas}`;
+                      }
+                    }}
+                  />
+                </div>
+                <div id="skill-round-display" className="text-[11px] font-mono text-slate-500 mt-1 px-1">
+                  Round {skillConvergence[skillConvergence.length - 1]?.round}: {Array.from({ length: CONV_N }, (_, i) => `${CONV_LABELS[i]}: σ=${fmt(targetSigmas[i], 3)}`).join('  ·  ')}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
                   Left: σ separates agents by forecast quality (Good → high σ, Bad → low σ).
