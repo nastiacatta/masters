@@ -4,14 +4,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, Cell,
-  Brush, ReferenceArea, ReferenceLine,
+  ReferenceArea, ReferenceLine,
 } from 'recharts';
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
   AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
-  BRUSH_PROPS, fmt, downsample, agentName,
+  fmt, downsample, agentName,
 } from '@/components/lab/shared';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
@@ -235,11 +235,10 @@ export default function BehaviourPage() {
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
         <header>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Behaviour &amp; Robustness</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Robustness</h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-            The core mechanism is a pure state machine: it sees deposits, reports, and participation — never motives.
-            This page tests what happens when agents deviate from truthful, full-participation behaviour.
-            All experiments use paired comparison (same seed, same DGP, only behaviour changes).
+            How robust is the mechanism to strategic behaviour, attacks, and parameter variation?
+            This section tests 18 behaviour presets against the truthful baseline using paired comparison.
           </p>
         </header>
 
@@ -634,7 +633,6 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
               <Bar dataKey="active" name="Active" radius={[2, 2, 0, 0]} maxBarSize={4}>
                 {partData.map((d, i) => <Cell key={i} fill={d.rate >= 0.8 ? '#10b981' : d.rate >= 0.5 ? '#f59e0b' : '#ef4444'} opacity={0.7} />)}
               </Bar>
-              <Brush dataKey="round" {...BRUSH_PROPS} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -661,7 +659,6 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
                 {skillZoom.state.refLeft && skillZoom.state.refRight && (
                   <ReferenceArea x1={skillZoom.state.refLeft} x2={skillZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -683,7 +680,6 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
             {cumZoomInter.state.refLeft && cumZoomInter.state.refRight && (
               <ReferenceArea x1={cumZoomInter.state.refLeft} x2={cumZoomInter.state.refRight} fillOpacity={0.1} fill="#6366f1" />
             )}
-            <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -798,7 +794,6 @@ function InformationTab({ biased, miscalibrated, baseline }: {
               {cumZoom.state.refLeft && cumZoom.state.refRight && (
                 <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
               )}
-              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -825,7 +820,6 @@ function InformationTab({ biased, miscalibrated, baseline }: {
                 {sigZoom.state.refLeft && sigZoom.state.refRight && (
                   <ReferenceArea x1={sigZoom.state.refLeft} x2={sigZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1002,7 +996,6 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
                 {sigDecayZoom.state.refLeft && sigDecayZoom.state.refRight && (
                   <ReferenceArea x1={sigDecayZoom.state.refLeft} x2={sigDecayZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1148,7 +1141,6 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
                 {cumZoomHedge.state.refLeft && cumZoomHedge.state.refRight && (
                   <ReferenceArea x1={cumZoomHedge.state.refLeft} x2={cumZoomHedge.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -1168,7 +1160,6 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
                 {sigZoomHedge.state.refLeft && sigZoomHedge.state.refRight && (
                   <ReferenceArea x1={sigZoomHedge.state.refLeft} x2={sigZoomHedge.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -1214,7 +1205,6 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
               {cumZoomNoisy.state.refLeft && cumZoomNoisy.state.refRight && (
                 <ReferenceArea x1={cumZoomNoisy.state.refLeft} x2={cumZoomNoisy.state.refRight} fillOpacity={0.1} fill="#6366f1" />
               )}
-              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -1259,7 +1249,6 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
                 {sigZoomRepGamer.state.refLeft && sigZoomRepGamer.state.refRight && (
                   <ReferenceArea x1={sigZoomRepGamer.state.refLeft} x2={sigZoomRepGamer.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1299,7 +1288,6 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
               {cumZoomSandbag.state.refLeft && cumZoomSandbag.state.refRight && (
                 <ReferenceArea x1={cumZoomSandbag.state.refLeft} x2={cumZoomSandbag.state.refRight} fillOpacity={0.1} fill="#6366f1" />
               )}
-              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -1394,7 +1382,6 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
               {cumZoom.state.refLeft && cumZoom.state.refRight && (
                 <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
               )}
-              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -1420,7 +1407,6 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
                 {depositZoom.state.refLeft && depositZoom.state.refRight && (
                   <ReferenceArea x1={depositZoom.state.refLeft} x2={depositZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
                 )}
-                <Brush dataKey="round" {...BRUSH_PROPS} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1507,7 +1493,6 @@ function ObjectivesTab({ riskAverse, baseline }: {
             {cumZoom.state.refLeft && cumZoom.state.refRight && (
               <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
             )}
-            <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -1617,7 +1602,6 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
               {sigZoom.state.refLeft && sigZoom.state.refRight && (
                 <ReferenceArea x1={sigZoom.state.refLeft} x2={sigZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
               )}
-              <Brush dataKey="round" {...BRUSH_PROPS} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -1728,7 +1712,6 @@ function OperationalTab({ latencyExploiter, baseline }: {
             {cumZoom.state.refLeft && cumZoom.state.refRight && (
               <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
             )}
-            <Brush dataKey="round" {...BRUSH_PROPS} />
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
