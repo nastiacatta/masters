@@ -3,6 +3,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -106,7 +107,7 @@ export default function WaterfallChart({
       }}
       chartType="Bar chart"
     >
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={400}>
         <BarChart
           data={chartData}
           margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
@@ -119,7 +120,7 @@ export default function WaterfallChart({
             interval={0}
             angle={-30}
             textAnchor="end"
-            height={60}
+            height={80}
           />
           <YAxis
             tick={AXIS_TICK}
@@ -139,13 +140,14 @@ export default function WaterfallChart({
             formatter={(_value: unknown, name: unknown, props: { payload?: (typeof chartData)[number] }) => {
               const row = props.payload;
               if (!row) return ['—', ''];
-              if (name === 'base') return null;
+              if (name === 'base') return ['', ''];
               const sign = row.rawDelta <= 0 ? '' : '+';
               return [
-                `${sign}${fmt(row.rawDelta, 3)} (total: ${fmt(row.base + row.delta, 3)})`,
+                `${sign}${fmt(row.rawDelta, 4)} (total: ${fmt(row.base + row.delta, 4)})`,
                 row.isTotal ? 'Total' : 'Δ',
               ];
             }}
+            itemStyle={{ fontSize: 11 }}
           />
           {/* Invisible base bar */}
           <Bar dataKey="base" stackId="waterfall" fill="transparent" isAnimationActive={false} />
@@ -161,6 +163,18 @@ export default function WaterfallChart({
             {chartData.map((d, i) => (
               <Cell key={`${d.name}-${i}`} fill={getFill(d)} opacity={0.9} />
             ))}
+            <LabelList
+              dataKey="delta"
+              position="top"
+              formatter={(v: string | number | boolean | null | undefined) => {
+                if (v == null) return '';
+                const num = Number(v);
+                const row = chartData.find(d => Math.abs(d.delta - num) < 1e-10);
+                if (!row) return fmt(num, 4);
+                return row.isTotal ? fmt(num, 4) : `${row.rawDelta <= 0 ? '' : '+'}${fmt(row.rawDelta, 4)}`;
+              }}
+              style={{ fontSize: 11, fill: '#334155', fontFamily: 'monospace' }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
