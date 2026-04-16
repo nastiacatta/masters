@@ -684,6 +684,33 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
         </ResponsiveContainer>
       </ChartCard>
 
+      {/* Participation-error correlation */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-slate-800 mb-2">Why does intermittency hurt?</h3>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-center">
+            <div className="text-2xl font-bold font-mono text-red-600">{(bursty.summary.meanParticipation / N * 100).toFixed(0)}%</div>
+            <div className="text-[11px] text-red-700 mt-1">Average participation</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">vs 100% baseline</div>
+          </div>
+          <div className="rounded-lg bg-amber-50 border border-amber-100 p-3 text-center">
+            <div className="text-2xl font-bold font-mono text-amber-600">{(N - bursty.summary.meanParticipation).toFixed(1)}</div>
+            <div className="text-[11px] text-amber-700 mt-1">Agents missing per round</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">= lost information</div>
+          </div>
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-center">
+            <div className="text-2xl font-bold font-mono text-slate-700">{deltaPct >= 0 ? '+' : ''}{deltaPct.toFixed(1)}%</div>
+            <div className="text-[11px] text-slate-600 mt-1">CRPS degradation</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">cost of missing agents</div>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 mt-3 leading-relaxed">
+          Each missing agent removes one forecast from the aggregate. With {N} agents, losing {(N - bursty.summary.meanParticipation).toFixed(1)} per round
+          means the aggregate is based on {bursty.summary.meanParticipation.toFixed(1)} signals instead of {N}.
+          The mechanism preserves skill estimates during absences (EWMA freezes), but can't compensate for the missing information itself.
+        </p>
+      </div>
+
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
         On real data (Notes page), the mechanism still improves by +4.4% at 60% missingness.
         This aligns with Vitali &amp; Pinson's robust regression approach, which handles missing forecasts
