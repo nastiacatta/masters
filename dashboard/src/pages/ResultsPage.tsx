@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { METHOD_COLORS } from '@/lib/palette';
 import {
   Bar,
   BarChart,
   Brush,
   CartesianGrid,
   Cell,
+  Label,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -36,6 +39,7 @@ import { runComposableRound, type ComposableParams, type RoundTrace } from '@/li
 import type { AgentState } from '@/lib/coreMechanism/runRound';
 import { METHOD, SEM } from '@/lib/tokens';
 import InfoToggle from '@/components/dashboard/InfoToggle';
+import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import {
   AGENT_PALETTE,
   AXIS_STROKE,
@@ -52,7 +56,12 @@ import ZoomBadge from '@/components/charts/ZoomBadge';
 import DeltaBarChart from '@/components/charts/DeltaBarChart';
 import ConcentrationPanel from '@/components/charts/ConcentrationPanel';
 import FourPanelLayout from '@/components/charts/FourPanelLayout';
+import TradeOffScatter from '@/components/charts/TradeOffScatter';
+import type { TradeOffPoint } from '@/components/charts/TradeOffScatter';
+import WaterfallChart from '@/components/charts/WaterfallChart';
+import type { WaterfallDatum } from '@/components/charts/WaterfallChart';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChartLinkingProvider } from '@/contexts/ChartLinkingContext';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
 import Breadcrumb from '@/components/dashboard/Breadcrumb';
 import MathBlock from '@/components/dashboard/MathBlock';
@@ -69,33 +78,6 @@ const ACCURACY_EPS = 1e-4;
 
 type Verdict = 'good' | 'neutral' | 'bad';
 
-function SmartTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
-  label?: string | number;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={TOOLTIP_STYLE}>
-      {label != null && (
-        <div className="font-medium text-slate-700 text-[11px] mb-1">{label}</div>
-      )}
-      {payload
-        .filter((p) => p.value != null)
-        .map((p) => (
-          <div key={p.dataKey} className="flex items-center gap-1.5 text-[11px]">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
-            <span className="text-slate-500">{p.name}</span>
-            <span className="font-mono font-medium ml-auto">{fmt(p.value, 4)}</span>
-          </div>
-        ))}
-    </div>
-  );
-}
 
 const VERDICT_BORDER: Record<Verdict, string> = {
   good: 'border-l-emerald-500',
@@ -136,9 +118,7 @@ const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
 const METHOD_LABEL: Record<string, string> = {
   uniform: 'Equal', deposit: 'Stake-only', skill: 'Skill-only', mechanism: 'Skill × stake', best_single: 'Best single',
 };
-const METHOD_COLOR: Record<string, string> = {
-  uniform: '#94a3b8', deposit: '#0d9488', skill: '#8b5cf6', mechanism: '#6366f1', best_single: '#f59e0b',
-};
+
 
 function meanFinite(values: Array<number | undefined | null>): number | null {
   const xs = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
@@ -303,7 +283,7 @@ function DepositSensitivityPanel() {
           The deposit policy determines how much of the skill signal reaches the aggregate weights.
         </p>
       </div>
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={360}>
         <BarChart data={chartData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
           <CartesianGrid {...GRID_PROPS} />
           <XAxis dataKey="policy" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE}
@@ -401,7 +381,7 @@ export default function ResultsPage() {
     return Array.from(byMethod.entries()).map(([method, rs]) => ({
       method,
       label: METHOD_LABEL[method] ?? method,
-      color: METHOD_COLOR[method] ?? '#64748b',
+      color: METHOD_COLORS[method] ?? '#64748b',
       meanCrps: meanFinite(rs.map((x) => x.mean_crps)),
       deltaCrps: meanFinite(rs.map((x) => x.delta_crps_vs_equal)),
       deltaCrpsSE: seFinite(rs.map((x) => x.delta_crps_vs_equal)),
@@ -444,6 +424,32 @@ export default function ResultsPage() {
         };
       });
   }, [expCoreMethods, expBestCore]);
+
+  // Experiment-backed trade-off scatter data
+  const expTradeOffData: TradeOffPoint[] = useMemo(() => {
+    return expCoreMethods.map(m => ({
+      method: m.method,
+      label: m.label,
+      crpsImprovement: -(m.deltaCrps ?? 0),
+      gini: m.finalGini ?? 0,
+      color: m.color,
+    }));
+  }, [expCoreMethods]);
+
+  // Experiment-backed waterfall data
+  const expWaterfallData: WaterfallDatum[] = useMemo(() => {
+    const getError = (method: string) => methodAgg.find(m => m.method === method)?.meanCrps ?? 0;
+    const uniformCrps = getError('uniform');
+    const depositCrps = getError('deposit');
+    const skillCrps = getError('skill');
+    const mechCrps = getError('mechanism');
+    return [
+      { label: 'Uniform (baseline)', value: uniformCrps, delta: 0, isTotal: true },
+      { label: '+ Deposits', value: depositCrps, delta: depositCrps - uniformCrps },
+      { label: '+ Skill', value: skillCrps, delta: skillCrps - depositCrps },
+      { label: 'Full Mechanism', value: mechCrps, delta: mechCrps - skillCrps, isTotal: true },
+    ];
+  }, [methodAgg]);
 
   const calibrationData = useMemo(() =>
     calibration.filter((p) => Number.isFinite(p.tau) && Number.isFinite(p.pHat))
@@ -509,6 +515,33 @@ export default function ResultsPage() {
       color: m.color,
     })).sort((a, b) => a.gini - b.gini),
     [demoMethods]);
+
+  // Trade-off scatter data: accuracy improvement vs concentration for each method
+  const tradeOffData: TradeOffPoint[] = useMemo(() => {
+    const equalError = demoMethods.find(m => m.key === 'equal')?.pipeline.summary.meanError ?? 0;
+    return demoMethods.map(m => ({
+      method: m.key,
+      label: m.label,
+      crpsImprovement: equalError - m.pipeline.summary.meanError,
+      gini: m.pipeline.summary.finalGini,
+      color: m.color,
+    }));
+  }, [demoMethods]);
+
+  // Waterfall data: incremental CRPS change from uniform → deposit → skill → mechanism
+  const waterfallData: WaterfallDatum[] = useMemo(() => {
+    const getError = (key: string) => demoMethods.find(m => m.key === key)?.pipeline.summary.meanError ?? 0;
+    const uniformCrps = getError('equal');
+    const stakeCrps = getError('stake_only');
+    const skillCrps = getError('skill_only');
+    const mechCrps = getError('blended');
+    return [
+      { label: 'Uniform (baseline)', value: uniformCrps, delta: 0, isTotal: true },
+      { label: '+ Deposits', value: stakeCrps, delta: stakeCrps - uniformCrps },
+      { label: '+ Skill', value: skillCrps, delta: skillCrps - stakeCrps },
+      { label: 'Full Mechanism', value: mechCrps, delta: mechCrps - skillCrps, isTotal: true },
+    ];
+  }, [demoMethods]);
 
   // Skill convergence: 3 agents with controlled noise levels
   // Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5) — the mechanism should rank them correctly
@@ -675,6 +708,8 @@ export default function ResultsPage() {
             ))}
           </div>
 
+          <ChartLinkingProvider initialMethods={['uniform', 'deposit', 'skill', 'mechanism']}>
+
           {loading && (
             <div className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4"><Skeleton height="120px" /><Skeleton height="120px" /></div>
@@ -716,6 +751,7 @@ export default function ResultsPage() {
                 baselineLabel="Equal weighting"
                 metricLabel="Δ CRPS (×10⁴)"
                 title="Method comparison — Wind power"
+                provenance={{ type: 'real', label: 'Real data — Elia wind' }}
               />
 
               <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -786,7 +822,7 @@ export default function ResultsPage() {
                           adjusts weights to make the linear combination match. Recovers structural weights precisely.
                         </p>
                       </div>
-                      <ResponsiveContainer width="100%" height={200}>
+                      <ResponsiveContainer width="100%" height={360}>
                         <BarChart
                           data={weightRecovery.map(r => ({
                             name: `F${r.forecaster + 1}`,
@@ -837,7 +873,7 @@ export default function ResultsPage() {
                       {/* σ trajectory */}
                       <div>
                         <div className="text-[11px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
-                        <ResponsiveContainer width="100%" height={180}>
+                        <ResponsiveContainer width="100%" height={360}>
                           <LineChart data={skillConvergence} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
                             <CartesianGrid {...GRID_PROPS} />
                             <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} />
@@ -851,7 +887,9 @@ export default function ResultsPage() {
                             {targetSigmas.map((ts, i) => (
                               <ReferenceLine key={`ts-${i}`} y={ts}
                                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                                strokeDasharray="6 3" strokeOpacity={0.4} />
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(ts, 3)} position="right" fontSize={11} fill="#334155" />
+                              </ReferenceLine>
                             ))}
                           </LineChart>
                         </ResponsiveContainer>
@@ -860,7 +898,7 @@ export default function ResultsPage() {
                       {/* Weight trajectory */}
                       <div>
                         <div className="text-[11px] font-semibold text-slate-600 mb-1">Normalised weight</div>
-                        <ResponsiveContainer width="100%" height={180}>
+                        <ResponsiveContainer width="100%" height={360}>
                           <LineChart data={weightConvergence} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
                             <CartesianGrid {...GRID_PROPS} />
                             <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} />
@@ -874,7 +912,9 @@ export default function ResultsPage() {
                             {targetWeights.map((tw, i) => (
                               <ReferenceLine key={`tw-${i}`} y={tw}
                                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                                strokeDasharray="6 3" strokeOpacity={0.4} />
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(tw, 3)} position="right" fontSize={11} fill="#334155" />
+                              </ReferenceLine>
                             ))}
                             <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                           </LineChart>
@@ -933,6 +973,7 @@ export default function ResultsPage() {
                 baselineLabel="Equal weighting"
                 metricLabel="Δ CRPS (×10⁴)"
                 title="Method comparison — Electricity prices"
+                provenance={{ type: 'real', label: 'Real data — Elia electricity' }}
               />
             </div>
           )}
@@ -947,6 +988,7 @@ export default function ResultsPage() {
 
           {useExp && !loading && activeTab === 'Accuracy' && (
             expAccuracyDisplay.length > 0 && calibrationData.length > 0 && ablationData.length > 0 ? (
+              <div className="space-y-6">
               <FourPanelLayout
                 title="Master Comparison"
                 thesisPoint="Accuracy, calibration, market structure, and ablation evidence at a glance."
@@ -965,7 +1007,7 @@ export default function ResultsPage() {
                 calibration={
                   <div className="rounded-xl border border-slate-200 bg-white p-4">
                     <div className="text-xs font-semibold text-slate-700 mb-2">Reliability diagram</div>
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={360}>
                       <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
                         <CartesianGrid {...GRID_PROPS} />
                         <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
@@ -994,7 +1036,7 @@ export default function ResultsPage() {
                 failure={
                   <div className="rounded-xl border border-slate-200 bg-white p-4">
                     <div className="text-xs font-semibold text-slate-700 mb-2">Ablation (ΔCRPS vs Full)</div>
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={360}>
                       <BarChart data={ablationData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                         <CartesianGrid {...GRID_PROPS} />
                         <XAxis dataKey="variant" tick={AXIS_TICK} stroke={AXIS_STROKE} />
@@ -1007,6 +1049,22 @@ export default function ResultsPage() {
                   </div>
                 }
               />
+
+              {/* Trade-off scatter: accuracy vs concentration */}
+              <TradeOffScatter
+                data={expTradeOffData}
+                title="Accuracy vs Concentration Trade-off"
+                provenance={{ type: 'synthetic', label: `Synthetic — ${defaultExperiment}` }}
+              />
+
+              {/* Waterfall: incremental CRPS change */}
+              <WaterfallChart
+                data={expWaterfallData}
+                title="Incremental CRPS Improvement"
+                metricLabel="Mean CRPS"
+                provenance={{ type: 'synthetic', label: `Synthetic — ${defaultExperiment}` }}
+              />
+              </div>
             ) : (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-[11px] text-slate-500">
                 No comparison data available for the four main methods.
@@ -1038,7 +1096,7 @@ export default function ResultsPage() {
               {calibrationData.length === 0 ? (
                 <p className="text-[11px] text-slate-500">Calibration data not available.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={360}>
                   <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
                     <CartesianGrid {...GRID_PROPS} />
                     <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
@@ -1059,7 +1117,7 @@ export default function ResultsPage() {
               {ablationData.length === 0 ? (
                 <p className="text-[11px] text-slate-500">Ablation data not available.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={360}>
                   <BarChart data={ablationData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                     <CartesianGrid {...GRID_PROPS} />
                     <XAxis dataKey="variant" tick={AXIS_TICK} stroke={AXIS_STROKE} />
@@ -1115,8 +1173,10 @@ export default function ResultsPage() {
                     <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                     {demoMethods.map((m) => (
                       <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                        strokeWidth={m.key === 'blended' ? 3 : 1.5} dot={false}
-                        strokeOpacity={m.key === 'blended' ? 1 : 0.6}
+                        strokeWidth={m.key === 'blended' ? 3.5 : 2}
+                        dot={false}
+                        strokeOpacity={1}
+                        strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '4 4' : m.key === 'skill_only' ? '2 2' : undefined}
                         isAnimationActive={true} animationDuration={300} />
                     ))}
                     <Brush dataKey="round" {...BRUSH_PROPS} />
@@ -1132,7 +1192,7 @@ export default function ResultsPage() {
                   The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
                 </p>
                 <div className="grid grid-cols-2 gap-4">
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={360}>
                     <LineChart data={skillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
                       <CartesianGrid {...GRID_PROPS} />
                       <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
@@ -1148,12 +1208,14 @@ export default function ResultsPage() {
                       {targetSigmas.map((ts, i) => (
                         <ReferenceLine key={`ts-${i}`} y={ts}
                           stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                          strokeDasharray="6 3" strokeOpacity={0.4} />
+                          strokeDasharray="6 3" strokeOpacity={0.4}>
+                          <Label value={fmt(ts, 3)} position="right" fontSize={11} fill="#334155" />
+                        </ReferenceLine>
                       ))}
                       <Brush dataKey="round" {...BRUSH_PROPS} />
                     </LineChart>
                   </ResponsiveContainer>
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={360}>
                     <LineChart data={weightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
                       <CartesianGrid {...GRID_PROPS} />
                       <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
@@ -1169,7 +1231,9 @@ export default function ResultsPage() {
                       {targetWeights.map((tw, i) => (
                         <ReferenceLine key={`tw-${i}`} y={tw}
                           stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                          strokeDasharray="6 3" strokeOpacity={0.4} />
+                          strokeDasharray="6 3" strokeOpacity={0.4}>
+                          <Label value={fmt(tw, 3)} position="right" fontSize={11} fill="#334155" />
+                        </ReferenceLine>
                       ))}
                       <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                       <Brush dataKey="round" {...BRUSH_PROPS} />
@@ -1182,6 +1246,21 @@ export default function ResultsPage() {
                 </p>
 
               </div>
+
+              {/* Trade-off scatter: accuracy vs concentration */}
+              <TradeOffScatter
+                data={tradeOffData}
+                title="Accuracy vs Concentration Trade-off"
+                provenance={{ type: 'demo', label: `In-browser demo — seed=${DEMO_SEED}, N=${DEMO_N}, T=${DEMO_T}` }}
+              />
+
+              {/* Waterfall: incremental CRPS change */}
+              <WaterfallChart
+                data={waterfallData}
+                title="Incremental CRPS Improvement"
+                metricLabel="Mean CRPS"
+                provenance={{ type: 'demo', label: `In-browser demo — seed=${DEMO_SEED}, N=${DEMO_N}, T=${DEMO_T}` }}
+              />
             </div>
           )}
 
@@ -1218,7 +1297,7 @@ export default function ResultsPage() {
                   </p>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={340}>
+              <ResponsiveContainer width="100%" height={360}>
                 <BarChart data={demoConcentrationBar} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
                   <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
@@ -1227,8 +1306,27 @@ export default function ResultsPage() {
                   <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                   <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={32}>
                     {demoConcentrationBar.map((d) => <Cell key={d.key} fill={d.color} opacity={0.85} />)}
+                    <LabelList
+                      dataKey="gini"
+                      position="top"
+                      formatter={(v: string | number | boolean | null | undefined) => {
+                        const n = Number(v);
+                        return Number.isFinite(n) ? fmt(n, 3) : '—';
+                      }}
+                      style={{ fontSize: 11, fill: '#334155' }}
+                    />
                   </Bar>
-                  <Bar dataKey="nEff" name="Mean N_eff" radius={[4, 4, 0, 0]} maxBarSize={32} fill="#0ea5e9" opacity={0.85} />
+                  <Bar dataKey="nEff" name="Mean N_eff" radius={[4, 4, 0, 0]} maxBarSize={32} fill="#0ea5e9" opacity={0.85}>
+                    <LabelList
+                      dataKey="nEff"
+                      position="top"
+                      formatter={(v: string | number | boolean | null | undefined) => {
+                        const n = Number(v);
+                        return Number.isFinite(n) ? fmt(n, 3) : '—';
+                      }}
+                      style={{ fontSize: 11, fill: '#334155' }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1245,15 +1343,35 @@ export default function ResultsPage() {
                   The question: how does the deposit rule affect the accuracy–concentration trade-off?
                 </p>
               </div>
-              <ResponsiveContainer width="100%" height={340}>
+              <ResponsiveContainer width="100%" height={360}>
                 <BarChart data={demoDeposits} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
                   <CartesianGrid {...GRID_PROPS} />
                   <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />
                   <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
                   <Tooltip content={<SmartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                  <Bar dataKey="meanError" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.outcome.main} opacity={0.85} />
-                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.wealth.main} opacity={0.85} />
+                  <Bar dataKey="meanError" name="Mean error" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.outcome.main} opacity={0.85}>
+                    <LabelList
+                      dataKey="meanError"
+                      position="top"
+                      formatter={(v: string | number | boolean | null | undefined) => {
+                        const n = Number(v);
+                        return Number.isFinite(n) ? fmt(n, 3) : '—';
+                      }}
+                      style={{ fontSize: 11, fill: '#334155' }}
+                    />
+                  </Bar>
+                  <Bar dataKey="gini" name="Final Gini" radius={[4, 4, 0, 0]} maxBarSize={36} fill={SEM.wealth.main} opacity={0.85}>
+                    <LabelList
+                      dataKey="gini"
+                      position="top"
+                      formatter={(v: string | number | boolean | null | undefined) => {
+                        const n = Number(v);
+                        return Number.isFinite(n) ? fmt(n, 3) : '—';
+                      }}
+                      style={{ fontSize: 11, fill: '#334155' }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
@@ -1296,6 +1414,7 @@ export default function ResultsPage() {
 
           </motion.div>
           </AnimatePresence>
+          </ChartLinkingProvider>
         </section>
 
       </div>

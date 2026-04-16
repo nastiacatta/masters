@@ -74,6 +74,27 @@ export function relativeLuminance(hex: string): number {
   return 0.2126 * linearise(r) + 0.7152 * linearise(g) + 0.0722 * linearise(b);
 }
 
+/** Aggregation method colour map — consistent across all pages. */
+export const METHOD_COLORS: Record<string, string> = {
+  uniform:   '#64748b',  // slate
+  deposit:   '#0ea5e9',  // sky
+  skill:     '#8b5cf6',  // violet
+  mechanism: '#10b981',  // emerald
+};
+
+/** Behaviour family hex colour map — consistent across all pages. */
+export const FAMILY_COLORS: Record<string, string> = {
+  participation: '#0ea5e9',
+  information:   '#3b82f6',
+  reporting:     '#8b5cf6',
+  staking:       '#14b8a6',
+  objectives:    '#6366f1',
+  identity:      '#f59e0b',
+  learning:      '#10b981',
+  adversarial:   '#ef4444',
+  operational:   '#64748b',
+};
+
 /**
  * WCAG 2.1 contrast ratio between two hex colours.
  *

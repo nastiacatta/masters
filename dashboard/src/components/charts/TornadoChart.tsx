@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import ChartCard from '@/components/dashboard/ChartCard';
+import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
@@ -39,6 +40,8 @@ interface TornadoChartProps {
   metricLabel?: string;
   /** Optional title override */
   title?: string;
+  /** Data provenance badge */
+  provenance?: DataProvenance;
 }
 
 /* ── Component ─────────────────────────────────────────────────────── */
@@ -48,6 +51,7 @@ export default function TornadoChart({
   baselineLabel = 'Baseline',
   metricLabel = 'Δ CRPS',
   title = 'Sensitivity Tornado',
+  provenance,
 }: TornadoChartProps) {
   // Sort by absolute delta magnitude — largest impact at top
   const sorted = [...data].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
@@ -63,6 +67,7 @@ export default function TornadoChart({
     <ChartCard
       title={title}
       subtitle="Bars extend left (beneficial) or right (harmful) from the baseline."
+      provenance={provenance}
       help={{
         term: 'Tornado Chart',
         definition:

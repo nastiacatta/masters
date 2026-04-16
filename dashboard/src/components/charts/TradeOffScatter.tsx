@@ -10,6 +10,7 @@ import {
   type LabelProps,
 } from 'recharts';
 import ChartCard from '@/components/dashboard/ChartCard';
+import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
@@ -37,6 +38,8 @@ interface TradeOffScatterProps {
   data: TradeOffPoint[];
   /** Optional title override */
   title?: string;
+  /** Data provenance badge */
+  provenance?: DataProvenance;
 }
 
 /* ── Custom label renderer for scatter points ──────────────────────── */
@@ -129,6 +132,7 @@ function renderDot(props: DotProps) {
 export default function TradeOffScatter({
   data,
   title = 'Accuracy vs Concentration Trade-off',
+  provenance,
 }: TradeOffScatterProps) {
   // Compute midpoints for quadrant reference lines
   const xValues = data.map((d) => d.crpsImprovement);
@@ -140,6 +144,7 @@ export default function TradeOffScatter({
     <ChartCard
       title={title}
       subtitle="Each point is one aggregation method. Bottom-right is ideal."
+      provenance={provenance}
       help={{
         term: 'Trade-off Scatter',
         definition:
