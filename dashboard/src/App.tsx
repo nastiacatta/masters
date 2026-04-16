@@ -7,7 +7,6 @@ import StickyGlossary from '@/components/dashboard/StickyGlossary';
 import HomePage from '@/pages/HomePage';
 import MechanismPage from '@/pages/MechanismPage';
 import ResultsPage from '@/pages/ResultsPage';
-import RobustnessPage from '@/pages/RobustnessPage';
 import BehaviourPage from '@/pages/BehaviourPage';
 import NotesPage from '@/pages/NotesPage';
 
@@ -24,29 +23,33 @@ export default function App() {
             <Sidebar />
             <main className="flex-1 overflow-hidden bg-slate-50 flex flex-col">
               <Routes>
-                {/* Primary routes */}
+                {/* Thesis flow */}
                 <Route path="/" element={<HomePage />} />
-                <Route path="/mechanism" element={<MechanismPage />} />
-                <Route path="/results" element={<ResultsPage />} />
-                <Route path="/behaviour" element={<BehaviourPage />} />
-                <Route path="/robustness" element={<RobustnessPage />} />
-                <Route path="/notes" element={<NotesPage />} />
-                <Route path="/slides" element={<Navigate to="/" replace />} />
+                <Route path="/evidence" element={<ResultsPage />} />
+                <Route path="/robustness" element={<BehaviourPage />} />
 
-                {/* Appendix: legacy interactive tools */}
+                {/* Reference */}
+                <Route path="/notes" element={<NotesPage />} />
+                <Route path="/explorer" element={<MechanismPage />} />
+
+                {/* Legacy interactive tools */}
                 <Route path="/appendix" element={<LabPage />} />
                 <Route path="/appendix/experiments" element={<ExperimentsPage />} />
 
-                {/* Legacy redirects */}
+                {/* Redirects — all old routes point to new locations */}
+                <Route path="/results" element={<Navigate to="/evidence" replace />} />
+                <Route path="/behaviour" element={<Navigate to="/robustness" replace />} />
+                <Route path="/mechanism" element={<Navigate to="/explorer" replace />} />
+                <Route path="/slides" element={<Navigate to="/" replace />} />
                 <Route path="/lab" element={<Navigate to="/appendix" replace />} />
-                <Route path="/walkthrough" element={<Navigate to="/mechanism" replace />} />
+                <Route path="/walkthrough" element={<Navigate to="/explorer" replace />} />
                 <Route path="/experiments" element={<Navigate to="/appendix/experiments" replace />} />
-                <Route path="/validation" element={<Navigate to="/behaviour" replace />} />
+                <Route path="/validation" element={<Navigate to="/robustness" replace />} />
                 <Route path="/overview" element={<Navigate to="/" replace />} />
-                <Route path="/pipeline" element={<Navigate to="/mechanism" replace />} />
-                <Route path="/comparison" element={<Navigate to="/results" replace />} />
-                <Route path="/comparisons" element={<Navigate to="/results" replace />} />
-                <Route path="/mechanism-explorer" element={<Navigate to="/mechanism" replace />} />
+                <Route path="/pipeline" element={<Navigate to="/explorer" replace />} />
+                <Route path="/comparison" element={<Navigate to="/evidence" replace />} />
+                <Route path="/comparisons" element={<Navigate to="/evidence" replace />} />
+                <Route path="/mechanism-explorer" element={<Navigate to="/explorer" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
