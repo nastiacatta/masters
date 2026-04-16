@@ -48,13 +48,16 @@ function renderPointLabel(props: LabelProps & { index?: number }, data: TradeOff
   const { x, y, index } = props;
   if (index == null || !data[index]) return null;
   const point = data[index];
-  // Alternate above/below to reduce overlap
-  const above = index % 2 === 0;
+  const px = Number(x);
+  const py = Number(y);
+
+  // Place label to the right of the dot instead of above/below
+  // This avoids vertical overlap when points have similar Y values
   return (
     <text
-      x={Number(x)}
-      y={above ? Number(y) - 16 : Number(y) + 20}
-      textAnchor="middle"
+      x={px + 14}
+      y={py + 4}
+      textAnchor="start"
       fill={point.color}
       fontSize={11}
       fontWeight={600}
@@ -120,7 +123,7 @@ export default function TradeOffScatter({
       chartType="Scatter chart"
     >
       <ResponsiveContainer width="100%" height={400}>
-        <ScatterChart margin={{ top: 40, right: 32, bottom: 24, left: 16 }}>
+        <ScatterChart margin={{ top: 24, right: 100, bottom: 24, left: 16 }}>
           <CartesianGrid {...GRID_PROPS} />
           <XAxis
             type="number"
