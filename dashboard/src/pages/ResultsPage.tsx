@@ -135,95 +135,43 @@ function seFinite(values: Array<number | undefined | null>): number | null {
   return Math.sqrt(variance / xs.length);
 }
 
-const EXPERIMENT_DESCRIPTIONS = [
-  {
-    title: 'Real data — Elia Offshore Wind',
-    tab: 'Real data',
-    setup: '5 causal forecasting models on 17,544 hourly Belgian wind power observations (2024–2025). Online: each hour the mechanism scores, updates skills, and re-weights.',
-    compared: '4 weighting rules: Equal (1/N), Skill-only (w ∝ g(σ)), Stake-only (w ∝ deposit), Skill × stake (full mechanism). Plus Best single (oracle).',
-    lookFor: 'Δ CRPS bar chart: negative = better than equal. CRPS-over-time: gap between lines = cumulative accuracy gain. DM test p < 0.001.',
-  },
-  {
-    title: 'Real data — Elia Electricity Prices',
-    tab: 'Real data',
-    setup: 'Same 5 models on Belgian electricity imbalance prices (15-min, 2024). More volatile with spikes — harder forecasting task.',
-    compared: 'Same 4 weighting rules. Tests whether the mechanism generalises beyond wind.',
-    lookFor: 'Does Skill × stake still beat Equal on a different domain?',
-  },
-  {
-    title: 'Weight learning — LMS vs Core mechanism',
-    tab: 'Real data',
-    setup: 'LMS: T=15k, endogenous DGP, true w=[0.8, 0.1, 0.5]. Core: T=500, exogenous DGP, 3 agents with τ=[0.2, 0.6, 1.5], fixed deposits.',
-    compared: 'LMS directly minimises (y−w·r)². Core uses CRPS → EWMA → σ → g(σ) → weight. Different objectives.',
-    lookFor: 'LMS recovers structural weights (MAE≈0.02). Core gets ranking right but modest separation (~0.32–0.35) due to skill floor λ=0.3.',
-  },
-  {
-    title: 'Cumulative forecast error',
-    tab: 'Accuracy',
-    setup: '6 synthetic agents, baseline DGP (y~U(0,1)), 200 rounds, seed 42. All agents truthful, full participation.',
-    compared: '4 weighting methods on identical data — only the influence rule changes.',
-    lookFor: 'Lines diverge after ~50 rounds (EWMA half-life ≈ 7). Skill × stake should stay below Equal. Gap at round 200 = total accuracy gain.',
-  },
-  {
-    title: 'Skill recognition',
-    tab: 'Accuracy',
-    setup: '3 agents: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5). Latent-fixed DGP, 500 rounds, fixed deposits (b=1), no weight cap.',
-    compared: 'σ trajectory (left) and weight trajectory (right). Dashed = steady-state targets.',
-    lookFor: 'Good agent gets highest σ and weight. Bad agent gets lowest. Separation is modest due to skill floor λ=0.3.',
-  },
-  {
-    title: 'Wealth concentration',
-    tab: 'Concentration',
-    setup: 'Same 6 agents, 200 rounds. Measures Gini (wealth inequality) and N_eff (effective participants) per method.',
-    compared: '4 weighting methods. Equal: Gini≈0, N_eff=6. Skill×stake: higher Gini, lower N_eff.',
-    lookFor: 'The accuracy–concentration trade-off. More concentration = better accuracy but less fairness.',
-  },
-  {
-    title: 'Deposit policy comparison',
-    tab: 'Deposit policy',
-    setup: 'Same 6 agents, 200 rounds, all Skill×stake. Only the deposit rule changes.',
-    compared: 'Fixed (b=1), Wealth fraction (b=0.18·W), σ-scaled (b=f·W·σ). Mean CRPS and Gini for each.',
-    lookFor: 'Stronger deposit rules improve accuracy but increase concentration. Wealth fraction is the default trade-off.',
-  },
-];
+const EXPERIMENT_CARDS = [
+  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 5 models', key: '21% CRPS improvement' },
+  { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-min prices, volatile spikes', key: 'Generalisation test' },
+  { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill gate', key: 'Ranking correct, modest separation' },
+  { title: 'Method Race', tab: 'Accuracy', color: '#6366f1', desc: '6 agents, 200 rounds, 4 methods', key: 'Skill × stake wins after ~50 rounds' },
+  { title: 'Skill Recognition', tab: 'Accuracy', color: '#f59e0b', desc: '3 agents with known quality', key: 'Good→high σ, Bad→low σ' },
+  { title: 'Concentration', tab: 'Concentration', color: '#ef4444', desc: 'Gini and N_eff by method', key: 'Accuracy–fairness trade-off' },
+  { title: 'Deposit Policy', tab: 'Deposit policy', color: '#64748b', desc: 'Fixed vs wealth-fraction vs σ-scaled', key: 'Deposit quality is the key lever' },
+] as const;
 
 function ExperimentGuide() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
       <button type="button" onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50 transition-colors">
-        <div>
+        <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-700">Experiment guide</span>
-          <span className="text-[11px] text-slate-400 ml-2">7 experiments explained</span>
+          <span className="text-[11px] text-slate-400">{EXPERIMENT_CARDS.length} experiments</span>
         </div>
-        <span className={`text-slate-400 text-sm transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
+        <span className={`text-slate-400 text-sm transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
       {open && (
-        <div className="px-5 pb-5 space-y-4 border-t border-slate-100">
-          {EXPERIMENT_DESCRIPTIONS.map((exp, i) => (
-            <div key={i} className="rounded-lg border border-slate-100 p-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-white bg-slate-500 rounded-full w-5 h-5 flex items-center justify-center shrink-0">{i + 1}</span>
-                <span className="text-xs font-semibold text-slate-700">{exp.title}</span>
-                <span className="text-[11px] text-slate-400 ml-auto">{exp.tab}</span>
+        <div className="px-5 pb-4 border-t border-slate-100">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-3">
+            {EXPERIMENT_CARDS.map((exp) => (
+              <div key={exp.title} className="rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: exp.color }} />
+                  <span className="text-xs font-semibold text-slate-800 truncate">{exp.title}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{exp.desc}</p>
+                <div className="mt-1.5 text-[11px] font-medium" style={{ color: exp.color }}>{exp.key}</div>
+                <div className="mt-1 text-[10px] text-slate-400">{exp.tab}</div>
               </div>
-              <div className="grid sm:grid-cols-3 gap-2 text-[11px]">
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Setup</div>
-                  <p className="text-slate-600 leading-relaxed">{exp.setup}</p>
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What's compared</div>
-                  <p className="text-slate-600 leading-relaxed">{exp.compared}</p>
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">What to look for</div>
-                  <p className="text-slate-600 leading-relaxed">{exp.lookFor}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
