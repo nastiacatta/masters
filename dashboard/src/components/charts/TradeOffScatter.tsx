@@ -51,7 +51,7 @@ function renderPointLabel(props: LabelProps & { index?: number }, data: TradeOff
   return (
     <text
       x={Number(x)}
-      y={Number(y) - 10}
+      y={Number(y) - 14}
       textAnchor="middle"
       fill={point.color}
       fontSize={11}
@@ -59,47 +59,6 @@ function renderPointLabel(props: LabelProps & { index?: number }, data: TradeOff
     >
       {point.label}
     </text>
-  );
-}
-
-/* ── Quadrant label component ──────────────────────────────────────── */
-
-function QuadrantLabels({ xMid, yMid }: { xMid: number; yMid: number }) {
-  /*
-   * Quadrant layout (x = CRPS improvement, y = Gini):
-   *   top-left:     Low accuracy, high concentration
-   *   top-right:    High accuracy, high concentration
-   *   bottom-left:  Low accuracy, low concentration
-   *   bottom-right: High accuracy, low concentration  ← ideal
-   */
-  const labels = [
-    { text: 'Low accuracy, high concentration', anchor: 'start' as const, dx: -1, dy: -1 },
-    { text: 'High accuracy, high concentration', anchor: 'end' as const, dx: 1, dy: -1 },
-    { text: 'Low accuracy, low concentration', anchor: 'start' as const, dx: -1, dy: 1 },
-    { text: 'High accuracy, low concentration', anchor: 'end' as const, dx: 1, dy: 1 },
-  ];
-
-  return (
-    <g className="quadrant-labels">
-      {labels.map((l) => {
-        // Position labels in the corners relative to the midpoint
-        const offsetX = l.dx > 0 ? xMid + 20 : xMid - 20;
-        const offsetY = l.dy > 0 ? yMid + 16 : yMid - 8;
-        return (
-          <text
-            key={l.text}
-            x={offsetX}
-            y={offsetY}
-            textAnchor={l.anchor}
-            fill="#cbd5e1"
-            fontSize={10}
-            fontStyle="italic"
-          >
-            {l.text}
-          </text>
-        );
-      })}
-    </g>
   );
 }
 
@@ -118,7 +77,7 @@ function renderDot(props: DotProps) {
     <circle
       cx={cx}
       cy={cy}
-      r={6}
+      r={8}
       fill={payload.color}
       stroke="#fff"
       strokeWidth={2}
@@ -143,7 +102,7 @@ export default function TradeOffScatter({
   return (
     <ChartCard
       title={title}
-      subtitle="Each point is one aggregation method. Bottom-right is ideal."
+      subtitle="Each point is one aggregation method. Right = more accurate, down = less concentrated. Bottom-right is ideal."
       provenance={provenance}
       help={{
         term: 'Trade-off Scatter',
@@ -158,7 +117,7 @@ export default function TradeOffScatter({
       }}
       chartType="Scatter chart"
     >
-      <ResponsiveContainer width="100%" height={360}>
+      <ResponsiveContainer width="100%" height={400}>
         <ScatterChart margin={{ top: 24, right: 32, bottom: 24, left: 16 }}>
           <CartesianGrid {...GRID_PROPS} />
           <XAxis
@@ -167,6 +126,7 @@ export default function TradeOffScatter({
             name="CRPS Improvement"
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
+            domain={['dataMin - 0.001', 'dataMax + 0.001']}
             label={{
               value: 'CRPS improvement (positive = better)',
               position: 'insideBottom',
@@ -181,6 +141,7 @@ export default function TradeOffScatter({
             name="Gini"
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
+            domain={['dataMin - 0.02', 'dataMax + 0.02']}
             label={{
               value: 'Gini (lower = better)',
               angle: -90,
@@ -193,8 +154,6 @@ export default function TradeOffScatter({
           {/* Quadrant dividers */}
           <ReferenceLine x={xMid} stroke="#e2e8f0" strokeDasharray="4 4" />
           <ReferenceLine y={yMid} stroke="#e2e8f0" strokeDasharray="4 4" />
-          {/* Quadrant labels rendered as custom SVG */}
-          <QuadrantLabels xMid={200} yMid={160} />
           <Tooltip
             contentStyle={TOOLTIP_STYLE as React.CSSProperties}
             formatter={(value: unknown, name: unknown) => {
