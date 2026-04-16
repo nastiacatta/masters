@@ -11,7 +11,8 @@ interface NavItem {
   to: string;
   label: string;
   icon: FC<{ className?: string }>;
-  group: 'primary' | 'secondary';
+  /** Step number shown in collapsed mode (null = reference section) */
+  step: number | null;
 }
 
 /* 16×16 inline SVG icons — simple paths, no icon library */
@@ -45,14 +46,6 @@ const BookIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const BeakerIcon: FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M5.5 2V6L2.5 12.5C2.5 13.5 3.5 14 4.5 14H11.5C12.5 14 13.5 13.5 13.5 12.5L10.5 6V2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    <path d="M5 2H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M4 10.5H12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeDasharray="1.5 2" />
-  </svg>
-);
-
 const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
   <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 1.5L2.5 4V7.5C2.5 11 5 13.5 8 14.5C11 13.5 13.5 11 13.5 7.5V4L8 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -60,16 +53,13 @@ const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+/** Thesis argument flow — numbered steps + unnumbered reference pages */
 const NAV_ITEMS: NavItem[] = [
-  /* Primary — thesis argument flow */
-  { to: '/',           label: 'Overview',   icon: HomeIcon,     group: 'primary' },
-  { to: '/mechanism',  label: 'Mechanism',  icon: CogIcon,      group: 'primary' },
-  { to: '/results',    label: 'Results',    icon: ChartBarIcon, group: 'primary' },
-  { to: '/behaviour',  label: 'Behaviour',  icon: BeakerIcon,   group: 'primary' },
-  { to: '/robustness', label: 'Robustness', icon: ShieldIcon,   group: 'primary' },
-  /* Secondary */
-  { to: '/notes',      label: 'Notes',      icon: BookIcon,     group: 'secondary' },
-  { to: '/appendix',   label: 'Appendix',   icon: BeakerIcon,   group: 'secondary' },
+  { to: '/',           label: 'Mechanism',  icon: HomeIcon,     step: 1 },
+  { to: '/evidence',   label: 'Evidence',   icon: ChartBarIcon, step: 2 },
+  { to: '/robustness', label: 'Robustness', icon: ShieldIcon,   step: 3 },
+  { to: '/notes',      label: 'Notes',      icon: BookIcon,     step: null },
+  { to: '/explorer',   label: 'Explorer',   icon: CogIcon,      step: null },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -86,36 +76,26 @@ export default function Sidebar() {
     onMouseLeave,
   } = useCollapsibleSidebar();
 
-  const primary   = NAV_ITEMS.filter((n) => n.group === 'primary');
-  const secondary = NAV_ITEMS.filter((n) => n.group === 'secondary');
+  const thesis    = NAV_ITEMS.filter((n) => n.step != null);
+  const reference = NAV_ITEMS.filter((n) => n.step == null);
 
-  /** Show text labels when expanded or hover-expanded */
   const showLabels = !isCollapsed || isHoverExpanded;
 
   return (
     <aside
-      className="bg-white border-r border-slate-200 flex flex-col h-full shrink-0 overflow-hidden"
-      style={{
-        width: effectiveWidth,
-        transition: 'width 200ms ease',
-      }}
+      className="bg-white border-r border-slate-100 flex flex-col h-full shrink-0 overflow-hidden"
+      style={{ width: effectiveWidth, transition: 'width 200ms ease' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Header */}
-      <div className="px-3 py-3 border-b border-slate-200 flex items-center gap-2">
-        {showLabels && (
-          <h1 className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap overflow-hidden">
-            Skill × Stake
-          </h1>
-        )}
-        {/* Toggle button */}
+      {/* Header — just the toggle, no title clutter */}
+      <div className="px-2 py-2.5 flex items-center">
         <button
           onClick={toggle}
           className={clsx(
-            'flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100',
+            'flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-50',
             'transition-colors duration-100 shrink-0',
-            showLabels ? 'ml-auto' : 'mx-auto mt-1',
+            showLabels ? '' : 'mx-auto',
           )}
           style={{ minWidth: 32, minHeight: 32, width: 32, height: 32 }}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -127,43 +107,21 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 overflow-y-auto">
-        {/* Primary group label */}
-        {showLabels && (
-          <div
-            className="px-3 pb-1.5 text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap"
-            style={{ fontSize: 11 }}
-          >
-            Thesis Flow
-          </div>
-        )}
-
-        {/* Primary group */}
+      {/* Navigation — clean, no group labels */}
+      <nav className="flex-1 px-1.5 pb-3 overflow-y-auto">
         <ul className="space-y-0.5">
-          {primary.map((item) => (
+          {thesis.map((item) => (
             <li key={item.to}>
               <SidebarLink item={item} showLabel={showLabels} />
             </li>
           ))}
         </ul>
 
-        {/* Divider */}
-        <div className="border-t border-slate-200 my-3" />
+        {/* Subtle separator */}
+        <div className="border-t border-slate-100 my-2 mx-2" />
 
-        {/* Secondary group label */}
-        {showLabels && (
-          <div
-            className="px-3 pb-1.5 text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap"
-            style={{ fontSize: 11 }}
-          >
-            Reference
-          </div>
-        )}
-
-        {/* Secondary group */}
         <ul className="space-y-0.5">
-          {secondary.map((item) => (
+          {reference.map((item) => (
             <li key={item.to}>
               <SidebarLink item={item} showLabel={showLabels} />
             </li>
@@ -184,22 +142,40 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
   return (
     <NavLink
       to={item.to}
-      end={item.to === '/' || item.to === '/appendix'}
+      end={item.to === '/'}
       title={showLabel ? undefined : item.label}
       className={({ isActive }) =>
         clsx(
-          'flex items-center rounded-md text-[13px] font-medium',
+          'flex items-center rounded-lg text-[13px] font-medium',
           'transition-colors duration-100',
-          showLabel ? 'gap-2.5 px-3 py-2' : 'justify-center px-1 py-2',
+          showLabel ? 'gap-2 px-2.5 py-1.5' : 'justify-center px-1 py-1.5',
           isActive
-            ? 'bg-teal-50 text-teal-700'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+            ? 'bg-slate-900 text-white'
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800',
         )
       }
     >
-      <Icon className="shrink-0" />
-      {showLabel && (
-        <span className="whitespace-nowrap overflow-hidden">{item.label}</span>
+      {({ isActive }) => (
+        <>
+          {/* Step number (thesis pages) or icon (reference pages) */}
+          {item.step != null ? (
+            <span
+              className={clsx(
+                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0',
+                isActive
+                  ? 'bg-white text-slate-900'
+                  : 'bg-slate-100 text-slate-400',
+              )}
+            >
+              {item.step}
+            </span>
+          ) : (
+            <Icon className="shrink-0" />
+          )}
+          {showLabel && (
+            <span className="whitespace-nowrap overflow-hidden">{item.label}</span>
+          )}
+        </>
       )}
     </NavLink>
   );

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 
 const NAV = [
-  { to: '/results',    label: 'Results',    desc: 'Accuracy & concentration', color: 'border-l-indigo-500 hover:bg-indigo-50' },
-  { to: '/behaviour',  label: 'Behaviour',  desc: 'Strategies, attacks & robustness', color: 'border-l-violet-500 hover:bg-violet-50' },
-  { to: '/notes',      label: 'Notes',      desc: 'All experiments & methodology', color: 'border-l-slate-400 hover:bg-slate-50' },
-  { to: '/robustness', label: 'Robustness', desc: 'Sybil resistance, arbitrage & invariants', color: 'border-l-emerald-500 hover:bg-emerald-50' },
+  { to: '/evidence',   label: 'Evidence',   desc: 'Real data, accuracy & concentration', color: 'border-l-indigo-500 hover:bg-indigo-50' },
+  { to: '/robustness', label: 'Robustness', desc: 'Behaviour taxonomy, attacks & sensitivity', color: 'border-l-violet-500 hover:bg-violet-50' },
+  { to: '/explorer',   label: 'Explorer',   desc: 'Interactive mechanism walkthrough', color: 'border-l-teal-500 hover:bg-teal-50' },
+  { to: '/notes',      label: 'Notes',      desc: 'Experiments & methodology', color: 'border-l-slate-400 hover:bg-slate-50' },
 ] as const;
 
 /** SVG circle indicator used in place of emoji characters. */
