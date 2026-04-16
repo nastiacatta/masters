@@ -5,7 +5,7 @@ import {
   AreaChart,
   Bar,
   BarChart,
-  Brush,
+
   CartesianGrid,
   Cell,
   Label,
@@ -46,7 +46,7 @@ import {
   AGENT_PALETTE,
   AXIS_STROKE,
   AXIS_TICK,
-  BRUSH_PROPS,
+
   CHART_MARGIN_LABELED,
   GRID_PROPS,
   TOOLTIP_STYLE,
@@ -811,7 +811,6 @@ export default function ResultsPage() {
                       <Line type="monotone" dataKey="skill" name="Skill-only" stroke="#8b5cf6" strokeWidth={1.5} dot={false} strokeOpacity={0.7} />
                       <Line type="monotone" dataKey="mechanism" name="Skill × stake" stroke="#6366f1" strokeWidth={3} dot={false} />
                       <Line type="monotone" dataKey="best" name="Best single" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeOpacity={0.7} />
-                      <Brush dataKey="t" {...BRUSH_PROPS} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -1230,7 +1229,6 @@ export default function ResultsPage() {
                             dot={false}
                             strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined} />
                         ))}
-                        <Brush dataKey="round" {...BRUSH_PROPS} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -1265,7 +1263,6 @@ export default function ResultsPage() {
                           <Label value={fmt(ts, 3)} position="right" fontSize={11} fill="#334155" />
                         </ReferenceLine>
                       ))}
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
                     </LineChart>
                   </ResponsiveContainer>
                   <ResponsiveContainer width="100%" height={360}>
@@ -1289,7 +1286,6 @@ export default function ResultsPage() {
                         </ReferenceLine>
                       ))}
                       <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

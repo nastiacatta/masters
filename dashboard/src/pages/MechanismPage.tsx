@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  ReferenceLine, Label, Brush, ReferenceArea,
+  ReferenceLine, Label, ReferenceArea,
 } from 'recharts';
 import { useStore } from '@/lib/store';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
@@ -15,10 +15,9 @@ import SystemArchitecture from '@/components/mechanism/SystemArchitecture';
 import ScenarioBuilder from '@/components/lab/ScenarioBuilder';
 import RoundRibbon from '@/components/inspector/RoundRibbon';
 import ValidationPanel from '@/components/lab/ValidationPanel';
-import StepSection from '@/components/dashboard/StepSection';
 import {
   AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
-  TOOLTIP_STYLE, BRUSH_PROPS, agentName, fmt, downsample, movingAvg,
+  TOOLTIP_STYLE, agentName, fmt, downsample, movingAvg,
 } from '@/components/lab/shared';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import SmallMultiplesGrid from '@/components/charts/SmallMultiplesGrid';
@@ -139,15 +138,16 @@ export default function MechanismPage() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* ── Header ── */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Mechanism</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Explorer</h2>
           <p className="text-sm text-slate-600 mt-2 max-w-2xl">
-            Interactive walkthrough using quantile forecasts scored by CRPS.
+            Interactive sandbox for exploring the mechanism. Adjust parameters, step through rounds, and inspect agent-level data.
             Each forecaster submits quantiles at τ = (0.1, 0.25, 0.5, 0.75, 0.9); the mechanism scores them via the pinball-loss CRPS surrogate.
           </p>
         </div>
 
         {/* ── Step 1: Understand the system ── */}
-        <StepSection step={1} title="Understand the system" description="Not a flat pipeline — a layered repeated system with feedback.">
+        <section className="space-y-4">
+          <h3 className="text-sm font-semibold text-slate-800">System architecture</h3>
           <div className="space-y-4 pb-6">
             <SystemArchitecture />
 
@@ -160,10 +160,11 @@ export default function MechanismPage() {
               ))}
             </div>
           </div>
-        </StepSection>
+        </section>
 
         {/* ── Step 2: Set inputs ── */}
-        <StepSection step={2} title="Set inputs" description="Optional: change DGP, behaviour, or parameters.">
+        <section>
+          <h3 className="text-sm font-semibold text-slate-800 mb-2">Configuration</h3>
           <div className="flex items-center gap-2 mb-4 flex-wrap pb-6">
           <button
             onClick={() => setControlsOpen(!controlsOpen)}
@@ -190,7 +191,7 @@ export default function MechanismPage() {
             ))}
           </div>
           </div>
-        </StepSection>
+        </section>
 
         <div className="flex gap-4">
           {/* ── Controls sidebar ── */}
@@ -223,7 +224,7 @@ export default function MechanismPage() {
           <div className="flex-1 min-w-0 space-y-6">
 
             {/* ── Step 3: Pick a round ── */}
-            <StepSection step={3} title="Pick a round" description="Use the slider or click a chart point to jump.">
+            <section>
             <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-0 z-20 shadow-sm -mt-1">
               <div className="flex items-center gap-3 flex-wrap">
                 <button type="button" onClick={() => setSelectedRound(Math.max(0, currentRound - 1))}
@@ -297,10 +298,8 @@ export default function MechanismPage() {
                 </>
               )}
             </div>
-            </StepSection>
-
-            {/* ── Step 4: Explore ── */}
-            <StepSection step={4} title="Explore" description="Timeline, round detail, or invariant checks.">
+            </section>
+            <section>
             {viewMode === 'timeline' && (
               <ChartLinkingProvider initialMethods={Array.from({ length: N }, (_, i) => `F${i + 1}`)}>
               <div className="space-y-4">
@@ -374,7 +373,6 @@ export default function MechanismPage() {
                       {errorZoom.state.refLeft && errorZoom.state.refRight && (
                         <ReferenceArea x1={errorZoom.state.refLeft} x2={errorZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
                       )}
-                      <Brush dataKey="round" {...BRUSH_PROPS} />
                     </AreaChart>
                   </ResponsiveContainer>
                   </div>
@@ -482,7 +480,6 @@ export default function MechanismPage() {
                         {skillZoom.state.refLeft && skillZoom.state.refRight && (
                           <ReferenceArea x1={skillZoom.state.refLeft} x2={skillZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
                         )}
-                        <Brush dataKey="round" {...BRUSH_PROPS} />
                       </LineChart>
                     </ResponsiveContainer>
                     </div>
@@ -533,7 +530,6 @@ export default function MechanismPage() {
                         {wealthZoom.state.refLeft && wealthZoom.state.refRight && (
                           <ReferenceArea x1={wealthZoom.state.refLeft} x2={wealthZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
                         )}
-                        <Brush dataKey="round" {...BRUSH_PROPS} />
                       </LineChart>
                     </ResponsiveContainer>
                     </div>
@@ -565,7 +561,7 @@ export default function MechanismPage() {
             {viewMode === 'validation' && (
               <ValidationPanel pipeline={pipeline} />
             )}
-            </StepSection>
+            </section>
           </div>
         </div>
       </div>
