@@ -6,14 +6,18 @@ import {
 } from 'recharts';
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
+import TornadoChart from '@/components/charts/TornadoChart';
+import type { TornadoDatum } from '@/components/charts/TornadoChart';
 import MathBlock from '@/components/dashboard/MathBlock';
 import SectionHeader from '@/components/dashboard/SectionHeader';
 import { FigureProvider } from '@/contexts/FigureContext';
 import { EquationProvider } from '@/contexts/EquationContext';
 import {
   AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
-  TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
+  BRUSH_PROPS, fmt, downsample, agentName,
 } from '@/components/lab/shared';
+import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
+import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
 import Breadcrumb from '@/components/dashboard/Breadcrumb';
@@ -30,26 +34,6 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'sybil', label: 'Sybil' },
   { id: 'sensitivity', label: 'Sensitivity' },
 ];
-
-function SmartTooltip({ active, payload, label }: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
-  label?: number | string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={TOOLTIP_STYLE}>
-      <div className="font-medium text-slate-700 text-[11px] mb-1">{typeof label === 'number' ? `Round ${label}` : label}</div>
-      {payload.filter(p => p.value != null).map((p) => (
-        <div key={p.dataKey} className="flex items-center gap-1.5 text-[11px]">
-          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
-          <span className="text-slate-500">{p.name}</span>
-          <span className="font-mono font-medium ml-auto">{fmt(p.value, 4)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function SectionIntro({ title, question, takeaway }: { title: string; question: string; takeaway: string }) {
   return (
@@ -202,8 +186,8 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
 
       <SectionHeader label="B" title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom. Hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Participation under intermittency" subtitle="Active agents per round. Use brush to pan. Hover for values.">
-          <ResponsiveContainer width="100%" height={280}>
+        <ChartCard title="Participation under intermittency" subtitle="Active agents per round. Use brush to pan. Hover for values." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <BarChart data={participationData} margin={CHART_MARGIN_LABELED}>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
@@ -231,7 +215,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
           </div>
           <p className="text-[11px] text-slate-400 mb-2">Skill σ by agent over time. Drag to zoom. Hover for values.</p>
           <div className="cursor-crosshair" role="img" aria-label="Skill trajectories under intermittency. Interactive chart.">
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart
               data={skillData}
               margin={CHART_MARGIN_LABELED}
@@ -268,7 +252,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
         </div>
         <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ + (1−λ)σ_min^η, 1] under the skill–stake rule. Drag to zoom. Hover for values.</p>
         <div className="cursor-crosshair" role="img" aria-label="m/b ratio by agent. Interactive chart.">
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={360}>
           <LineChart
             data={mOverBData}
             margin={CHART_MARGIN_LABELED}
@@ -334,7 +318,12 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
 
       <SectionHeader label="A" title="Headline metrics" description="Sybil vs baseline wealth.">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4 pb-6">
-        <HeadlineCard label="Sybil profit ratio" value={fmt(profitRatio, 3)} sub={profitRatio <= 1 ? '≤ 1.0 → no advantage' : '> 1.0 → potential advantage'} />
+        <MetricDisplay
+          label="Sybil wealth advantage"
+          value={profitRatio <= 1.05 ? 'None' : `${fmt((profitRatio - 1) * 100, 1)}%`}
+          detail={`Profit ratio: ${fmt(profitRatio, 3)} (≤ 1.05 = no advantage)`}
+          variant={profitRatio <= 1.05 ? 'verdict-good' : profitRatio <= 1.15 ? 'verdict-neutral' : 'verdict-bad'}
+        />
         <HeadlineCard label="Sybil pair wealth" value={fmt(sybilProfit, 2)} />
         <HeadlineCard label="Baseline pair wealth" value={fmt(baselineProfit, 2)} />
         <HeadlineCard label="Mean error (sybil)" value={fmt(sybil.summary.meanError, 4)} />
@@ -344,14 +333,9 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
 
       <SectionHeader label="B" title="Charts & explanation" description="Wealth trajectories and why sybil fails. Drag to zoom, hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-slate-800">Wealth under sybil attack</h3>
-            <ZoomBadge isZoomed={wealthZoom.state.isZoomed} onReset={wealthZoom.reset} />
-          </div>
-          <p className="text-[11px] text-slate-400 mb-2">F1–F2 are sybil clones. Drag to zoom. Hover for values.</p>
+        <ChartCard title="Wealth under sybil attack" subtitle="F1–F2 are sybil clones. Drag to zoom. Hover for values." provenance={{ type: 'demo', label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
           <div className="cursor-crosshair" role="img" aria-label="Wealth under sybil. Interactive chart.">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart
               data={wealthData}
               margin={CHART_MARGIN_LABELED}
@@ -384,7 +368,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
             </LineChart>
           </ResponsiveContainer>
           </div>
-        </div>
+        </ChartCard>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h4 className="text-sm font-semibold text-slate-800 mb-3">Why sybil fails</h4>
@@ -450,8 +434,8 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
 
       <SectionHeader label="B" title="Charts" description="Bar chart and scatter. Hover bars or points for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Hover bars for values. Lower is better.">
-          <ResponsiveContainer width="100%" height={320}>
+        <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Hover bars for values. Lower is better." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <BarChart data={barData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="lam" tick={AXIS_TICK} stroke={AXIS_STROKE}
@@ -523,6 +507,29 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
           downweighting — at the cost of higher concentration (Gini).
         </p>
       </div>
+
+      {/* Tornado chart: sensitivity of mean CRPS to λ and σ_min */}
+      <TornadoChart
+        data={(() => {
+          // Compute sensitivity: range of mean error when varying each parameter
+          const lamValues = [...new Set(data.map(d => d.lam))];
+          const sigValues = [...new Set(data.map(d => d.sigmaMin))];
+          // For λ: fix σ_min at 0.1, vary λ
+          const lamErrors = lamValues.map(l => data.find(d => d.lam === l && d.sigmaMin === 0.1)?.meanError ?? 0);
+          const lamRange = Math.max(...lamErrors) - Math.min(...lamErrors);
+          // For σ_min: fix λ at 0.3, vary σ_min
+          const sigErrors = sigValues.map(s => data.find(d => d.lam === 0.3 && d.sigmaMin === s)?.meanError ?? 0);
+          const sigRange = Math.max(...sigErrors) - Math.min(...sigErrors);
+          return [
+            { label: 'λ (stake weight)', delta: lamRange, color: '#6366f1' },
+            { label: 'σ_min (skill floor)', delta: sigRange, color: '#0ea5e9' },
+          ] as TornadoDatum[];
+        })()}
+        title="Sensitivity of mean CRPS to mechanism parameters"
+        metricLabel="Error range"
+        baselineLabel="Default config"
+        provenance={{ type: 'demo', label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=100` }}
+      />
       </SectionHeader>
     </div>
   );

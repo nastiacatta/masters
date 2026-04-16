@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import ChartCard from '@/components/dashboard/ChartCard';
+import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
@@ -35,6 +36,8 @@ interface DeltaBarChartProps {
   metricLabel?: string;
   /** Optional title override for the chart card */
   title?: string;
+  /** Data provenance badge */
+  provenance?: DataProvenance;
 }
 
 /** Sorted data row with rank badge text for the Y-axis label. */
@@ -147,6 +150,7 @@ export default function DeltaBarChart({
   baselineLabel = 'Baseline (equal)',
   metricLabel = 'Δ CRPS (×10⁴)',
   title,
+  provenance,
 }: DeltaBarChartProps) {
   // Sort ascending by delta (most negative = best accuracy first)
   const sorted: SortedRow[] = [...data]
@@ -172,6 +176,7 @@ export default function DeltaBarChart({
     <ChartCard
       title={title ?? "Accuracy Ranking"}
       subtitle="Bars show Δ vs baseline — left of zero is better."
+      provenance={provenance}
       help={{
         term: 'Delta Bar Chart',
         definition:
@@ -254,9 +259,9 @@ export default function DeltaBarChart({
               position="right"
               formatter={(v: string | number | boolean | null | undefined) => {
                 const n = Number(v);
-                return Number.isFinite(n) ? fmt(n, 2) : '—';
+                return Number.isFinite(n) ? fmt(n, 3) : '—';
               }}
-              style={{ fontSize: 10, fill: '#64748b' }}
+              style={{ fontSize: 11, fill: '#334155' }}
             />
           </Bar>
           {showErrorBars && (

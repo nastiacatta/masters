@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import ChartCard from '@/components/dashboard/ChartCard';
+import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
@@ -37,6 +38,8 @@ interface WaterfallChartProps {
   metricLabel?: string;
   /** Optional title override */
   title?: string;
+  /** Data provenance badge */
+  provenance?: DataProvenance;
 }
 
 /* ── Colours ───────────────────────────────────────────────────────── */
@@ -51,6 +54,7 @@ export default function WaterfallChart({
   data,
   metricLabel = 'CRPS',
   title = 'Waterfall — Incremental Changes',
+  provenance,
 }: WaterfallChartProps) {
   /*
    * Stacked bar trick: each bar is composed of an invisible "base" segment
@@ -91,6 +95,7 @@ export default function WaterfallChart({
     <ChartCard
       title={title}
       subtitle="Each bar shows the incremental change from the previous step."
+      provenance={provenance}
       help={{
         term: 'Waterfall Chart',
         definition:

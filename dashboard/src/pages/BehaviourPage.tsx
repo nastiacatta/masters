@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { FAMILY_COLORS, VERDICT_COLOURS } from '@/lib/palette';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -7,10 +8,12 @@ import {
 } from 'recharts';
 import { runPipeline, type PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
+import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
   AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
-  TOOLTIP_STYLE, BRUSH_PROPS, fmt, downsample, agentName,
+  BRUSH_PROPS, fmt, downsample, agentName,
 } from '@/components/lab/shared';
+import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
 import MathBlock from '@/components/dashboard/MathBlock';
@@ -19,6 +22,10 @@ import FamilyCard from '@/components/behaviour/FamilyCard';
 import CoverageAudit from '@/components/behaviour/CoverageAudit';
 import ComparisonTable from '@/components/behaviour/ComparisonTable';
 import FamilyImpactChart from '@/components/behaviour/FamilyImpactChart';
+import TornadoChart from '@/components/charts/TornadoChart';
+import type { TornadoDatum } from '@/components/charts/TornadoChart';
+// @ts-ignore — TabBar will be wired in task 14
+import TabBar from '@/components/dashboard/TabBar';
 import MechanismResponseCard from '@/components/behaviour/MechanismResponseCard';
 import { TAXONOMY_ITEMS } from '@/lib/behaviour/taxonomyData';
 import { PRESET_CONFIGS } from '@/lib/behaviour/presetMeta';
@@ -39,6 +46,11 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
+/** Core tabs with experiment-backed content. */
+const CORE_TABS: Tab[] = ['Overview', 'Participation', 'Information', 'Reporting', 'Adversarial', 'Sensitivity'];
+/** Extended tabs — taxonomy placeholders without full experiment data. */
+const EXTENDED_TABS: Tab[] = ['Staking', 'Objectives', 'Identity', 'Learning', 'Operational'];
+
 /** Tabs that have experiment-backed content (not just taxonomy placeholders). */
 const EXPERIMENT_TABS = new Set<string>(
   TAXONOMY_ITEMS
@@ -51,7 +63,7 @@ EXPERIMENT_TABS.add('Sensitivity');
 
 // ── Family colours ─────────────────────────────────────────────────────────
 
-const FAMILY_COLORS: Record<BehaviourFamily, string> = {
+const FAMILY_BADGE_CLASSES: Record<BehaviourFamily, string> = {
   participation: 'bg-sky-100 text-sky-700 border-sky-200',
   information: 'bg-blue-100 text-blue-700 border-blue-200',
   reporting: 'bg-violet-100 text-violet-700 border-violet-200',
@@ -63,17 +75,7 @@ const FAMILY_COLORS: Record<BehaviourFamily, string> = {
   operational: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
-const FAMILY_HEX: Record<BehaviourFamily, string> = {
-  participation: '#0ea5e9',
-  information: '#3b82f6',
-  reporting: '#8b5cf6',
-  staking: '#14b8a6',
-  objectives: '#6366f1',
-  identity: '#f59e0b',
-  learning: '#10b981',
-  adversarial: '#ef4444',
-  operational: '#64748b',
-};
+
 
 const FAMILY_DESCRIPTIONS: Record<BehaviourFamily, string> = {
   participation: 'When and whether agents submit forecasts.',
@@ -89,50 +91,13 @@ const FAMILY_DESCRIPTIONS: Record<BehaviourFamily, string> = {
 
 // ── Shared helpers ─────────────────────────────────────────────────────────
 
-function SmartTooltip({ active, payload, label }: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
-  label?: number | string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={TOOLTIP_STYLE}>
-      <div className="font-medium text-slate-700 text-[11px] mb-1">{typeof label === 'number' ? `Round ${label}` : label}</div>
-      {payload.filter(p => p.value != null).map(p => (
-        <div key={p.dataKey} className="flex items-center gap-1.5 text-[11px]">
-          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
-          <span className="text-slate-500">{p.name}</span>
-          <span className="font-mono font-medium ml-auto">{fmt(p.value, 4)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Metric({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
-      <div className="text-lg font-bold font-mono text-slate-800 mt-1">{value}</div>
-      {sub && <div className="text-[11px] text-slate-400 mt-0.5">{sub}</div>}
-    </div>
-  );
-}
-
 type Verdict = 'good' | 'neutral' | 'bad';
-const VB: Record<Verdict, string> = { good: 'border-l-emerald-500', neutral: 'border-l-amber-400', bad: 'border-l-red-400' };
-const VT: Record<Verdict, string> = { good: 'text-emerald-600', neutral: 'text-amber-600', bad: 'text-red-600' };
-const VBG: Record<Verdict, string> = { good: 'bg-emerald-50', neutral: 'bg-amber-50', bad: 'bg-red-50' };
-
-function VerdictCard({ question, answer, detail, verdict }: { question: string; answer: string; detail: string; verdict: Verdict }) {
-  return (
-    <div className={`rounded-xl border border-slate-200 border-l-4 ${VB[verdict]} ${VBG[verdict]} p-4`}>
-      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{question}</div>
-      <div className={`text-xl font-bold font-mono mt-1 ${VT[verdict]}`}>{answer}</div>
-      <div className="text-xs text-slate-500 mt-1">{detail}</div>
-    </div>
-  );
-}
+/** Map verdict string to MetricDisplay variant. */
+const VERDICT_VARIANT: Record<Verdict, 'verdict-good' | 'verdict-neutral' | 'verdict-bad'> = {
+  good: 'verdict-good',
+  neutral: 'verdict-neutral',
+  bad: 'verdict-bad',
+};
 
 /** Compare two pipelines: returns {deltaPct, deltaAbs}. */
 function compare(test: PipelineResult, base: PipelineResult) {
@@ -140,6 +105,31 @@ function compare(test: PipelineResult, base: PipelineResult) {
   const pct = base.summary.meanError > 0 ? (d / base.summary.meanError * 100) : 0;
   return { deltaAbs: d, deltaPct: pct };
 }
+
+/** Placeholder banner for tabs without full experiment data. */
+function PlaceholderBanner({ family: _family, description }: { family: string; description: string }) {
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-4">
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-amber-400" />
+        <span className="text-sm font-semibold text-amber-800">
+          Taxonomy placeholder — no experiment data
+        </span>
+      </div>
+      <p className="text-xs text-amber-700 mt-2">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+const PLACEHOLDER_DESCRIPTIONS: Record<string, string> = {
+  Staking: 'This tab would show full experiment results for deposit policy strategies (budget constraints, house-money effect, Kelly sizing) with paired comparison against the baseline. Currently shows in-browser demo simulations.',
+  Objectives: 'This tab would show experiments testing diverse agent objectives (CRRA utility, loss aversion, signalling motives, leaderboard optimisation) and their impact on aggregate accuracy.',
+  Identity: 'This tab would show experiments testing identity attacks (sybil splitting, collusion, reputation reset) with detailed mechanism response analysis.',
+  Learning: 'This tab would show experiments testing adaptive learning strategies (reinforcement learning, bandit algorithms, gradient-based adaptation) and how the mechanism responds to evolving behaviour.',
+  Operational: 'This tab would show experiments testing real-world operational frictions (latency exploitation, submission errors, automation failures) and their impact on mechanism performance.',
+};
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -235,7 +225,7 @@ export default function BehaviourPage() {
     return [...byFamily.entries()].map(([family, delta]) => ({
       family,
       worstDeltaCrpsPct: delta,
-      color: FAMILY_HEX[family as BehaviourFamily] ?? '#94a3b8',
+      color: FAMILY_COLORS[family as BehaviourFamily] ?? '#94a3b8',
     }));
   }, [behaviourSummary]);
 
@@ -254,19 +244,37 @@ export default function BehaviourPage() {
         </header>
 
         {/* ── Tab bar with experiment/taxonomy indicators ─────────────── */}
-        <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
-          {TABS.map(t => {
-            const hasExperiment = EXPERIMENT_TABS.has(t);
-            return (
-              <button key={t} onClick={() => setTab(t)}
-                className={`relative px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === t ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                <span className="flex items-center gap-1.5">
-                  {t}
-                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${hasExperiment ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                </span>
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-0">
+          <div className="flex gap-0 border-b border-slate-200 overflow-x-auto flex-1">
+            {CORE_TABS.map(t => {
+              const hasExperiment = EXPERIMENT_TABS.has(t);
+              return (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`relative px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === t ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                  <span className="flex items-center gap-1.5">
+                    {t}
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${hasExperiment ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                  </span>
+                </button>
+              );
+            })}
+            <span className="inline-block w-px bg-slate-300 mx-1 self-stretch" />
+            {EXTENDED_TABS.map(t => {
+              const hasExperiment = EXPERIMENT_TABS.has(t);
+              return (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`relative px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === t ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                  <span className="flex items-center gap-1.5">
+                    {t}
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${hasExperiment ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <span className="ml-auto flex-shrink-0 whitespace-nowrap pl-4 pr-1 text-slate-400" style={{ fontSize: '11px' }}>
+            Tab {TABS.indexOf(tab) + 1} of {TABS.length}: {tab}
+          </span>
         </div>
 
         <AnimatePresence mode="wait">
@@ -320,7 +328,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
         name: item.name,
         status: item.status,
       })),
-      color: FAMILY_COLORS[family],
+      color: FAMILY_BADGE_CLASSES[family],
     }));
   }, []);
 
@@ -511,8 +519,9 @@ function OverviewTab({ summary, familyImpact, setTab }: {
         <h3 className="text-sm font-semibold text-slate-800">Structural insights</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {INSIGHTS.map((ins, i) => (
-            <div key={i} className={`rounded-xl border border-slate-200 border-l-4 ${VB[ins.verdict]} ${VBG[ins.verdict]} p-4`}>
-              <div className={`text-xs font-bold ${VT[ins.verdict]} mb-1`}>{ins.title}</div>
+            <div key={i} className="rounded-xl border border-slate-200 border-l-4 p-4"
+              style={{ borderLeftColor: VERDICT_COLOURS[ins.verdict].border, backgroundColor: VERDICT_COLOURS[ins.verdict].bg }}>
+              <div className="text-xs font-bold mb-1" style={{ color: VERDICT_COLOURS[ins.verdict].fg }}>{ins.title}</div>
               <p className="text-xs text-slate-600 leading-relaxed">{ins.detail}</p>
             </div>
           ))}
@@ -546,6 +555,23 @@ function OverviewTab({ summary, familyImpact, setTab }: {
           <FamilyImpactChart data={familyImpact} />
         </div>
       </div>
+
+      {/* Tornado chart — family impact on forecast accuracy */}
+      <TornadoChart
+        data={
+          [...familyImpact]
+            .sort((a, b) => Math.abs(b.worstDeltaCrpsPct) - Math.abs(a.worstDeltaCrpsPct))
+            .map((d): TornadoDatum => ({
+              label: d.family.charAt(0).toUpperCase() + d.family.slice(1),
+              delta: d.worstDeltaCrpsPct,
+              family: d.family,
+              color: d.color,
+            }))
+        }
+        title="Impact of each behaviour family on forecast accuracy"
+        metricLabel="Worst-case Δ CRPS %"
+        baselineLabel="Truthful baseline"
+      />
     </div>
   );
 }
@@ -589,17 +615,17 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
       <MathBlock accent label="EWMA skill update" latex="L_{i,t} = \\begin{cases} (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t} & \\text{if present} \\\\ L_{i,t-1} & \\text{if absent} \\end{cases}" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <VerdictCard question="Degrades gracefully?" answer={degradesGracefully ? 'Yes' : 'No'}
+        <MetricDisplay label="Degrades gracefully?" value={degradesGracefully ? 'Yes' : 'No'}
           detail={`Error ${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)}% vs baseline`}
-          verdict={degradesGracefully ? 'good' : 'bad'} />
-        <Metric label="Mean CRPS (bursty)" value={fmt(bursty.summary.meanError, 4)} />
-        <Metric label="Avg participation" value={`${(bursty.summary.meanParticipation / N * 100).toFixed(0)}%`} sub={`of ${N} agents`} />
-        <Metric label="Final Gini" value={fmt(bursty.summary.finalGini, 3)} />
+          variant={VERDICT_VARIANT[degradesGracefully ? 'good' : 'bad']} />
+        <MetricDisplay label="Mean CRPS (bursty)" value={fmt(bursty.summary.meanError, 4)} />
+        <MetricDisplay label="Avg participation" value={`${(bursty.summary.meanParticipation / N * 100).toFixed(0)}%`} detail={`of ${N} agents`} />
+        <MetricDisplay label="Final Gini" value={fmt(bursty.summary.finalGini, 3)} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Participation per round" subtitle="Green ≥ 80%, amber ≥ 50%, red < 50%. Bursty pattern with ~22-round period.">
-          <ResponsiveContainer width="100%" height={260}>
+        <ChartCard title="Participation per round" subtitle="Green ≥ 80%, amber ≥ 50%, red < 50%. Bursty pattern with ~22-round period." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <BarChart data={partData} margin={CHART_MARGIN_LABELED}>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
@@ -620,7 +646,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
           </div>
           <p className="text-xs text-slate-500 mb-2">σ stays flat during absences (EWMA freezes). No drift or corruption.</p>
           <div className="cursor-crosshair">
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={skillData} margin={CHART_MARGIN_LABELED}
                 onMouseDown={skillZoom.onMouseDown} onMouseMove={skillZoom.onMouseMove} onMouseUp={skillZoom.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -642,8 +668,8 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
         </div>
       </div>
 
-      <ChartCard title="Cumulative error: bursty vs baseline" subtitle="If lines track closely, intermittency doesn't hurt the aggregate. Drag to zoom.">
-        <ResponsiveContainer width="100%" height={260}>
+      <ChartCard title="Cumulative error: bursty vs baseline" subtitle="If lines track closely, intermittency doesn't hurt the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ResponsiveContainer width="100%" height={360}>
           <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
             onMouseDown={cumZoomInter.onMouseDown} onMouseMove={cumZoomInter.onMouseMove} onMouseUp={cumZoomInter.onMouseUp}>
             <CartesianGrid {...GRID_PROPS} />
@@ -738,14 +764,14 @@ function InformationTab({ biased, miscalibrated, baseline }: {
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <VerdictCard question="Does bias hurt?" answer={biasHurts ? 'Yes' : 'Minimal'}
+        <MetricDisplay label="Does bias hurt?" value={biasHurts ? 'Yes' : 'Minimal'}
           detail={`Error ${biasDelta.deltaPct >= 0 ? '+' : ''}${biasDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={biasHurts ? 'bad' : 'good'} />
-        <VerdictCard question="Does miscalibration hurt?" answer={miscalHurts ? 'Yes' : 'Minimal'}
+          variant={VERDICT_VARIANT[biasHurts ? 'bad' : 'good']} />
+        <MetricDisplay label="Does miscalibration hurt?" value={miscalHurts ? 'Yes' : 'Minimal'}
           detail={`Error ${miscalDelta.deltaPct >= 0 ? '+' : ''}${miscalDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={miscalHurts ? 'bad' : 'good'} />
-        <Metric label="Mean CRPS (biased)" value={fmt(biased.summary.meanError, 4)} />
-        <Metric label="Mean CRPS (miscal.)" value={fmt(miscalibrated.summary.meanError, 4)} />
+          variant={VERDICT_VARIANT[miscalHurts ? 'bad' : 'good']} />
+        <MetricDisplay label="Mean CRPS (biased)" value={fmt(biased.summary.meanError, 4)} />
+        <MetricDisplay label="Mean CRPS (miscal.)" value={fmt(miscalibrated.summary.meanError, 4)} />
       </div>
 
       {!biasedSigmaDropped && (
@@ -756,8 +782,8 @@ function InformationTab({ biased, miscalibrated, baseline }: {
       )}
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Cumulative error comparison" subtitle="Biased vs miscalibrated vs baseline. Lower is better. Drag to zoom.">
-          <ResponsiveContainer width="100%" height={260}>
+        <ChartCard title="Cumulative error comparison" subtitle="Biased vs miscalibrated vs baseline. Lower is better. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
@@ -784,7 +810,7 @@ function InformationTab({ biased, miscalibrated, baseline }: {
           </div>
           <p className="text-xs text-slate-500 mb-2">How quickly the skill layer detects and downweights biased/miscalibrated agents.</p>
           <div className="cursor-crosshair">
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={sigData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={sigZoom.onMouseDown} onMouseMove={sigZoom.onMouseMove} onMouseUp={sigZoom.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -882,15 +908,15 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <VerdictCard question="Manipulation profitable?" answer={manipProfit > baseProfit0 + 0.5 ? 'Yes' : 'No'}
+        <MetricDisplay label="Manipulation profitable?" value={manipProfit > baseProfit0 + 0.5 ? 'Yes' : 'No'}
           detail={`F1: ${fmt(manipProfit, 2)} vs ${fmt(baseProfit0, 2)} honest`}
-          verdict={manipProfit > baseProfit0 + 0.5 ? 'bad' : 'good'} />
-        <VerdictCard question="Arbitrage profitable?" answer={arbProfit > arbBaseline + 0.5 ? 'Yes' : 'No'}
+          variant={VERDICT_VARIANT[manipProfit > baseProfit0 + 0.5 ? 'bad' : 'good']} />
+        <MetricDisplay label="Arbitrage profitable?" value={arbProfit > arbBaseline + 0.5 ? 'Yes' : 'No'}
           detail={`F6: ${fmt(arbProfit, 2)} vs ${fmt(arbBaseline, 2)} honest`}
-          verdict={arbProfit > arbBaseline + 0.5 ? 'bad' : 'good'} />
-        <VerdictCard question="Sybil-resistant?" answer={sybilRatio <= 1.05 ? 'Yes' : 'No'}
+          variant={VERDICT_VARIANT[arbProfit > arbBaseline + 0.5 ? 'bad' : 'good']} />
+        <MetricDisplay label="Sybil-resistant?" value={sybilRatio <= 1.05 ? 'Yes' : 'No'}
           detail={`Clone pair ratio: ${fmt(sybilRatio, 3)}`}
-          verdict={sybilRatio <= 1.05 ? 'good' : 'bad'} />
+          variant={VERDICT_VARIANT[sybilRatio <= 1.05 ? 'good' : 'bad']} />
       </div>
 
       {/* Attack comparison table */}
@@ -939,8 +965,8 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Accuracy impact by attack" subtitle="Mean CRPS. Higher = worse aggregate.">
-          <ResponsiveContainer width="100%" height={280}>
+        <ChartCard title="Accuracy impact by attack" subtitle="Mean CRPS. Higher = worse aggregate." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <BarChart data={attacks} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} angle={-20} textAnchor="end" />
@@ -960,7 +986,7 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
           </div>
           <p className="text-xs text-slate-500 mb-2">F1's skill estimate under different attacks. Misreporting erodes σ. Drag to zoom.</p>
           <div className="cursor-crosshair">
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={sigmaTraces} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={sigDecayZoom.onMouseDown} onMouseMove={sigDecayZoom.onMouseMove} onMouseUp={sigDecayZoom.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -1098,17 +1124,17 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
         <MathBlock accent label="Hedged report" latex="\\hat{r}_i = 0.7 \\cdot r_i^{\\text{true}} + 0.3 \\cdot 0.5, \\quad f_{\\text{risk}} \\leftarrow 0.55 \\cdot f_{\\text{risk}}" />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <VerdictCard question="Accuracy hurt?" answer={Math.abs(hedgeDelta.deltaPct) < 5 ? 'Minimal' : hedgeDelta.deltaPct > 0 ? 'Yes' : 'Improved'}
+          <MetricDisplay label="Accuracy hurt?" value={Math.abs(hedgeDelta.deltaPct) < 5 ? 'Minimal' : hedgeDelta.deltaPct > 0 ? 'Yes' : 'Improved'}
             detail={`Error ${hedgeDelta.deltaPct >= 0 ? '+' : ''}${hedgeDelta.deltaPct.toFixed(1)}% vs baseline`}
-            verdict={Math.abs(hedgeDelta.deltaPct) < 5 ? 'good' : hedgeDelta.deltaPct > 5 ? 'bad' : 'good'} />
-          <Metric label="Mean CRPS (hedged)" value={fmt(riskAverse.summary.meanError, 4)} />
-          <Metric label="Mean CRPS (baseline)" value={fmt(baseline.summary.meanError, 4)} />
-          <Metric label="Gini (hedged)" value={fmt(riskAverse.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
+            variant={VERDICT_VARIANT[Math.abs(hedgeDelta.deltaPct) < 5 ? 'good' : hedgeDelta.deltaPct > 5 ? 'bad' : 'good']} />
+          <MetricDisplay label="Mean CRPS (hedged)" value={fmt(riskAverse.summary.meanError, 4)} />
+          <MetricDisplay label="Mean CRPS (baseline)" value={fmt(baseline.summary.meanError, 4)} />
+          <MetricDisplay label="Gini (hedged)" value={fmt(riskAverse.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4">
-          <ChartCard title="Cumulative error: hedged vs truthful" subtitle="Close tracking means hedging doesn't break the aggregate. Drag to zoom.">
-            <ResponsiveContainer width="100%" height={260}>
+          <ChartCard title="Cumulative error: hedged vs truthful" subtitle="Close tracking means hedging doesn't break the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={cumHedgeData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={cumZoomHedge.onMouseDown} onMouseMove={cumZoomHedge.onMouseMove} onMouseUp={cumZoomHedge.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -1127,8 +1153,8 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Average skill estimate (σ)" subtitle="Hedged agents get lower σ because their reports are less accurate. Drag to zoom.">
-            <ResponsiveContainer width="100%" height={260}>
+          <ChartCard title="Average skill estimate (σ)" subtitle="Hedged agents get lower σ because their reports are less accurate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={sigmaHedgeData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={sigZoomHedge.onMouseDown} onMouseMove={sigZoomHedge.onMouseMove} onMouseUp={sigZoomHedge.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -1165,16 +1191,16 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <VerdictCard question="Noise hurts accuracy?" answer={noisyDelta.deltaPct > 1 ? 'Yes' : 'Minimal'}
+          <MetricDisplay label="Noise hurts accuracy?" value={noisyDelta.deltaPct > 1 ? 'Yes' : 'Minimal'}
             detail={`Error ${noisyDelta.deltaPct >= 0 ? '+' : ''}${noisyDelta.deltaPct.toFixed(1)}% vs baseline`}
-            verdict={noisyDelta.deltaPct > 3 ? 'bad' : noisyDelta.deltaPct > 1 ? 'neutral' : 'good'} />
-          <Metric label="Mean CRPS (noisy)" value={fmt(noisyReporter.summary.meanError, 4)} />
-          <Metric label="Gini (noisy)" value={fmt(noisyReporter.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
-          <Metric label="Participation" value={`${(noisyReporter.summary.meanParticipation / N * 100).toFixed(0)}%`} />
+            variant={VERDICT_VARIANT[noisyDelta.deltaPct > 3 ? 'bad' : noisyDelta.deltaPct > 1 ? 'neutral' : 'good']} />
+          <MetricDisplay label="Mean CRPS (noisy)" value={fmt(noisyReporter.summary.meanError, 4)} />
+          <MetricDisplay label="Gini (noisy)" value={fmt(noisyReporter.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
+          <MetricDisplay label="Participation" value={`${(noisyReporter.summary.meanParticipation / N * 100).toFixed(0)}%`} />
         </div>
 
-        <ChartCard title="Cumulative error: noisy vs baseline" subtitle="Noise degrades accuracy but the skill layer limits aggregate damage. Drag to zoom.">
-          <ResponsiveContainer width="100%" height={260}>
+        <ChartCard title="Cumulative error: noisy vs baseline" subtitle="Noise degrades accuracy but the skill layer limits aggregate damage. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumNoisyData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoomNoisy.onMouseDown} onMouseMove={cumZoomNoisy.onMouseMove} onMouseUp={cumZoomNoisy.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
@@ -1204,12 +1230,12 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <VerdictCard question="Gaming inflates σ?" answer={repGamerDelta.deltaPct > 1 ? 'Partially' : 'No'}
+          <MetricDisplay label="Gaming inflates σ?" value={repGamerDelta.deltaPct > 1 ? 'Partially' : 'No'}
             detail={`Error ${repGamerDelta.deltaPct >= 0 ? '+' : ''}${repGamerDelta.deltaPct.toFixed(1)}% vs baseline`}
-            verdict={repGamerDelta.deltaPct > 3 ? 'bad' : repGamerDelta.deltaPct > 1 ? 'neutral' : 'good'} />
-          <Metric label="Mean CRPS (gamer)" value={fmt(reputationGamer.summary.meanError, 4)} />
-          <Metric label="Gini (gamer)" value={fmt(reputationGamer.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
-          <Metric label="N_eff (gamer)" value={fmt(reputationGamer.summary.meanNEff, 2)} />
+            variant={VERDICT_VARIANT[repGamerDelta.deltaPct > 3 ? 'bad' : repGamerDelta.deltaPct > 1 ? 'neutral' : 'good']} />
+          <MetricDisplay label="Mean CRPS (gamer)" value={fmt(reputationGamer.summary.meanError, 4)} />
+          <MetricDisplay label="Gini (gamer)" value={fmt(reputationGamer.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
+          <MetricDisplay label="N_eff (gamer)" value={fmt(reputationGamer.summary.meanNEff, 2)} />
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -1219,7 +1245,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
           </div>
           <p className="text-xs text-slate-500 mb-2">Does the gamer's σ stay artificially high? Compare agent 0 across both runs.</p>
           <div className="cursor-crosshair">
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={sigRepGamerData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={sigZoomRepGamer.onMouseDown} onMouseMove={sigZoomRepGamer.onMouseMove} onMouseUp={sigZoomRepGamer.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -1250,16 +1276,16 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <VerdictCard question="Sandbagging hurts?" answer={sandbagDelta.deltaPct > 1 ? 'Yes' : 'Minimal'}
+          <MetricDisplay label="Sandbagging hurts?" value={sandbagDelta.deltaPct > 1 ? 'Yes' : 'Minimal'}
             detail={`Error ${sandbagDelta.deltaPct >= 0 ? '+' : ''}${sandbagDelta.deltaPct.toFixed(1)}% vs baseline`}
-            verdict={sandbagDelta.deltaPct > 3 ? 'bad' : sandbagDelta.deltaPct > 1 ? 'neutral' : 'good'} />
-          <Metric label="Mean CRPS (sandbag)" value={fmt(sandbagger.summary.meanError, 4)} />
-          <Metric label="Gini (sandbag)" value={fmt(sandbagger.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
-          <Metric label="Participation" value={`${(sandbagger.summary.meanParticipation / N * 100).toFixed(0)}%`} />
+            variant={VERDICT_VARIANT[sandbagDelta.deltaPct > 3 ? 'bad' : sandbagDelta.deltaPct > 1 ? 'neutral' : 'good']} />
+          <MetricDisplay label="Mean CRPS (sandbag)" value={fmt(sandbagger.summary.meanError, 4)} />
+          <MetricDisplay label="Gini (sandbag)" value={fmt(sandbagger.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
+          <MetricDisplay label="Participation" value={`${(sandbagger.summary.meanParticipation / N * 100).toFixed(0)}%`} />
         </div>
 
-        <ChartCard title="Cumulative error: sandbagger vs baseline" subtitle="Deliberate underperformance degrades the aggregate. Drag to zoom.">
-          <ResponsiveContainer width="100%" height={260}>
+        <ChartCard title="Cumulative error: sandbagger vs baseline" subtitle="Deliberate underperformance degrades the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumSandbagData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoomSandbag.onMouseDown} onMouseMove={cumZoomSandbag.onMouseMove} onMouseUp={cumZoomSandbag.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
@@ -1331,6 +1357,7 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PlaceholderBanner family="Staking" description={PLACEHOLDER_DESCRIPTIONS.Staking} />
       <p className="text-sm text-slate-600 max-w-2xl">
         How much agents wager determines their influence on the aggregate. Budget constraints
         can cause ruin (agents forced out), the house-money effect increases risk-taking after
@@ -1339,21 +1366,21 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
       <MathBlock accent label="Effective wager" latex="m_i = f_{\\text{risk}} \\cdot W_i \\cdot d_i, \\quad f_{\\text{risk}} \\in [0.05, 0.45]" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <VerdictCard question="Ruin events?" answer={ruinCount > 0 ? `${ruinCount} agents` : 'None'}
+        <MetricDisplay label="Ruin events?" value={ruinCount > 0 ? `${ruinCount} agents` : 'None'}
           detail={`Agents with wealth < 0.1 at end`}
-          verdict={ruinCount > 0 ? 'bad' : 'good'} />
-        <VerdictCard question="House-money hurts?" answer={Math.abs(houseDelta.deltaPct) < 5 ? 'Minimal' : 'Yes'}
+          variant={VERDICT_VARIANT[ruinCount > 0 ? 'bad' : 'good']} />
+        <MetricDisplay label="House-money hurts?" value={Math.abs(houseDelta.deltaPct) < 5 ? 'Minimal' : 'Yes'}
           detail={`Error ${houseDelta.deltaPct >= 0 ? '+' : ''}${houseDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={Math.abs(houseDelta.deltaPct) < 5 ? 'good' : 'bad'} />
-        <VerdictCard question="Kelly improves?" answer={kellyDelta.deltaPct < -1 ? 'Yes' : 'Minimal'}
+          variant={VERDICT_VARIANT[Math.abs(houseDelta.deltaPct) < 5 ? 'good' : 'bad']} />
+        <MetricDisplay label="Kelly improves?" value={kellyDelta.deltaPct < -1 ? 'Yes' : 'Minimal'}
           detail={`Error ${kellyDelta.deltaPct >= 0 ? '+' : ''}${kellyDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={kellyDelta.deltaPct < -1 ? 'good' : 'neutral'} />
-        <Metric label="Budget Δ CRPS" value={`${budgetDelta.deltaPct >= 0 ? '+' : ''}${budgetDelta.deltaPct.toFixed(1)}%`} />
+          variant={VERDICT_VARIANT[kellyDelta.deltaPct < -1 ? 'good' : 'neutral']} />
+        <MetricDisplay label="Budget Δ CRPS" value={`${budgetDelta.deltaPct >= 0 ? '+' : ''}${budgetDelta.deltaPct.toFixed(1)}%`} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Cumulative error: budget-constrained vs baseline" subtitle="Ruin removes agents from the pool, potentially degrading the aggregate. Drag to zoom.">
-          <ResponsiveContainer width="100%" height={260}>
+        <ChartCard title="Cumulative error: budget-constrained vs baseline" subtitle="Ruin removes agents from the pool, potentially degrading the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
@@ -1379,7 +1406,7 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
           </div>
           <p className="text-xs text-slate-500 mb-2">Kelly sizing ties deposit to σ·(1−σ), producing adaptive stake sizes.</p>
           <div className="cursor-crosshair">
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={depositCompare} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={depositZoom.onMouseDown} onMouseMove={depositZoom.onMouseMove} onMouseUp={depositZoom.onMouseUp}>
                 <CartesianGrid {...GRID_PROPS} />
@@ -1401,8 +1428,8 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
       </div>
 
       {/* Deposit policy comparison bar chart */}
-      <ChartCard title="Deposit policy comparison" subtitle="Mean CRPS across staking strategies. Lower is better.">
-        <ResponsiveContainer width="100%" height={260}>
+      <ChartCard title="Deposit policy comparison" subtitle="Mean CRPS across staking strategies. Lower is better." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ResponsiveContainer width="100%" height={360}>
           <BarChart data={depositPolicies} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} angle={-15} textAnchor="end" />
@@ -1440,6 +1467,7 @@ function ObjectivesTab({ riskAverse, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PlaceholderBanner family="Objectives" description={PLACEHOLDER_DESCRIPTIONS.Objectives} />
       <p className="text-sm text-slate-600 max-w-2xl">
         Not all agents maximise expected value. Under CRRA (Constant Relative Risk Aversion)
         utility, agents with higher &gamma; stake less and hedge reports toward the centre.
@@ -1456,16 +1484,16 @@ function ObjectivesTab({ riskAverse, baseline }: {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <VerdictCard question="Risk aversion hurts?" answer={Math.abs(raDelta.deltaPct) < 5 ? 'Minimal' : 'Yes'}
+        <MetricDisplay label="Risk aversion hurts?" value={Math.abs(raDelta.deltaPct) < 5 ? 'Minimal' : 'Yes'}
           detail={`Error ${raDelta.deltaPct >= 0 ? '+' : ''}${raDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={Math.abs(raDelta.deltaPct) < 5 ? 'good' : raDelta.deltaPct > 5 ? 'bad' : 'good'} />
-        <Metric label="Mean CRPS (risk-averse)" value={fmt(riskAverse.summary.meanError, 4)} />
-        <Metric label="Mean CRPS (baseline)" value={fmt(baseline.summary.meanError, 4)} />
-        <Metric label="Gini (risk-averse)" value={fmt(riskAverse.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
+          variant={VERDICT_VARIANT[Math.abs(raDelta.deltaPct) < 5 ? 'good' : raDelta.deltaPct > 5 ? 'bad' : 'good']} />
+        <MetricDisplay label="Mean CRPS (risk-averse)" value={fmt(riskAverse.summary.meanError, 4)} />
+        <MetricDisplay label="Mean CRPS (baseline)" value={fmt(baseline.summary.meanError, 4)} />
+        <MetricDisplay label="Gini (risk-averse)" value={fmt(riskAverse.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
       </div>
 
-      <ChartCard title="Cumulative error: risk-averse vs baseline" subtitle="CRRA agents hedge and stake less. If lines track closely, the mechanism tolerates diverse objectives.">
-        <ResponsiveContainer width="100%" height={260}>
+      <ChartCard title="Cumulative error: risk-averse vs baseline" subtitle="CRRA agents hedge and stake less. If lines track closely, the mechanism tolerates diverse objectives." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ResponsiveContainer width="100%" height={360}>
           <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
             onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
             <CartesianGrid {...GRID_PROPS} />
@@ -1531,6 +1559,7 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PlaceholderBanner family="Identity" description={PLACEHOLDER_DESCRIPTIONS.Identity} />
       <p className="text-sm text-slate-600 max-w-2xl">
         Identity attacks exploit the mechanism by splitting into multiple accounts (sybil),
         coordinating with allies (collusion), or building reputation then exploiting it
@@ -1538,15 +1567,15 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <VerdictCard question="Sybil-resistant?" answer={sybilRatio <= 1.05 ? 'Yes' : 'No'}
+        <MetricDisplay label="Sybil-resistant?" value={sybilRatio <= 1.05 ? 'Yes' : 'No'}
           detail={`Clone pair ratio: ${fmt(sybilRatio, 3)}`}
-          verdict={sybilRatio <= 1.05 ? 'good' : 'bad'} />
-        <VerdictCard question="Collusion profitable?" answer={collusionDelta.deltaPct > 3 ? 'Partially' : 'No'}
+          variant={VERDICT_VARIANT[sybilRatio <= 1.05 ? 'good' : 'bad']} />
+        <MetricDisplay label="Collusion profitable?" value={collusionDelta.deltaPct > 3 ? 'Partially' : 'No'}
           detail={`Error ${collusionDelta.deltaPct >= 0 ? '+' : ''}${collusionDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={collusionDelta.deltaPct > 3 ? 'bad' : 'good'} />
-        <VerdictCard question="Rep. reset recovers?" answer={repResetMetrics.skillRecoveryRounds != null ? 'Yes' : 'No'}
+          variant={VERDICT_VARIANT[collusionDelta.deltaPct > 3 ? 'bad' : 'good']} />
+        <MetricDisplay label="Rep. reset recovers?" value={repResetMetrics.skillRecoveryRounds != null ? 'Yes' : 'No'}
           detail={repResetMetrics.skillRecoveryRounds != null ? `σ < 0.5 in ${repResetMetrics.skillRecoveryRounds} rounds after attack` : 'σ never dropped below 0.5'}
-          verdict={repResetMetrics.skillRecoveryRounds != null ? 'good' : 'bad'} />
+          variant={VERDICT_VARIANT[repResetMetrics.skillRecoveryRounds != null ? 'good' : 'bad']} />
       </div>
 
       {/* Mechanism response cards */}
@@ -1573,7 +1602,7 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
         </div>
         <p className="text-xs text-slate-500 mb-2">Agent 0 is honest for 100 rounds, then starts manipulating. Vertical line marks the phase transition.</p>
         <div className="cursor-crosshair">
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={360}>
             <LineChart data={sigData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={sigZoom.onMouseDown} onMouseMove={sigZoom.onMouseMove} onMouseUp={sigZoom.onMouseUp}>
               <CartesianGrid {...GRID_PROPS} />
@@ -1614,6 +1643,7 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
 function LearningTab() {
   return (
     <div className="space-y-6">
+      <PlaceholderBanner family="Learning" description={PLACEHOLDER_DESCRIPTIONS.Learning} />
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700 space-y-2">
         <div className="font-semibold text-indigo-800">Note — Learning belongs to the mechanism layer</div>
         <p>
@@ -1666,6 +1696,7 @@ function OperationalTab({ latencyExploiter, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PlaceholderBanner family="Operational" description={PLACEHOLDER_DESCRIPTIONS.Operational} />
       <p className="text-sm text-slate-600 max-w-2xl">
         Latency exploiters submit reports with partial outcome information &mdash; they observe
         a noisy signal of the realisation before the submission deadline. This creates an unfair
@@ -1673,17 +1704,17 @@ function OperationalTab({ latencyExploiter, baseline }: {
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <VerdictCard question="Latency exploitable?" answer={latDelta.deltaPct < -1 ? 'Yes' : 'Minimal'}
+        <MetricDisplay label="Latency exploitable?" value={latDelta.deltaPct < -1 ? 'Yes' : 'Minimal'}
           detail={`Error ${latDelta.deltaPct >= 0 ? '+' : ''}${latDelta.deltaPct.toFixed(1)}% vs baseline`}
-          verdict={latDelta.deltaPct < -3 ? 'bad' : 'neutral'} />
-        <Metric label="Mean CRPS (latency)" value={fmt(latencyExploiter.summary.meanError, 4)} />
-        <Metric label="Gini (latency)" value={fmt(latencyExploiter.summary.finalGini, 3)} sub={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
-        <Metric label="Gini delta" value={fmt(latencyExploiter.summary.finalGini - baseline.summary.finalGini, 4)}
-          sub={latencyExploiter.summary.finalGini > baseline.summary.finalGini ? 'More concentrated' : 'Less concentrated'} />
+          variant={VERDICT_VARIANT[latDelta.deltaPct < -3 ? 'bad' : 'neutral']} />
+        <MetricDisplay label="Mean CRPS (latency)" value={fmt(latencyExploiter.summary.meanError, 4)} />
+        <MetricDisplay label="Gini (latency)" value={fmt(latencyExploiter.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
+        <MetricDisplay label="Gini delta" value={fmt(latencyExploiter.summary.finalGini - baseline.summary.finalGini, 4)}
+          detail={latencyExploiter.summary.finalGini > baseline.summary.finalGini ? 'More concentrated' : 'Less concentrated'} />
       </div>
 
-      <ChartCard title="Cumulative error: latency exploiter vs baseline" subtitle="Lower CRPS for the exploiter means they have an unfair advantage. Drag to zoom.">
-        <ResponsiveContainer width="100%" height={260}>
+      <ChartCard title="Cumulative error: latency exploiter vs baseline" subtitle="Lower CRPS for the exploiter means they have an unfair advantage. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ResponsiveContainer width="100%" height={360}>
           <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
             onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
             <CartesianGrid {...GRID_PROPS} />
@@ -1759,16 +1790,16 @@ function SensitivityTab({ data }: { data: { lam: number; sig: number; error: num
       <MathBlock accent label="Skill gate" latex="g(\\sigma_i) = \\lambda + (1-\\lambda)\\,\\sigma_i^\\eta, \\quad \\sigma_i = \\sigma_{\\min} + (1-\\sigma_{\\min})\\,e^{-\\gamma L_i}" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <VerdictCard question="Brittle?" answer={notBrittle ? 'No' : 'Yes'}
+        <MetricDisplay label="Brittle?" value={notBrittle ? 'No' : 'Yes'}
           detail={`Error varies ${relRange.toFixed(0)}% across ${data.length} configs`}
-          verdict={notBrittle ? 'good' : 'bad'} />
-        <Metric label="Best" value={`λ=${best.lam}, σ=${best.sig}`} sub={`CRPS ${fmt(best.error, 4)}`} />
-        <Metric label="Worst" value={`λ=${worst.lam}, σ=${worst.sig}`} sub={`CRPS ${fmt(worst.error, 4)}`} />
-        <Metric label="Gini range" value={fmt(Math.max(...data.map(d => d.gini)) - Math.min(...data.map(d => d.gini)), 3)} />
+          variant={VERDICT_VARIANT[notBrittle ? 'good' : 'bad']} />
+        <MetricDisplay label="Best" value={`λ=${best.lam}, σ=${best.sig}`} detail={`CRPS ${fmt(best.error, 4)}`} />
+        <MetricDisplay label="Worst" value={`λ=${worst.lam}, σ=${worst.sig}`} detail={`CRPS ${fmt(worst.error, 4)}`} />
+        <MetricDisplay label="Gini range" value={fmt(Math.max(...data.map(d => d.gini)) - Math.min(...data.map(d => d.gini)), 3)} />
       </div>
 
-      <ChartCard title="Mean CRPS by λ and σ_min" subtitle={`${data.length} configs, ${T} rounds each. Lower is better.`}>
-        <ResponsiveContainer width="100%" height={320}>
+      <ChartCard title="Mean CRPS by λ and σ_min" subtitle={`${data.length} configs, ${T} rounds each. Lower is better.`} provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ResponsiveContainer width="100%" height={360}>
           <BarChart data={barData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="lam" tick={{ ...AXIS_TICK, fontSize: 12 }} stroke={AXIS_STROKE} />

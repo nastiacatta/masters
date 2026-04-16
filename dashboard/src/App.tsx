@@ -26,11 +26,11 @@ export default function App() {
               <Routes>
                 {/* Primary routes */}
                 <Route path="/" element={<HomePage />} />
+                <Route path="/mechanism" element={<MechanismPage />} />
                 <Route path="/results" element={<ResultsPage />} />
                 <Route path="/behaviour" element={<BehaviourPage />} />
-                <Route path="/notes" element={<NotesPage />} />
-                <Route path="/mechanism" element={<MechanismPage />} />
                 <Route path="/robustness" element={<RobustnessPage />} />
+                <Route path="/notes" element={<NotesPage />} />
                 <Route path="/slides" element={<Navigate to="/" replace />} />
 
                 {/* Appendix: legacy interactive tools */}

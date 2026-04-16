@@ -61,14 +61,14 @@ const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
 );
 
 const NAV_ITEMS: NavItem[] = [
-  /* Primary — thesis story flow */
+  /* Primary — thesis argument flow */
   { to: '/',           label: 'Overview',   icon: HomeIcon,     group: 'primary' },
+  { to: '/mechanism',  label: 'Mechanism',  icon: CogIcon,      group: 'primary' },
   { to: '/results',    label: 'Results',    icon: ChartBarIcon, group: 'primary' },
   { to: '/behaviour',  label: 'Behaviour',  icon: BeakerIcon,   group: 'primary' },
   { to: '/robustness', label: 'Robustness', icon: ShieldIcon,   group: 'primary' },
   /* Secondary */
   { to: '/notes',      label: 'Notes',      icon: BookIcon,     group: 'secondary' },
-  { to: '/mechanism',  label: 'Mechanism',  icon: CogIcon,      group: 'secondary' },
   { to: '/appendix',   label: 'Appendix',   icon: BeakerIcon,   group: 'secondary' },
 ];
 
@@ -104,13 +104,6 @@ export default function Sidebar() {
     >
       {/* Header */}
       <div className="px-3 py-3 border-b border-slate-200 flex items-center gap-2">
-        {/* Monogram */}
-        <div
-          className="bg-indigo-600 text-white rounded-md flex items-center justify-center shrink-0 font-bold"
-          style={{ width: 28, height: 28, fontSize: 11 }}
-        >
-          S×S
-        </div>
         {showLabels && (
           <h1 className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap overflow-hidden">
             Skill × Stake
@@ -142,7 +135,7 @@ export default function Sidebar() {
             className="px-3 pb-1.5 text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap"
             style={{ fontSize: 11 }}
           >
-            Main
+            Thesis Flow
           </div>
         )}
 

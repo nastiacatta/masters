@@ -20,6 +20,10 @@ import {
   AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   TOOLTIP_STYLE, BRUSH_PROPS, agentName, fmt, downsample, movingAvg,
 } from '@/components/lab/shared';
+import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
+import SmallMultiplesGrid from '@/components/charts/SmallMultiplesGrid';
+import ChartCard from '@/components/dashboard/ChartCard';
+import { ChartLinkingProvider } from '@/contexts/ChartLinkingContext';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
 
@@ -30,28 +34,6 @@ const INVARIANTS = [
   { label: 'Absent excluded', desc: 'Missing agents get mᵢ = 0, no payoff.', color: SEM.score.main },
 ];
 
-
-function SmartTooltip({ active, payload, label }: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
-  label?: number;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={TOOLTIP_STYLE} className="max-w-xs">
-      <div className="font-medium text-slate-700 text-[11px] mb-1">Round {label}</div>
-      <div className="space-y-0.5 max-h-48 overflow-y-auto">
-        {payload.filter(p => p.value != null && p.name !== '').map(p => (
-          <div key={p.dataKey} className="flex items-center gap-1.5 text-[11px]">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
-            <span className="text-slate-500 truncate">{p.name}</span>
-            <span className="font-mono font-medium text-slate-700 ml-auto">{fmt(p.value, 4)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ZoomBadge imported from shared component
 
@@ -71,6 +53,7 @@ export default function MechanismPage() {
   const [selectedAgent, setSelectedAgent] = useState<number | null>(null);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
+  const [chartDisplayMode, setChartDisplayMode] = useState<'overlapping' | 'grid'>('overlapping');
 
   const [simParams, setSimParams] = useState<SimParams>({
     T: rounds, N: nAgents, gamma: 1.5, lambda: 0.3, eta: 1.0, f: 0.4, U: 50,
@@ -319,6 +302,7 @@ export default function MechanismPage() {
             {/* ── Step 4: Explore ── */}
             <StepSection step={4} title="Explore" description="Timeline, round detail, or invariant checks.">
             {viewMode === 'timeline' && (
+              <ChartLinkingProvider initialMethods={Array.from({ length: N }, (_, i) => `F${i + 1}`)}>
               <div className="space-y-4">
                 {/* Agent selector */}
                 <div className="flex items-center gap-1.5 flex-wrap bg-white rounded-xl border border-slate-200 p-3">
@@ -359,7 +343,7 @@ export default function MechanismPage() {
                     <ZoomBadge isZoomed={errorZoom.state.isZoomed} onReset={errorZoom.reset} />
                   </div>
                   <div className="cursor-crosshair" role="img" aria-label="Forecast error over rounds. Interactive chart.">
-                  <ResponsiveContainer width="100%" height={260}>
+                  <ResponsiveContainer width="100%" height={360}>
                     <AreaChart
                       data={errorData}
                       margin={CHART_MARGIN_LABELED}
@@ -397,6 +381,61 @@ export default function MechanismPage() {
                 </div>
 
                 {/* Skill + Wealth side by side */}
+                <div className="flex items-center gap-2 mb-2">
+                  <h4 className="text-sm font-semibold text-slate-800">Agent trajectories</h4>
+                  <button
+                    onClick={() => setChartDisplayMode(v => v === 'overlapping' ? 'grid' : 'overlapping')}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      chartDisplayMode === 'grid'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {chartDisplayMode === 'overlapping' ? 'Grid view' : 'Overlapping view'}
+                  </button>
+                </div>
+
+                {chartDisplayMode === 'grid' ? (
+                  <div className="space-y-4">
+                    <SmallMultiplesGrid title="Skill trajectories (σ)" subtitle="One chart per agent">
+                      {Array.from({ length: N }, (_, i) => (
+                        <ChartCard key={`skill-${i}`} title={agentName(i)} provenance={{ type: 'demo', label: `In-browser demo — seed=${seed}, N=${nAgents}, T=${rounds}` }}>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <LineChart data={skillData} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
+                              <CartesianGrid {...GRID_PROPS} />
+                              <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} />
+                              <YAxis tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} domain={[0, 1]} />
+                              <Tooltip content={<SmartTooltip />} />
+                              <ReferenceLine y={pipeline.params.sigma_min} stroke="#94a3b8" strokeDasharray="4 4" />
+                              <Line type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeWidth={2} dot={false} connectNulls />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </ChartCard>
+                      ))}
+                    </SmallMultiplesGrid>
+
+                    <SmallMultiplesGrid title="Wealth evolution" subtitle="One chart per agent">
+                      {Array.from({ length: N }, (_, i) => (
+                        <ChartCard key={`wealth-${i}`} title={agentName(i)} provenance={{ type: 'demo', label: `In-browser demo — seed=${seed}, N=${nAgents}, T=${rounds}` }}>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <LineChart data={wealthData} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
+                              <CartesianGrid {...GRID_PROPS} />
+                              <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} />
+                              <YAxis tick={{ ...AXIS_TICK, fontSize: 10 }} stroke={AXIS_STROKE} />
+                              <Tooltip content={<SmartTooltip />} />
+                              <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="4 4" />
+                              <Line type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeWidth={2} dot={false} connectNulls />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </ChartCard>
+                      ))}
+                    </SmallMultiplesGrid>
+                  </div>
+                ) : (
                 <div className="grid lg:grid-cols-2 gap-4">
                   <div className="bg-white rounded-xl border border-slate-200 p-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -412,7 +451,7 @@ export default function MechanismPage() {
                     </div>
                     <p className="text-[11px] text-slate-400 mb-2">Skill σ by agent over time. Click or drag to zoom.</p>
                     <div className="cursor-crosshair" role="img" aria-label="Skill trajectories by agent. Interactive chart.">
-                    <ResponsiveContainer width="100%" height={260}>
+                    <ResponsiveContainer width="100%" height={360}>
                       <LineChart
                         data={skillData}
                         margin={CHART_MARGIN_LABELED}
@@ -463,7 +502,7 @@ export default function MechanismPage() {
                     </div>
                     <p className="text-[11px] text-slate-400 mb-2">Wealth by agent over time. Click or drag to zoom.</p>
                     <div className="cursor-crosshair" role="img" aria-label="Wealth evolution by agent. Interactive chart.">
-                    <ResponsiveContainer width="100%" height={260}>
+                    <ResponsiveContainer width="100%" height={360}>
                       <LineChart
                         data={wealthData}
                         margin={CHART_MARGIN_LABELED}
@@ -500,7 +539,9 @@ export default function MechanismPage() {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
+              </ChartLinkingProvider>
             )}
 
             {/* ══ ROUND DETAIL VIEW ══ */}
@@ -558,7 +599,7 @@ function AgentBarCharts({ trace, N }: {
           />
         </div>
         <p className="text-[11px] text-slate-400 mb-2">Deposit b (light) vs effective wager m (dark). Hover for values.</p>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={360}>
           <BarChart data={agentBarData} margin={CHART_MARGIN_LABELED}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE}
@@ -588,7 +629,7 @@ function AgentBarCharts({ trace, N }: {
           />
         </div>
         <p className="text-[11px] text-slate-400 mb-2">Profit π (green = gain, red = loss). Hover for values.</p>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={360}>
           <BarChart data={agentBarData} margin={CHART_MARGIN_LABELED}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE}
