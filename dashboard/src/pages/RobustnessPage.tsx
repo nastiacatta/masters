@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, ReferenceLine, Cell, Label,
   Brush, ReferenceArea,
 } from 'recharts';
@@ -140,7 +140,6 @@ export default function RobustnessPage() {
 function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; baseline: PipelineResult }) {
   const N = bursty.traces[0]?.participated.length ?? 6;
   const skillZoom = useChartZoom();
-  const mOverBZoom = useChartZoom();
 
   const skillData = useMemo(() => {
     return downsample(bursty.traces.map((t, i) => {
@@ -152,12 +151,14 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
 
   const mOverBData = useMemo(() => {
     return downsample(bursty.traces.map((t, i) => {
-      const vals: Record<string, number> = { round: i + 1 };
-      for (let j = 0; j < N; j++) {
+      const ratios = Array.from({ length: N }, (_, j) => {
         const b = t.deposits[j];
-        vals[`F${j + 1}`] = b > 0.001 ? t.effectiveWager[j] / b : 0;
-      }
-      return vals;
+        return b > 0.001 ? t.effectiveWager[j] / b : 0;
+      }).filter(r => r > 0); // only active agents
+      const mean = ratios.length > 0 ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
+      const min = ratios.length > 0 ? Math.min(...ratios) : 0;
+      const max = ratios.length > 0 ? Math.max(...ratios) : 0;
+      return { round: i + 1, mean, min, max };
     }), 300);
   }, [bursty.traces, N]);
 
@@ -245,45 +246,33 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-sm font-semibold text-slate-800">m/b ratio under intermittency</h3>
-          <ZoomBadge isZoomed={mOverBZoom.state.isZoomed} onReset={mOverBZoom.reset} />
-        </div>
-        <p className="text-[11px] text-slate-400 mb-2">Effective wager / deposit stays within [λ + (1−λ)σ_min^η, 1] under the skill–stake rule. Drag to zoom. Hover for values.</p>
-        <div className="cursor-crosshair" role="img" aria-label="m/b ratio by agent. Interactive chart.">
+      <ChartCard title="m/b ratio under intermittency" subtitle="Mean ± range across active agents. Shaded band shows min–max. Should stay within [λ, 1]." provenance={{ type: 'demo', label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
         <ResponsiveContainer width="100%" height={360}>
-          <LineChart
-            data={mOverBData}
-            margin={CHART_MARGIN_LABELED}
-            onMouseDown={mOverBZoom.onMouseDown}
-            onMouseMove={mOverBZoom.onMouseMove}
-            onMouseUp={mOverBZoom.onMouseUp}
-          >
+          <AreaChart data={mOverBData} margin={CHART_MARGIN_LABELED}>
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-              domain={[mOverBZoom.state.left, mOverBZoom.state.right]}
               label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1.1]}
-              label={{ value: 'm/b', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+              label={{ value: 'm/b ratio', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
             <Tooltip content={<SmartTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-            <ReferenceLine y={1} stroke="#94a3b8" strokeDasharray="4 4" />
-            <ReferenceLine y={0.3} stroke="#94a3b8" strokeDasharray="4 4">
-              <Label value="λ" position="left" fill="#94a3b8" fontSize={11} />
+            <defs>
+              <linearGradient id="mbBandGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#6366f1" stopOpacity={0.03} />
+              </linearGradient>
+            </defs>
+            <ReferenceLine y={1} stroke="#94a3b8" strokeDasharray="4 4">
+              <Label value="Upper bound (1.0)" position="right" fontSize={11} fill="#94a3b8" />
             </ReferenceLine>
-            {Array.from({ length: N }, (_, i) => (
-              <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
-                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
-            ))}
-            {mOverBZoom.state.refLeft && mOverBZoom.state.refRight && (
-              <ReferenceArea x1={mOverBZoom.state.refLeft} x2={mOverBZoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
-            )}
-            <Brush dataKey="round" {...BRUSH_PROPS} />
-          </LineChart>
+            <ReferenceLine y={0.3} stroke="#94a3b8" strokeDasharray="4 4">
+              <Label value="λ = 0.3" position="right" fontSize={11} fill="#94a3b8" />
+            </ReferenceLine>
+            <Area type="monotone" dataKey="max" name="Max" stroke="transparent" fill="url(#mbBandGrad)" />
+            <Area type="monotone" dataKey="min" name="Min" stroke="transparent" fill="white" />
+            <Line type="monotone" dataKey="mean" name="Mean m/b" stroke="#6366f1" strokeWidth={2.5} dot={false} />
+          </AreaChart>
         </ResponsiveContainer>
-        </div>
-      </div>
+      </ChartCard>
       </SectionHeader>
     </div>
   );

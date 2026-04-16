@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { METHOD_COLORS } from '@/lib/palette';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   Brush,
@@ -492,6 +494,30 @@ export default function ResultsPage() {
       return point;
     });
     return downsample(raw, 300);
+  }, [demoMethods]);
+
+  const demoDeltaPerRound = useMemo(() => {
+    const equalRounds = demoMethods.find(m => m.key === 'equal')!.pipeline.rounds;
+    const raw = equalRounds.map((eqR, i) => {
+      const point: Record<string, number> = { round: i + 1 };
+      for (const m of demoMethods) {
+        if (m.key === 'equal') continue;
+        point[m.key] = m.pipeline.rounds[i].error - eqR.error;
+      }
+      return point;
+    });
+    // Compute rolling average (window 20) for smoother view
+    const smoothed = raw.map((pt, i) => {
+      const smoothPt: Record<string, number> = { round: pt.round };
+      for (const m of demoMethods) {
+        if (m.key === 'equal') continue;
+        const start = Math.max(0, i - 19);
+        const window = raw.slice(start, i + 1);
+        smoothPt[m.key] = window.reduce((s, w) => s + (w[m.key] ?? 0), 0) / window.length;
+      }
+      return smoothPt;
+    });
+    return downsample(smoothed, 300);
   }, [demoMethods]);
 
   const demoDeposits = useMemo(() => {
@@ -1146,42 +1172,69 @@ export default function ResultsPage() {
                 </p>
               </div>
 
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-semibold text-slate-800">Cumulative forecast error over time</h3>
-                  <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
+              <div className="grid lg:grid-cols-2 gap-4">
+                {/* Left: Per-round Δ CRPS vs equal (rolling average) — shows the gap */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-700 mb-1">Δ Error vs equal weighting (20-round rolling avg)</div>
+                  <p className="text-[11px] text-slate-400 mb-2">Below zero = better than equal. The gap shows the mechanism's advantage.</p>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <AreaChart data={demoDeltaPerRound} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Δ Error vs Equal', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                      <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 4">
+                        <Label value="Equal weighting" position="right" fontSize={11} fill="#94a3b8" />
+                      </ReferenceLine>
+                      <defs>
+                        <linearGradient id="blendedGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      {demoMethods.filter(m => m.key !== 'equal').map((m) => (
+                        m.key === 'blended' ? (
+                          <Area key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
+                            fill="url(#blendedGrad)" strokeWidth={2.5} dot={false} />
+                        ) : (
+                          <Area key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
+                            fill="transparent" strokeWidth={1.5} dot={false}
+                            strokeDasharray={m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined} />
+                        )
+                      ))}
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
-                  Each line shows the running average error for a different weighting method.
-                  Lower means more accurate forecasts.
-                  The <span className="font-semibold" style={{ color: METHOD.blended.color }}>Skill × stake</span> line
-                  should track below the others if the online skill layer adds value.
-                  Drag to zoom into a time range.
-                </p>
 
-              </div>
-              <div className="cursor-crosshair">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
-                    onMouseDown={cumErrorZoom.onMouseDown} onMouseMove={cumErrorZoom.onMouseMove} onMouseUp={cumErrorZoom.onMouseUp}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]}
-                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-                      label={{ value: 'Cumulative mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                    {demoMethods.map((m) => (
-                      <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                        strokeWidth={m.key === 'blended' ? 3.5 : 2}
-                        dot={false}
-                        strokeOpacity={1}
-                        strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '4 4' : m.key === 'skill_only' ? '2 2' : undefined}
-                        isAnimationActive={true} animationDuration={300} />
-                    ))}
-                    <Brush dataKey="round" {...BRUSH_PROPS} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {/* Right: Cumulative error (zoomed Y-axis) */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-700 mb-1">Cumulative mean error</div>
+                  <p className="text-[11px] text-slate-400 mb-2">Running average CRPS. Y-axis zoomed to show differences. Lower = better.</p>
+                  <div className="cursor-crosshair">
+                    <ResponsiveContainer width="100%" height={400}>
+                      <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
+                        onMouseDown={cumErrorZoom.onMouseDown} onMouseMove={cumErrorZoom.onMouseMove} onMouseUp={cumErrorZoom.onMouseUp}>
+                        <CartesianGrid {...GRID_PROPS} />
+                        <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumErrorZoom.state.left, cumErrorZoom.state.right]}
+                          label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                        <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={['auto', 'auto']}
+                          label={{ value: 'Cumulative mean error', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                        <Tooltip content={<SmartTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                        {demoMethods.map((m) => (
+                          <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
+                            strokeWidth={m.key === 'blended' ? 3 : 2}
+                            dot={false}
+                            strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined} />
+                        ))}
+                        <Brush dataKey="round" {...BRUSH_PROPS} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
 
               {/* Skill convergence (demo) — mechanism skill-based weights */}
