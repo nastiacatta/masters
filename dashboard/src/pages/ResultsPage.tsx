@@ -1098,9 +1098,8 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">Method comparison: cumulative forecast error</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-                    Running average CRPS for each weighting method. Lower = more accurate.
-                    The gap between lines shows the mechanism's advantage. Click a method in the legend to isolate it.
+                  <p className="text-xs text-slate-500 mt-1">
+                    Running average CRPS by method. Lower = better. Gap between lines = mechanism's advantage.
                   </p>
                 </div>
 

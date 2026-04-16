@@ -237,8 +237,7 @@ export default function BehaviourPage() {
         <header>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Robustness</h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-            How robust is the mechanism to strategic behaviour, attacks, and parameter variation?
-            This section tests 18 behaviour presets against the truthful baseline using paired comparison.
+            18 behaviour presets tested against the truthful baseline using paired comparison.
           </p>
         </header>
 
@@ -451,9 +450,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
   return (
     <div className="space-y-8">
       <p className="text-sm text-slate-600 max-w-2xl">
-        Following Lambert et al. (2008), the mechanism treats each agent as a policy π that outputs
-        (participate, report, deposit). The core never depends on motives — only on observable actions.
-        This separation lets us swap behaviours without touching the settlement logic.
+        The mechanism sees deposits, reports, and participation — never motives. Each behaviour below is tested in isolation.
       </p>
 
       {/* Architecture diagram */}
@@ -607,9 +604,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
-        Real forecasters go offline — sensors fail, models retrain, participants skip rounds.
-        Following Vitali &amp; Pinson (2024), the mechanism must handle missing submissions without
-        corrupting skill estimates. The EWMA update freezes when an agent is absent:
+        What happens when agents go offline? The EWMA freezes during absences — no drift, no corruption.
       </p>
       <MathBlock accent label="EWMA skill update" latex="L_{i,t} = \\begin{cases} (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t} & \\text{if present} \\\\ L_{i,t-1} & \\text{if absent} \\end{cases}" />
 
@@ -781,9 +776,7 @@ function InformationTab({ biased, miscalibrated, baseline }: {
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
-        Belief formation quality determines the raw signal each agent brings to the aggregate.
-        Biased agents add a persistent directional error; miscalibrated agents push reports away
-        from 0.5 (overconfidence). The skill layer should detect both and downweight accordingly.
+        Biased and miscalibrated agents degrade signal quality. The skill layer should detect and downweight them.
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -918,14 +911,11 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
-        Six attack types from the thesis, each optimised against the mechanism's rules.
-        The weighted-score payoff (Lambert 2008) is:
+        Six attack types, each optimised against the mechanism's rules.
       </p>
       <MathBlock accent label="Payoff" latex="\\Pi_i = m_i\\left(1 + s(r_i, \\omega) - \\frac{\\sum_j m_j\\, s(r_j, \\omega)}{\\sum_j m_j}\\right)" />
       <p className="text-sm text-slate-600 max-w-2xl">
-        Chen et al. (2014) proved WSWMs admit an arbitrage interval: any prediction
-        within a certain range yields nonneg payoff for both outcomes.
-        The arbitrageur uses the simplest strategy: report the mean of others' reports.
+        The arbitrageur exploits the Chen (2014) arbitrage interval by reporting the mean of others.
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1138,8 +1128,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
       <div className="space-y-6">
         <h3 className="text-sm font-semibold text-slate-800">Risk-averse hedging</h3>
         <p className="text-sm text-slate-600 max-w-2xl">
-          Risk-averse agents shrink reports toward the centre and stake less.
-          This is rational under concave utility — it reduces payoff variance at the cost of informativeness.
+          Risk-averse agents hedge reports toward 0.5 and stake less. Rational under concave utility.
         </p>
         <MathBlock accent label="Hedged report" latex="\\hat{r}_i = 0.7 \\cdot r_i^{\\text{true}} + 0.3 \\cdot 0.5, \\quad f_{\\text{risk}} \\leftarrow 0.55 \\cdot f_{\\text{risk}}" />
 
@@ -1203,9 +1192,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
       <div className="space-y-6">
         <h3 className="text-sm font-semibold text-slate-800">Noisy reporting</h3>
         <p className="text-sm text-slate-600 max-w-2xl">
-          Sloppy rather than strategic — the noisy reporter adds random noise to truthful reports.
-          This degrades CRPS proportionally to noise scale, and the skill layer should detect the
-          lower signal quality.
+          Random noise added to truthful reports. The skill layer should detect lower signal quality.
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1241,9 +1228,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
       <div className="space-y-6">
         <h3 className="text-sm font-semibold text-slate-800">Reputation gaming</h3>
         <p className="text-sm text-slate-600 max-w-2xl">
-          The reputation gamer sacrifices short-term accuracy to inflate their skill estimate σ
-          by anchoring reports near the aggregate. If the mechanism's EWMA is fooled, the gamer
-          gains disproportionate influence.
+          Anchors reports near the aggregate to inflate σ. If EWMA is fooled, the gamer gains disproportionate influence.
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1286,9 +1271,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
       <div className="space-y-6">
         <h3 className="text-sm font-semibold text-slate-800">Sandbagging</h3>
         <p className="text-sm text-slate-600 max-w-2xl">
-          The sandbagger deliberately underperforms by adding large noise, lowering the mechanism's
-          expectation. If the skill layer is fooled, the sandbagger can later outperform expectations
-          for outsized payoffs. Here we test the steady-state impact.
+          Deliberately underperforms to lower expectations, then outperforms for outsized payoffs.
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
