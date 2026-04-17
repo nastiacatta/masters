@@ -125,13 +125,27 @@ def run_real_data_comparison(
 
     # Compute CRPS for each weighting rule (post-warmup)
     eps = 1e-12
-    rules = ["uniform", "skill", "mechanism", "best_single"]
+    rules = ["uniform", "skill", "mechanism", "best_single",
+             "inverse_variance", "trimmed_mean", "median"]
     crps_per_rule: dict[str, list[float]] = {r: [] for r in rules}
     per_round: list[dict] = []
+
+    # Track per-agent rolling CRPS for inverse-variance weights
+    agent_rolling_crps: list[list[float]] = [[] for _ in range(n_forecasters)]
 
     for t in range(warmup, T):
         y_t = float(y_all[t])
         q_t = q_reports[:, t, :]
+
+        # Per-agent CRPS this round (needed for inverse-variance and oracle)
+        agent_crps_t = np.array([
+            float(crps_hat_from_quantiles(y_t, q_t[i:i+1], taus)[0])
+            for i in range(n_forecasters)
+        ])
+        for i in range(n_forecasters):
+            agent_rolling_crps[i].append(agent_crps_t[i])
+            if len(agent_rolling_crps[i]) > 500:
+                agent_rolling_crps[i] = agent_rolling_crps[i][-500:]
 
         # Uniform
         agg_u = np.mean(q_t, axis=0)
@@ -156,13 +170,46 @@ def run_real_data_comparison(
             c_m = c_u
         crps_per_rule["mechanism"].append(c_m)
 
-        # Best single (lowest residual variance)
+        # Best single (lowest residual variance over last 50 rounds)
         best_idx = int(np.argmin([
             np.var([reports[j, max(0, t-50):t] - y_all[max(0, t-50):t]])
             for j in range(n_forecasters)
         ])) if t > 50 else 0
         c_best = float(crps_hat_from_quantiles(y_t, q_t[best_idx:best_idx+1], taus)[0])
         crps_per_rule["best_single"].append(c_best)
+
+        # --- NEW: Inverse-variance weighting (Bates-Granger style) ---
+        # Weights proportional to 1/variance of recent CRPS
+        if t - warmup >= 20:
+            inv_var_w = np.zeros(n_forecasters)
+            for i in range(n_forecasters):
+                recent = agent_rolling_crps[i][-100:]
+                var_i = np.var(recent) + eps
+                inv_var_w[i] = 1.0 / var_i
+            inv_var_w /= inv_var_w.sum()
+            agg_iv = np.sum(inv_var_w[:, None] * q_t, axis=0)
+        else:
+            agg_iv = agg_u
+        c_iv = float(crps_hat_from_quantiles(y_t, agg_iv.reshape(1, -1), taus)[0])
+        crps_per_rule["inverse_variance"].append(c_iv)
+
+        # --- NEW: Trimmed mean (drop worst, average rest) ---
+        # Drop the forecaster with highest recent CRPS
+        if t - warmup >= 20:
+            recent_means = [np.mean(agent_rolling_crps[i][-100:]) for i in range(n_forecasters)]
+            worst_idx = int(np.argmax(recent_means))
+            keep_mask = np.ones(n_forecasters, dtype=bool)
+            keep_mask[worst_idx] = False
+            agg_trim = np.mean(q_t[keep_mask], axis=0)
+        else:
+            agg_trim = agg_u
+        c_trim = float(crps_hat_from_quantiles(y_t, agg_trim.reshape(1, -1), taus)[0])
+        crps_per_rule["trimmed_mean"].append(c_trim)
+
+        # --- NEW: Median forecast (per-quantile median across forecasters) ---
+        agg_med = np.median(q_t, axis=0)
+        c_med = float(crps_hat_from_quantiles(y_t, agg_med.reshape(1, -1), taus)[0])
+        crps_per_rule["median"].append(c_med)
 
         per_round.append({
             "t": t,
@@ -171,6 +218,9 @@ def run_real_data_comparison(
             "crps_skill": c_s,
             "crps_mechanism": c_m,
             "crps_best_single": c_best,
+            "crps_inverse_variance": c_iv,
+            "crps_trimmed_mean": c_trim,
+            "crps_median": c_med,
         })
 
     # --- Oracle comparison (knows true per-agent quality) ---
@@ -204,7 +254,9 @@ def run_real_data_comparison(
     mean_uniform = float(np.mean(crps_per_rule["uniform"]))
     mean_mechanism = float(np.mean(crps_per_rule["mechanism"]))
     rows = []
-    for rule in rules:
+    for rule in rules + ["oracle"]:
+        if rule not in crps_per_rule:
+            continue
         mean_crps = float(np.mean(crps_per_rule[rule]))
         rows.append({
             "experiment": f"real_data_{series_name}",
@@ -215,15 +267,6 @@ def run_real_data_comparison(
             "mean_crps": mean_crps,
             "delta_crps_vs_equal": mean_crps - mean_uniform,
         })
-    rows.append({
-        "experiment": f"real_data_{series_name}",
-        "method": "oracle",
-        "seed": 0,
-        "DGP": series_name,
-        "preset": "fixed_deposits",
-        "mean_crps": mean_oracle,
-        "delta_crps_vs_equal": mean_oracle - mean_uniform,
-    })
 
     result = {
         "config": {
@@ -244,18 +287,65 @@ def run_real_data_comparison(
     rolling_improvement = []
     crps_u_arr = np.array(crps_per_rule["uniform"])
     crps_m_arr = np.array(crps_per_rule["mechanism"])
+    crps_best_arr = np.array(crps_per_rule["best_single"])
     step_roll = max(1, len(crps_u_arr) // 200)
     for start in range(0, len(crps_u_arr) - window_size, step_roll):
         end = start + window_size
         u_window = np.mean(crps_u_arr[start:end])
         m_window = np.mean(crps_m_arr[start:end])
-        pct = (m_window - u_window) / u_window * 100 if u_window > 0 else 0
+        b_window = np.mean(crps_best_arr[start:end])
+        pct_vs_uniform = (m_window - u_window) / u_window * 100 if u_window > 0 else 0
+        pct_vs_best = (m_window - b_window) / b_window * 100 if b_window > 0 else 0
         rolling_improvement.append({
             "t_start": warmup + start,
             "t_end": warmup + end,
-            "pct_improvement": round(pct, 2),
+            "pct_improvement": round(pct_vs_uniform, 2),
+            "pct_vs_best_single": round(pct_vs_best, 2),
         })
     result["rolling_improvement"] = rolling_improvement
+
+    # --- Train/test split analysis ---
+    half = len(crps_u_arr) // 2
+    train_test = {}
+    for method_name in crps_per_rule:
+        arr = np.array(crps_per_rule[method_name])
+        train_mean = float(np.mean(arr[:half]))
+        test_mean = float(np.mean(arr[half:]))
+        train_test[method_name] = {
+            "train_crps": round(train_mean, 6),
+            "test_crps": round(test_mean, 6),
+            "train_delta_vs_uniform": round(train_mean - float(np.mean(crps_u_arr[:half])), 6),
+            "test_delta_vs_uniform": round(test_mean - float(np.mean(crps_u_arr[half:])), 6),
+        }
+    result["train_test_split"] = {
+        "train_rounds": half,
+        "test_rounds": len(crps_u_arr) - half,
+        "methods": train_test,
+    }
+
+    # --- Aggregate calibration (PIT for mechanism's quantile forecast) ---
+    # For each round, check if y falls below each quantile level
+    pit_counts = {float(tau): 0 for tau in taus}
+    n_scored = 0
+    for t in range(warmup, T):
+        y_t = float(y_all[t])
+        r_mech = np.asarray(res["r_hat_hist"][t], dtype=np.float64)
+        if r_mech.size == len(taus):
+            n_scored += 1
+            for k, tau in enumerate(taus):
+                if y_t <= r_mech[k]:
+                    pit_counts[float(tau)] += 1
+    calibration = []
+    if n_scored > 0:
+        for tau in taus:
+            empirical = pit_counts[float(tau)] / n_scored
+            calibration.append({
+                "tau": float(tau),
+                "nominal": float(tau),
+                "empirical": round(empirical, 4),
+                "gap": round(abs(empirical - float(tau)), 4),
+            })
+    result["calibration"] = calibration
 
     # --- Sensitivity summary (pre-computed, added to output) ---
     result["sensitivity"] = {
