@@ -15,6 +15,7 @@ import time
 import numpy as np
 
 from .forecasters import BaseForecaster, get_all_forecasters
+from .stats import diebold_mariano_test
 
 
 def normalize_series(series: np.ndarray) -> tuple[np.ndarray, float, float]:
@@ -201,6 +202,79 @@ def run_real_data_comparison(
         "per_round": per_round,
     }
 
+    # --- Diebold-Mariano tests ---
+    crps_uniform_arr = np.array(crps_per_rule["uniform"])
+    crps_mechanism_arr = np.array(crps_per_rule["mechanism"])
+    dm_mech = diebold_mariano_test(crps_uniform_arr, crps_mechanism_arr, h=1)
+    result["dm_test"] = {
+        "statistic": round(dm_mech["dm_stat"], 4),
+        "p_value": round(dm_mech["p_value"], 6),
+        "significant_at_001": dm_mech["p_value"] < 0.001,
+        "significant_at_005": dm_mech["p_value"] < 0.05,
+        "comparison": "uniform vs mechanism",
+    }
+
+    crps_skill_arr = np.array(crps_per_rule["skill"])
+    dm_skill = diebold_mariano_test(crps_uniform_arr, crps_skill_arr, h=1)
+    result["dm_test_skill"] = {
+        "statistic": round(dm_skill["dm_stat"], 4),
+        "p_value": round(dm_skill["p_value"], 6),
+        "significant_at_001": dm_skill["p_value"] < 0.001,
+        "significant_at_005": dm_skill["p_value"] < 0.05,
+        "comparison": "uniform vs skill",
+    }
+
+    # --- Per-agent CRPS time series (downsampled) ---
+    per_agent_crps_history = []
+    step_agent = max(1, (T - warmup) // 600)
+    for t in range(warmup, T, step_agent):
+        entry = {"t": t}
+        for i in range(n_forecasters):
+            c = float(crps_hat_from_quantiles(float(y_all[t]), q_reports[i:i+1, t, :], taus)[0])
+            entry[f"crps_{i}"] = round(c, 6)
+        per_agent_crps_history.append(entry)
+    result["per_agent_crps"] = per_agent_crps_history
+
+    # --- Per-agent skill history (for dashboard skill recognition chart) ---
+    # Downsample to ~600 points for reasonable JSON size
+    sigma_hist = res["sigma_hist"]  # (n_forecasters, T)
+    L_hist = res.get("L_hist")      # (n_forecasters, T+1) if store_history
+    score_hist = res.get("score_hist")  # (n_forecasters, T) if store_history
+    wager_hist = res["wager_hist"]  # (n_forecasters, T)
+
+    step = max(1, (T - warmup) // 600)
+    skill_history = []
+    for t in range(warmup, T, step):
+        entry: dict = {"t": t}
+        for i in range(n_forecasters):
+            name = forecasters[i].name
+            entry[f"sigma_{i}"] = round(float(sigma_hist[i, t]), 6)
+            entry[f"weight_{i}"] = round(float(wager_hist[i, t]), 6)
+            if score_hist is not None:
+                entry[f"score_{i}"] = round(float(score_hist[i, t]), 6)
+        skill_history.append(entry)
+
+    # Steady-state σ (average of last 20% of rounds)
+    tail_start = warmup + int(0.8 * (T - warmup))
+    steady_state = []
+    for i in range(n_forecasters):
+        tail_sigma = sigma_hist[i, tail_start:T]
+        tail_wager = wager_hist[i, tail_start:T]
+        avg_score = float(np.mean(score_hist[i, tail_start:T])) if score_hist is not None else None
+        steady_state.append({
+            "forecaster": forecasters[i].name,
+            "index": i,
+            "mean_sigma": round(float(np.mean(tail_sigma)), 6),
+            "mean_weight": round(float(np.mean(tail_wager)), 6),
+            "mean_score": round(avg_score, 6) if avg_score is not None else None,
+        })
+    # Sort by mean_sigma descending (best forecaster first)
+    steady_state.sort(key=lambda x: x["mean_sigma"], reverse=True)
+
+    result["skill_history"] = skill_history
+    result["steady_state"] = steady_state
+    result["forecaster_names"] = [fc.name for fc in forecasters]
+
     # Write output
     out_path = os.path.join(outdir, "real_data", series_name)
     os.makedirs(os.path.join(out_path, "data"), exist_ok=True)
@@ -214,5 +288,20 @@ def run_real_data_comparison(
     for r in rows:
         d = r['delta_crps_vs_equal']
         print(f"  {r['method']:15s} {r['mean_crps']:12.6f} {d:+12.6f}")
+
+    print(f"\n  Skill ranking (steady-state σ, last 20% of rounds):")
+    print(f"  {'Forecaster':25s} {'σ':>8s} {'Weight':>8s} {'Score':>8s}")
+    print(f"  {'-'*52}")
+    for ss in steady_state:
+        score_str = f"{ss['mean_score']:.4f}" if ss['mean_score'] is not None else "N/A"
+        print(f"  {ss['forecaster']:25s} {ss['mean_sigma']:8.4f} {ss['mean_weight']:8.4f} {score_str:>8s}")
+
+    print(f"\n  Diebold-Mariano tests (H0: equal predictive accuracy):")
+    dm_m = result["dm_test"]
+    sig_m = "***" if dm_m["significant_at_001"] else ("*" if dm_m["significant_at_005"] else "")
+    print(f"  Uniform vs Mechanism: DM={dm_m['statistic']:+.4f}, p={dm_m['p_value']:.6f} {sig_m}")
+    dm_s = result["dm_test_skill"]
+    sig_s = "***" if dm_s["significant_at_001"] else ("*" if dm_s["significant_at_005"] else "")
+    print(f"  Uniform vs Skill:     DM={dm_s['statistic']:+.4f}, p={dm_s['p_value']:.6f} {sig_s}")
 
     return result

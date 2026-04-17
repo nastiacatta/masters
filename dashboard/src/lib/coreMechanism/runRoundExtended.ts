@@ -23,8 +23,7 @@ export function capWeightShares(m: number[], omegaMax: number): number[] {
   const n = cleaned.length;
   const om = Math.max(1 / n, Math.min(1, omegaMax));
 
-  // Simplex projection: iteratively clip overweight shares and redistribute
-  let shares = cleaned.map((v) => v / M);
+  const shares = cleaned.map((v) => v / M);
   const capped = new Array(n).fill(false);
 
   for (let iter = 0; iter < n; iter++) {

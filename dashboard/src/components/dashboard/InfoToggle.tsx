@@ -9,7 +9,10 @@ export interface InfoToggleContent {
   axes?: { x: string; y: string };
 }
 
-interface InfoToggleProps extends InfoToggleContent {}
+interface InfoToggleProps extends InfoToggleContent {
+  /** Additional class name for the wrapper span. */
+  className?: string;
+}
 
 export default function InfoToggle({
   term,

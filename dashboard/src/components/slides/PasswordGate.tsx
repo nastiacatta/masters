@@ -1,13 +1,8 @@
 import { useState, type FormEvent } from 'react';
+import { validatePassword } from './passwordValidation';
 
 interface PasswordGateProps {
   onAuthenticate: () => void;
-}
-
-const CORRECT_PASSWORD = 'anastasia';
-
-export function validatePassword(value: string): boolean {
-  return value === CORRECT_PASSWORD;
 }
 
 export default function PasswordGate({ onAuthenticate }: PasswordGateProps) {

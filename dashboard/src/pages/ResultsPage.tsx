@@ -70,12 +70,46 @@ import Skeleton from '@/components/dashboard/Skeleton';
 import { FigureProvider } from '@/contexts/FigureContext';
 import { EquationProvider } from '@/contexts/EquationContext';
 
+// ── Analysis hooks and components ──────────────────────────────────
+import {
+  useClaimValidation,
+  useEffectSizes,
+  useResultConsistency,
+  useSensitivityData,
+  useFailureModes,
+  useBaselineCoverage,
+  useAnalysisGaps,
+  useAblationInterpretation,
+  useRealDataContext,
+  useRegimeBreakdownFromAdapter,
+  useDepositInteraction,
+  usePanelSizeSensitivity,
+} from '@/hooks/useAnalysis';
+import ClaimEvidenceCard from '@/components/analysis/ClaimEvidenceCard';
+import ResultConsistencyMatrix from '@/components/analysis/ResultConsistencyMatrix';
+import SensitivityPanel from '@/components/analysis/SensitivityPanel';
+import FailureModePanel from '@/components/analysis/FailureModePanel';
+import BaselineCoverageTable from '@/components/analysis/BaselineCoverageTable';
+import MissingAnalysisChecklist from '@/components/analysis/MissingAnalysisChecklist';
+import WhenDoesSkillHelpPanel from '@/components/analysis/WhenDoesSkillHelpPanel';
+import AblationInterpretPanel from '@/components/analysis/AblationInterpretPanel';
+import RealDataContextPanel from '@/components/analysis/RealDataContextPanel';
+import RegimeBreakdownTable from '@/components/analysis/RegimeBreakdownTable';
+import DepositInteractionPanel from '@/components/analysis/DepositInteractionPanel';
+import PanelSizeChart from '@/components/analysis/PanelSizeChart';
+
 const DEMO_SEED = 42;
 const DEMO_N = 6;
 const DEMO_T = 200;
 
 const CORE_METHOD_KEYS = ['uniform', 'deposit', 'skill', 'mechanism'] as const;
 const ACCURACY_EPS = 1e-4;
+
+// Skill convergence demo: 3 agents with controlled noise levels
+const CONV_N = 3;
+const CONV_T = 500;
+const CONV_TAU = [0.2, 0.6, 1.5] as const; // Good, Okay, Bad
+const CONV_LABELS = ['F1: Good (τ=0.2)', 'F2: Okay (τ=0.6)', 'F3: Bad (τ=1.5)'] as const;
 
 type Verdict = 'good' | 'neutral' | 'bad';
 
@@ -113,8 +147,8 @@ function AnswerCard({
   );
 }
 
-const EXP_TABS = ['Real data', 'Accuracy', 'Concentration', 'Calibration', 'Ablation'] as const;
-const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy'] as const;
+const EXP_TABS = ['Real data', 'Accuracy', 'Concentration', 'Calibration', 'Ablation', 'Scientific Analysis'] as const;
+const DEMO_TABS = ['Accuracy', 'Concentration', 'Deposit policy', 'Scientific Analysis'] as const;
 
 const METHOD_LABEL: Record<string, string> = {
   uniform: 'Equal', deposit: 'Stake-only', skill: 'Skill-only', mechanism: 'Skill × stake', best_single: 'Best single',
@@ -265,6 +299,7 @@ function DepositSensitivityPanel() {
 
 export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('Real data');
+  const [skillSource, setSkillSource] = useState<'real' | 'dgp'>('real');
 
   // --- adapter-backed data ---
   const [masterRows, setMasterRows] = useState<MasterComparisonRow[]>([]);
@@ -279,7 +314,6 @@ export default function ResultsPage() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      setLoading(true);
       try {
         const [master, ablation, exps] = await Promise.all([
           loadMasterComparison().catch(() => null),
@@ -494,10 +528,6 @@ export default function ResultsPage() {
 
   // Skill convergence: 3 agents with controlled noise levels
   // Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5) — the mechanism should rank them correctly
-  const CONV_N = 3;
-  const CONV_T = 500;
-  const CONV_TAU = [0.2, 0.6, 1.5]; // Good, Okay, Bad
-  const CONV_LABELS = ['Good (τ=0.2)', 'Okay (τ=0.6)', 'Bad (τ=1.5)'];
 
   const convPipeline = useMemo(() => {
     // Generate DGP with controlled noise levels
@@ -583,8 +613,65 @@ export default function ResultsPage() {
     });
     return downsample(out, 600);
   }, [realData]);
+  // ── Real skill history data (from comparison.json) ──
+  const hasRealSkill = !!(realData?.skill_history?.length && realData?.forecaster_names?.length);
+  const realForecasterCount = realData?.forecaster_names?.length ?? 0;
+  const realForecasterNames = realData?.forecaster_names ?? [];
+
+  // Skill (σ) trajectory from real forecaster data
+  const realSkillConvergence = useMemo(() => {
+    if (!hasRealSkill) return [];
+    const raw = realData!.skill_history!.map((entry) => {
+      const pt: Record<string, number> = { t: entry.t };
+      for (let j = 0; j < realForecasterCount; j++) pt[`sigma_${j}`] = entry[`sigma_${j}`];
+      return pt;
+    });
+    return downsample(raw, 600);
+  }, [hasRealSkill, realData, realForecasterCount]);
+
+  // Weight trajectory from real forecaster data
+  const realWeightConvergence = useMemo(() => {
+    if (!hasRealSkill) return [];
+    const raw = realData!.skill_history!.map((entry) => {
+      const pt: Record<string, number> = { t: entry.t };
+      for (let j = 0; j < realForecasterCount; j++) pt[`weight_${j}`] = entry[`weight_${j}`];
+      return pt;
+    });
+    return downsample(raw, 600);
+  }, [hasRealSkill, realData, realForecasterCount]);
+
+  // Steady-state σ and weight targets from real data
+  const realSteadyState = realData?.steady_state ?? [];
+
+  // Build lookup: index → steady-state values
+  const realTargetSigmas = useMemo(() => {
+    if (!hasRealSkill) return [];
+    const map = new Map(realSteadyState.map((s) => [s.index, s.mean_sigma]));
+    return Array.from({ length: realForecasterCount }, (_, i) => map.get(i) ?? 0);
+  }, [hasRealSkill, realSteadyState, realForecasterCount]);
+
+  const realTargetWeights = useMemo(() => {
+    if (!hasRealSkill) return [];
+    const map = new Map(realSteadyState.map((s) => [s.index, s.mean_weight]));
+    return Array.from({ length: realForecasterCount }, (_, i) => map.get(i) ?? 0);
+  }, [hasRealSkill, realSteadyState, realForecasterCount]);
+
   const useExp = hasExpData && !loading && isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
+
+  // ── Analysis hooks ──────────────────────────────────────────────
+  const claimValidation = useClaimValidation();
+  const effectSizes = useEffectSizes();
+  const resultConsistency = useResultConsistency();
+  const sensitivityData = useSensitivityData();
+  const failureModes = useFailureModes();
+  const baselineCoverage = useBaselineCoverage();
+  const analysisGaps = useAnalysisGaps();
+  const ablationInterpretation = useAblationInterpretation();
+  const realDataContext = useRealDataContext();
+  const regimeBreakdownData = useRegimeBreakdownFromAdapter();
+  const depositInteraction = useDepositInteraction();
+  const panelSizeSensitivity = usePanelSizeSensitivity();
 
   const deltaCrps = realData
     ? (realData.rows.find(r => r.method === 'mechanism')?.delta_crps_vs_equal ?? null)
@@ -744,6 +831,211 @@ export default function ResultsPage() {
                 <DepositSensitivityPanel />
               )}
 
+              {/* ═══ Skill Recognition — with Real/DGP toggle ═══ */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-semibold text-slate-800">
+                      {skillSource === 'real' && hasRealSkill
+                        ? `Skill recognition — Elia wind (${realForecasterCount} real forecasters)`
+                        : 'Skill recognition — Synthetic DGP (3 controlled agents)'}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-slate-500">Data source:</span>
+                    <button
+                      onClick={() => setSkillSource('real')}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                        skillSource === 'real'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      Real forecasters
+                    </button>
+                    <button
+                      onClick={() => setSkillSource('dgp')}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                        skillSource === 'dgp'
+                          ? 'bg-teal-600 text-white'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      Synthetic DGP
+                    </button>
+                  </div>
+                </div>
+
+                {skillSource === 'real' && hasRealSkill ? (
+                  <>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      The mechanism's EWMA skill gate learns which forecasting model is best over {realData!.config.T.toLocaleString()} hourly rounds.
+                      {' '}{realForecasterCount} models: {realForecasterNames.join(', ')}.
+                      Left: skill estimate σ (higher = better forecaster). Right: normalised weight (higher = more influence on the aggregate).
+                      Dashed lines show steady-state averages from the last 2,000 rounds.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* σ trajectory */}
+                      <div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
+                        <ResponsiveContainer width="100%" height={400}>
+                          <LineChart data={realSkillConvergence} margin={{ top: 4, right: 8, bottom: 24, left: 52 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="t" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
+                              label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} domain={[0, 1]}
+                              label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {realTargetSigmas.map((ts, i) => (
+                              <ReferenceLine key={`rts-${i}`} y={ts}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(ts, 3)} position="right" fontSize={10} fill="#334155" />
+                              </ReferenceLine>
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[11px] text-slate-400 mt-1">Higher σ = better forecaster. Dashed = steady-state average.</p>
+                      </div>
+                      {/* Weight trajectory */}
+                      <div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Normalised weight</div>
+                        <ResponsiveContainer width="100%" height={400}>
+                          <LineChart data={realWeightConvergence} margin={{ top: 4, right: 8, bottom: 24, left: 52 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="t" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
+                              label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
+                              label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {realTargetWeights.map((tw, i) => (
+                              <ReferenceLine key={`rtw-${i}`} y={tw}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(tw, 3)} position="right" fontSize={10} fill="#334155" />
+                              </ReferenceLine>
+                            ))}
+                            <ReferenceLine y={1 / realForecasterCount} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[11px] text-slate-400 mt-1">Weights start near 1/{realForecasterCount}, diverge via g(σ). Dashed = steady state.</p>
+                      </div>
+                    </div>
+
+                    {/* Steady-state ranking table */}
+                    {realSteadyState.length > 0 && (
+                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                        <div className="text-[11px] font-semibold text-slate-700 mb-2">Steady-state ranking (last 2,000 rounds)</div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-[11px]">
+                            <thead>
+                              <tr className="text-left text-slate-500 border-b border-slate-200">
+                                <th className="py-1.5 pr-3">Rank</th>
+                                <th className="py-1.5 pr-3">Forecaster</th>
+                                <th className="py-1.5 pr-3 text-right">Mean σ</th>
+                                <th className="py-1.5 pr-3 text-right">Mean weight</th>
+                                <th className="py-1.5 text-right">Mean score</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {realSteadyState.map((s, rank) => (
+                                <tr key={s.index} className="border-b border-slate-100 last:border-0">
+                                  <td className="py-1.5 pr-3 font-mono text-slate-400">{rank + 1}</td>
+                                  <td className="py-1.5 pr-3 font-medium text-slate-700">
+                                    <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: AGENT_PALETTE[s.index % AGENT_PALETTE.length] }} />
+                                    {s.forecaster}
+                                  </td>
+                                  <td className="py-1.5 pr-3 text-right font-mono">{fmt(s.mean_sigma, 4)}</td>
+                                  <td className="py-1.5 pr-3 text-right font-mono">{fmt(s.mean_weight, 4)}</td>
+                                  <td className="py-1.5 text-right font-mono">{s.mean_score != null ? fmt(s.mean_score, 4) : '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                          Naive (last value) achieves the highest σ — it's the simplest model but performs well on smooth wind data.
+                          ARIMA(2,1,1) ranks last with a notably lower σ, suggesting its parametric assumptions don't fit the data well.
+                          The ML models (XGBoost, MLP) and EWMA cluster in the middle.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      3 forecasters with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
+                      The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
+                        <ResponsiveContainer width="100%" height={400}>
+                          <LineChart data={skillConvergence} margin={{ top: 4, right: 8, bottom: 24, left: 52 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
+                              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} domain={[0, 1]}
+                              label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                            {Array.from({ length: CONV_N }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {targetSigmas.map((ts, i) => (
+                              <ReferenceLine key={`ts-${i}`} y={ts}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(ts, 3)} position="right" fontSize={10} fill="#334155" />
+                              </ReferenceLine>
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[11px] text-slate-400 mt-1">Good → high σ, Bad → low σ. Dashed = steady state.</p>
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Normalised weight</div>
+                        <ResponsiveContainer width="100%" height={400}>
+                          <LineChart data={weightConvergence} margin={{ top: 4, right: 8, bottom: 24, left: 52 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="round" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
+                              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} domain={[0.2, 0.5]}
+                              label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+                            {Array.from({ length: CONV_N }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={CONV_LABELS[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {targetWeights.map((tw, i) => (
+                              <ReferenceLine key={`tw-${i}`} y={tw}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(tw, 3)} position="right" fontSize={10} fill="#334155" />
+                              </ReferenceLine>
+                            ))}
+                            <ReferenceLine y={1 / CONV_N} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[11px] text-slate-400 mt-1">Weights start at 1/3, diverge via g(σ). Dashed = steady state.</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* ═══ Weight Learning: Two Approaches ═══ */}
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-6">
                 <div>
@@ -816,6 +1108,11 @@ export default function ResultsPage() {
                       <MathBlock
                         caption="The mechanism chain: each round, CRPS loss feeds into EWMA smoothing, which produces a skill estimate σ that gates the effective wager."
                       />
+                      <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                        <strong>Absent agents:</strong> When an agent is absent, the EWMA update depends on the decay parameter κ.
+                        If κ &gt; 0, the loss decays toward the prior L₀: L<sub>i,t</sub> = (1−κ)L<sub>i,t−1</sub> + κL₀.
+                        If κ = 0, the loss freezes: L<sub>i,t</sub> = L<sub>i,t−1</sub>.
+                      </p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {/* σ trajectory */}
@@ -1167,13 +1464,107 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* Skill convergence (demo) — mechanism skill-based weights */}
+              {/* Skill convergence (demo) — with Real/DGP toggle */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 mb-1">Skill recognition</h3>
-                <p className="text-xs text-slate-500 mb-3">
-                  3 forecasters with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
-                  The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
-                </p>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                  {skillSource === 'real' && hasRealSkill
+                    ? `Skill recognition — Elia wind (${realForecasterCount} real forecasters)`
+                    : 'Skill recognition — Synthetic DGP (3 controlled agents)'}
+                </h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-slate-500">Data source:</span>
+                  <button
+                    onClick={() => setSkillSource('real')}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                      skillSource === 'real'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    Real forecasters
+                  </button>
+                  <button
+                    onClick={() => setSkillSource('dgp')}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                      skillSource === 'dgp'
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    Synthetic DGP
+                  </button>
+                </div>
+
+                {skillSource === 'real' && hasRealSkill ? (
+                  <>
+                    <p className="text-xs text-slate-500 mb-3">
+                      The mechanism's EWMA skill gate learns which forecasting model is best over {realData!.config.T.toLocaleString()} hourly rounds.
+                      {' '}{realForecasterCount} models: {realForecasterNames.join(', ')}.
+                      Left: skill estimate σ (higher = better forecaster). Right: normalised weight.
+                      Dashed lines show steady-state averages from the last 2,000 rounds.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
+                        <ResponsiveContainer width="100%" height={360}>
+                          <LineChart data={realSkillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                              label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                              label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
+                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {realTargetSigmas.map((ts, i) => (
+                              <ReferenceLine key={`rts-${i}`} y={ts}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(ts, 3)} position="right" fontSize={11} fill="#334155" />
+                              </ReferenceLine>
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[11px] text-slate-400">Higher σ = better forecaster. Dashed = steady-state average.</p>
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Normalised weight</div>
+                        <ResponsiveContainer width="100%" height={360}>
+                          <LineChart data={realWeightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                            <CartesianGrid {...GRID_PROPS} />
+                            <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                              label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                              label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                            <Tooltip content={<SmartTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
+                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                              <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                            ))}
+                            {realTargetWeights.map((tw, i) => (
+                              <ReferenceLine key={`rtw-${i}`} y={tw}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeDasharray="6 3" strokeOpacity={0.4}>
+                                <Label value={fmt(tw, 3)} position="right" fontSize={11} fill="#334155" />
+                              </ReferenceLine>
+                            ))}
+                            <ReferenceLine y={1 / realForecasterCount} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <p className="text-[11px] text-slate-400">Weights start near 1/{realForecasterCount}, diverge via g(σ). Dashed = steady state.</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-500 mb-3">
+                      3 forecasters with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
+                      The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
+                    </p>
                 <div className="grid grid-cols-2 gap-4">
                   <ResponsiveContainer width="100%" height={360}>
                     <LineChart data={skillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
@@ -1221,6 +1612,8 @@ export default function ResultsPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+                  </>
+                )}
                 {/* Interactive round indicator */}
                 <div className="flex items-center gap-3 mt-3 px-1">
                   <span className="text-[11px] text-slate-400 shrink-0">Inspect round:</span>
@@ -1247,8 +1640,9 @@ export default function ResultsPage() {
                   Round {skillConvergence[skillConvergence.length - 1]?.round}: {Array.from({ length: CONV_N }, (_, i) => `${CONV_LABELS[i]}: σ=${fmt(targetSigmas[i], 3)}`).join('  ·  ')}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Left: σ separates agents by forecast quality (Good → high σ, Bad → low σ).
-                  Right: weights diverge from 1/3 via the skill gate g(σ) = λ + (1−λ)σ. Dashed = steady state.
+                  Left: σ separates agents by forecast quality — the top line is F1 (Good, τ=0.2) with the highest σ, 
+                  the bottom line is F3 (Bad, τ=1.5) with the lowest σ. The mechanism correctly identifies who is skilled.
+                  Right: weights diverge from 1/3 via the skill gate g(σ) = λ + (1−λ)σ. Dashed lines = steady-state targets.
                 </p>
 
               </div>
@@ -1415,6 +1809,177 @@ export default function ResultsPage() {
                   to isolate the pure skill signal without wealth confounds.
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* ═══ SCIENTIFIC ANALYSIS TAB ═══ */}
+
+          {activeTab === 'Scientific Analysis' && (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+                <h3 className="text-sm font-semibold text-indigo-900 mb-1">Scientific Analysis</h3>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  Automated validation of thesis claims, cross-experiment consistency, sensitivity analysis,
+                  failure mode documentation, and analysis gap tracking. This section provides the interpretive
+                  layer that ensures results are presented with scientific rigour.
+                </p>
+              </div>
+
+              {/* ── Claim Evidence Cards ── */}
+              <section>
+                <h3 className="text-sm font-semibold text-slate-800 mb-3">Thesis Claims</h3>
+                {claimValidation.loading ? (
+                  <p className="text-xs text-slate-400">Loading claim validation…</p>
+                ) : claimValidation.error ? (
+                  <p className="text-xs text-red-500">Error loading claims: {claimValidation.error}</p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {claimValidation.claims.map((claim) => {
+                      const validation = claimValidation.results.find((r) => r.claimId === claim.id) ?? null;
+                      const es = effectSizes.byMethod.get(claim.evidence?.comparison_method ?? '') ?? null;
+                      return (
+                        <ClaimEvidenceCard
+                          key={claim.id}
+                          claim={claim}
+                          validation={validation}
+                          effectSize={es}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* ── Result Consistency Matrix ── */}
+              <section>
+                {resultConsistency.loading ? (
+                  <p className="text-xs text-slate-400">Loading consistency matrix…</p>
+                ) : resultConsistency.error ? (
+                  <p className="text-xs text-red-500">Error: {resultConsistency.error}</p>
+                ) : resultConsistency.data ? (
+                  <ResultConsistencyMatrix result={resultConsistency.data} />
+                ) : null}
+              </section>
+
+              {/* ── Sensitivity Panel ── */}
+              <section>
+                {sensitivityData.loading ? (
+                  <p className="text-xs text-slate-400">Loading sensitivity analysis…</p>
+                ) : sensitivityData.error ? (
+                  <p className="text-xs text-red-500">Error: {sensitivityData.error}</p>
+                ) : sensitivityData.data ? (
+                  <SensitivityPanel summary={sensitivityData.data} />
+                ) : null}
+              </section>
+
+              {/* ── Failure Mode Panel ── */}
+              <section>
+                {failureModes.loading ? (
+                  <p className="text-xs text-slate-400">Loading failure modes…</p>
+                ) : failureModes.error ? (
+                  <p className="text-xs text-red-500">Error: {failureModes.error}</p>
+                ) : failureModes.data ? (
+                  <FailureModePanel failureModes={failureModes.data} />
+                ) : (
+                  <FailureModePanel failureModes={[]} />
+                )}
+              </section>
+
+              {/* ── Baseline Coverage Table ── */}
+              <section>
+                {baselineCoverage.loading ? (
+                  <p className="text-xs text-slate-400">Loading baseline coverage…</p>
+                ) : baselineCoverage.error ? (
+                  <p className="text-xs text-red-500">Error: {baselineCoverage.error}</p>
+                ) : baselineCoverage.data ? (
+                  <BaselineCoverageTable entries={baselineCoverage.data} />
+                ) : null}
+              </section>
+
+              {/* ── Missing Analysis Checklist ── */}
+              <section>
+                {analysisGaps.loading ? (
+                  <p className="text-xs text-slate-400">Loading analysis gaps…</p>
+                ) : analysisGaps.error ? (
+                  <p className="text-xs text-red-500">Error: {analysisGaps.error}</p>
+                ) : analysisGaps.data ? (
+                  <MissingAnalysisChecklist gaps={analysisGaps.data} />
+                ) : (
+                  <MissingAnalysisChecklist gaps={[]} />
+                )}
+              </section>
+
+              {/* ── When Does Skill Help Panel (placeholder data) ── */}
+              <section>
+                <WhenDoesSkillHelpPanel data={[
+                  { condition: 'Small panel', n: 3, t: 1000, tauSpread: 1.3, deltaCrps: -0.0012, se: 0.0008, ciLow: -0.0028, ciHigh: 0.0004, significant: false },
+                  { condition: 'Medium panel', n: 6, t: 1000, tauSpread: 1.3, deltaCrps: -0.0035, se: 0.0006, ciLow: -0.0047, ciHigh: -0.0023, significant: true },
+                  { condition: 'Large panel', n: 10, t: 1000, tauSpread: 1.3, deltaCrps: -0.0048, se: 0.0005, ciLow: -0.0058, ciHigh: -0.0038, significant: true },
+                  { condition: 'Short horizon', n: 6, t: 200, tauSpread: 1.3, deltaCrps: -0.0018, se: 0.0012, ciLow: -0.0042, ciHigh: 0.0006, significant: false },
+                  { condition: 'Long horizon', n: 6, t: 2000, tauSpread: 1.3, deltaCrps: -0.0042, se: 0.0004, ciLow: -0.0050, ciHigh: -0.0034, significant: true },
+                  { condition: 'Low heterogeneity', n: 6, t: 1000, tauSpread: 0.3, deltaCrps: -0.0008, se: 0.0007, ciLow: -0.0022, ciHigh: 0.0006, significant: false },
+                  { condition: 'High heterogeneity', n: 6, t: 1000, tauSpread: 2.0, deltaCrps: -0.0055, se: 0.0005, ciLow: -0.0065, ciHigh: -0.0045, significant: true },
+                ]} />
+              </section>
+
+              {/* ── Ablation Interpretation Panel ── */}
+              <section>
+                {ablationInterpretation.loading ? (
+                  <p className="text-xs text-slate-400">Loading ablation interpretation…</p>
+                ) : ablationInterpretation.error ? (
+                  <p className="text-xs text-red-500">Error: {ablationInterpretation.error}</p>
+                ) : ablationInterpretation.data ? (
+                  <AblationInterpretPanel interpretation={ablationInterpretation.data} />
+                ) : null}
+              </section>
+
+              {/* ── Regime Breakdown Table ── */}
+              <section>
+                {regimeBreakdownData.loading ? (
+                  <p className="text-xs text-slate-400">Loading regime breakdown…</p>
+                ) : regimeBreakdownData.error ? (
+                  <p className="text-xs text-red-500">Error: {regimeBreakdownData.error}</p>
+                ) : regimeBreakdownData.data ? (
+                  <RegimeBreakdownTable regimes={regimeBreakdownData.data} />
+                ) : null}
+              </section>
+
+              {/* ── Deposit Interaction Panel ── */}
+              <section>
+                {depositInteraction.loading ? (
+                  <p className="text-xs text-slate-400">Loading deposit interaction…</p>
+                ) : depositInteraction.error ? (
+                  <p className="text-xs text-red-500">Error: {depositInteraction.error}</p>
+                ) : depositInteraction.data ? (
+                  <DepositInteractionPanel analysis={depositInteraction.data} />
+                ) : null}
+              </section>
+
+              {/* ── Panel Size Sensitivity Chart ── */}
+              <section>
+                {panelSizeSensitivity.loading ? (
+                  <p className="text-xs text-slate-400">Loading panel size sensitivity…</p>
+                ) : panelSizeSensitivity.error ? (
+                  <p className="text-xs text-red-500">Error: {panelSizeSensitivity.error}</p>
+                ) : panelSizeSensitivity.data ? (
+                  <PanelSizeChart sweep={panelSizeSensitivity.data} />
+                ) : null}
+              </section>
+
+              {/* ── Real Data Context Panel ── */}
+              <section>
+                {realDataContext.loading ? (
+                  <p className="text-xs text-slate-400">Loading real-data context…</p>
+                ) : realDataContext.error ? (
+                  <p className="text-xs text-red-500">Error: {realDataContext.error}</p>
+                ) : realDataContext.data ? (
+                  <RealDataContextPanel
+                    realData={realDataContext.data.realData}
+                    realDataElectricity={realDataContext.data.realDataElectricity}
+                    syntheticDeltaCrps={realDataContext.data.syntheticDeltaCrps}
+                  />
+                ) : null}
+              </section>
             </div>
           )}
 

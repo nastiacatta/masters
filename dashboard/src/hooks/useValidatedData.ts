@@ -7,7 +7,7 @@
  *
  * Uses `useMemo` so validation only re-runs when `data` or `rules` change.
  *
- * Requirements: 27.1–27.7
+ * Requirements: 27.1–27.7, 8.3, 8.7
  */
 
 import { useMemo } from 'react';
@@ -20,6 +20,9 @@ import {
   validateSignConsistency,
   validateBudgetBalance,
 } from '../lib/validation';
+
+import type { ValidationSchema } from '../lib/analysis/types';
+import { validate as guardValidate } from '../lib/analysis/dataIntegrityGuard';
 
 /** Result returned by `useValidatedData`. */
 export interface ValidatedResult<T> {
@@ -128,4 +131,51 @@ export function useValidatedData<T extends Record<string, unknown>>(
       hasWarnings: warnings.length > 0,
     };
   }, [data, rules, chartTitle]);
+}
+
+
+// ── Schema-based validation via DataIntegrityGuard ──────────────────
+
+/** Result returned by `useSchemaValidatedData`. */
+export interface SchemaValidatedResult<T extends Record<string, unknown>> {
+  /** Sanitised data with out-of-range values replaced by null. */
+  sanitisedData: T[] | null;
+  /** Warnings from the data integrity guard. */
+  warnings: string[];
+  /** Fields where > 10% of rows contain NaN. */
+  degradedFields: string[];
+  /** True while data or schema is not yet available. */
+  loading: boolean;
+}
+
+/**
+ * Validate data against a `ValidationSchema` from `dataIntegrityGuard.ts`.
+ *
+ * When both `data` and `schema` are provided, calls `validate()` and
+ * returns sanitised data, warnings, and degraded fields.
+ * When `schema` is null, passes data through unchanged.
+ *
+ * Requirements: 8.3, 8.7
+ */
+export function useSchemaValidatedData<T extends Record<string, unknown>>(
+  data: T[] | null,
+  schema: ValidationSchema | null,
+): SchemaValidatedResult<T> {
+  return useMemo(() => {
+    if (data === null) {
+      return { sanitisedData: null, warnings: [], degradedFields: [], loading: true };
+    }
+
+    if (schema === null) {
+      return { sanitisedData: data, warnings: [], degradedFields: [], loading: false };
+    }
+
+    const result = guardValidate(data, schema);
+    return {
+      sanitisedData: result.sanitisedData,
+      warnings: result.warnings,
+      degradedFields: result.degradedFields,
+      loading: false,
+    };
+  }, [data, schema]);
 }

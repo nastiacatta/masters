@@ -98,6 +98,9 @@ export default function CoreStep() {
             Losses from the scoring rule update skill weights for the next round. Learning rate, forgetting, and exploration (if present) control how fast σ adapts.
           </p>
           <MathBlock accent label="EWMA loss" latex="L_{i,t} = (1-\\rho) L_{i,t-1} + \\rho \\cdot \\ell_{i,t}" />
+          <p className="text-xs text-slate-500 mt-1">
+            <strong>Absent agents:</strong> If κ &gt; 0, loss decays toward L₀: L = (1−κ)L + κL₀. If κ = 0, loss freezes (L unchanged).
+          </p>
           <MathBlock label="Loss to skill" latex="\\sigma_{i,t+1} = \\sigma_{\\min} + (1 - \\sigma_{\\min}) e^{-\\gamma L_{i,t}}" />
           <p className="text-xs text-slate-500">
             <strong>State propagated to t+1:</strong> <MathBlock inline latex="L_{i,t}" />, <MathBlock inline latex="\\sigma_{i,t+1}" />, wealth <MathBlock inline latex="W_{i,t+1}" />. Missing agents may use freeze or decay toward L_0.

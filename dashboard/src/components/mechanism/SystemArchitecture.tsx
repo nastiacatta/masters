@@ -329,7 +329,7 @@ export default function SystemArchitecture() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
-  const adjacency = useMemo(buildAdjacency, []);
+  const adjacency = useMemo(() => buildAdjacency(), []);
 
   const allNodes = useMemo(() => {
     const map = new Map<string, ArchNode>();

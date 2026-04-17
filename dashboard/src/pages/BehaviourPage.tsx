@@ -24,8 +24,6 @@ import ComparisonTable from '@/components/behaviour/ComparisonTable';
 import FamilyImpactChart from '@/components/behaviour/FamilyImpactChart';
 import TornadoChart from '@/components/charts/TornadoChart';
 import type { TornadoDatum } from '@/components/charts/TornadoChart';
-// @ts-ignore — TabBar will be wired in task 14
-import TabBar from '@/components/dashboard/TabBar';
 import MechanismResponseCard from '@/components/behaviour/MechanismResponseCard';
 import { TAXONOMY_ITEMS } from '@/lib/behaviour/taxonomyData';
 import { PRESET_CONFIGS } from '@/lib/behaviour/presetMeta';
@@ -38,6 +36,31 @@ const SEED = 42;
 const N = 6;
 const T = 300;
 
+/**
+ * Build cumulative-average series from two (or more) round-error arrays.
+ * Returns an array of objects with `round` and one key per series name.
+ * Extracted to module scope so `useMemo` closures don't mutate `let` variables.
+ */
+function cumulativeAverage(
+  series: Record<string, { error: number }[]>,
+  maxSamples = 300,
+): Record<string, number>[] {
+  const keys = Object.keys(series);
+  const len = Math.min(...keys.map(k => series[k].length));
+  const sums: Record<string, number> = {};
+  for (const k of keys) sums[k] = 0;
+
+  const raw = Array.from({ length: len }, (_, i) => {
+    const pt: Record<string, number> = { round: i + 1 };
+    for (const k of keys) {
+      sums[k] += series[k][i].error;
+      pt[k] = sums[k] / (i + 1);
+    }
+    return pt;
+  });
+  return downsample(raw, maxSamples);
+}
+
 // ── 11-tab structure ───────────────────────────────────────────────────────
 
 const TABS = [
@@ -48,7 +71,7 @@ type Tab = (typeof TABS)[number];
 
 /** Core tabs with experiment-backed content. */
 const CORE_TABS: Tab[] = ['Overview', 'Participation', 'Information', 'Reporting', 'Adversarial', 'Sensitivity'];
-/** Extended tabs — taxonomy placeholders without full experiment data. */
+/** Extended tabs — in-browser simulations. */
 const EXTENDED_TABS: Tab[] = ['Staking', 'Objectives', 'Identity', 'Learning', 'Operational'];
 
 /** Tabs that have experiment-backed content (not just taxonomy placeholders). */
@@ -107,28 +130,28 @@ function compare(test: PipelineResult, base: PipelineResult) {
 }
 
 /** Placeholder banner for tabs without full experiment data. */
-function PlaceholderBanner({ family: _family, description }: { family: string; description: string }) {
+function PlaceholderBanner({ description }: { family: string; description: string }) {
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-4">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-4">
       <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-amber-400" />
-        <span className="text-sm font-semibold text-amber-800">
-          Taxonomy placeholder — no experiment data
+        <span className="w-2 h-2 rounded-full bg-slate-400" />
+        <span className="text-sm font-semibold text-slate-700">
+          In-browser simulation
         </span>
       </div>
-      <p className="text-xs text-amber-700 mt-2">
-        {description}
+      <p className="text-xs text-slate-500 mt-2">
+        {description} Results are from a lightweight in-browser simulation (seed={SEED}, N={N}, T={T}).
       </p>
     </div>
   );
 }
 
 const PLACEHOLDER_DESCRIPTIONS: Record<string, string> = {
-  Staking: 'This tab would show full experiment results for deposit policy strategies (budget constraints, house-money effect, Kelly sizing) with paired comparison against the baseline. Currently shows in-browser demo simulations.',
-  Objectives: 'This tab would show experiments testing diverse agent objectives (CRRA utility, loss aversion, signalling motives, leaderboard optimisation) and their impact on aggregate accuracy.',
-  Identity: 'This tab would show experiments testing identity attacks (sybil splitting, collusion, reputation reset) with detailed mechanism response analysis.',
-  Learning: 'This tab would show experiments testing adaptive learning strategies (reinforcement learning, bandit algorithms, gradient-based adaptation) and how the mechanism responds to evolving behaviour.',
-  Operational: 'This tab would show experiments testing real-world operational frictions (latency exploitation, submission errors, automation failures) and their impact on mechanism performance.',
+  Staking: 'Deposit policy strategies (budget constraints, house-money effect, Kelly sizing) affect how much agents commit each round. The deposit amount directly controls the effective wager and thus the agent\'s influence on the aggregate forecast.',
+  Objectives: 'Agents with diverse objectives (risk aversion, loss aversion, signalling motives) may deviate from truthful reporting. Understanding these deviations helps assess mechanism robustness under realistic preferences.',
+  Identity: 'Identity attacks (sybil splitting, collusion, reputation reset) test whether agents can gain unfair advantage by manipulating their identity. The mechanism\'s sybil-proofness property should prevent splitting gains.',
+  Learning: 'Adaptive learning strategies test how agents who adjust their behaviour based on past outcomes interact with the mechanism\'s own learning (EWMA skill updates).',
+  Operational: 'Real-world operational frictions (latency exploitation, submission errors, automation failures) test mechanism robustness under imperfect conditions that arise in practice.',
 };
 
 
@@ -237,6 +260,7 @@ export default function BehaviourPage() {
         <header>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Robustness</h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+            Testing mechanism resilience under diverse agent behaviours, strategic attacks, and parameter sensitivity.
             18 behaviour presets tested against the truthful baseline using paired comparison.
           </p>
         </header>
@@ -593,20 +617,17 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
     round: r.round, active: r.participation, rate: r.participation / N,
   })), 300), [bursty.rounds]);
 
-  const cumData = useMemo(() => {
-    let sB = 0, sBu = 0;
-    return downsample(Array.from({ length: Math.min(baseline.rounds.length, bursty.rounds.length) }, (_, i) => {
-      sB += baseline.rounds[i].error; sBu += bursty.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), bursty: sBu / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, bursty.rounds]);
+  const cumData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    bursty: bursty.rounds,
+  }), [baseline.rounds, bursty.rounds]);
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
         What happens when agents go offline? The EWMA freezes during absences — no drift, no corruption.
       </p>
-      <MathBlock accent label="EWMA skill update" latex="L_{i,t} = \\begin{cases} (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t} & \\text{if present} \\\\ L_{i,t-1} & \\text{if absent} \\end{cases}" />
+      <MathBlock accent label="EWMA skill update" latex="L_{i,t} = \\begin{cases} (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t} & \\text{if present} \\\\ (1-\\kappa)L_{i,t-1} + \\kappa L_0 & \\text{if absent, } \\kappa > 0 \\\\ L_{i,t-1} & \\text{if absent, } \\kappa = 0 \\end{cases}" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricDisplay label="Degrades gracefully?" value={degradesGracefully ? 'Yes' : 'No'}
@@ -751,16 +772,11 @@ function InformationTab({ biased, miscalibrated, baseline }: {
   }, [biased.traces]);
 
   // Cumulative error: 3 lines
-  const cumData = useMemo(() => {
-    let sBase = 0, sBias = 0, sMisc = 0;
-    const len = Math.min(baseline.rounds.length, biased.rounds.length, miscalibrated.rounds.length);
-    return downsample(Array.from({ length: len }, (_, i) => {
-      sBase += baseline.rounds[i].error;
-      sBias += biased.rounds[i].error;
-      sMisc += miscalibrated.rounds[i].error;
-      return { round: i + 1, baseline: sBase / (i + 1), biased: sBias / (i + 1), miscalibrated: sMisc / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, biased.rounds, miscalibrated.rounds]);
+  const cumData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    biased: biased.rounds,
+    miscalibrated: miscalibrated.rounds,
+  }), [baseline.rounds, biased.rounds, miscalibrated.rounds]);
 
   // σ trajectory for agent 0 across all three presets
   const sigData = useMemo(() => {
@@ -846,15 +862,25 @@ function InformationTab({ biased, miscalibrated, baseline }: {
         </div>
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-2">
         <div className="font-semibold text-amber-800">Taxonomy note — Correlated errors &amp; costly information</div>
         <p>
-          The full taxonomy also includes <em>correlated errors</em> (agents sharing the same flawed
-          data source, reducing effective N_eff) and <em>costly information</em> (agents who must pay
-          to acquire signals, creating a participation–quality trade-off). These are not simulated here
-          but are structurally important: correlated errors reduce diversity gains from aggregation,
-          while costly information creates an adverse selection problem where only well-funded agents
-          invest in signal quality.
+          <strong>Correlated errors:</strong> When multiple agents share the same flawed data source (e.g. all using
+          the same weather model), their errors are correlated. This reduces the effective diversity of the panel —
+          even with N=10 agents, if they all share the same bias, the effective N<sub>eff</sub> may be much lower.
+          The aggregation gains from combining forecasts depend on error <em>independence</em>; correlated errors
+          erode this benefit and can make the aggregate no better than a single forecaster.
+        </p>
+        <p>
+          <strong>Costly information:</strong> When agents must pay to acquire better signals (e.g. buying proprietary
+          data), only well-funded agents invest in quality. This creates adverse selection: the agents with the best
+          information are also the wealthiest, potentially concentrating influence. In the mechanism, this interacts
+          with the deposit layer — wealthy agents can afford both better signals <em>and</em> larger deposits,
+          compounding their advantage.
+        </p>
+        <p>
+          Neither pattern is simulated here, but both are structurally important for real-world deployments where
+          forecasters often share common data sources and face different information acquisition costs.
         </p>
       </div>
     </div>
@@ -1078,13 +1104,10 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
   const cumZoomSandbag = useChartZoom();
 
   // ── Hedging data (existing) ──────────────────────────────────────────
-  const cumHedgeData = useMemo(() => {
-    let sB = 0, sH = 0;
-    return downsample(Array.from({ length: Math.min(baseline.rounds.length, riskAverse.rounds.length) }, (_, i) => {
-      sB += baseline.rounds[i].error; sH += riskAverse.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), hedged: sH / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, riskAverse.rounds]);
+  const cumHedgeData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    hedged: riskAverse.rounds,
+  }), [baseline.rounds, riskAverse.rounds]);
 
   const sigmaHedgeData = useMemo(() => downsample(
     Array.from({ length: Math.min(baseline.traces.length, riskAverse.traces.length) }, (_, i) => ({
@@ -1095,13 +1118,10 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
   [baseline.traces, riskAverse.traces]);
 
   // ── Noisy reporting data ─────────────────────────────────────────────
-  const cumNoisyData = useMemo(() => {
-    let sB = 0, sN = 0;
-    return downsample(Array.from({ length: Math.min(baseline.rounds.length, noisyReporter.rounds.length) }, (_, i) => {
-      sB += baseline.rounds[i].error; sN += noisyReporter.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), noisy: sN / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, noisyReporter.rounds]);
+  const cumNoisyData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    noisy: noisyReporter.rounds,
+  }), [baseline.rounds, noisyReporter.rounds]);
 
   // ── Reputation gamer σ trajectory ────────────────────────────────────
   const sigRepGamerData = useMemo(() => {
@@ -1114,13 +1134,10 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
   }, [baseline.traces, reputationGamer.traces]);
 
   // ── Sandbagging cumulative error ─────────────────────────────────────
-  const cumSandbagData = useMemo(() => {
-    let sB = 0, sS = 0;
-    return downsample(Array.from({ length: Math.min(baseline.rounds.length, sandbagger.rounds.length) }, (_, i) => {
-      sB += baseline.rounds[i].error; sS += sandbagger.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), sandbagger: sS / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, sandbagger.rounds]);
+  const cumSandbagData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    sandbagger: sandbagger.rounds,
+  }), [baseline.rounds, sandbagger.rounds]);
 
   return (
     <div className="space-y-8">
@@ -1128,7 +1145,17 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
       <div className="space-y-6">
         <h3 className="text-sm font-semibold text-slate-800">Risk-averse hedging</h3>
         <p className="text-sm text-slate-600 max-w-2xl">
-          Risk-averse agents hedge reports toward 0.5 and stake less. Rational under concave utility.
+          <strong>What it means:</strong> A risk-averse agent prefers a certain outcome over a gamble with the same expected value.
+          In this mechanism, risk aversion manifests in two ways: (1) the agent <em>shrinks</em> their forecast toward the
+          uninformative prior (0.5), reducing potential losses from extreme predictions, and (2) they <em>reduce</em> their
+          deposit, limiting financial exposure. This is rational under concave utility (e.g. CRRA with γ &gt; 0), where
+          the marginal value of gains is less than the marginal pain of losses.
+        </p>
+        <p className="text-sm text-slate-600 max-w-2xl mt-2">
+          <strong>Mechanism impact:</strong> Hedged reports are less informative — they carry less signal about the true outcome.
+          The skill layer detects this: hedged agents score worse on average, so their σ drops and they receive less weight
+          in the aggregate. The mechanism tolerates hedging without breaking because it measures actual forecast quality,
+          not boldness. This is consistent with Lambert&apos;s individual rationality property.
         </p>
         <MathBlock accent label="Hedged report" latex="\\hat{r}_i = 0.7 \\cdot r_i^{\\text{true}} + 0.3 \\cdot 0.5, \\quad f_{\\text{risk}} \\leftarrow 0.55 \\cdot f_{\\text{risk}}" />
 
@@ -1326,14 +1353,10 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
   const ruinCount = budgetConstrained.finalState.filter(a => a.wealth < 0.1).length;
 
   // Cumulative error: budget-constrained vs baseline
-  const cumData = useMemo(() => {
-    let sB = 0, sBc = 0;
-    const len = Math.min(baseline.rounds.length, budgetConstrained.rounds.length);
-    return downsample(Array.from({ length: len }, (_, i) => {
-      sB += baseline.rounds[i].error; sBc += budgetConstrained.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), constrained: sBc / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, budgetConstrained.rounds]);
+  const cumData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    constrained: budgetConstrained.rounds,
+  }), [baseline.rounds, budgetConstrained.rounds]);
 
   // Deposit-as-fraction comparison: kelly vs baseline (agent 0)
   const depositCompare = useMemo(() => {
@@ -1452,14 +1475,10 @@ function ObjectivesTab({ riskAverse, baseline }: {
   const cumZoom = useChartZoom();
   const raDelta = compare(riskAverse, baseline);
 
-  const cumData = useMemo(() => {
-    let sB = 0, sR = 0;
-    const len = Math.min(baseline.rounds.length, riskAverse.rounds.length);
-    return downsample(Array.from({ length: len }, (_, i) => {
-      sB += baseline.rounds[i].error; sR += riskAverse.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), risk_averse: sR / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, riskAverse.rounds]);
+  const cumData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    risk_averse: riskAverse.rounds,
+  }), [baseline.rounds, riskAverse.rounds]);
 
   return (
     <div className="space-y-6">
@@ -1637,32 +1656,70 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
 function LearningTab() {
   return (
     <div className="space-y-6">
-      <PlaceholderBanner family="Learning" description={PLACEHOLDER_DESCRIPTIONS.Learning} />
-      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700 space-y-2">
-        <div className="font-semibold text-indigo-800">Note — Learning belongs to the mechanism layer</div>
-        <p>
-          Reinforcement learning, rule learning, and exploration vs exploitation are adaptations
-          of the <em>mechanism</em> (Block A), not user behaviours (Block B). The thesis treats
-          the EWMA skill update as the mechanism&apos;s learning rule — it adapts weights based on
-          observed forecast quality without requiring agents to learn.
-        </p>
-        <p>
-          Agent-side learning (e.g., agents who adjust their strategy based on profits) creates
-          a feedback loop between the mechanism and behaviour layers. This is structurally different
-          from the other behaviour families because it requires modelling the agent&apos;s internal
-          optimisation process, not just their observable actions.
-        </p>
-        <p>
-          For this reason, learning and meta-strategy are excluded from the behaviour comparison
-          table and treated as a separate research direction.
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-indigo-900">Why learning is treated separately</h3>
+        <p className="text-sm text-indigo-800 leading-relaxed">
+          Learning creates a unique challenge because <em>both</em> the mechanism and the agents can adapt over time.
+          This tab distinguishes two fundamentally different types of learning in the system.
         </p>
       </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-teal-500" />
+            <h4 className="text-sm font-semibold text-slate-800">Mechanism-side learning</h4>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            The EWMA skill update <em>is</em> the mechanism&apos;s learning rule. Each round, it observes forecast
+            quality via CRPS scoring and updates the loss estimate L<sub>i,t</sub>, which maps to a skill weight
+            σ<sub>i</sub>. This is fully specified — no agent cooperation required. The learning rate ρ controls
+            how quickly the mechanism adapts: higher ρ means faster response to recent performance but more noise.
+          </p>
+          <MathBlock accent label="Mechanism learning" latex="L_{i,t} = (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t}" />
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-violet-500" />
+            <h4 className="text-sm font-semibold text-slate-800">Agent-side learning</h4>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Agents who adjust their strategy based on past profits create a feedback loop: the mechanism
+            updates σ based on agent behaviour, and agents update behaviour based on σ and payoffs. This
+            is structurally different from other behaviour families because it requires modelling the
+            agent&apos;s internal optimisation process, not just their observable actions.
+          </p>
+          <div className="rounded-lg bg-violet-50 border border-violet-100 p-3 text-xs text-violet-700">
+            Examples: reinforcement learning (adjust reports based on reward signal), rule learning
+            (discover the scoring rule and optimise against it), exploration vs exploitation (balance
+            trying new strategies vs exploiting known ones).
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2">
+        <h4 className="text-sm font-semibold text-slate-800">The key question</h4>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Does the mechanism remain robust when agents learn to game it? If an agent discovers that
+          hedging toward 0.5 reduces variance, the EWMA detects the resulting accuracy drop and
+          lowers σ. But if an agent learns to <em>improve</em> their forecasts (genuine learning),
+          the mechanism rewards this with higher σ. The design is incentive-compatible with genuine
+          improvement but penalises strategic manipulation — the same property that makes it robust
+          to the adversarial attacks tested in other tabs.
+        </p>
+        <p className="text-xs text-slate-500 leading-relaxed mt-1">
+          Full agent-side learning simulations (RL agents, bandit algorithms, gradient-based adaptation)
+          are a separate research direction and not included in the current behaviour comparison table.
+        </p>
+      </div>
+
       {/* taxonomy notes for the 3 items */}
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy items</div>
-        <p>• <strong>Reinforcement from profits</strong> — Mechanism extension (EWMA already does this)</p>
-        <p>• <strong>Rule learning</strong> — Agents discover scoring rule and optimise against it</p>
-        <p>• <strong>Exploration vs exploitation</strong> — Agents balance trying new strategies vs exploiting known ones</p>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-1">
+        <div className="font-semibold text-slate-700">Taxonomy items in this family</div>
+        <p>• <strong>Reinforcement from profits</strong> — Agents adjust strategy based on payoff history. The mechanism&apos;s EWMA already performs this function on the mechanism side.</p>
+        <p>• <strong>Rule learning</strong> — Agents discover the scoring rule structure and optimise against it. Proper scoring rules are designed to make truthful reporting optimal even when the rule is known.</p>
+        <p>• <strong>Exploration vs exploitation</strong> — Agents balance trying new strategies vs exploiting known ones. This creates non-stationary behaviour that the EWMA must track.</p>
       </div>
     </div>
   );
@@ -1679,18 +1736,25 @@ function OperationalTab({ latencyExploiter, baseline }: {
   const cumZoom = useChartZoom();
   const latDelta = compare(latencyExploiter, baseline);
 
-  const cumData = useMemo(() => {
-    let sB = 0, sL = 0;
-    const len = Math.min(baseline.rounds.length, latencyExploiter.rounds.length);
-    return downsample(Array.from({ length: len }, (_, i) => {
-      sB += baseline.rounds[i].error; sL += latencyExploiter.rounds[i].error;
-      return { round: i + 1, baseline: sB / (i + 1), latency: sL / (i + 1) };
-    }), 300);
-  }, [baseline.rounds, latencyExploiter.rounds]);
+  const cumData = useMemo(() => cumulativeAverage({
+    baseline: baseline.rounds,
+    latency: latencyExploiter.rounds,
+  }), [baseline.rounds, latencyExploiter.rounds]);
 
   return (
     <div className="space-y-6">
-      <PlaceholderBanner family="Operational" description={PLACEHOLDER_DESCRIPTIONS.Operational} />
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-slate-400" />
+          <span className="text-sm font-semibold text-slate-700">
+            In-browser simulation — latency exploitation
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 mt-2">
+          Additional operational frictions (interface errors, automation patterns)
+          are documented in the taxonomy but not yet simulated.
+        </p>
+      </div>
       <p className="text-sm text-slate-600 max-w-2xl">
         Latency exploiters submit reports with partial outcome information &mdash; they observe
         a noisy signal of the realisation before the submission deadline. This creates an unfair

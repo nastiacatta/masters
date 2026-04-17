@@ -136,29 +136,41 @@ class NaiveForecaster(BaseForecaster):
 
 
 class MovingAverageForecaster(BaseForecaster):
-    """Forecast = mean of last `ma_window` values."""
+    """Forecast = exponentially weighted moving average (EWMA) of recent values.
 
-    def __init__(self, ma_window: int = 20, residual_window: int = 200):
-        # MA retrains every step with a moderate smoothing window;
-        # residual_window=200 (default) balances recency and stability.
+    Uses a short effective window via exponential weighting, which adapts
+    faster than a simple moving average and produces tighter residuals
+    for autocorrelated series like wind power.
+    """
+
+    def __init__(self, span: int = 5, residual_window: int = 100):
         super().__init__(
-            f"Moving Average ({ma_window})",
+            f"EWMA ({span})",
             retrain_every=1,
             window=200,
             residual_window=residual_window,
         )
-        self.ma_window = ma_window
+        self.span = span
+        self._alpha = 2.0 / (span + 1)
+        self._ewma = 0.5
         self._history: np.ndarray = np.array([])
 
     def fit(self, history: np.ndarray) -> None:
         self._history = history
+        if len(history) == 0:
+            self._ewma = 0.5
+        elif len(history) <= self.span:
+            self._ewma = float(np.mean(history))
+        else:
+            # Compute EWMA over the tail
+            val = float(history[-self.span])
+            for v in history[-self.span + 1:]:
+                val = self._alpha * float(v) + (1 - self._alpha) * val
+            self._ewma = val
         self._fitted = True
 
     def predict(self) -> float:
-        if len(self._history) == 0:
-            return 0.5
-        tail = self._history[-self.ma_window:]
-        return float(np.mean(tail))
+        return self._ewma
 
 
 class ARIMAForecaster(BaseForecaster):
@@ -193,35 +205,6 @@ class ARIMAForecaster(BaseForecaster):
         except Exception:
             self._last_pred = float(history[-1])
         self._fitted = True
-
-    def _generate_quantiles(self, taus: np.ndarray) -> np.ndarray:
-        """Use statsmodels get_forecast().summary_frame() for native intervals.
-
-        For each tau, compute alpha = 2 * min(tau, 1 - tau).
-        - tau < 0.5  → use mean_ci_lower
-        - tau > 0.5  → use mean_ci_upper
-        - tau == 0.5 → use point forecast
-
-        Falls back to residual bootstrap on any failure.
-        """
-        if self._model is not None:
-            try:
-                fcast = self._model.get_forecast(steps=1)
-                quantiles = np.empty(len(taus))
-                for i, tau in enumerate(taus):
-                    if abs(tau - 0.5) < 1e-9:
-                        quantiles[i] = self._last_pred
-                    else:
-                        alpha = 2.0 * min(tau, 1.0 - tau)
-                        sf = fcast.summary_frame(alpha=alpha)
-                        if tau < 0.5:
-                            quantiles[i] = float(sf['mean_ci_lower'].iloc[0])
-                        else:
-                            quantiles[i] = float(sf['mean_ci_upper'].iloc[0])
-                return quantiles
-            except Exception:
-                pass
-        return super()._generate_quantiles(taus)
 
     def predict(self) -> float:
         return self._last_pred
@@ -428,7 +411,7 @@ def get_all_forecasters() -> list[BaseForecaster]:
     """
     return [
         NaiveForecaster(residual_window=100),           # fast-adapting, short buffer
-        MovingAverageForecaster(ma_window=20, residual_window=200),  # default, moderate
+        MovingAverageForecaster(span=5, residual_window=100),  # EWMA(5), fast-adapting
         ARIMAForecaster(order=(2, 1, 1), residual_window=300),       # matches training window
         XGBoostForecaster(n_lags=10, residual_window=300),           # matches training window
         MLPForecaster(n_lags=10, hidden=16, residual_window=300),    # matches training window

@@ -499,8 +499,9 @@ describe('15.18 HomePage cleanup — pure logic', () => {
   ] as const;
 
   describe('FINDINGS array contains no emoji characters', () => {
-    // Regex matching common emoji ranges
-    const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}]|🔴|🟠|🟡|⚪|🟢|✓|⚖|🔒|↔|💡|⚠/u;
+    // Regex matching common emoji ranges — uses alternation for combining/joiner code points
+    // to avoid no-misleading-character-class lint errors.
+    const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{1F534}\u{1F7E0}\u{1F7E1}\u{26AA}\u{1F7E2}\u{2713}\u{2696}\u{1F512}\u{2194}\u{1F4A1}\u{26A0}]|\u{200D}|\u{20E3}|[\u{FE00}-\u{FE0F}]/u;
 
     it('no emoji in FINDINGS titles', () => {
       for (const f of FINDINGS) {

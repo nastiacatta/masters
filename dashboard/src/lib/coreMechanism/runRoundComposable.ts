@@ -113,9 +113,9 @@ function scoreCrps(y: number, qReport: number[]): number {
   return clamp(1 - crpsHat(y, qReport) / 2);
 }
 
-/** Loss for EWMA skill update — use CRPS-hat directly. */
+/** Loss for EWMA skill update — normalised CRPS-hat/2 to [0, 1], matching Python normalised_loss. */
 function crpsLoss(y: number, qReport: number[]): number {
-  return crpsHat(y, qReport);
+  return crpsHat(y, qReport) / 2;
 }
 
 function lossToSkill(L: number, sigmaMin: number, gamma: number): number {
