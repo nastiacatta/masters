@@ -790,6 +790,23 @@ export default function ResultsPage() {
                 provenance={{ type: 'real', label: 'Real data — Elia wind' }}
               />
 
+              {/* DM test significance badge */}
+              {realData?.dm_test && (
+                <div className="flex items-center gap-3 mt-2">
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                    realData.dm_test.significant_at_001 ? 'bg-green-100 text-green-700' :
+                    realData.dm_test.significant_at_005 ? 'bg-amber-100 text-amber-700' :
+                    'bg-slate-100 text-slate-500'
+                  }`}>
+                    DM test: p {realData.dm_test.significant_at_001 ? '< 0.001 ***' :
+                      realData.dm_test.significant_at_005 ? '< 0.05 *' : `= ${realData.dm_test.p_value.toFixed(4)}`}
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Mechanism vs uniform (Diebold-Mariano, HAC-corrected)
+                  </span>
+                </div>
+              )}
+
               <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-sm font-semibold text-slate-800">CRPS over time</h3>
@@ -1194,6 +1211,55 @@ export default function ResultsPage() {
                   </p>
                 </div>
               </div>
+
+              {/* ═══ Per-forecaster CRPS over time ═══ */}
+              {realData?.per_agent_crps && realData.per_agent_crps.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-800">Per-forecaster CRPS over time</h3>
+                  <p className="text-xs text-slate-500">
+                    Individual CRPS for each forecaster at each round. Lower is better.
+                    Shows which forecaster is best at different times.
+                  </p>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={realData.per_agent_crps} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      {(realData.forecaster_names ?? []).map((name, i) => (
+                        <Line key={i} type="monotone" dataKey={`crps_${i}`} name={name}
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* ═══ Rolling improvement over time ═══ */}
+              {realData?.rolling_improvement && realData.rolling_improvement.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-800">Rolling improvement over time</h3>
+                  <p className="text-xs text-slate-500">
+                    Mechanism vs uniform CRPS improvement in sliding 1000-hour windows.
+                    Negative = mechanism is better. Shows stability across time.
+                  </p>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={realData.rolling_improvement} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
+                      <CartesianGrid {...GRID_PROPS} />
+                      <XAxis dataKey="t_start" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Window start (hour)', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                      <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                        label={{ value: 'Δ CRPS %', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip content={<SmartTooltip />} />
+                      <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
+                      <Line type="monotone" dataKey="pct_improvement" name="Improvement %"
+                        stroke="#6366f1" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           )}
 
