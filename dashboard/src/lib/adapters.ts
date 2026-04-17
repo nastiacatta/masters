@@ -496,6 +496,37 @@ export interface RealDataResult {
   }>;
   // Forecaster names in order
   forecaster_names?: string[];
+
+  // Diebold-Mariano test results
+  dm_test?: {
+    statistic: number;
+    p_value: number;
+    significant_at_001: boolean;
+    significant_at_005: boolean;
+    comparison: string;
+  };
+  dm_test_skill?: {
+    statistic: number;
+    p_value: number;
+    significant_at_001: boolean;
+    significant_at_005: boolean;
+    comparison: string;
+  };
+  // Per-agent CRPS over time (downsampled ~600 points)
+  per_agent_crps?: Array<Record<string, number>>;
+  // Rolling window improvement (mechanism vs uniform, ~200 points)
+  rolling_improvement?: Array<{
+    t_start: number;
+    t_end: number;
+    pct_improvement: number;
+  }>;
+  // Sensitivity analysis
+  sensitivity?: {
+    default_params: Record<string, number>;
+    optimal_params: Record<string, number>;
+    optimal_improvement_pct: number;
+    default_improvement_pct: number;
+  };
 }
 
 export async function loadRealDataComparison(seriesName: string = 'elia_wind'): Promise<RealDataResult | null> {

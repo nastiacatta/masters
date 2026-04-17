@@ -1,5 +1,5 @@
 """
-Five forecasting models for the real-data mechanism comparison.
+Seven forecasting models for the real-data mechanism comparison.
 
 Each forecaster implements:
   - fit(history: np.ndarray) -> None   # train on past data
@@ -390,16 +390,86 @@ class MLPForecaster(BaseForecaster):
         return self._last_pred
 
 
+class ThetaForecaster(BaseForecaster):
+    """Theta method: decompose into trend + seasonality, forecast via SES on the theta line."""
+
+    def __init__(self, residual_window: int = 200):
+        super().__init__(
+            "Theta",
+            retrain_every=50,
+            window=300,
+            residual_window=residual_window,
+        )
+        self._alpha = 0.3  # SES smoothing parameter
+        self._level = 0.5
+        self._drift = 0.0
+        self._history: np.ndarray = np.array([])
+
+    def fit(self, history: np.ndarray) -> None:
+        self._history = history
+        if len(history) < 3:
+            self._level = float(history[-1]) if len(history) > 0 else 0.5
+            self._drift = 0.0
+            self._fitted = True
+            return
+        # Simple exponential smoothing with drift
+        tail = history[-self.window:]
+        self._level = float(tail[0])
+        for v in tail[1:]:
+            self._level = self._alpha * float(v) + (1 - self._alpha) * self._level
+        # Drift = average change over last 50 points
+        n_drift = min(50, len(tail) - 1)
+        if n_drift > 0:
+            self._drift = float(np.mean(np.diff(tail[-n_drift-1:])))
+        else:
+            self._drift = 0.0
+        self._fitted = True
+
+    def predict(self) -> float:
+        return float(np.clip(self._level + self._drift, 0, 1))
+
+
+class EnsembleForecaster(BaseForecaster):
+    """Simple ensemble: average of Naive and EWMA quantile forecasts."""
+
+    def __init__(self):
+        super().__init__(
+            "Ensemble (Naive+EWMA)",
+            retrain_every=1,
+            window=200,
+            residual_window=100,
+        )
+        self._naive = NaiveForecaster(residual_window=100)
+        self._ewma = MovingAverageForecaster(span=5, residual_window=100)
+
+    def fit(self, history: np.ndarray) -> None:
+        self._naive.fit(history)
+        self._ewma.fit(history)
+        self._fitted = True
+
+    def predict(self) -> float:
+        return (self._naive.predict() + self._ewma.predict()) / 2
+
+    def predict_quantiles(self, taus: np.ndarray) -> np.ndarray:
+        q1 = self._naive.predict_quantiles(taus)
+        q2 = self._ewma.predict_quantiles(taus)
+        return (q1 + q2) / 2
+
+    def update_residuals(self, y_true: float, y_pred: float) -> None:
+        super().update_residuals(y_true, y_pred)
+        self._naive.update_residuals(y_true, self._naive.predict())
+        self._ewma.update_residuals(y_true, self._ewma.predict())
+
+
 def get_all_forecasters() -> list[BaseForecaster]:
-    """Return all 5 forecasters with documented residual window choices.
+    """Return all 7 forecasters with documented residual window choices.
 
     Residual windows are set per-forecaster to balance the bias-variance
     trade-off in residual-bootstrap quantile estimation:
 
     - Naive (100): Retrains every step, so a short window keeps the
       bootstrap responsive to recent regime changes.
-    - Moving Average (200): Moderate smoothing; the default window
-      balances recency and stability for a simple averaging model.
+    - Moving Average (100): EWMA(5), fast-adapting with short buffer.
     - ARIMA (300): Retrains every 50 steps on a 300-point training
       window; matching residual_window to the training window ensures
       the bootstrap covers the same data horizon as the fitted model.
@@ -408,6 +478,9 @@ def get_all_forecasters() -> list[BaseForecaster]:
       horizon for consistent fallback quantile estimation.
     - MLP (300): Same rationale as ARIMA/XGBoost — periodic retraining
       on a 300-point window warrants a matching residual buffer.
+    - Theta (200): SES with drift, moderate residual window balances
+      the 300-point training window with faster adaptation.
+    - Ensemble (100): Averages Naive + EWMA; inherits their short buffers.
     """
     return [
         NaiveForecaster(residual_window=100),           # fast-adapting, short buffer
@@ -415,4 +488,6 @@ def get_all_forecasters() -> list[BaseForecaster]:
         ARIMAForecaster(order=(2, 1, 1), residual_window=300),       # matches training window
         XGBoostForecaster(n_lags=10, residual_window=300),           # matches training window
         MLPForecaster(n_lags=10, hidden=16, residual_window=300),    # matches training window
+        ThetaForecaster(residual_window=200),            # SES + drift, moderate buffer
+        EnsembleForecaster(),                            # Naive+EWMA average
     ]

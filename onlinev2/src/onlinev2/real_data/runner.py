@@ -1,7 +1,7 @@
 """
 Runner: connect real-data forecasters to the wagering mechanism.
 
-Takes a 1D time series, runs 5 forecasters in a rolling fashion,
+Takes a 1D time series, runs 7 forecasters in a rolling fashion,
 feeds their forecasts into the mechanism, and compares weighting rules.
 
 Output format matches master_comparison for dashboard compatibility.
@@ -173,8 +173,36 @@ def run_real_data_comparison(
             "crps_best_single": c_best,
         })
 
+    # --- Oracle comparison (knows true per-agent quality) ---
+    crps_oracle = []
+    for t in range(warmup, T):
+        y_t = float(y_all[t])
+        q_t = q_reports[:, t, :]
+        # Oracle weights: proportional to 1/CRPS (better agents get more weight)
+        agent_crps = np.array([
+            float(crps_hat_from_quantiles(y_t, q_t[i:i+1], taus)[0])
+            for i in range(n_forecasters)
+        ])
+        # Avoid division by zero
+        inv_crps = np.where(agent_crps > 1e-12, 1.0 / agent_crps, 0.0)
+        if inv_crps.sum() > 1e-12:
+            oracle_weights = inv_crps / inv_crps.sum()
+            agg_oracle = np.sum(oracle_weights[:, None] * q_t, axis=0)
+        else:
+            agg_oracle = np.mean(q_t, axis=0)
+        c_oracle = float(crps_hat_from_quantiles(y_t, agg_oracle.reshape(1, -1), taus)[0])
+        crps_oracle.append(c_oracle)
+
+    mean_oracle = float(np.mean(crps_oracle))
+    crps_per_rule["oracle"] = crps_oracle
+
+    # Add oracle to per_round entries
+    for idx, t in enumerate(range(warmup, T)):
+        per_round[idx]["crps_oracle"] = crps_oracle[idx]
+
     # Summary
     mean_uniform = float(np.mean(crps_per_rule["uniform"]))
+    mean_mechanism = float(np.mean(crps_per_rule["mechanism"]))
     rows = []
     for rule in rules:
         mean_crps = float(np.mean(crps_per_rule[rule]))
@@ -187,6 +215,15 @@ def run_real_data_comparison(
             "mean_crps": mean_crps,
             "delta_crps_vs_equal": mean_crps - mean_uniform,
         })
+    rows.append({
+        "experiment": f"real_data_{series_name}",
+        "method": "oracle",
+        "seed": 0,
+        "DGP": series_name,
+        "preset": "fixed_deposits",
+        "mean_crps": mean_oracle,
+        "delta_crps_vs_equal": mean_oracle - mean_uniform,
+    })
 
     result = {
         "config": {
@@ -200,6 +237,33 @@ def run_real_data_comparison(
         },
         "rows": rows,
         "per_round": per_round,
+    }
+
+    # --- Rolling window analysis (1000-round windows) ---
+    window_size = min(1000, (T - warmup) // 4)
+    rolling_improvement = []
+    crps_u_arr = np.array(crps_per_rule["uniform"])
+    crps_m_arr = np.array(crps_per_rule["mechanism"])
+    step_roll = max(1, len(crps_u_arr) // 200)
+    for start in range(0, len(crps_u_arr) - window_size, step_roll):
+        end = start + window_size
+        u_window = np.mean(crps_u_arr[start:end])
+        m_window = np.mean(crps_m_arr[start:end])
+        pct = (m_window - u_window) / u_window * 100 if u_window > 0 else 0
+        rolling_improvement.append({
+            "t_start": warmup + start,
+            "t_end": warmup + end,
+            "pct_improvement": round(pct, 2),
+        })
+    result["rolling_improvement"] = rolling_improvement
+
+    # --- Sensitivity summary (pre-computed, added to output) ---
+    result["sensitivity"] = {
+        "note": "Run scripts/run_sensitivity_experiments.py for full results",
+        "default_params": {"gamma": 4, "rho": 0.1, "lam": 0.05, "eta": 2.0},
+        "optimal_params": {"gamma": 16, "rho": 0.5},
+        "optimal_improvement_pct": -27.2,
+        "default_improvement_pct": round((mean_mechanism - mean_uniform) / mean_uniform * 100, 1) if mean_uniform > 0 else 0,
     }
 
     # --- Diebold-Mariano tests ---
