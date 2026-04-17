@@ -55,11 +55,11 @@ const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
 
 /** Thesis argument flow — numbered steps + unnumbered reference pages */
 const NAV_ITEMS: NavItem[] = [
-  { to: '/',           label: 'Mechanism',  icon: HomeIcon,     step: 1 },
-  { to: '/evidence',   label: 'Evidence',   icon: ChartBarIcon, step: 2 },
-  { to: '/robustness', label: 'Robustness', icon: ShieldIcon,   step: 3 },
-  { to: '/notes',      label: 'Notes',      icon: BookIcon,     step: null },
-  { to: '/explorer',   label: 'Explorer',   icon: CogIcon,      step: null },
+  { to: '/',           label: 'Overview',     icon: HomeIcon,     step: 1 },
+  { to: '/evidence',   label: 'Evidence',     icon: ChartBarIcon, step: 2 },
+  { to: '/robustness', label: 'Robustness',   icon: ShieldIcon,   step: 3 },
+  { to: '/notes',      label: 'Notes',        icon: BookIcon,     step: null },
+  { to: '/explorer',   label: 'Explorer',     icon: CogIcon,      step: null },
 ];
 
 /* ------------------------------------------------------------------ */

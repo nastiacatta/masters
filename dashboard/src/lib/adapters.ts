@@ -25,6 +25,7 @@ import type {
   BankrollAblationRow,
   WeightRecoveryRow,
 } from './types';
+import type { FailureMode, AnalysisGap, EnrichedThesisClaim, AblationInterpretation, RegimeStats, InteractionAnalysis, PanelSweepResult } from './analysis/types';
 
 type RawRow = Record<string, unknown>;
 
@@ -483,6 +484,18 @@ export interface RealDataResult {
     crps_mechanism: number;
     crps_best_single: number;
   }>;
+  // Per-agent skill history (downsampled)
+  skill_history?: Array<Record<string, number>>;
+  // Steady-state skill ranking (sorted by mean_sigma descending)
+  steady_state?: Array<{
+    forecaster: string;
+    index: number;
+    mean_sigma: number;
+    mean_weight: number;
+    mean_score: number | null;
+  }>;
+  // Forecaster names in order
+  forecaster_names?: string[];
 }
 
 export async function loadRealDataComparison(seriesName: string = 'elia_wind'): Promise<RealDataResult | null> {
@@ -495,4 +508,66 @@ export async function loadRealDataComparison(seriesName: string = 'elia_wind'): 
     // Not available.
   }
   return null;
+}
+
+
+// ── New adapter functions for analysis data files ───────────────────
+
+/** Load failure_modes.json for the Limitations & Failure Modes panel. */
+export async function loadFailureModes(): Promise<FailureMode[]> {
+  return fetchJSON<FailureMode[]>(`${DATA_BASE}/failure_modes.json`);
+}
+
+/** Load analysis_gaps.json for the Missing Analysis Checklist. */
+export async function loadAnalysisGaps(): Promise<AnalysisGap[]> {
+  return fetchJSON<AnalysisGap[]>(`${DATA_BASE}/analysis_gaps.json`);
+}
+
+/** Load enriched thesis_results.json with conditions, evidence, and limitations. */
+export async function loadEnrichedThesisResults(): Promise<EnrichedThesisClaim[]> {
+  return fetchJSON<EnrichedThesisClaim[]>(`${DATA_BASE}/thesis_results.json`);
+}
+
+/** Load ablation interpretation JSON for the AblationInterpretPanel. */
+export async function loadAblationInterpretation(): Promise<AblationInterpretation | null> {
+  try {
+    return await fetchJSON<AblationInterpretation>(
+      `${DATA_BASE}/core/experiments/bankroll_ablation/data/ablation_interpretation.json`,
+    );
+  } catch {
+    return null;
+  }
+}
+
+/** Load regime breakdown JSON for the RegimeBreakdownTable. */
+export async function loadRegimeBreakdown(): Promise<RegimeStats[]> {
+  try {
+    return await fetchJSON<RegimeStats[]>(
+      `${DATA_BASE}/core/experiments/master_comparison/data/regime_breakdown.json`,
+    );
+  } catch {
+    return [];
+  }
+}
+
+/** Load deposit interaction analysis JSON. */
+export async function loadDepositInteraction(): Promise<InteractionAnalysis | null> {
+  try {
+    return await fetchJSON<InteractionAnalysis>(
+      `${DATA_BASE}/core/experiments/deposit_policy_comparison/data/interaction_analysis.json`,
+    );
+  } catch {
+    return null;
+  }
+}
+
+/** Load panel size sensitivity sweep JSON. */
+export async function loadPanelSizeSensitivity(): Promise<PanelSweepResult | null> {
+  try {
+    return await fetchJSON<PanelSweepResult>(
+      `${DATA_BASE}/core/experiments/panel_size_sensitivity/data/panel_sweep.json`,
+    );
+  } catch {
+    return null;
+  }
 }

@@ -15,7 +15,6 @@ export default function Comparison() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     Promise.all([loadMasterComparison(), loadBankrollAblation()]).then(([m, a]) => {
       if (!cancelled) {
         setMaster(m ?? null);

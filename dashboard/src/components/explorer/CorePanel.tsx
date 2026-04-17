@@ -161,6 +161,9 @@ export default function CorePanel() {
             label="EWMA loss"
             latex="L_{i,t} = (1-\\rho) L_{i,t-1} + \\rho \\cdot \\ell_{i,t}"
           />
+          <p className="text-xs text-slate-500 mt-1">
+            <strong>Absent agents:</strong> If κ &gt; 0, loss decays toward L₀: L = (1−κ)L + κL₀. If κ = 0, loss freezes (L unchanged).
+          </p>
           <FormulaCallout
             label="Loss to skill"
             latex="\\sigma_{i,t+1} = \\sigma_{\\min} + (1 - \\sigma_{\\min}) e^{-\\gamma L_{i,t}}"

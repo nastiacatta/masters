@@ -9,7 +9,26 @@
     "interpretation": "The online skill layer tracks intrinsic forecaster quality well in the latent-truth setting, so up-weighting better forecasters improves the aggregate. The size of the improvement depends on the deposit policy: fixed deposits (which isolate the skill signal) yield the full 21%, while bankroll-fraction deposits reduce the advantage to ~5%.",
     "caveat": "This is a clean benchmark with identifiable truth, not a strategic or adversarial setting.",
     "experimentName": "master_comparison",
-    "category": "aggregation_quality"
+    "category": "aggregation_quality",
+    "conditions": {
+      "dgp": "latent_fixed",
+      "n_forecasters": 10,
+      "T": 1000,
+      "deposit_policy": "fixed",
+      "n_seeds": 20
+    },
+    "evidence": {
+      "metric_field": "delta_crps_vs_equal",
+      "expected_sign": "negative",
+      "threshold": 0.01,
+      "comparison_method": "equal"
+    },
+    "limitations": [
+      "Does not hold with small panels (N ≤ 3) where estimation noise dominates",
+      "Advantage shrinks under bankroll-fraction deposit policy (~5% vs 21%)",
+      "Requires heterogeneous forecaster skill; homogeneous panels see no benefit",
+      "Short horizons (T < 50) may not allow EWMA to converge"
+    ]
   },
   {
     "id": "skill_recovery",
@@ -21,7 +40,25 @@
     "interpretation": "The exponential decay parameter γ controls the speed-accuracy trade-off: faster decay recovers quicker but is noisier.",
     "caveat": "Recovery speed depends on γ, signal-to-noise ratio, and the number of active agents.",
     "experimentName": "skill_recovery",
-    "category": "skill_recovery"
+    "category": "skill_recovery",
+    "conditions": {
+      "dgp": "latent_fixed",
+      "n_forecasters": 6,
+      "T": 2000,
+      "deposit_policy": "fixed",
+      "n_seeds": 20
+    },
+    "evidence": {
+      "metric_field": "rank_correlation",
+      "expected_sign": "positive",
+      "threshold": 0.9,
+      "comparison_method": "true_skill_ordering"
+    },
+    "limitations": [
+      "Recovery time increases with panel size (more agents to re-rank)",
+      "Under high noise (low signal-to-noise ratio), recovery may be incomplete",
+      "Non-stationary skill (continuous drift) prevents full convergence"
+    ]
   },
   {
     "id": "concentration_controlled",
@@ -33,7 +70,25 @@
     "interpretation": "Skill gating attenuates noisy large bets without concentrating wealth in few agents.",
     "caveat": "Under some deposit policies (e.g. wealth-fraction), concentration can still rise if skilled agents compound returns.",
     "experimentName": "master_comparison",
-    "category": "aggregation_quality"
+    "category": "aggregation_quality",
+    "conditions": {
+      "dgp": "latent_fixed",
+      "n_forecasters": 10,
+      "T": 1000,
+      "deposit_policy": "fixed",
+      "n_seeds": 20
+    },
+    "evidence": {
+      "metric_field": "final_gini",
+      "expected_sign": "negative",
+      "threshold": 0.05,
+      "comparison_method": "equal"
+    },
+    "limitations": [
+      "Wealth-fraction deposit policy can increase concentration via compounding",
+      "Very long horizons (T >> 1000) may show slow concentration drift",
+      "Highly skilled outlier agents can still accumulate disproportionate wealth"
+    ]
   },
   {
     "id": "calibration_holds",
@@ -45,7 +100,26 @@
     "interpretation": "The linear pool preserves calibration for moderate probability events but under-disperses in the tails. Note: the baseline DGP produces miscalibrated forecasts by construction (uniform noise on quantiles). The latent-fixed DGP was introduced to provide a cleaner calibration benchmark.",
     "caveat": "Tail miscalibration is the main modelling limitation and is shared across all weighting methods. Results should be interpreted relative to the DGP used.",
     "experimentName": "calibration",
-    "category": "calibration"
+    "category": "calibration",
+    "conditions": {
+      "dgp": "latent_fixed",
+      "n_forecasters": 6,
+      "T": 1000,
+      "deposit_policy": "fixed",
+      "n_seeds": 20
+    },
+    "evidence": {
+      "metric_field": "coverage_gap",
+      "expected_sign": "positive",
+      "threshold": 0.05,
+      "comparison_method": "nominal_coverage"
+    },
+    "limitations": [
+      "Tail miscalibration is inherent to the linear pool and shared across all methods",
+      "Baseline DGP produces miscalibrated forecasts by construction",
+      "Only tested on latent_fixed DGP; other DGPs may show different calibration patterns",
+      "Small panels may not provide enough diversity for good calibration"
+    ]
   },
   {
     "id": "equal_is_strong_baseline",
@@ -57,6 +131,25 @@
     "interpretation": "Blended skill × stake wins when the panel includes forecasters with heterogeneous skill and enough rounds for the EWMA to converge (typically >50). Under non-stationarity, regime shifts reset the skill estimates and equal weighting dominates during re-learning. With small panels (N ≤ 3), estimation noise in σ can erase the advantage entirely.",
     "caveat": "With few agents or short horizons, estimation noise in σ can erase the advantage.",
     "experimentName": "master_comparison",
-    "category": "aggregation_quality"
+    "category": "aggregation_quality",
+    "conditions": {
+      "dgp": "latent_fixed",
+      "n_forecasters": 10,
+      "T": 1000,
+      "deposit_policy": "fixed",
+      "n_seeds": 20
+    },
+    "evidence": {
+      "metric_field": "delta_crps_vs_equal",
+      "expected_sign": "negative",
+      "threshold": 0.001,
+      "comparison_method": "equal"
+    },
+    "limitations": [
+      "Small panels (N ≤ 3): estimation noise erases the advantage",
+      "Short horizons (T < 50): EWMA has not converged",
+      "Non-stationarity: regime shifts reset skill estimates, equal dominates during re-learning",
+      "Homogeneous skill: no signal to exploit, equal is optimal"
+    ]
   }
 ]

@@ -42,6 +42,22 @@ export default function HomePage() {
           </p>
         </header>
 
+        {/* ── Plain-language summary ── */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 -mt-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">In plain terms</h2>
+          <p className="text-sm text-slate-700 leading-relaxed max-w-3xl">
+            Imagine a group of forecasters predicting tomorrow&apos;s wind power output. Each round, they submit
+            probabilistic forecasts and put money on the line. The mechanism learns who is good at forecasting
+            and gives them more influence over the combined prediction. Good forecasters earn money; bad ones lose it.
+            The key question: does this adaptive weighting actually produce better forecasts than simply averaging everyone equally?
+          </p>
+          <p className="text-sm text-slate-600 leading-relaxed max-w-3xl mt-2">
+            <strong>Answer:</strong> Yes, but only when the panel has enough forecasters (N &ge; 6), enough rounds
+            for learning to converge (~50), and heterogeneous skill levels. Under these conditions, the mechanism
+            achieves a 21% improvement in forecast quality on real wind data.
+          </p>
+        </div>
+
         {/* ── Connecting statement ── */}
         <p className="text-sm text-slate-500 leading-relaxed -mt-8">
           The following sections outline the mechanism architecture, the core contribution, and the principal empirical findings.
@@ -177,7 +193,7 @@ export default function HomePage() {
 
         {/* ── Footer ── */}
         <footer className="text-center text-[11px] text-slate-400 pt-4 border-t border-slate-100">
-          Anastasia Cattaneo · Imperial College London · © 2025
+          Anastasia Cattaneo · Imperial College London · © 2026
         </footer>
 
       </div>

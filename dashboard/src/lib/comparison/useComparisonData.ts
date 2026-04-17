@@ -43,7 +43,7 @@ export function useComparisonData<T>(
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [path]);
+  }, [path, validate]);
 
   return { data, error, loading };
 }

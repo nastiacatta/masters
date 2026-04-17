@@ -7,9 +7,9 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 
 import { viridis, cividis, sequentialBlue } from '@/lib/colourScales';
-import { isSignificant, ciBounds } from '@/components/charts/DeltaBarChart';
+import { isSignificant, ciBounds } from '@/components/charts/deltaBarHelpers';
 import { generateCSV, sanitiseFilename } from '@/lib/csv';
-import { getMethodOpacity } from '@/contexts/ChartLinkingContext';
+import { getMethodOpacity } from '@/lib/chartLinking';
 import {
   validateNumericFields,
   validateRanges,

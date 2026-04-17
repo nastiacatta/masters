@@ -1,4 +1,5 @@
-import { createContext, useRef, type ReactNode } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useCallback, useRef, type ReactNode } from 'react';
 import type { NumberingContextValue } from '@/contexts/FigureContext';
 
 const defaultValue: NumberingContextValue = {
@@ -11,18 +12,14 @@ export const EquationContext = createContext<NumberingContextValue>(defaultValue
 export function EquationProvider({ children }: { children: ReactNode }) {
   const counter = useRef(0);
 
-  // Reset on every mount so each page starts from 1.
-  counter.current = 0;
+  const next = useCallback(() => {
+    counter.current += 1;
+    return counter.current;
+  }, []);
 
-  const value: NumberingContextValue = {
-    next() {
-      counter.current += 1;
-      return counter.current;
-    },
-    reset() {
-      counter.current = 0;
-    },
-  };
+  const reset = useCallback(() => {
+    counter.current = 0;
+  }, []);
 
-  return <EquationContext value={value}>{children}</EquationContext>;
+  return <EquationContext value={{ next, reset }}>{children}</EquationContext>;
 }

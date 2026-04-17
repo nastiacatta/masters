@@ -28,7 +28,7 @@ const INITIAL: ZoomState = {
  *     )}
  *   </LineChart>
  */
-export function useChartZoom(_dataKey = 'round') {
+export function useChartZoom() {
   const [state, setState] = useState<ZoomState>(INITIAL);
   const dragging = useRef(false);
 

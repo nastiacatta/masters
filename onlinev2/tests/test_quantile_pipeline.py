@@ -22,36 +22,31 @@ from onlinev2.real_data.forecasters import (
 
 
 # ---------------------------------------------------------------------------
-# 1. test_arima_uses_native_intervals
+# 1. test_arima_uses_residual_bootstrap
 # ---------------------------------------------------------------------------
-def test_arima_uses_native_intervals():
-    """Req 2.1 — When ARIMA has a fitted model, _generate_quantiles uses
-    get_forecast().summary_frame() rather than residual bootstrap."""
+def test_arima_uses_residual_bootstrap():
+    """ARIMA uses the base class residual bootstrap for quantile generation
+    (native statsmodels intervals were removed due to miscalibration)."""
     fc = ARIMAForecaster(order=(2, 1, 1))
     fc._fitted = True
     fc._last_pred = 0.5
 
-    # Build a mock model whose get_forecast().summary_frame() returns a
-    # DataFrame-like object with mean_ci_lower / mean_ci_upper columns.
-    mock_sf = MagicMock()
-    mock_sf.__getitem__ = lambda self, key: MagicMock(iloc=[0.4 if "lower" in key else 0.6])
-
-    mock_fcast = MagicMock()
-    mock_fcast.summary_frame.return_value = mock_sf
-
-    mock_model = MagicMock()
-    mock_model.get_forecast.return_value = mock_fcast
-
-    fc._model = mock_model
-
     taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
     # Add enough residuals so predict_quantiles takes the normal path
-    fc._residuals = [0.01] * 20
+    fc._residuals = [0.01 * (i - 10) for i in range(20)]
 
-    fc.predict_quantiles(taus)
+    q = fc.predict_quantiles(taus)
 
-    # summary_frame should have been called (once per non-median tau)
-    mock_fcast.summary_frame.assert_called()
+    # Should produce valid quantiles (monotone, in [0,1])
+    assert len(q) == len(taus)
+    assert all(0 <= qi <= 1 for qi in q)
+    # Should be monotone non-decreasing
+    for k in range(1, len(q)):
+        assert q[k] >= q[k - 1] - 1e-12
+
+    # Verify ARIMA does NOT override _generate_quantiles (uses base class)
+    from onlinev2.real_data.forecasters import BaseForecaster
+    assert type(fc)._generate_quantiles is BaseForecaster._generate_quantiles
 
 
 # ---------------------------------------------------------------------------
