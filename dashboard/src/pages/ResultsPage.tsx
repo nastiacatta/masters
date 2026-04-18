@@ -886,17 +886,13 @@ export default function ResultsPage() {
               )}
 
               {/* ═══ Skill Recognition — with Real/DGP toggle ═══ */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-slate-800">
-                      {skillSource === 'real' && hasRealSkill
-                        ? `Skill recognition: Elia wind (${realForecasterCount} real forecasters)`
-                        : 'Skill recognition: Synthetic DGP (3 controlled agents)'}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs text-slate-500">Data source:</span>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    How the mechanism learns forecaster quality
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">Source:</span>
                     <button
                       onClick={() => setSkillSource('real')}
                       className={`px-3 py-1 text-xs rounded-full transition-colors ${
@@ -923,108 +919,73 @@ export default function ResultsPage() {
                 {skillSource === 'real' && hasRealSkill ? (
                   <>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      The mechanism's EWMA skill gate learns which forecasting model is best over {realData!.config.T.toLocaleString()} hourly rounds.
-                      {' '}{realForecasterCount} models: {realForecasterNames.join(', ')}.
-                      Left: skill estimate σ (higher = better forecaster). Right: normalised weight (higher = more influence on the aggregate).
-                      Dashed lines show steady-state averages from the last 2,000 rounds.
-                      Showing top 5 of {realForecasterCount} forecasters.
+                      Each round, the EWMA skill gate observes each model's CRPS and updates its skill estimate σ.
+                      Better forecasters accumulate higher σ and receive more weight in the aggregate.
+                      Data: {realData!.config.T.toLocaleString()} hourly rounds, {realForecasterCount} models.
+                      Top 5 shown below.
                     </p>
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* σ trajectory */}
-                      <div>
-                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Skill estimate σ</div>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <LineChart data={realSkillConvergence} margin={{ top: 4, right: 8, bottom: 24, left: 52 }}>
-                            <CartesianGrid {...GRID_PROPS} />
-                            <XAxis dataKey="t" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
-                              label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} domain={[0, 1]}
-                              label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
-                            <Tooltip content={<SmartTooltip />} />
-                            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
-                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
-                              <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
-                            ))}
-                            {realTargetSigmas.slice(0, 5).map((ts, i) => (
-                              <ReferenceLine key={`rts-${i}`} y={ts}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                                strokeDasharray="6 3" strokeOpacity={0.4}>
-                                <Label value={fmt(ts, 3)} position="right" fontSize={10} fill="#334155" />
-                              </ReferenceLine>
-                            ))}
-                          </LineChart>
-                        </ResponsiveContainer>
-                        <p className="text-[11px] text-slate-400 mt-1">Higher σ = better forecaster. Dashed = steady-state average.</p>
-                      </div>
-                      {/* Weight trajectory */}
-                      <div>
-                        <div className="text-[11px] font-semibold text-slate-600 mb-1">Normalised weight</div>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <LineChart data={realWeightConvergence} margin={{ top: 4, right: 8, bottom: 24, left: 52 }}>
-                            <CartesianGrid {...GRID_PROPS} />
-                            <XAxis dataKey="t" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
-                              label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                            <YAxis tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE}
-                              label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
-                            <Tooltip content={<SmartTooltip />} />
-                            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
-                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
-                              <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
-                            ))}
-                            {realTargetWeights.slice(0, 5).map((tw, i) => (
-                              <ReferenceLine key={`rtw-${i}`} y={tw}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                                strokeDasharray="6 3" strokeOpacity={0.4}>
-                                <Label value={fmt(tw, 3)} position="right" fontSize={10} fill="#334155" />
-                              </ReferenceLine>
-                            ))}
-                            <ReferenceLine y={1 / realForecasterCount} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                        <p className="text-[11px] text-slate-400 mt-1">Weights start near 1/{realForecasterCount}, diverge via g(σ). Dashed = steady state.</p>
-                      </div>
-                    </div>
 
-                    {/* Steady-state ranking table */}
+                    {/* Steady-state ranking first (the key result) */}
                     {realSteadyState.length > 0 && (
-                      <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                        <div className="text-[11px] font-semibold text-slate-700 mb-2">Steady-state ranking (last 2,000 rounds)</div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-[11px]">
-                            <thead>
-                              <tr className="text-left text-slate-500 border-b border-slate-200">
-                                <th className="py-1.5 pr-3">Rank</th>
-                                <th className="py-1.5 pr-3">Forecaster</th>
-                                <th className="py-1.5 pr-3 text-right">Mean σ</th>
-                                <th className="py-1.5 pr-3 text-right">Mean weight</th>
-                                <th className="py-1.5 text-right">Mean score</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {realSteadyState.map((s, rank) => (
-                                <tr key={s.index} className="border-b border-slate-100 last:border-0">
-                                  <td className="py-1.5 pr-3 font-mono text-slate-400">{rank + 1}</td>
-                                  <td className="py-1.5 pr-3 font-medium text-slate-700">
-                                    <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: AGENT_PALETTE[s.index % AGENT_PALETTE.length] }} />
-                                    {s.forecaster}
-                                  </td>
-                                  <td className="py-1.5 pr-3 text-right font-mono">{fmt(s.mean_sigma, 4)}</td>
-                                  <td className="py-1.5 pr-3 text-right font-mono">{fmt(s.mean_weight, 4)}</td>
-                                  <td className="py-1.5 text-right font-mono">{s.mean_score != null ? fmt(s.mean_score, 4) : '-'}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                          Naive (last value) achieves the highest σ. It's the simplest model but performs well on smooth wind data.
-                          ARIMA(2,1,1) ranks last with a notably lower σ, suggesting its parametric assumptions don't fit the data well.
-                          The ML models (XGBoost, MLP) and EWMA cluster in the middle.
-                        </p>
+                      <div className="grid sm:grid-cols-5 gap-2">
+                        {realSteadyState.slice(0, 5).map((s, rank) => (
+                          <div key={s.index} className={`rounded-lg border p-3 text-center ${rank === 0 ? 'border-indigo-200 bg-indigo-50' : 'border-slate-100 bg-slate-50'}`}>
+                            <div className="flex items-center justify-center gap-1.5 mb-1">
+                              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: AGENT_PALETTE[s.index % AGENT_PALETTE.length] }} />
+                              <span className="text-[11px] font-semibold text-slate-700">#{rank + 1}</span>
+                            </div>
+                            <div className="text-xs font-medium text-slate-800 truncate">{s.forecaster}</div>
+                            <div className="text-lg font-bold font-mono text-indigo-600 mt-1">{s.mean_sigma.toFixed(3)}</div>
+                            <div className="text-[10px] text-slate-400">σ (skill)</div>
+                          </div>
+                        ))}
                       </div>
                     )}
+
+                    {/* σ trajectory (full width, tall) */}
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">Skill estimate σ over time</div>
+                      <ResponsiveContainer width="100%" height={450}>
+                        <LineChart data={realSkillConvergence} margin={{ top: 8, right: 24, bottom: 28, left: 52 }}>
+                          <CartesianGrid {...GRID_PROPS} />
+                          <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                            label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                          <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0.6, 1]}
+                            label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                          <Tooltip content={<SmartTooltip />} />
+                          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                          {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
+                            <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
+                              stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
+                          ))}
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <p className="text-[11px] text-slate-400 mt-1">Higher σ = better forecaster. The mechanism separates models within the first few hundred rounds.</p>
+                    </div>
+
+                    {/* Weight trajectory (full width, tall) */}
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">Resulting aggregation weights</div>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <LineChart data={realWeightConvergence} margin={{ top: 8, right: 24, bottom: 28, left: 52 }}>
+                          <CartesianGrid {...GRID_PROPS} />
+                          <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                            label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
+                          <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                            label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                          <Tooltip content={<SmartTooltip />} />
+                          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                          {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
+                            <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
+                              stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
+                          ))}
+                          <ReferenceLine y={1 / realForecasterCount} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3}>
+                            <Label value={`Equal (1/${realForecasterCount})`} position="right" fontSize={10} fill="#94a3b8" />
+                          </ReferenceLine>
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <p className="text-[11px] text-slate-400 mt-1">Weights start near equal (1/{realForecasterCount}) and diverge as the mechanism learns. Better models get more influence.</p>
+                    </div>
                   </>
                 ) : (
                   <>
