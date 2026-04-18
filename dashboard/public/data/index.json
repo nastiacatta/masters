@@ -1,7 +1,7 @@
 [
   {
     "name": "skill_wager",
-    "displayName": "Skill × Wager",
+    "displayName": "Skill \u00d7 Wager",
     "description": "Tests the interaction between online skill learning and deposit-driven effective wagers across agents with different forecast quality.",
     "block": "experiments",
     "dgp": "latent_fixed",
@@ -9,7 +9,10 @@
     "nAgents": 3,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "timeseries": "timeseries.csv", "summary": "summary.csv" }
+    "dataFiles": {
+      "timeseries": "timeseries.csv",
+      "summary": "summary.csv"
+    }
   },
   {
     "name": "forecast_aggregation",
@@ -21,7 +24,9 @@
     "nAgents": 6,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "crps_timeseries": "crps_timeseries.csv" }
+    "dataFiles": {
+      "crps_timeseries": "crps_timeseries.csv"
+    }
   },
   {
     "name": "behaviour_matrix",
@@ -33,19 +38,23 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "behaviour_matrix": "behaviour_matrix.csv" }
+    "dataFiles": {
+      "behaviour_matrix": "behaviour_matrix.csv"
+    }
   },
   {
     "name": "parameter_sweep",
     "displayName": "Parameter Sweep",
-    "description": "Sweeps over λ and σ_min to map the Pareto frontier between forecast quality and concentration.",
+    "description": "Sweeps over \u03bb and \u03c3_min to map the Pareto frontier between forecast quality and concentration.",
     "block": "experiments",
     "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "sweep": "sweep.csv" }
+    "dataFiles": {
+      "sweep": "sweep.csv"
+    }
   },
   {
     "name": "calibration",
@@ -57,7 +66,9 @@
     "nAgents": 6,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "reliability": "reliability.csv" }
+    "dataFiles": {
+      "reliability": "reliability.csv"
+    }
   },
   {
     "name": "settlement_sanity",
@@ -69,7 +80,11 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "series": "series.csv", "summary": "summary.csv", "hist": "hist.csv" }
+    "dataFiles": {
+      "series": "series.csv",
+      "summary": "summary.csv",
+      "hist": "hist.csv"
+    }
   },
   {
     "name": "fixed_deposit",
@@ -81,7 +96,9 @@
     "nAgents": 4,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "timeseries": "timeseries.csv" }
+    "dataFiles": {
+      "timeseries": "timeseries.csv"
+    }
   },
   {
     "name": "intermittency_stress_test",
@@ -93,7 +110,9 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "intermittency_stress": "intermittency_stress.csv" }
+    "dataFiles": {
+      "intermittency_stress": "intermittency_stress.csv"
+    }
   },
   {
     "name": "sybil",
@@ -105,7 +124,9 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "sybil": "sybil.csv" }
+    "dataFiles": {
+      "sybil": "sybil.csv"
+    }
   },
   {
     "name": "arbitrage_scan",
@@ -117,7 +138,9 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "arbitrage_scan": "arbitrage_scan.csv" }
+    "dataFiles": {
+      "arbitrage_scan": "arbitrage_scan.csv"
+    }
   },
   {
     "name": "weight_learning",
@@ -129,7 +152,10 @@
     "nAgents": 3,
     "rounds": 20000,
     "nSeeds": 20,
-    "dataFiles": { "summary": "summary.json", "config": "config.json" }
+    "dataFiles": {
+      "summary": "summary.json",
+      "config": "config.json"
+    }
   },
   {
     "name": "skill_recovery",
@@ -141,7 +167,10 @@
     "nAgents": 6,
     "rounds": 2000,
     "nSeeds": 20,
-    "dataFiles": { "quantiles_crps_summary": "quantiles_crps_summary.csv", "point_mae_summary": "point_mae_summary.csv" }
+    "dataFiles": {
+      "quantiles_crps_summary": "quantiles_crps_summary.csv",
+      "point_mae_summary": "point_mae_summary.csv"
+    }
   },
   {
     "name": "detection_adaptation",
@@ -153,7 +182,9 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "detection_adaptation": "detection_adaptation.csv" }
+    "dataFiles": {
+      "detection_adaptation": "detection_adaptation.csv"
+    }
   },
   {
     "name": "preference_stress_test",
@@ -165,91 +196,9 @@
     "nAgents": 10,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "preference_stress": "preference_stress.csv" }
-  },
-  {
-    "name": "collusion_stress",
-    "displayName": "Collusion Stress",
-    "description": "Compares no collusion vs collusion group; measures within-group synchrony and impact.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 11,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "collusion_stress": "collusion_stress.csv", "detection_metrics": "detection_metrics.csv" }
-  },
-  {
-    "name": "insider_advantage",
-    "displayName": "Insider Advantage",
-    "description": "Compares no insider vs insider; measures insider profit advantage from privileged information.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 9,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "insider_advantage": "insider_advantage.csv" }
-  },
-  {
-    "name": "wash_activity_gaming",
-    "displayName": "Wash Activity Gaming",
-    "description": "Compares no wash vs wash trader; measures activity inflation from fake interactions.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 9,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "wash_activity_gaming": "wash_activity_gaming.csv" }
-  },
-  {
-    "name": "strategic_reporting",
-    "displayName": "Strategic Reporting",
-    "description": "Compares truthful vs strategic reporter; measures aggregate forecast impact.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 9,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "strategic_reporting": "strategic_reporting.csv" }
-  },
-  {
-    "name": "identity_attack_matrix",
-    "displayName": "Identity Attack Matrix",
-    "description": "Compares single account vs sybil split vs reputation reset vs collusive multi-account.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 8,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "identity_attack_matrix": "identity_attack_matrix.csv" }
-  },
-  {
-    "name": "drift_adaptation",
-    "displayName": "Drift Adaptation",
-    "description": "Compares fast vs slow adaptor to drift in the outcome process.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 8,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "drift_adaptation": "drift_adaptation.csv" }
-  },
-  {
-    "name": "stake_policy_matrix",
-    "displayName": "Stake Policy Matrix",
-    "description": "Compares fixed fraction vs Kelly-like vs house-money vs lumpy vs break-even vs volatility-sensitive staking.",
-    "block": "behaviour",
-    "dgp": "baseline",
-    "scoringMode": "CRPS",
-    "nAgents": 8,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "stake_policy_matrix": "stake_policy_matrix.csv" }
+    "dataFiles": {
+      "preference_stress": "preference_stress.csv"
+    }
   },
   {
     "name": "deposit_policy_comparison",
@@ -261,30 +210,8 @@
     "nAgents": 6,
     "rounds": 1000,
     "nSeeds": 20,
-    "dataFiles": { "deposit_policy_comparison": "deposit_policy_comparison.csv" }
-  },
-  {
-    "name": "master_comparison",
-    "displayName": "Master Comparison",
-    "description": "All weighting methods (equal, stake-only, skill-only, blended, bankroll) on same panel; paired deltas vs equal.",
-    "block": "core",
-    "dgp": "latent_fixed",
-    "scoringMode": "CRPS",
-    "nAgents": 10,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "master_comparison": "master_comparison.json" }
-  },
-  {
-    "name": "bankroll_ablation",
-    "displayName": "Bankroll Ablation",
-    "description": "Five-step pipeline: Full vs A- (no confidence), B- (fixed deposit), C- (no skill gate), D- (no cap), E- (freeze wealth).",
-    "block": "core",
-    "dgp": "latent_fixed",
-    "scoringMode": "CRPS",
-    "nAgents": 6,
-    "rounds": 1000,
-    "nSeeds": 20,
-    "dataFiles": { "summary": "summary.json", "bankroll_ablation": "bankroll_ablation.csv" }
+    "dataFiles": {
+      "deposit_policy_comparison": "deposit_policy_comparison.csv"
+    }
   }
 ]

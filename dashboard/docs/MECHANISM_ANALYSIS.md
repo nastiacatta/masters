@@ -201,7 +201,7 @@ The mechanism correctly identifies forecaster quality:
 
 | Deposit Policy | CRPS Improvement | Mechanism |
 |---------------|------------------|-----------|
-| Fixed (b=1) | -34% | Full skill signal |
+| Fixed (b=1) | -21% | Full skill signal |
 | Exponential | -15% | Reduced advantage |
 | Bankroll fraction | -5% | Minimal advantage |
 
