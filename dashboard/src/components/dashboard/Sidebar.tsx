@@ -195,12 +195,7 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
           {showLabel && (
             <span className="whitespace-nowrap overflow-hidden flex-1">{item.label}</span>
           )}
-          {/* Keyboard shortcut hint — only for reference items (thesis items already show step number) */}
-          {showLabel && item.shortcut && !isActive && item.step == null && (
-            <kbd className="hidden sm:inline-block text-[9px] font-mono text-slate-300 bg-slate-50 border border-slate-100 rounded px-1 py-0.5 ml-auto">
-              {item.shortcut}
-            </kbd>
-          )}
+          {/* Keyboard shortcuts removed — were redundant visual clutter */}
         </>
       )}
     </NavLink>
