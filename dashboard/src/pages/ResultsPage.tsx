@@ -554,7 +554,7 @@ export default function ResultsPage() {
 
   const convPipeline = useMemo(() => {
     // Generate DGP with controlled noise levels
-    const dgp = generateLatentFixed(DEMO_SEED, CONV_T, CONV_N, 1, CONV_TAU);
+    const dgp = generateLatentFixed(DEMO_SEED, CONV_T, CONV_N, 1, [...CONV_TAU]);
     // Run the mechanism manually using runComposableRound
     const params: ComposableParams = {
       lam: 0.3, eta: 1, sigma_min: 0.1, gamma: 4, rho: 0.1,

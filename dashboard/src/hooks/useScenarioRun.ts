@@ -32,7 +32,7 @@ export function useScenarioRun(options: PipelineOptions): {
   const builderSettlementRule = builder?.settlementRule;
   const mechanismLam = mechanism?.lam;
   const mechanismRho = mechanism?.rho;
-  const mechanismSigmaMin = mechanism?.sigmaMin;
+  const mechanismSigmaMin = mechanism?.sigma_min;
 
   const result = useMemo(
     () => runPipeline(options),
