@@ -283,8 +283,8 @@ function DepositSensitivityPanel() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800">How deposit policy affects accuracy (Elia Wind)</h3>
         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-          Fixed deposits give the mechanism the most room to work, achieving a 34% CRPS improvement over equal weighting.
-          Exponential deposits reduce the advantage to 15%, and bankroll-fraction deposits to just 5%.
+          Fixed deposits give the mechanism the most room to work (~21% CRPS improvement over equal weighting).
+          Exponential deposits reduce the advantage to ~15%, and bankroll-fraction deposits to ~5%.
           The deposit policy determines how much of the skill signal reaches the aggregate weights.
         </p>
       </div>
