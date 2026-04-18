@@ -16,7 +16,6 @@ import numpy as np
 
 from onlinev2.analysis.stats import compute_ci, compute_se, sanitise_json
 
-
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------

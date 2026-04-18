@@ -16,7 +16,6 @@ from dataclasses import asdict, dataclass
 
 from onlinev2.analysis.stats import sanitise_json
 
-
 # ---------------------------------------------------------------------------
 # Step-to-label / complexity mapping
 # ---------------------------------------------------------------------------

@@ -19,7 +19,6 @@ from onlinev2.analysis.panel_sweep import (
 )
 from onlinev2.analysis.stats import compute_ci, compute_se
 
-
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------

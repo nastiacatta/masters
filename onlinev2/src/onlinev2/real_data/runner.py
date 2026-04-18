@@ -248,7 +248,7 @@ def run_real_data_comparison(
         crps_oracle.append(c_oracle)
         per_round[idx]["crps_oracle"] = c_oracle
 
-    mean_oracle = float(np.mean(crps_oracle))
+    float(np.mean(crps_oracle))
     crps_per_rule["oracle"] = crps_oracle
 
     # Summary
@@ -396,7 +396,7 @@ def run_real_data_comparison(
     # --- Per-agent skill history (for dashboard skill recognition chart) ---
     # Downsample to ~600 points for reasonable JSON size
     sigma_hist = res["sigma_hist"]  # (n_forecasters, T)
-    L_hist = res.get("L_hist")      # (n_forecasters, T+1) if store_history
+    res.get("L_hist")      # (n_forecasters, T+1) if store_history
     score_hist = res.get("score_hist")  # (n_forecasters, T) if store_history
     wager_hist = res["wager_hist"]  # (n_forecasters, T)
 
@@ -405,7 +405,7 @@ def run_real_data_comparison(
     for t in range(warmup, T, step):
         entry: dict = {"t": t}
         for i in range(n_forecasters):
-            name = forecasters[i].name
+            forecasters[i].name
             entry[f"sigma_{i}"] = round(float(sigma_hist[i, t]), 6)
             entry[f"weight_{i}"] = round(float(wager_hist[i, t]), 6)
             if score_hist is not None:
@@ -447,14 +447,14 @@ def run_real_data_comparison(
         d = r['delta_crps_vs_equal']
         print(f"  {r['method']:15s} {r['mean_crps']:12.6f} {d:+12.6f}")
 
-    print(f"\n  Skill ranking (steady-state σ, last 20% of rounds):")
+    print("\n  Skill ranking (steady-state σ, last 20% of rounds):")
     print(f"  {'Forecaster':25s} {'σ':>8s} {'Weight':>8s} {'Score':>8s}")
     print(f"  {'-'*52}")
     for ss in steady_state:
         score_str = f"{ss['mean_score']:.4f}" if ss['mean_score'] is not None else "N/A"
         print(f"  {ss['forecaster']:25s} {ss['mean_sigma']:8.4f} {ss['mean_weight']:8.4f} {score_str:>8s}")
 
-    print(f"\n  Diebold-Mariano tests (H0: equal predictive accuracy):")
+    print("\n  Diebold-Mariano tests (H0: equal predictive accuracy):")
     dm_m = result["dm_test"]
     sig_m = "***" if dm_m["significant_at_001"] else ("*" if dm_m["significant_at_005"] else "")
     print(f"  Uniform vs Mechanism: DM={dm_m['statistic']:+.4f}, p={dm_m['p_value']:.6f} {sig_m}")

@@ -16,7 +16,6 @@ from hypothesis.extra.numpy import arrays
 
 from onlinev2.analysis.stats import compute_ci, compute_se, paired_delta_crps
 
-
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------
@@ -148,7 +147,6 @@ from onlinev2.analysis.regime_breakdown import (
 )
 from onlinev2.analysis.stats import sanitise_json
 
-
 # ---------------------------------------------------------------------------
 # Strategies for Properties 11 and 12
 # ---------------------------------------------------------------------------
@@ -267,8 +265,8 @@ def _assert_no_nan_inf_in_json(json_str: str) -> None:
 def _check_no_nan_inf(obj: object) -> None:
     """Recursively check that no float values are NaN or Inf."""
     if isinstance(obj, float):
-        assert not math.isnan(obj), f"Found NaN in JSON output"
-        assert not math.isinf(obj), f"Found Inf in JSON output"
+        assert not math.isnan(obj), "Found NaN in JSON output"
+        assert not math.isinf(obj), "Found Inf in JSON output"
     elif isinstance(obj, dict):
         for v in obj.values():
             _check_no_nan_inf(v)

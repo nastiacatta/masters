@@ -12,7 +12,6 @@ import pytest
 
 from onlinev2.analysis.stats import compute_ci, compute_se, paired_delta_crps, sanitise_json
 
-
 # ---------------------------------------------------------------------------
 # paired_delta_crps
 # ---------------------------------------------------------------------------

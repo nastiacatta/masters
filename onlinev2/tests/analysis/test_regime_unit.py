@@ -19,7 +19,6 @@ from onlinev2.analysis.regime_breakdown import (
 )
 from onlinev2.analysis.stats import compute_ci, compute_se
 
-
 # ---------------------------------------------------------------------------
 # Low sample size warning (Req 3.5)
 # ---------------------------------------------------------------------------

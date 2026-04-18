@@ -22,7 +22,6 @@ from onlinev2.analysis.regime_breakdown import (
 )
 from onlinev2.analysis.stats import compute_ci, compute_se
 
-
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------
@@ -169,7 +168,6 @@ class TestRegimePartitioning:
     @given(y=y_array())
     @settings(max_examples=100)
     def test_volatility_partition(self, y: np.ndarray) -> None:
-        T = len(y)
         high_vol_idx, low_vol_idx = _get_volatility_indices(y)
 
         abs_diff = np.abs(np.diff(y))
