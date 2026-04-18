@@ -15,7 +15,8 @@ export interface ExtendedParams extends MechanismParams {
 
 /** Cap weight shares per onlinev2 staking.cap_weight_shares.
  *  Projects shares onto the simplex with max share ≤ omegaMax.
- *  Returns rescaled values that sum to the original total M. */
+ *  Returns rescaled values that sum to the original total M.
+ *  Invariants: sum preserved, each share ≤ omegaMax, all non-negative. */
 export function capWeightShares(m: number[], omegaMax: number): number[] {
   const cleaned = m.map((v) => Math.max(0, v));
   const M = cleaned.reduce((a, b) => a + b, 0);
@@ -55,7 +56,26 @@ export function capWeightShares(m: number[], omegaMax: number): number[] {
 
   // Rescale back to original total
   const shareSum = shares.reduce((a, b) => a + b, 0);
-  return shareSum > EPS ? shares.map((s) => (s / shareSum) * M) : cleaned;
+  const result = shareSum > EPS ? shares.map((s) => (s / shareSum) * M) : cleaned;
+
+  // Validate invariants (match Python assertions)
+  if (import.meta.env.DEV) {
+    const resultSum = result.reduce((a, b) => a + b, 0);
+    const massTol = Math.max(EPS, 1e-8);
+    if (Math.abs(resultSum - M) > massTol) {
+      console.warn(`capWeightShares: mass not preserved: sum=${resultSum}, M=${M}`);
+    }
+    const resultShares = resultSum > EPS ? result.map((v) => v / resultSum) : result;
+    const maxShare = Math.max(...resultShares);
+    if (maxShare > om + massTol) {
+      console.warn(`capWeightShares: cap violated: maxShare=${maxShare}, om=${om}`);
+    }
+    if (result.some((v) => v < -EPS)) {
+      console.warn(`capWeightShares: negative value found`);
+    }
+  }
+
+  return result;
 }
 
 export interface ExtendedStepOutputs extends StepOutputs {

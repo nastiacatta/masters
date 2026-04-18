@@ -29,7 +29,7 @@ export default function HomePage() {
       <div className="max-w-6xl mx-auto px-6 py-16 sm:py-24 space-y-16">
 
         {/* ── Research Question ── */}
-        <header>
+        <header className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight tracking-tight">
             Skill × Stake
           </h1>
