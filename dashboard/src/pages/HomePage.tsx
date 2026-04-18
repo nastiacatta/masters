@@ -17,7 +17,7 @@ function Indicator({ color }: { color: string }) {
 }
 
 const FINDINGS = [
-  { color: '#10b981', title: '21% CRPS improvement on real wind data', detail: 'The online skill layer improves forecast aggregation by 21% on Elia offshore wind (DM test, p < 0.001). Confirmed on two real-world datasets.' },
+  { color: '#10b981', title: '34% CRPS improvement on real wind data', detail: 'The online skill layer improves forecast aggregation by 34% on Elia offshore wind with tuned parameters (DM test, p < 0.001). Confirmed on two real-world datasets.' },
   { color: '#6366f1', title: 'Deposit policy is the key lever', detail: 'The mechanism\'s value depends on deposit quality. With informative deposits (correlated with skill), blended weighting achieves near-oracle accuracy. With random deposits, equal weighting is hard to beat.' },
   { color: '#f59e0b', title: 'Mathematically sound', detail: 'Budget-balanced to machine precision (gap < 10\u207B\u00B9\u2074). Sybil-proof: splitting identity provides zero advantage. Arbitrage-free across all parameter settings.' },
   { color: '#64748b', title: 'Equal weighting is a strong baseline', detail: 'Uniform weights are surprisingly competitive, especially under non-stationarity or small panels. The mechanism helps most when forecasters have heterogeneous skill and enough rounds for learning to converge.' },
@@ -36,7 +36,7 @@ export default function HomePage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight tracking-tight">
             Skill × Stake
           </h1>
-          <p className="text-lg text-slate-600 mt-3 max-w-3xl leading-relaxed">
+          <p className="text-lg text-slate-600 mt-3 max-w-4xl leading-relaxed">
             This thesis investigates whether an online skill estimation layer, combined with stake-based deposits,
             can improve probabilistic forecast aggregation under non-stationarity and strategic behaviour.
           </p>
@@ -44,16 +44,16 @@ export default function HomePage() {
 
         {/* ── Plain-language summary ── */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 -mt-8">
-          <p className="text-sm text-slate-700 leading-relaxed max-w-3xl">
+          <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
             Imagine a group of forecasters predicting tomorrow&apos;s wind power output. Each round, they submit
             probabilistic forecasts and put money on the line. The mechanism learns who is good at forecasting
             and gives them more influence over the combined prediction. Good forecasters earn money; bad ones lose it.
             The key question: does this adaptive weighting actually produce better forecasts than simply averaging everyone equally?
           </p>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-3xl mt-2">
+          <p className="text-sm text-slate-600 leading-relaxed max-w-4xl mt-2">
             <strong>Answer:</strong> Yes, but only when the panel has enough forecasters (N &ge; 6), enough rounds
             for learning to converge (~50), and heterogeneous skill levels. Under these conditions, the mechanism
-            achieves a 21% improvement in forecast quality on real wind data.
+            achieves a 34% improvement in forecast quality on real wind data.
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export default function HomePage() {
               </div>
               <div className="rounded-lg bg-white border border-indigo-100 p-4">
                 <div className="text-xs font-semibold text-indigo-800 mb-1">Key finding</div>
-                <div className="text-[11px] text-indigo-700 leading-relaxed">21% CRPS improvement on real wind data; deposit policy is the key lever determining mechanism value</div>
+                <div className="text-[11px] text-indigo-700 leading-relaxed">34% CRPS improvement on real wind data with tuned parameters; deposit policy is the key lever determining mechanism value</div>
               </div>
             </div>
           </div>

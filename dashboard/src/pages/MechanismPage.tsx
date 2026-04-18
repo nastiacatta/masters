@@ -135,9 +135,9 @@ export default function MechanismPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
         {/* ── Header ── */}
-        <div className="mb-8">
+        <div>
           <h2 className="text-2xl font-bold text-slate-900">Explorer</h2>
           <p className="text-sm text-slate-600 mt-2 max-w-2xl">
             Interactive sandbox for exploring the mechanism. Adjust parameters, step through rounds, and inspect agent-level data.
@@ -397,7 +397,7 @@ export default function MechanismPage() {
                   <div className="space-y-4">
                     <SmallMultiplesGrid title="Skill trajectories (σ)" subtitle="One chart per agent">
                       {Array.from({ length: N }, (_, i) => (
-                        <ChartCard key={`skill-${i}`} title={agentName(i)} provenance={{ type: 'demo', label: `In-browser demo — seed=${seed}, N=${nAgents}, T=${rounds}` }}>
+                        <ChartCard key={`skill-${i}`} title={agentName(i)} provenance={{ type: 'demo', label: `In-browser demo, seed=${seed}, N=${nAgents}, T=${rounds}` }}>
                           <ResponsiveContainer width="100%" height={240}>
                             <LineChart data={skillData} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
                               <CartesianGrid {...GRID_PROPS} />
@@ -416,7 +416,7 @@ export default function MechanismPage() {
 
                     <SmallMultiplesGrid title="Wealth evolution" subtitle="One chart per agent">
                       {Array.from({ length: N }, (_, i) => (
-                        <ChartCard key={`wealth-${i}`} title={agentName(i)} provenance={{ type: 'demo', label: `In-browser demo — seed=${seed}, N=${nAgents}, T=${rounds}` }}>
+                        <ChartCard key={`wealth-${i}`} title={agentName(i)} provenance={{ type: 'demo', label: `In-browser demo, seed=${seed}, N=${nAgents}, T=${rounds}` }}>
                           <ResponsiveContainer width="100%" height={240}>
                             <LineChart data={wealthData} margin={{ top: 4, right: 8, bottom: 4, left: 36 }}>
                               <CartesianGrid {...GRID_PROPS} />
@@ -545,7 +545,7 @@ export default function MechanismPage() {
               <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-slate-200 p-5">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-                    Transformation ribbon — Round {currentRound + 1}
+                    Transformation ribbon: Round {currentRound + 1}
                   </h4>
                   <RoundRibbon
                     trace={trace}
