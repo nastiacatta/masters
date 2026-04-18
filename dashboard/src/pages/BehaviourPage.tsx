@@ -1384,7 +1384,7 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
         can cause ruin (agents forced out), the house-money effect increases risk-taking after
         gains, and Kelly-like sizing ties deposits to estimated edge.
       </p>
-      <MathBlock accent label="Effective wager" latex="m_i = f_{\\text{risk}} \\cdot W_i \\cdot d_i, \\quad f_{\\text{risk}} \\in [0.05, 0.45]" />
+      <MathBlock accent label="Effective wager" latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1-\\lambda)\\sigma^{\\eta}" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricDisplay label="Ruin events?" value={ruinCount > 0 ? `${ruinCount} agents` : 'None'}

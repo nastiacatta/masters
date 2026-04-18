@@ -78,7 +78,6 @@ import {
   useSensitivityData,
   useFailureModes,
   useBaselineCoverage,
-  useAnalysisGaps,
   useAblationInterpretation,
   useRealDataContext,
   useRegimeBreakdownFromAdapter,
@@ -90,7 +89,6 @@ import ResultConsistencyMatrix from '@/components/analysis/ResultConsistencyMatr
 import SensitivityPanel from '@/components/analysis/SensitivityPanel';
 import FailureModePanel from '@/components/analysis/FailureModePanel';
 import BaselineCoverageTable from '@/components/analysis/BaselineCoverageTable';
-import MissingAnalysisChecklist from '@/components/analysis/MissingAnalysisChecklist';
 import WhenDoesSkillHelpPanel from '@/components/analysis/WhenDoesSkillHelpPanel';
 import AblationInterpretPanel from '@/components/analysis/AblationInterpretPanel';
 import RealDataContextPanel from '@/components/analysis/RealDataContextPanel';
@@ -689,7 +687,6 @@ export default function ResultsPage() {
   const sensitivityData = useSensitivityData();
   const failureModes = useFailureModes();
   const baselineCoverage = useBaselineCoverage();
-  const analysisGaps = useAnalysisGaps();
   const ablationInterpretation = useAblationInterpretation();
   const realDataContext = useRealDataContext();
   const regimeBreakdownData = useRegimeBreakdownFromAdapter();
@@ -930,6 +927,7 @@ export default function ResultsPage() {
                       {' '}{realForecasterCount} models: {realForecasterNames.join(', ')}.
                       Left: skill estimate σ (higher = better forecaster). Right: normalised weight (higher = more influence on the aggregate).
                       Dashed lines show steady-state averages from the last 2,000 rounds.
+                      Showing top 5 of {realForecasterCount} forecasters.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                       {/* σ trajectory */}
@@ -944,11 +942,11 @@ export default function ResultsPage() {
                               label={{ value: 'σ', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
-                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
                               <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
                             ))}
-                            {realTargetSigmas.map((ts, i) => (
+                            {realTargetSigmas.slice(0, 5).map((ts, i) => (
                               <ReferenceLine key={`rts-${i}`} y={ts}
                                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
                                 strokeDasharray="6 3" strokeOpacity={0.4}>
@@ -971,11 +969,11 @@ export default function ResultsPage() {
                               label={{ value: 'w', angle: -90, position: 'insideLeft', offset: 0, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
-                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
                               <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
                             ))}
-                            {realTargetWeights.map((tw, i) => (
+                            {realTargetWeights.slice(0, 5).map((tw, i) => (
                               <ReferenceLine key={`rtw-${i}`} y={tw}
                                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
                                 strokeDasharray="6 3" strokeOpacity={0.4}>
@@ -1268,9 +1266,9 @@ export default function ResultsPage() {
                         label={{ value: 'CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                       <Tooltip content={<SmartTooltip />} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {(realData.forecaster_names ?? []).map((name, i) => (
+                      {(realData.forecaster_names ?? []).slice(0, 5).map((name, i) => (
                         <Line key={i} type="monotone" dataKey={`crps_${i}`} name={name}
-                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
+                          stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
                       ))}
                     </LineChart>
                   </ResponsiveContainer>
@@ -1701,11 +1699,11 @@ export default function ResultsPage() {
                               label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
                               <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
                             ))}
-                            {realTargetSigmas.map((ts, i) => (
+                            {realTargetSigmas.slice(0, 5).map((ts, i) => (
                               <ReferenceLine key={`rts-${i}`} y={ts}
                                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
                                 strokeDasharray="6 3" strokeOpacity={0.4}>
@@ -1727,11 +1725,11 @@ export default function ResultsPage() {
                               label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-                            {Array.from({ length: realForecasterCount }, (_, i) => (
+                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
                               <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={2} dot={false} />
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
                             ))}
-                            {realTargetWeights.map((tw, i) => (
+                            {realTargetWeights.slice(0, 5).map((tw, i) => (
                               <ReferenceLine key={`rtw-${i}`} y={tw}
                                 stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
                                 strokeDasharray="6 3" strokeOpacity={0.4}>
@@ -1962,7 +1960,7 @@ export default function ResultsPage() {
               </ResponsiveContainer>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Deposit rules in detail</div>
-                <MathBlock latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1{-}\\lambda)\\sigma^\\eta" label="Effective wager" caption="The deposit b_i determines how much of the skill signal reaches the aggregate" />
+                <MathBlock latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1-\\lambda)\\sigma^{\\eta}" label="Effective wager" caption="The deposit b_i determines how much of the skill signal reaches the aggregate" />
 
                 <div className="grid sm:grid-cols-3 gap-3">
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -2017,7 +2015,7 @@ export default function ResultsPage() {
                 {claimValidation.loading ? (
                   <p className="text-xs text-slate-400">Loading claim validation…</p>
                 ) : claimValidation.error ? (
-                  <p className="text-xs text-red-500">Error loading claims: {claimValidation.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {claimValidation.claims.map((claim) => {
@@ -2041,7 +2039,7 @@ export default function ResultsPage() {
                 {resultConsistency.loading ? (
                   <p className="text-xs text-slate-400">Loading consistency matrix…</p>
                 ) : resultConsistency.error ? (
-                  <p className="text-xs text-red-500">Error: {resultConsistency.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : resultConsistency.data ? (
                   <ResultConsistencyMatrix result={resultConsistency.data} />
                 ) : null}
@@ -2052,7 +2050,7 @@ export default function ResultsPage() {
                 {sensitivityData.loading ? (
                   <p className="text-xs text-slate-400">Loading sensitivity analysis…</p>
                 ) : sensitivityData.error ? (
-                  <p className="text-xs text-red-500">Error: {sensitivityData.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : sensitivityData.data ? (
                   <SensitivityPanel summary={sensitivityData.data} />
                 ) : null}
@@ -2063,7 +2061,7 @@ export default function ResultsPage() {
                 {failureModes.loading ? (
                   <p className="text-xs text-slate-400">Loading failure modes…</p>
                 ) : failureModes.error ? (
-                  <p className="text-xs text-red-500">Error: {failureModes.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : failureModes.data ? (
                   <FailureModePanel failureModes={failureModes.data} />
                 ) : (
@@ -2076,23 +2074,10 @@ export default function ResultsPage() {
                 {baselineCoverage.loading ? (
                   <p className="text-xs text-slate-400">Loading baseline coverage…</p>
                 ) : baselineCoverage.error ? (
-                  <p className="text-xs text-red-500">Error: {baselineCoverage.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : baselineCoverage.data ? (
                   <BaselineCoverageTable entries={baselineCoverage.data} />
                 ) : null}
-              </section>
-
-              {/* ── Missing Analysis Checklist ── */}
-              <section>
-                {analysisGaps.loading ? (
-                  <p className="text-xs text-slate-400">Loading analysis gaps…</p>
-                ) : analysisGaps.error ? (
-                  <p className="text-xs text-red-500">Error: {analysisGaps.error}</p>
-                ) : analysisGaps.data ? (
-                  <MissingAnalysisChecklist gaps={analysisGaps.data} />
-                ) : (
-                  <MissingAnalysisChecklist gaps={[]} />
-                )}
               </section>
 
               {/* ── When Does Skill Help Panel (placeholder data) ── */}
@@ -2113,7 +2098,7 @@ export default function ResultsPage() {
                 {ablationInterpretation.loading ? (
                   <p className="text-xs text-slate-400">Loading ablation interpretation…</p>
                 ) : ablationInterpretation.error ? (
-                  <p className="text-xs text-red-500">Error: {ablationInterpretation.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : ablationInterpretation.data ? (
                   <AblationInterpretPanel interpretation={ablationInterpretation.data} />
                 ) : null}
@@ -2124,7 +2109,7 @@ export default function ResultsPage() {
                 {regimeBreakdownData.loading ? (
                   <p className="text-xs text-slate-400">Loading regime breakdown…</p>
                 ) : regimeBreakdownData.error ? (
-                  <p className="text-xs text-red-500">Error: {regimeBreakdownData.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : regimeBreakdownData.data ? (
                   <RegimeBreakdownTable regimes={regimeBreakdownData.data} />
                 ) : null}
@@ -2135,7 +2120,7 @@ export default function ResultsPage() {
                 {depositInteraction.loading ? (
                   <p className="text-xs text-slate-400">Loading deposit interaction…</p>
                 ) : depositInteraction.error ? (
-                  <p className="text-xs text-red-500">Error: {depositInteraction.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : depositInteraction.data ? (
                   <DepositInteractionPanel analysis={depositInteraction.data} />
                 ) : null}
@@ -2146,7 +2131,7 @@ export default function ResultsPage() {
                 {panelSizeSensitivity.loading ? (
                   <p className="text-xs text-slate-400">Loading panel size sensitivity…</p>
                 ) : panelSizeSensitivity.error ? (
-                  <p className="text-xs text-red-500">Error: {panelSizeSensitivity.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : panelSizeSensitivity.data ? (
                   <PanelSizeChart sweep={panelSizeSensitivity.data} />
                 ) : null}
@@ -2157,7 +2142,7 @@ export default function ResultsPage() {
                 {realDataContext.loading ? (
                   <p className="text-xs text-slate-400">Loading real-data context…</p>
                 ) : realDataContext.error ? (
-                  <p className="text-xs text-red-500">Error: {realDataContext.error}</p>
+                  <p className="text-xs text-slate-400">Data not yet available for this analysis.</p>
                 ) : realDataContext.data ? (
                   <RealDataContextPanel
                     realData={realDataContext.data.realData}
