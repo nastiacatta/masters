@@ -119,6 +119,8 @@ export default function WaterfallChart({
             stroke={AXIS_STROKE}
             interval={0}
             height={60}
+            angle={-30}
+            textAnchor="end"
           />
           <YAxis
             tick={AXIS_TICK}

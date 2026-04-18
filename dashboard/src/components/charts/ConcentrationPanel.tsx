@@ -96,8 +96,12 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
           <CartesianGrid {...GRID_PROPS} />
           <XAxis
             dataKey="label"
-            tick={{ ...AXIS_TICK, fontSize: 12 }}
+            tick={{ ...AXIS_TICK, fontSize: 11 }}
             stroke={AXIS_STROKE}
+            interval={0}
+            angle={data.length > 4 ? -25 : 0}
+            textAnchor={data.length > 4 ? 'end' : 'middle'}
+            height={data.length > 4 ? 50 : 30}
           />
           <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
           <Tooltip content={<SmartTooltip />} />

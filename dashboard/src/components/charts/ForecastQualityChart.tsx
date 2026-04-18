@@ -53,7 +53,7 @@ export default function ForecastQualityChart({ data }: Props) {
         <LineChart
           data={data}
           syncId="round-window"
-          margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+          margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
           onMouseDown={zoom.onMouseDown}
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
