@@ -215,7 +215,7 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
               <Tooltip content={<SmartTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8, lineHeight: '16px', maxHeight: 36, overflow: 'hidden' }} iconSize={8} />
               <ReferenceLine y={pipeline.params.sigma_min} stroke="#94a3b8" strokeDasharray="4 4">
                 <Label value="σ_min" position="right" fill="#94a3b8" fontSize={9} />
               </ReferenceLine>

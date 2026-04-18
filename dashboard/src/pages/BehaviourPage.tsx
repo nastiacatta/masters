@@ -668,7 +668,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[skillZoom.state.left, skillZoom.state.right]} />
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
                 <Tooltip content={<SmartTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 11, lineHeight: '18px', maxHeight: 40, overflow: 'hidden' }} iconSize={8} />
                 {Array.from({ length: N }, (_, i) => (
                   <Line key={i} type="monotone" dataKey={`F${i + 1}`} name={agentName(i)}
                     stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />

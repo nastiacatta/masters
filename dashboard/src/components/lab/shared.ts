@@ -25,6 +25,8 @@ export const TOOLTIP_STYLE: CSSProperties = {
   background: 'rgba(255,255,255,0.98)',
   backdropFilter: 'blur(8px)',
   lineHeight: 1.5,
+  maxWidth: 320,
+  wordBreak: 'break-word' as const,
 };
 
 export function agentName(i: number): string {

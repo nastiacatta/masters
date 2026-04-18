@@ -44,6 +44,30 @@ interface TradeOffScatterProps {
 
 /* ── Custom label renderer for scatter points ──────────────────────── */
 
+/** Simple greedy label placement: track used Y positions and nudge labels to avoid overlap. */
+const _usedPositions: number[] = [];
+const LABEL_HEIGHT = 14; // approximate height of a label in px
+
+function resetLabelPositions() {
+  _usedPositions.length = 0;
+}
+
+function findNonOverlappingY(desiredY: number): number {
+  let y = desiredY;
+  // Try the desired position first, then nudge up/down
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const offset = attempt === 0 ? 0 : (attempt % 2 === 1 ? Math.ceil(attempt / 2) : -Math.ceil(attempt / 2)) * LABEL_HEIGHT;
+    const candidate = y + offset;
+    if (_usedPositions.every((used) => Math.abs(used - candidate) >= LABEL_HEIGHT)) {
+      _usedPositions.push(candidate);
+      return candidate;
+    }
+  }
+  // Fallback: just use the desired position
+  _usedPositions.push(y);
+  return y;
+}
+
 function renderPointLabel(props: LabelProps & { index?: number }, data: TradeOffPoint[]) {
   const { x, y, index } = props;
   if (index == null || !data[index]) return null;
@@ -51,12 +75,15 @@ function renderPointLabel(props: LabelProps & { index?: number }, data: TradeOff
   const px = Number(x);
   const py = Number(y);
 
-  // Place label to the right of the dot instead of above/below
-  // This avoids vertical overlap when points have similar Y values
+  // Reset positions on first label of each render pass
+  if (index === 0) resetLabelPositions();
+
+  const adjustedY = findNonOverlappingY(py + 4);
+
   return (
     <text
       x={px + 14}
-      y={py + 4}
+      y={adjustedY}
       textAnchor="start"
       fill={point.color}
       fontSize={11}
