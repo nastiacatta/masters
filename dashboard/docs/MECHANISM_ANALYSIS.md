@@ -22,6 +22,8 @@ Each forecaster i submits:
 - A **probabilistic forecast**: a set of quantiles q_i(tau) at levels tau = {0.1, 0.2, ..., 0.9}
 - A **deposit** b_i (money at risk)
 
+The quantile grid uses 9 equidistant levels (tau = 0.1, 0.2, ..., 0.9), matching `TAUS_FINE` in both the Python core (`onlinev2.core.scoring.TAUS_FINE`) and the dashboard TypeScript (`dgpSimulator.TAUS`). A legacy 5-level grid (0.1, 0.25, 0.5, 0.75, 0.9) exists as `TAUS_COARSE` but is not recommended for new experiments because the non-equidistant spacing reduces CRPS approximation quality.
+
 The deposit can follow different policies:
 - **Fixed**: b_i = 1 for all agents (isolates the skill signal)
 - **Wealth fraction**: b_i = f * W_i where f ~ 0.18 (creates feedback loop)
@@ -224,11 +226,13 @@ Total payout = total effective wager. Verified to machine precision (gap < 1e-14
 
 ### 6.2 Sybil-Proofness
 
-Splitting identity provides zero advantage. If agent i splits into two clones (i', i'') with deposits b' + b'' = b_i and the same forecast:
+Splitting identity provides zero advantage **when clones submit identical reports and conserve total wager**. If agent i splits into two clones (i', i'') with deposits b' + b'' = b_i and the same forecast:
 - Both clones get the same score s_i
 - Their combined payoff: pi' + pi'' = m' * (1 + s_i - s_bar) + m'' * (1 + s_i - s_bar) = (m' + m'') * (1 + s_i - s_bar) = m_i * (1 + s_i - s_bar) = pi_i
 
 The payoff is identical. No incentive to split.
+
+**Important scope limitation:** This holds only for the narrow case of identical reports and conserved total wager. In practice, sybil clones may submit slightly different reports (due to noise or strategy), which can break the invariance. The dashboard's sybil preset tests this more realistic scenario where clones have small report divergence, not the theoretical invariance property.
 
 ### 6.3 Arbitrage-Free
 

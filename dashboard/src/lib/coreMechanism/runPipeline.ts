@@ -2,7 +2,7 @@
  * Pipeline runner: DGP → Core (composable) → run and collect results with per-round traces.
  * Rerun from round 0 to T on every option change; UI reads selected round from recomputed state.
  */
-import { generateDGP, type DGPId } from './dgpSimulator';
+import { generateDGP, type DGPId, TAUS } from './dgpSimulator';
 import type { AgentState, WeightingMode } from './runRound';
 import {
   DEFAULT_BUILDER_SELECTIONS,
@@ -209,6 +209,11 @@ function buildRoundBehaviour(
     }
 
     if (preset === 'sybil' && index < sybilCount) {
+      // NOTE: This is a *realistic* sybil scenario where clones have slightly
+      // different reports due to noise. The theoretical sybil-proofness property
+      // (Lambert 2008, Proposition 3) holds only when clones submit *identical*
+      // reports and conserve total wager. This preset tests the more practical
+      // case where identity splitting introduces small report divergence.
       report = clamp(baseReports[0] + normalSample(rng) * 0.005);
       riskFraction *= 0.55;
       depositMultiplier = 1 / sybilCount;
@@ -419,9 +424,8 @@ export function runPipeline(options: PipelineOptions): PipelineResult {
       ? (() => {
           let sum = 0;
           for (let k = 0; k < trace.r_hat_q.length; k++) {
-            const taus = [0.1, 0.25, 0.5, 0.75, 0.9];
             const err = y - trace.r_hat_q[k];
-            sum += err >= 0 ? taus[k] * err : (taus[k] - 1) * err;
+            sum += err >= 0 ? TAUS[k] * err : (TAUS[k] - 1) * err;
           }
           return (2 * sum) / trace.r_hat_q.length;
         })()

@@ -7,8 +7,22 @@ import { createSeededRng, normCdf, normPpf } from './seededRng';
 
 export type DGPId = 'baseline' | 'latent_fixed' | 'aggregation_method1' | 'aggregation_method3';
 
-/** Quantile levels used for CRPS scoring throughout the mechanism. */
-export const TAUS = [0.1, 0.25, 0.5, 0.75, 0.9] as const;
+/**
+ * Quantile grids for CRPS scoring.
+ *
+ * TAUS_COARSE: 5-level non-equidistant grid (legacy). Adequate for quick checks
+ * but produces a less accurate CRPS approximation because the trapezoidal rule
+ * is not exact on non-equidistant grids.
+ *
+ * TAUS_FINE: 9-level equidistant grid. Recommended for new experiments and
+ * aligned with Python onlinev2.core.scoring.TAUS_FINE. Provides better CRPS
+ * approximation quality.
+ *
+ * TAUS: alias for TAUS_FINE (the recommended default).
+ */
+export const TAUS_COARSE = [0.1, 0.25, 0.5, 0.75, 0.9] as const;
+export const TAUS_FINE = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] as const;
+export const TAUS = TAUS_FINE;
 export type Taus = typeof TAUS;
 
 export interface DGPOption {

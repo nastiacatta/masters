@@ -98,7 +98,7 @@ export const PRESET_META: Record<
   },
   sybil: {
     label: 'Sybil split',
-    description: 'A strong forecaster is split across multiple identities.',
+    description: 'A strong forecaster is split across multiple identities with slightly divergent reports. Tests the practical (not theoretical) sybil scenario.',
     levers: ['identity splitting', 'share fragmentation'],
   },
   evader: {

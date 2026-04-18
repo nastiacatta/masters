@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import type { FC } from 'react';
+import { useEffect, type FC } from 'react';
 import { useCollapsibleSidebar } from '@/hooks/useCollapsibleSidebar';
 
 /* ------------------------------------------------------------------ */
@@ -13,6 +13,8 @@ interface NavItem {
   icon: FC<{ className?: string }>;
   /** Step number shown in collapsed mode (null = reference section) */
   step: number | null;
+  /** Keyboard shortcut hint (e.g. "1", "2") */
+  shortcut?: string;
 }
 
 /* 16×16 inline SVG icons — simple paths, no icon library */
@@ -55,11 +57,11 @@ const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
 
 /** Thesis argument flow — numbered steps + unnumbered reference pages */
 const NAV_ITEMS: NavItem[] = [
-  { to: '/',           label: 'Overview',     icon: HomeIcon,     step: 1 },
-  { to: '/evidence',   label: 'Evidence',     icon: ChartBarIcon, step: 2 },
-  { to: '/robustness', label: 'Robustness',   icon: ShieldIcon,   step: 3 },
-  { to: '/notes',      label: 'Notes',        icon: BookIcon,     step: null },
-  { to: '/explorer',   label: 'Explorer',     icon: CogIcon,      step: null },
+  { to: '/',           label: 'Overview',     icon: HomeIcon,     step: 1, shortcut: '1' },
+  { to: '/evidence',   label: 'Evidence',     icon: ChartBarIcon, step: 2, shortcut: '2' },
+  { to: '/robustness', label: 'Robustness',   icon: ShieldIcon,   step: 3, shortcut: '3' },
+  { to: '/notes',      label: 'Notes',        icon: BookIcon,     step: null, shortcut: 'n' },
+  { to: '/explorer',   label: 'Explorer',     icon: CogIcon,      step: null, shortcut: 'e' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -76,10 +78,35 @@ export default function Sidebar() {
     onMouseLeave,
   } = useCollapsibleSidebar();
 
+  const location = useLocation();
+
   const thesis    = NAV_ITEMS.filter((n) => n.step != null);
   const reference = NAV_ITEMS.filter((n) => n.step == null);
 
   const showLabels = !isCollapsed || isHoverExpanded;
+
+  // Keyboard shortcuts: press 1/2/3/n/e to navigate (only when no input focused)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Skip if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const item = NAV_ITEMS.find((n) => n.shortcut === e.key);
+      if (item) {
+        // Use history.pushState via the hash router
+        window.location.hash = `#${item.to}`;
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Determine current page title for the breadcrumb area
+  const currentPage = NAV_ITEMS.find(
+    (n) => n.to === '/' ? location.pathname === '/' : location.pathname.startsWith(n.to)
+  );
 
   return (
     <aside
@@ -88,8 +115,8 @@ export default function Sidebar() {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Header — just the toggle, no title clutter */}
-      <div className="px-2 py-2.5 flex items-center">
+      {/* Header — toggle + current page name */}
+      <div className="px-2 py-2.5 flex items-center gap-2">
         <button
           onClick={toggle}
           className={clsx(
@@ -99,12 +126,17 @@ export default function Sidebar() {
           )}
           style={{ minWidth: 32, minHeight: 32, width: 32, height: 32 }}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
         >
           <span className="text-[14px] leading-none font-mono">
             {isCollapsed ? '»' : '«'}
           </span>
         </button>
+        {showLabels && currentPage && (
+          <span className="text-[11px] font-medium text-slate-400 truncate">
+            {currentPage.label}
+          </span>
+        )}
       </div>
 
       {/* Navigation — clean, no group labels */}
@@ -143,7 +175,7 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
     <NavLink
       to={item.to}
       end={item.to === '/'}
-      title={showLabel ? undefined : item.label}
+      title={showLabel ? undefined : `${item.label}${item.shortcut ? ` (${item.shortcut})` : ''}`}
       className={({ isActive }) =>
         clsx(
           'flex items-center rounded-lg text-[13px] font-medium',
@@ -173,7 +205,13 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
             <Icon className="shrink-0" />
           )}
           {showLabel && (
-            <span className="whitespace-nowrap overflow-hidden">{item.label}</span>
+            <span className="whitespace-nowrap overflow-hidden flex-1">{item.label}</span>
+          )}
+          {/* Keyboard shortcut hint — only when expanded and not active */}
+          {showLabel && item.shortcut && !isActive && (
+            <kbd className="hidden sm:inline-block text-[9px] font-mono text-slate-300 bg-slate-50 border border-slate-100 rounded px-1 py-0.5 ml-auto">
+              {item.shortcut}
+            </kbd>
           )}
         </>
       )}

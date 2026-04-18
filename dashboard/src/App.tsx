@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { StoreProvider } from '@/lib/store';
 import { ExplorerProvider } from '@/lib/explorerStore';
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -13,6 +13,16 @@ import NotesPage from '@/pages/NotesPage';
 import LabPage from '@/pages/LabPage';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
 
+/** Scroll to top on route change and add a subtle fade transition. */
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  return (
+    <div key={location.pathname} className="flex-1 overflow-hidden flex flex-col animate-in fade-in duration-150">
+      {children}
+    </div>
+  );
+}
+
 
 export default function App() {
   return (
@@ -22,7 +32,8 @@ export default function App() {
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
             <main className="flex-1 overflow-hidden bg-slate-50 flex flex-col">
-              <Routes>
+              <PageTransition>
+                <Routes>
                 {/* Thesis flow */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/evidence" element={<ResultsPage />} />
@@ -52,6 +63,7 @@ export default function App() {
                 <Route path="/mechanism-explorer" element={<Navigate to="/explorer" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </PageTransition>
             </main>
           </div>
           <StickyGlossary />
