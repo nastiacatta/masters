@@ -111,6 +111,29 @@ const CONV_T = 500;
 const CONV_TAU = [0.2, 0.6, 1.5] as const; // Good, Okay, Bad
 const CONV_LABELS = ['F1: Good (τ=0.2)', 'F2: Okay (τ=0.6)', 'F3: Bad (τ=1.5)'] as const;
 
+// ── Method chart colors & labels for real-data comparison ───────────
+const METHOD_CHART_COLORS: Record<string, string> = {
+  uniform: '#94a3b8',
+  skill: '#8b5cf6',
+  mechanism: '#6366f1',
+  best_single: '#f59e0b',
+  inverse_variance: '#0ea5e9',
+  trimmed_mean: '#14b8a6',
+  median: '#10b981',
+  oracle: '#64748b',
+};
+
+const METHOD_CHART_LABELS: Record<string, string> = {
+  uniform: 'Equal',
+  skill: 'Skill-only',
+  mechanism: 'Skill × stake',
+  best_single: 'Best single',
+  inverse_variance: 'Inv-variance',
+  trimmed_mean: 'Trimmed mean',
+  median: 'Median',
+  oracle: 'Oracle',
+};
+
 type Verdict = 'good' | 'neutral' | 'bad';
 
 
@@ -779,11 +802,14 @@ export default function ResultsPage() {
               </div>
 
               <DeltaBarChart
-                data={realData.rows.map(r => ({
-                  label: r.method === 'uniform' ? 'Equal' : r.method === 'skill' ? 'Skill-only' : r.method === 'mechanism' ? 'Skill × stake' : r.method === 'best_single' ? 'Best single' : r.method,
-                  delta: r.delta_crps_vs_equal * 1e4,
-                  color: r.method === 'mechanism' ? '#6366f1' : r.method === 'skill' ? '#8b5cf6' : r.method === 'uniform' ? '#94a3b8' : '#f59e0b',
-                }))}
+                data={realData.rows
+                  .filter(r => r.method !== 'uniform')
+                  .sort((a, b) => a.delta_crps_vs_equal - b.delta_crps_vs_equal)
+                  .map(r => ({
+                    label: METHOD_CHART_LABELS[r.method] ?? r.method,
+                    delta: r.delta_crps_vs_equal * 1e4,
+                    color: METHOD_CHART_COLORS[r.method] ?? '#64748b',
+                  }))}
                 baselineLabel="Equal weighting"
                 metricLabel="Δ CRPS (×10⁴)"
                 title="Method comparison — Wind power"
@@ -806,6 +832,20 @@ export default function ResultsPage() {
                   </span>
                 </div>
               )}
+
+              {/* Mechanism vs alternatives interpretive callout */}
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-2">
+                <h4 className="text-xs font-semibold text-indigo-900">Why simpler methods beat the mechanism on pure CRPS</h4>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  Median and inverse-variance weighting achieve better CRPS because they directly optimise for forecast quality.
+                  The mechanism trades some aggregation quality for properties these methods lack:
+                  <strong> incentive-compatible settlement</strong> (agents are rewarded for accuracy),
+                  <strong> budget balance</strong> (no external funding),
+                  <strong> sybil-proofness</strong> (splitting identity provides zero advantage), and
+                  <strong> online adaptivity</strong> (learns skill without prior knowledge).
+                  The mechanism's contribution is the complete economic structure, not just the aggregation.
+                </p>
+              </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -1260,6 +1300,83 @@ export default function ResultsPage() {
                   </ResponsiveContainer>
                 </div>
               )}
+
+              {/* ═══ Aggregate calibration ═══ */}
+              {realData?.calibration && realData.calibration.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-800">Aggregate calibration (mechanism)</h3>
+                  <p className="text-xs text-slate-500">
+                    PIT coverage: fraction of outcomes below each quantile level.
+                    Perfect calibration = empirical matches nominal.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200">
+                          <th className="text-left py-1.5 text-slate-500 font-medium">τ</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Nominal</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Empirical</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Gap</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {realData.calibration.map((c: any) => (
+                          <tr key={c.tau} className="border-b border-slate-100">
+                            <td className="py-1.5 font-mono">{c.tau.toFixed(2)}</td>
+                            <td className="text-right py-1.5 font-mono">{c.nominal.toFixed(2)}</td>
+                            <td className="text-right py-1.5 font-mono">{c.empirical.toFixed(4)}</td>
+                            <td className={`text-right py-1.5 font-mono ${c.gap > 0.03 ? 'text-amber-600' : 'text-green-600'}`}>
+                              {c.gap.toFixed(4)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ Train/test split validation ═══ */}
+              {realData?.train_test_split && (
+                <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-800">Train/test split validation</h3>
+                  <p className="text-xs text-slate-500">
+                    First {realData.train_test_split.train_rounds.toLocaleString()} rounds for learning,
+                    last {realData.train_test_split.test_rounds.toLocaleString()} for evaluation.
+                    Consistent results = no overfitting.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200">
+                          <th className="text-left py-1.5 text-slate-500 font-medium">Method</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Train CRPS</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Test CRPS</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Train Δ</th>
+                          <th className="text-right py-1.5 text-slate-500 font-medium">Test Δ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(realData.train_test_split.methods)
+                          .sort(([,a]: any, [,b]: any) => a.test_crps - b.test_crps)
+                          .map(([method, vals]: [string, any]) => (
+                            <tr key={method} className="border-b border-slate-100">
+                              <td className="py-1.5 font-medium text-slate-700">{METHOD_CHART_LABELS[method] ?? method}</td>
+                              <td className="text-right py-1.5 font-mono">{vals.train_crps.toFixed(6)}</td>
+                              <td className="text-right py-1.5 font-mono">{vals.test_crps.toFixed(6)}</td>
+                              <td className={`text-right py-1.5 font-mono ${vals.train_delta_vs_uniform < 0 ? 'text-green-600' : 'text-slate-500'}`}>
+                                {vals.train_delta_vs_uniform >= 0 ? '+' : ''}{vals.train_delta_vs_uniform.toFixed(6)}
+                              </td>
+                              <td className={`text-right py-1.5 font-mono ${vals.test_delta_vs_uniform < 0 ? 'text-green-600' : 'text-slate-500'}`}>
+                                {vals.test_delta_vs_uniform >= 0 ? '+' : ''}{vals.test_delta_vs_uniform.toFixed(6)}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1276,11 +1393,14 @@ export default function ResultsPage() {
                 </p>
               </div>
               <DeltaBarChart
-                data={realDataElec.rows.map(r => ({
-                  label: r.method === 'uniform' ? 'Equal' : r.method === 'skill' ? 'Skill-only' : r.method === 'mechanism' ? 'Skill × stake' : r.method === 'best_single' ? 'Best single' : r.method,
-                  delta: r.delta_crps_vs_equal * 1e4,
-                  color: r.method === 'mechanism' ? '#6366f1' : r.method === 'skill' ? '#8b5cf6' : r.method === 'uniform' ? '#94a3b8' : '#f59e0b',
-                }))}
+                data={realDataElec.rows
+                  .filter(r => r.method !== 'uniform')
+                  .sort((a, b) => a.delta_crps_vs_equal - b.delta_crps_vs_equal)
+                  .map(r => ({
+                    label: METHOD_CHART_LABELS[r.method] ?? r.method,
+                    delta: r.delta_crps_vs_equal * 1e4,
+                    color: METHOD_CHART_COLORS[r.method] ?? '#64748b',
+                  }))}
                 baselineLabel="Equal weighting"
                 metricLabel="Δ CRPS (×10⁴)"
                 title="Method comparison — Electricity prices"
