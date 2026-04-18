@@ -23,9 +23,6 @@ const FINDINGS = [
   { color: '#64748b', title: 'Equal weighting is a strong baseline', detail: 'Uniform weights are surprisingly competitive, especially under non-stationarity or small panels. The mechanism helps most when forecasters have heterogeneous skill and enough rounds for learning to converge.' },
 ] as const;
 
-const FLOW_STEPS = ['Submit', 'Skill-adjust', 'Aggregate', 'Settle'] as const;
-const FLOW_COLORS = ['#0ea5e9', '#8b5cf6', '#14b8a6', '#f59e0b'] as const;
-
 export default function HomePage() {
   return (
     <div className="flex-1 overflow-y-auto">
@@ -90,32 +87,48 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Round process — inline flow diagram ── */}
+        {/* ── Round process ── */}
         <section>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Round process</h2>
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-              {FLOW_STEPS.map((step, i) => (
-                <div key={step} className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex items-center gap-2">
-                    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="shrink-0">
-                      <circle cx="5" cy="5" r="4" fill={FLOW_COLORS[i]} />
-                    </svg>
-                    <span className="text-sm font-semibold text-slate-800">{step}</span>
-                  </div>
-                  {i < FLOW_STEPS.length - 1 && (
-                    <svg width="20" height="16" viewBox="0 0 20 16" aria-hidden="true" className="text-slate-300 shrink-0">
-                      <path d="M2 8h16M14 4l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">What happens each round</h2>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+            <div className="grid sm:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-sky-500 flex items-center justify-center text-white text-[10px] font-bold">1</div>
+                  <span className="text-sm font-semibold text-slate-800">Submit</span>
                 </div>
-              ))}
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Each forecaster submits a probabilistic forecast (quantiles) and a deposit (money at risk).
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center text-white text-[10px] font-bold">2</div>
+                  <span className="text-sm font-semibold text-slate-800">Weight</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  The mechanism scales each deposit by the forecaster's learned skill. Good forecasters get more influence.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-white text-[10px] font-bold">3</div>
+                  <span className="text-sm font-semibold text-slate-800">Aggregate</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Individual forecasts are combined into a single aggregate using the skill-adjusted weights.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-[10px] font-bold">4</div>
+                  <span className="text-sm font-semibold text-slate-800">Settle &amp; Learn</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  After the outcome is observed, forecasters who beat the average profit. Skill estimates update.
+                </p>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-4 text-center leading-relaxed max-w-2xl mx-auto">
-              Each round, forecasters submit predictions with wagers. Wagers are scaled by learned skill estimates,
-              then used as aggregation weights. After the outcome is observed, payoffs reward accuracy and skill
-              estimates update via EWMA.
-            </p>
           </div>
         </section>
 
