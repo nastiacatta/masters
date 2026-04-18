@@ -58,6 +58,8 @@ import DeltaBarChart from '@/components/charts/DeltaBarChart';
 import ConcentrationPanel from '@/components/charts/ConcentrationPanel';
 import FourPanelLayout from '@/components/charts/FourPanelLayout';
 import TradeOffScatter from '@/components/charts/TradeOffScatter';
+import { getDefaultForecaster, sortSteadyState, computeSigmaDomain, buildBarData, buildLineRenderOrder, getLineStyle } from '@/components/charts/skillRecognitionHelpers';
+import ForecasterSelector from '@/components/charts/ForecasterSelector';
 import type { TradeOffPoint } from '@/components/charts/TradeOffScatter';
 import WaterfallChart from '@/components/charts/WaterfallChart';
 import type { WaterfallDatum } from '@/components/charts/WaterfallChart';
@@ -321,6 +323,7 @@ function DepositSensitivityPanel() {
 export default function ResultsPage() {
   const [activeTab, setActiveTab] = useState<string>('Real data');
   const [skillSource, setSkillSource] = useState<'real' | 'dgp'>('real');
+  const [selectedForecaster, setSelectedForecaster] = useState<number>(-1);
 
   // --- adapter-backed data ---
   const [masterRows, setMasterRows] = useState<MasterComparisonRow[]>([]);
@@ -662,7 +665,7 @@ export default function ResultsPage() {
   }, [hasRealSkill, realData, realForecasterCount]);
 
   // Steady-state σ and weight targets from real data
-  const realSteadyState = realData?.steady_state ?? [];
+  const realSteadyState = useMemo(() => realData?.steady_state ?? [], [realData]);
 
   // Build lookup: index → steady-state values
   const realTargetSigmas = useMemo(() => {
@@ -676,6 +679,22 @@ export default function ResultsPage() {
     const map = new Map(realSteadyState.map((s) => [s.index, s.mean_weight]));
     return Array.from({ length: realForecasterCount }, (_, i) => map.get(i) ?? 0);
   }, [hasRealSkill, realSteadyState, realForecasterCount]);
+
+  const sortedSteadyState = useMemo(() => sortSteadyState(realData?.steady_state ?? []), [realData]);
+
+  const sigmaDomain = useMemo(() => computeSigmaDomain(realSkillConvergence, realForecasterCount), [realSkillConvergence, realForecasterCount]);
+
+  const forecasterItems = useMemo(() => sortedSteadyState.map(s => ({
+    name: s.forecaster,
+    index: s.index,
+    color: AGENT_PALETTE[s.index % AGENT_PALETTE.length],
+  })), [sortedSteadyState]);
+
+  useEffect(() => {
+    if (sortedSteadyState.length > 0 && selectedForecaster === -1) {
+      setSelectedForecaster(getDefaultForecaster(sortedSteadyState));
+    }
+  }, [sortedSteadyState, selectedForecaster]);
 
   const useExp = hasExpData && !loading && isFullPanel;
   const tabs = useExp ? EXP_TABS : DEMO_TABS;
@@ -923,16 +942,18 @@ export default function ResultsPage() {
 
                 {skillSource === 'real' && hasRealSkill ? (
                   <>
+                    <ForecasterSelector
+                      forecasters={forecasterItems}
+                      selectedIndex={selectedForecaster}
+                      onSelect={setSelectedForecaster}
+                    />
+
                     {/* 1. Horizontal bar chart: final σ ranking (the key result) */}
                     <div>
                       <div className="text-xs font-semibold text-slate-600 mb-3">Learned skill ranking (steady-state σ)</div>
-                      <ResponsiveContainer width="100%" height={Math.max(200, realSteadyState.length * 40 + 40)}>
+                      <ResponsiveContainer width="100%" height={sortedSteadyState.length * 36 + 40}>
                         <BarChart
-                          data={realSteadyState.slice(0, 5).map((s) => ({
-                            name: s.forecaster,
-                            sigma: s.mean_sigma,
-                            fill: AGENT_PALETTE[s.index % AGENT_PALETTE.length],
-                          }))}
+                          data={buildBarData(sortedSteadyState, AGENT_PALETTE)}
                           layout="vertical"
                           margin={{ top: 4, right: 60, bottom: 4, left: 140 }}
                         >
@@ -942,8 +963,14 @@ export default function ResultsPage() {
                           <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#334155' }} stroke={AXIS_STROKE} width={130} />
                           <Tooltip content={<SmartTooltip />} />
                           <Bar dataKey="sigma" name="Skill σ" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                            {realSteadyState.slice(0, 5).map((s) => (
-                              <Cell key={s.index} fill={AGENT_PALETTE[s.index % AGENT_PALETTE.length]} opacity={0.85} />
+                            {buildBarData(sortedSteadyState, AGENT_PALETTE).map((entry) => (
+                              <Cell
+                                key={entry.originalIndex}
+                                fill={entry.fill}
+                                opacity={entry.originalIndex === selectedForecaster ? 0.95 : 0.5}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setSelectedForecaster(entry.originalIndex)}
+                              />
                             ))}
                             <LabelList dataKey="sigma" position="right"
                               formatter={(v: string | number | boolean | null | undefined) => {
@@ -962,23 +989,35 @@ export default function ResultsPage() {
 
                     {/* 2. σ trajectory over time (full width, single chart) */}
                     <div>
-                      <div className="text-xs font-semibold text-slate-600 mb-2">σ trajectory over {realData!.config.T.toLocaleString()} hours</div>
+                      <div className="text-xs font-semibold text-slate-600 mb-2">
+                        σ trajectory over {realData!.config.T.toLocaleString()} hours
+                        <span className="text-xs text-slate-500 ml-2">
+                          Showing: {realForecasterNames[selectedForecaster]} (σ = {fmt(realTargetSigmas[selectedForecaster], 3)})
+                        </span>
+                      </div>
                       <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={realSkillConvergence} margin={{ top: 8, right: 24, bottom: 28, left: 52 }}>
                           <CartesianGrid {...GRID_PROPS} />
                           <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
                             label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                          <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0.6, 1]}
+                          <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={sigmaDomain}
                             label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                           <Tooltip content={<SmartTooltip />} />
-                          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                          {realSteadyState.slice(0, 5).map((s) => (
-                            <Line key={s.index} type="monotone" dataKey={`sigma_${s.index}`} name={s.forecaster}
-                              stroke={AGENT_PALETTE[s.index % AGENT_PALETTE.length]}
-                              strokeWidth={s === realSteadyState[0] ? 3 : 1.5}
-                              strokeOpacity={s === realSteadyState[0] ? 1 : 0.6}
-                              dot={false} />
-                          ))}
+                          {buildLineRenderOrder(realForecasterCount, selectedForecaster).map((i) => {
+                            const style = getLineStyle(selectedForecaster, i);
+                            return (
+                              <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
+                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                strokeWidth={style.strokeWidth}
+                                strokeOpacity={style.opacity}
+                                dot={false} />
+                            );
+                          })}
+                          <ReferenceLine y={realTargetSigmas[selectedForecaster]}
+                            stroke={AGENT_PALETTE[selectedForecaster % AGENT_PALETTE.length]}
+                            strokeDasharray="6 3" strokeOpacity={0.6}>
+                            <Label value={fmt(realTargetSigmas[selectedForecaster], 3)} position="right" fontSize={11} fill="#334155" />
+                          </ReferenceLine>
                         </LineChart>
                       </ResponsiveContainer>
                       <p className="text-[11px] text-slate-400 mt-1">
@@ -1656,21 +1695,24 @@ export default function ResultsPage() {
                             <CartesianGrid {...GRID_PROPS} />
                             <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
                               label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
+                            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={sigmaDomain}
                               label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
-                            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
-                              <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
-                            ))}
-                            {realTargetSigmas.slice(0, 5).map((ts, i) => (
-                              <ReferenceLine key={`rts-${i}`} y={ts}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                                strokeDasharray="6 3" strokeOpacity={0.4}>
-                                <Label value={fmt(ts, 3)} position="right" fontSize={11} fill="#334155" />
-                              </ReferenceLine>
-                            ))}
+                            {buildLineRenderOrder(realForecasterCount, selectedForecaster).map((i) => {
+                              const style = getLineStyle(selectedForecaster, i);
+                              return (
+                                <Line key={i} type="monotone" dataKey={`sigma_${i}`} name={realForecasterNames[i]}
+                                  stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                  strokeWidth={style.strokeWidth}
+                                  strokeOpacity={style.opacity}
+                                  dot={false} />
+                              );
+                            })}
+                            <ReferenceLine y={realTargetSigmas[selectedForecaster]}
+                              stroke={AGENT_PALETTE[selectedForecaster % AGENT_PALETTE.length]}
+                              strokeDasharray="6 3" strokeOpacity={0.6}>
+                              <Label value={fmt(realTargetSigmas[selectedForecaster], 3)} position="right" fontSize={11} fill="#334155" />
+                            </ReferenceLine>
                           </LineChart>
                         </ResponsiveContainer>
                         <p className="text-[11px] text-slate-400">Higher σ = better forecaster. Dashed = steady-state average.</p>
@@ -1685,18 +1727,21 @@ export default function ResultsPage() {
                             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
                               label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
-                            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-                            {Array.from({ length: Math.min(realForecasterCount, 5) }, (_, i) => (
-                              <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={i < 3 ? 2.5 : 1.5} dot={false} />
-                            ))}
-                            {realTargetWeights.slice(0, 5).map((tw, i) => (
-                              <ReferenceLine key={`rtw-${i}`} y={tw}
-                                stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
-                                strokeDasharray="6 3" strokeOpacity={0.4}>
-                                <Label value={fmt(tw, 3)} position="right" fontSize={11} fill="#334155" />
-                              </ReferenceLine>
-                            ))}
+                            {buildLineRenderOrder(realForecasterCount, selectedForecaster).map((i) => {
+                              const style = getLineStyle(selectedForecaster, i);
+                              return (
+                                <Line key={i} type="monotone" dataKey={`weight_${i}`} name={realForecasterNames[i]}
+                                  stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]}
+                                  strokeWidth={style.strokeWidth}
+                                  strokeOpacity={style.opacity}
+                                  dot={false} />
+                              );
+                            })}
+                            <ReferenceLine y={realTargetWeights[selectedForecaster]}
+                              stroke={AGENT_PALETTE[selectedForecaster % AGENT_PALETTE.length]}
+                              strokeDasharray="6 3" strokeOpacity={0.6}>
+                              <Label value={fmt(realTargetWeights[selectedForecaster], 3)} position="right" fontSize={11} fill="#334155" />
+                            </ReferenceLine>
                             <ReferenceLine y={1 / realForecasterCount} stroke="#94a3b8" strokeDasharray="2 2" strokeOpacity={0.3} />
                           </LineChart>
                         </ResponsiveContainer>

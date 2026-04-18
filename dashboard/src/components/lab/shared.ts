@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react';
 
 export const AGENT_PALETTE = [
-  '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
-  '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6',
+  '#6366f1', '#10b981', '#f59e0b', '#0ea5e9',
+  '#ef4444', '#ec4899', '#8b5cf6', '#14b8a6',
   '#f97316', '#06b6d4', '#84cc16', '#a855f7',
 ];
 
