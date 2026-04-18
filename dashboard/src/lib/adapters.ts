@@ -527,6 +527,24 @@ export interface RealDataResult {
     optimal_improvement_pct: number;
     default_improvement_pct: number;
   };
+  // Aggregate calibration (PIT coverage)
+  calibration?: Array<{
+    tau: number;
+    nominal: number;
+    empirical: number;
+    gap: number;
+  }>;
+  // Train/test split validation
+  train_test_split?: {
+    train_rounds: number;
+    test_rounds: number;
+    methods: Record<string, {
+      train_crps: number;
+      test_crps: number;
+      train_delta_vs_uniform: number;
+      test_delta_vs_uniform: number;
+    }>;
+  };
 }
 
 export async function loadRealDataComparison(seriesName: string = 'elia_wind'): Promise<RealDataResult | null> {
