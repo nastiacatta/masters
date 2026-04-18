@@ -55,7 +55,7 @@ function hasAnySE(rows: SortedRow[]): boolean {
 }
 
 /** Determine if a bar's 95% CI excludes zero → statistically significant. */
-import { isSignificant } from './deltaBarHelpers';
+import { isSignificant, ciBounds } from './deltaBarHelpers';
 
 /**
  * Hex colour → rgba at given opacity.

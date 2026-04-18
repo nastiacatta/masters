@@ -48,7 +48,7 @@ function computeMetricValue(
   // Special case: skill_recovery uses rank_correlation
   if (metric_field === 'rank_correlation') {
     const values = experimentData
-      .map((row) => (row as Record<string, unknown>)[metric_field])
+      .map((row) => (row as unknown as Record<string, unknown>)[metric_field])
       .filter((v): v is number => typeof v === 'number' && !isNaN(v));
     if (values.length === 0) return null;
     return values.reduce((sum, v) => sum + v, 0) / values.length;
@@ -57,7 +57,7 @@ function computeMetricValue(
   // Special case: calibration uses coverage_gap
   if (metric_field === 'coverage_gap') {
     const values = experimentData
-      .map((row) => (row as Record<string, unknown>)[metric_field])
+      .map((row) => (row as unknown as Record<string, unknown>)[metric_field])
       .filter((v): v is number => typeof v === 'number' && !isNaN(v));
     if (values.length === 0) return null;
     return values.reduce((sum, v) => sum + v, 0) / values.length;
@@ -71,7 +71,7 @@ function computeMetricValue(
   if (filtered.length === 0) return null;
 
   const values = filtered
-    .map((row) => (row as Record<string, unknown>)[metric_field])
+    .map((row) => (row as unknown as Record<string, unknown>)[metric_field])
     .filter((v): v is number => typeof v === 'number' && !isNaN(v));
 
   if (values.length === 0) return null;

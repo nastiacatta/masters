@@ -81,7 +81,7 @@ function CalibrationBand(props: Record<string, unknown>) {
 }
 
 export default function CalibrationChart({ data }: Props) {
-  const zoom = useChartZoom('tau');
+  const zoom = useChartZoom();
 
   return (
     <ChartCard
