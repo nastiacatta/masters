@@ -95,7 +95,7 @@ export default function WaterfallChart({
   return (
     <ChartCard
       title={title}
-      subtitle="Each bar shows the incremental change from the previous step."
+      subtitle="Each step adds one component. Green bars show the CRPS at that stage (lower = better)."
       provenance={provenance}
       help={{
         term: 'Waterfall Chart',
@@ -115,12 +115,10 @@ export default function WaterfallChart({
           <CartesianGrid {...GRID_PROPS} vertical={false} />
           <XAxis
             dataKey="name"
-            tick={AXIS_TICK}
+            tick={{ ...AXIS_TICK, fontSize: 10 }}
             stroke={AXIS_STROKE}
             interval={0}
-            angle={-30}
-            textAnchor="end"
-            height={80}
+            height={60}
           />
           <YAxis
             tick={AXIS_TICK}

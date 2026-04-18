@@ -77,8 +77,8 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
 
   return (
     <ChartCard
-      title="Market Structure"
-      subtitle="Gini, HHI, and N_eff side by side per method."
+      title="Influence Distribution"
+      subtitle="How evenly influence is spread across forecasters. Lower Gini = fairer. Higher N_eff = more diverse."
       help={{
         term: 'Concentration Metrics',
         definition:

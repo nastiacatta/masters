@@ -132,8 +132,9 @@ export default function TradeOffScatter({
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
             domain={['dataMin - 0.001', 'dataMax + 0.001']}
+            tickFormatter={(v: number) => fmt(v, 3)}
             label={{
-              value: 'CRPS improvement (positive = better)',
+              value: 'Accuracy gain →',
               position: 'insideBottom',
               offset: -4,
               fontSize: 11,
@@ -147,8 +148,9 @@ export default function TradeOffScatter({
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
             domain={['dataMin - 0.02', 'dataMax + 0.02']}
+            tickFormatter={(v: number) => fmt(v, 2)}
             label={{
-              value: 'Gini (lower = better)',
+              value: '← Fairer',
               angle: -90,
               position: 'insideLeft',
               offset: 4,

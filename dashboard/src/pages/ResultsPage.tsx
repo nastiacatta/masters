@@ -1798,7 +1798,7 @@ export default function ResultsPage() {
                 </p>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-800">Wealth concentration by method</h3>
+                <h3 className="text-sm font-semibold text-slate-800">Influence distribution by method</h3>
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3 mt-2">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
