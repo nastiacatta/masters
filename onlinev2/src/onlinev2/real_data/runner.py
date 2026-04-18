@@ -137,11 +137,8 @@ def run_real_data_comparison(
         y_t = float(y_all[t])
         q_t = q_reports[:, t, :]
 
-        # Per-agent CRPS this round (needed for inverse-variance and oracle)
-        agent_crps_t = np.array([
-            float(crps_hat_from_quantiles(y_t, q_t[i:i+1], taus)[0])
-            for i in range(n_forecasters)
-        ])
+        # Per-agent CRPS this round (vectorised — pass full matrix at once)
+        agent_crps_t = crps_hat_from_quantiles(y_t, q_t, taus)
         for i in range(n_forecasters):
             agent_rolling_crps[i].append(agent_crps_t[i])
             if len(agent_rolling_crps[i]) > 500:
@@ -170,22 +167,23 @@ def run_real_data_comparison(
             c_m = c_u
         crps_per_rule["mechanism"].append(c_m)
 
-        # Best single (lowest residual variance over last 50 rounds)
-        best_idx = int(np.argmin([
-            np.var([reports[j, max(0, t-50):t] - y_all[max(0, t-50):t]])
-            for j in range(n_forecasters)
-        ])) if t > 50 else 0
+        # Best single (lowest recent CRPS — uses quantile quality, not just point accuracy)
+        if t - warmup >= 20:
+            recent_agent_crps = [np.mean(agent_rolling_crps[j][-100:]) for j in range(n_forecasters)]
+            best_idx = int(np.argmin(recent_agent_crps))
+        else:
+            best_idx = 0
         c_best = float(crps_hat_from_quantiles(y_t, q_t[best_idx:best_idx+1], taus)[0])
         crps_per_rule["best_single"].append(c_best)
 
         # --- NEW: Inverse-variance weighting (Bates-Granger style) ---
-        # Weights proportional to 1/variance of recent CRPS
+        # Weights proportional to 1/mean(recent CRPS) — better agents get more weight
         if t - warmup >= 20:
             inv_var_w = np.zeros(n_forecasters)
             for i in range(n_forecasters):
                 recent = agent_rolling_crps[i][-100:]
-                var_i = np.var(recent) + eps
-                inv_var_w[i] = 1.0 / var_i
+                mean_crps_i = np.mean(recent) + eps
+                inv_var_w[i] = 1.0 / mean_crps_i
             inv_var_w /= inv_var_w.sum()
             agg_iv = np.sum(inv_var_w[:, None] * q_t, axis=0)
         else:
@@ -223,17 +221,15 @@ def run_real_data_comparison(
             "crps_median": c_med,
         })
 
-    # --- Oracle comparison (knows true per-agent quality) ---
+    # --- Oracle comparison (uses agent_crps_t already computed in main loop) ---
+    # Re-compute oracle in a fast vectorised pass
+    print("  Computing oracle...")
     crps_oracle = []
-    for t in range(warmup, T):
+    for idx in range(len(per_round)):
+        t = warmup + idx
         y_t = float(y_all[t])
         q_t = q_reports[:, t, :]
-        # Oracle weights: proportional to 1/CRPS (better agents get more weight)
-        agent_crps = np.array([
-            float(crps_hat_from_quantiles(y_t, q_t[i:i+1], taus)[0])
-            for i in range(n_forecasters)
-        ])
-        # Avoid division by zero
+        agent_crps = crps_hat_from_quantiles(y_t, q_t, taus)
         inv_crps = np.where(agent_crps > 1e-12, 1.0 / agent_crps, 0.0)
         if inv_crps.sum() > 1e-12:
             oracle_weights = inv_crps / inv_crps.sum()
@@ -242,13 +238,10 @@ def run_real_data_comparison(
             agg_oracle = np.mean(q_t, axis=0)
         c_oracle = float(crps_hat_from_quantiles(y_t, agg_oracle.reshape(1, -1), taus)[0])
         crps_oracle.append(c_oracle)
+        per_round[idx]["crps_oracle"] = c_oracle
 
     mean_oracle = float(np.mean(crps_oracle))
     crps_per_rule["oracle"] = crps_oracle
-
-    # Add oracle to per_round entries
-    for idx, t in enumerate(range(warmup, T)):
-        per_round[idx]["crps_oracle"] = crps_oracle[idx]
 
     # Summary
     mean_uniform = float(np.mean(crps_per_rule["uniform"]))
