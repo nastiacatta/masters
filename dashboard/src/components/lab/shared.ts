@@ -29,6 +29,11 @@ export const TOOLTIP_STYLE: CSSProperties = {
   wordBreak: 'break-word' as const,
 };
 
+export function mean(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
 export function agentName(i: number): string {
   return `F${i + 1}`;
 }
@@ -72,7 +77,8 @@ export function movingAvg(values: number[], window: number): number[] {
 }
 
 export function gini(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
+  const sorted = values.filter((v) => v >= 0).slice().sort((a, b) => a - b);
+  if (sorted.length === 0) return 0;
   const total = sorted.reduce((s, v) => s + v, 0);
   if (total <= 0) return 0;
   let w = 0;

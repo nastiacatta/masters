@@ -53,7 +53,7 @@ function resetLabelPositions() {
 }
 
 function findNonOverlappingY(desiredY: number): number {
-  let y = desiredY;
+  const y = desiredY;
   // Try the desired position first, then nudge up/down
   for (let attempt = 0; attempt < 20; attempt++) {
     const offset = attempt === 0 ? 0 : (attempt % 2 === 1 ? Math.ceil(attempt / 2) : -Math.ceil(attempt / 2)) * LABEL_HEIGHT;

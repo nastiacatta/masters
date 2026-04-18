@@ -25,17 +25,7 @@ function computeRealDeltaCrps(data: RealDataResult | null): number | null {
 }
 
 /** Check for discrepancy (>2× difference). */
-export function hasDiscrepancyWarning(
-  realDeltaCrps: number | null,
-  syntheticDeltaCrps: number | null,
-): boolean {
-  return (
-    realDeltaCrps != null &&
-    syntheticDeltaCrps != null &&
-    syntheticDeltaCrps !== 0 &&
-    Math.abs(realDeltaCrps / syntheticDeltaCrps) > 2
-  );
-}
+import { hasDiscrepancyWarning } from '@/lib/analysis/discrepancyWarning';
 
 const FUTURE_TARGETS = [
   'Temperature forecasts (ECMWF ensemble)',

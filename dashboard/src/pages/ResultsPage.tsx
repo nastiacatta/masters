@@ -1319,7 +1319,7 @@ export default function ResultsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {realData.calibration.map((c: any) => (
+                        {realData.calibration.map((c: { tau: number; nominal: number; empirical: number; gap: number }) => (
                           <tr key={c.tau} className="border-b border-slate-100">
                             <td className="py-1.5 font-mono">{c.tau.toFixed(2)}</td>
                             <td className="text-right py-1.5 font-mono">{c.nominal.toFixed(2)}</td>
@@ -1357,8 +1357,8 @@ export default function ResultsPage() {
                       </thead>
                       <tbody>
                         {Object.entries(realData.train_test_split.methods)
-                          .sort(([,a]: any, [,b]: any) => a.test_crps - b.test_crps)
-                          .map(([method, vals]: [string, any]) => (
+                          .sort(([,a], [,b]) => a.test_crps - b.test_crps)
+                          .map(([method, vals]) => (
                             <tr key={method} className="border-b border-slate-100">
                               <td className="py-1.5 font-medium text-slate-700">{METHOD_CHART_LABELS[method] ?? method}</td>
                               <td className="text-right py-1.5 font-mono">{vals.train_crps.toFixed(6)}</td>

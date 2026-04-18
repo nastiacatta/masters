@@ -9,7 +9,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { hasDiscrepancyWarning } from '@/components/analysis/RealDataContextPanel';
+import { hasDiscrepancyWarning } from '@/lib/analysis/discrepancyWarning';
 
 describe('Property 13: Discrepancy warning threshold', () => {
   it('warning displayed iff |realΔCRPS / syntheticΔCRPS| > 2', () => {

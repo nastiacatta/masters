@@ -13,6 +13,7 @@ import {
   type InfluenceRule,
 } from './runRoundComposable';
 import type { BehaviourPresetId } from '@/lib/behaviour/hiddenAttributes';
+import { gini, mean } from '@/components/lab/shared';
 
 const DEFAULT_ROUNDS = 20000;
 const DEFAULT_SEED = 42;
@@ -67,24 +68,6 @@ export interface PipelineOptions {
 
 function clamp(value: number, lo = 0, hi = 1): number {
   return Math.max(lo, Math.min(hi, value));
-}
-
-function mean(values: number[]): number {
-  if (!values.length) return 0;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function gini(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const total = sorted.reduce((sum, value) => sum + value, 0);
-  if (total <= 0) return 0;
-
-  let weighted = 0;
-  sorted.forEach((value, index) => {
-    weighted += (index + 1) * value;
-  });
-
-  return (2 * weighted - (sorted.length + 1) * total) / (sorted.length * total);
 }
 
 function makeRng(seed: number): () => number {
