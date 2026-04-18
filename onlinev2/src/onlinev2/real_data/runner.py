@@ -33,16 +33,22 @@ def run_real_data_comparison(
     taus: np.ndarray | None = None,
     outdir: str = "outputs",
     series_name: str = "real_data",
+    gamma: float = 4.0,
+    rho: float = 0.1,
+    lam: float = 0.05,
 ) -> dict:
     """Run all forecasters on a real time series and compare weighting rules.
 
     Args:
         series: 1D array of observed values (raw, will be normalized)
-        forecasters: list of forecaster objects (default: all 5)
+        forecasters: list of forecaster objects (default: all 7)
         warmup: number of initial rounds used only for training (no scoring)
         taus: quantile levels for CRPS (default: [0.1, 0.25, 0.5, 0.75, 0.9])
         outdir: output directory
         series_name: name for the output files
+        gamma: EWMA loss-to-skill sensitivity (default 4.0, tuned: 16.0)
+        rho: EWMA learning rate (default 0.1, tuned: 0.5)
+        lam: skill gate floor (default 0.05)
 
     Returns:
         dict with 'config', 'rows' (master_comparison format), 'per_round'
@@ -104,11 +110,11 @@ def run_real_data_comparison(
     from onlinev2.simulation import run_simulation
 
     # Run simulation with the mechanism
-    print("  Running mechanism simulation...")
+    print(f"  Running mechanism simulation (γ={gamma}, ρ={rho}, λ={lam})...")
     res = run_simulation(
         T=T,
         n_forecasters=n_forecasters,
-        missing_prob=0.0,  # all forecasters always present
+        missing_prob=0.0,
         seed=42,
         scoring_mode="quantiles_crps",
         taus=taus,
@@ -119,7 +125,9 @@ def run_real_data_comparison(
         deposit_mode="fixed",
         fixed_deposit=1.0,
         eta=2.0,
-        lam=0.05,
+        lam=lam,
+        gamma=gamma,
+        rho=rho,
         omega_max=0.0,
     )
 
@@ -270,6 +278,9 @@ def run_real_data_comparison(
             "series_min": s_min,
             "series_max": s_max,
             "forecasters": [fc.name for fc in forecasters],
+            "gamma": gamma,
+            "rho": rho,
+            "lam": lam,
         },
         "rows": rows,
         "per_round": per_round,
