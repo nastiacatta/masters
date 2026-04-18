@@ -44,7 +44,6 @@ export default function HomePage() {
 
         {/* ── Plain-language summary ── */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 -mt-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">In plain terms</h2>
           <p className="text-sm text-slate-700 leading-relaxed max-w-3xl">
             Imagine a group of forecasters predicting tomorrow&apos;s wind power output. Each round, they submit
             probabilistic forecasts and put money on the line. The mechanism learns who is good at forecasting
