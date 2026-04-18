@@ -5,7 +5,7 @@ const EXPERIMENTS = [
     id: 'deposit-sensitivity',
     title: 'Deposit policy determines whether skill helps',
     status: 'confirmed' as const,
-    finding: 'On synthetic data: exponential deposits drown out the skill signal (mechanism +0.0%). On real wind data: the mechanism improves under ALL deposit regimes — fixed (+21.0%), exponential (+15.5%), bankroll (+5.3%). Real forecasters have genuinely different quality that the skill layer exploits regardless of deposit noise.',
+    finding: 'On synthetic data: exponential deposits drown out the skill signal (mechanism +0.0%). On real wind data: the mechanism improves under ALL deposit regimes, including fixed (+21.0%), exponential (+15.5%), and bankroll (+5.3%). Real forecasters have genuinely different quality that the skill layer exploits regardless of deposit noise.',
     implication: 'The deposit sensitivity is real but less severe on real data than synthetic. The skill signal is stronger when forecasters have heterogeneous, time-varying quality.',
     data: [
       { label: 'Real: Fixed deposits', delta: '-0.019562', pct: '+21.0%', sig: true },
@@ -19,7 +19,7 @@ const EXPERIMENTS = [
     id: 'rank-skill',
     title: 'Rank-based skill weights outperform multiplicative gate',
     status: 'confirmed' as const,
-    finding: 'Replacing the multiplicative skill gate with rank-based weights (weight ∝ rank position by σ) improves CRPS by 21.1% under exponential deposits — the exact regime where the current mechanism fails.',
+    finding: 'Replacing the multiplicative skill gate with rank-based weights (weight ∝ rank position by σ) improves CRPS by 21.1% under exponential deposits, the exact regime where the current mechanism fails.',
     implication: 'Ranks are invariant to deposit scale, so they can\'t be drowned out by deposit noise. This is a candidate replacement for the multiplicative gate.',
     data: [
       { label: 'Rank-based skill', delta: '-0.011690', pct: '+21.1%', sig: true },
@@ -53,7 +53,7 @@ const EXPERIMENTS = [
     id: 'learning-curve',
     title: 'The skill layer works from T=100 onwards',
     status: 'confirmed' as const,
-    finding: 'The mechanism improvement is stable across T=100 to T=1000 (all ~5.2% under fixed deposits). The EWMA skill estimate converges quickly — no long burn-in needed.',
+    finding: 'The mechanism improvement is stable across T=100 to T=1000 (all ~5.2% under fixed deposits). The EWMA skill estimate converges quickly with no long burn-in needed.',
     implication: 'The online skill layer is practical even for short horizons. 100 rounds is enough for the skill signal to separate good from bad forecasters.',
     data: [
       { label: 'T = 100', delta: '-0.002910', pct: '+5.3%', sig: true },
@@ -78,9 +78,9 @@ const EXPERIMENTS = [
   },
   {
     id: 'real-data-wind',
-    title: 'Real data: Elia offshore wind — mechanism +21.1% (1h-ahead)',
+    title: 'Real data: Elia offshore wind, mechanism +21.1% (1h-ahead)',
     status: 'confirmed' as const,
-    finding: '5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on Elia Belgian offshore wind power (17,544 hourly points, 2024–2025). The mechanism beats equal weighting by 21.1% and skill-only by 8.5%. This is the strongest result — the skill × stake combination adds genuine value when forecasters have heterogeneous, time-varying quality.',
+    finding: '5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on Elia Belgian offshore wind power (17,544 hourly points, 2024–2025). The mechanism beats equal weighting by 21.1% and skill-only by 8.5%. This is the strongest result: the skill × stake combination adds genuine value when forecasters have heterogeneous, time-varying quality.',
     implication: 'On real data with real models, the thesis claim holds strongly. The mechanism correctly identifies and upweights better forecasters as their relative quality shifts over time.',
     data: [
       { label: 'Mechanism (skill × stake)', delta: '-0.019612', pct: '+21.1%', sig: true },
@@ -93,7 +93,7 @@ const EXPERIMENTS = [
     id: 'day-ahead',
     title: 'Day-ahead forecasting: mechanism +1.1%',
     status: 'confirmed' as const,
-    finding: 'At day-ahead horizon (daily resolution, 730 points), the mechanism improves by 1.1%. Smaller than hourly because all models struggle equally at longer horizons — the skill differences are smaller.',
+    finding: 'At day-ahead horizon (daily resolution, 730 points), the mechanism improves by 1.1%. Smaller than hourly because all models struggle equally at longer horizons and the skill differences are smaller.',
     implication: 'The mechanism helps at all horizons, but the gain scales with how different the models are. Day-ahead is the standard benchmark in energy forecasting.',
     data: [
       { label: 'Mechanism', delta: '-0.001764', pct: '+1.1%', sig: true },
@@ -104,7 +104,7 @@ const EXPERIMENTS = [
     id: '4h-ahead',
     title: '4-hour-ahead (15-min resolution): mechanism +6.7%',
     status: 'confirmed' as const,
-    finding: 'At 4-hour horizon on 15-minute data (20k points), the mechanism improves by 6.7%. This is the sweet spot — enough horizon for models to differentiate, enough data for skill to converge.',
+    finding: 'At 4-hour horizon on 15-minute data (20k points), the mechanism improves by 6.7%. This is the sweet spot: enough horizon for models to differentiate, enough data for skill to converge.',
     implication: 'The 4-hour horizon is practical for energy trading and shows a meaningful improvement.',
     data: [
       { label: 'Mechanism', delta: '-0.008632', pct: '+6.7%', sig: true },
@@ -136,7 +136,7 @@ const STATUS_STYLE = {
 export default function NotesPage() {
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
 
         <header>
           <div className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold tracking-wide mb-4">
@@ -203,7 +203,7 @@ export default function NotesPage() {
           <p className="text-xs text-slate-500 leading-relaxed">
             Synthetic experiments use the latent-fixed DGP with 10 heterogeneous forecasters (τ ∈ [0.15, 1.0]),
             T=500 rounds, 20% missingness, and CRPS scoring. Each seed generates the same truth, reports,
-            and missingness pattern — only the weighting rule changes. Significance tested via paired t-test.
+            and missingness pattern; only the weighting rule changes. Significance tested via paired t-test.
           </p>
           <p className="text-xs text-slate-500 leading-relaxed mt-2">
             Real-data experiments use 5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on

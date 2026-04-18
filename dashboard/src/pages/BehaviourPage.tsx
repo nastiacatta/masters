@@ -102,14 +102,14 @@ const FAMILY_BADGE_CLASSES: Record<BehaviourFamily, string> = {
 
 const FAMILY_DESCRIPTIONS: Record<BehaviourFamily, string> = {
   participation: 'When and whether agents submit forecasts.',
-  information: 'How agents form beliefs — signal quality, bias, calibration.',
-  reporting: 'What agents report — truthful belief or distorted.',
-  staking: 'How much agents wager — bankroll management.',
-  objectives: 'What agents optimise — expected value, utility, reputation.',
+  information: 'How agents form beliefs: signal quality, bias, calibration.',
+  reporting: 'What agents report: truthful belief or distorted.',
+  staking: 'How much agents wager and bankroll management.',
+  objectives: 'What agents optimise: expected value, utility, reputation.',
   identity: 'Whether agents split into multiple accounts.',
   learning: 'How agents adapt strategy over time.',
   adversarial: 'Attacks optimised against the mechanism rules.',
-  operational: 'Real-world frictions — latency, errors, automation.',
+  operational: 'Real-world frictions: latency, errors, automation.',
 };
 
 // ── Shared helpers ─────────────────────────────────────────────────────────
@@ -431,7 +431,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       tier: 'BENEFICIAL', emoji: '', borderColor: 'border-l-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', labelColor: 'text-emerald-800',
       rule: 'Δ < -0.5%',
       presets: [
-        { label: 'House-money', delta: '-1.1%', interpretation: 'Winners get more influence — aligns incentives with accuracy' },
+        { label: 'House-money', delta: '-1.1%', interpretation: 'Winners get more influence, aligning incentives with accuracy' },
         { label: 'Latency exploit', delta: '-2.9%', interpretation: 'Partial outcome info actually improves the aggregate forecast' },
       ],
     },
@@ -474,7 +474,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
   return (
     <div className="space-y-8">
       <p className="text-sm text-slate-600 max-w-2xl">
-        The mechanism sees deposits, reports, and participation — never motives. Each behaviour below is tested in isolation.
+        The mechanism sees deposits, reports, and participation, never motives. Each behaviour below is tested in isolation.
       </p>
 
       {/* Architecture diagram */}
@@ -499,7 +499,7 @@ function OverviewTab({ summary, familyImpact, setTab }: {
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Thesis verdict</div>
         <p className="text-sm text-slate-800 leading-relaxed">
           The mechanism is partially robust to strategic behaviour. Point-forecast attacks (manipulation,
-          evasion, reputation reset) are well-contained by the skill gate — the EWMA detects misreporting
+          evasion, reputation reset) are well-contained by the skill gate. The EWMA detects misreporting
           within ~7 rounds. However, quantile-level distortions (bias +17%, noise +18%, reputation gaming +28%)
           propagate to the aggregate CRPS because the skill layer downweights slowly when the distortion
           affects all quantile levels simultaneously. The dominant vulnerability remains participation:
@@ -560,7 +560,8 @@ function OverviewTab({ summary, familyImpact, setTab }: {
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-800">Cross-behaviour comparison</h3>
         <p className="text-xs text-slate-500">
-          All runs: {T} rounds, {N} agents, seed {SEED}, baseline DGP. Paired against truthful baseline. 18 presets (RL excluded — mechanism layer).
+          Sorted by CRPS impact (worst first). Green = beneficial, red = harmful.
+          All runs: {T} rounds, {N} agents, seed {SEED}, baseline DGP. Paired against truthful baseline. 18 presets (RL excluded, mechanism layer).
         </p>
         <ComparisonTable rows={summary} baselineName="Benign baseline" />
       </div>
@@ -625,7 +626,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 max-w-2xl">
-        What happens when agents go offline? The EWMA freezes during absences — no drift, no corruption.
+        What happens when agents go offline? The EWMA freezes during absences, preventing drift.
       </p>
       <MathBlock accent label="EWMA skill update" latex="L_{i,t} = \\begin{cases} (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t} & \\text{if present} \\\\ (1-\\kappa)L_{i,t-1} + \\kappa L_0 & \\text{if absent, } \\kappa > 0 \\\\ L_{i,t-1} & \\text{if absent, } \\kappa = 0 \\end{cases}" />
 
@@ -639,7 +640,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Participation per round" subtitle="Green ≥ 80%, amber ≥ 50%, red < 50%. Bursty pattern with ~22-round period." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ChartCard title="Participation per round" subtitle="Green ≥ 80%, amber ≥ 50%, red < 50%. Bursty pattern with ~22-round period." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <BarChart data={partData} margin={CHART_MARGIN_LABELED}>
               <CartesianGrid {...GRID_PROPS} />
@@ -681,7 +682,7 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
         </div>
       </div>
 
-      <ChartCard title="Cumulative error: bursty vs baseline" subtitle="If lines track closely, intermittency doesn't hurt the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+      <ChartCard title="Cumulative error: bursty vs baseline" subtitle="If lines track closely, intermittency doesn't hurt the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
         <ResponsiveContainer width="100%" height={360}>
           <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
             onMouseDown={cumZoomInter.onMouseDown} onMouseMove={cumZoomInter.onMouseMove} onMouseUp={cumZoomInter.onMouseUp}>
@@ -734,12 +735,12 @@ function IntermittencyTab({ bursty, baseline }: { bursty: PipelineResult; baseli
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note — Selective entry</div>
+        <div className="font-semibold text-amber-800">Taxonomy note: Selective entry</div>
         <p>
           The taxonomy also includes <em>selective entry</em>: agents who participate only when they
           believe their signal is strong (selection on confidence) or when the market spread is wide
           (selection on edge). These patterns are not simulated here but are structurally similar to
-          bursty participation — the EWMA freeze handles both cases identically since the mechanism
+          bursty participation. The EWMA freeze handles both cases identically since the mechanism
           never observes <em>why</em> an agent is absent, only <em>that</em> they are absent.
         </p>
       </div>
@@ -809,12 +810,12 @@ function InformationTab({ biased, miscalibrated, baseline }: {
       {!biasedSigmaDropped && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
           <span className="text-red-500 text-base">⚠</span>
-          Biased agent's σ did not drop below 0.5 within 50 rounds — skill layer may be slow to downweight.
+          Biased agent's σ did not drop below 0.5 within 50 rounds. Skill layer may be slow to downweight.
         </div>
       )}
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Cumulative error comparison" subtitle="Biased vs miscalibrated vs baseline. Lower is better. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ChartCard title="Cumulative error comparison" subtitle="Biased vs miscalibrated vs baseline. Lower is better. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
@@ -863,7 +864,7 @@ function InformationTab({ biased, miscalibrated, baseline }: {
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-2">
-        <div className="font-semibold text-amber-800">Taxonomy note — Correlated errors &amp; costly information</div>
+        <div className="font-semibold text-amber-800">Taxonomy note: Correlated errors &amp; costly information</div>
         <p>
           <strong>Correlated errors:</strong> When multiple agents share the same flawed data source (e.g. all using
           the same weather model), their errors are correlated. This reduces the effective diversity of the panel —
@@ -875,7 +876,7 @@ function InformationTab({ biased, miscalibrated, baseline }: {
           <strong>Costly information:</strong> When agents must pay to acquire better signals (e.g. buying proprietary
           data), only well-funded agents invest in quality. This creates adverse selection: the agents with the best
           information are also the wealthiest, potentially concentrating influence. In the mechanism, this interacts
-          with the deposit layer — wealthy agents can afford both better signals <em>and</em> larger deposits,
+          with the deposit layer. Wealthy agents can afford both better signals <em>and</em> larger deposits,
           compounding their advantage.
         </p>
         <p>
@@ -989,7 +990,7 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
                     <td className="py-2 pr-3 font-medium" style={{ color: r.color }}>{r.name}</td>
                     <td className="text-right py-2 px-2 font-mono">{fmt(r.error, 4)}</td>
                     <td className={`text-right py-2 px-2 font-mono ${delta > 1 ? 'text-red-500' : delta < -1 ? 'text-emerald-600' : 'text-slate-500'}`}>
-                      {i === 0 ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`}
+                      {i === 0 ? '-' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`}
                     </td>
                     <td className="text-right py-2 px-2 font-mono">{fmt(r.gini, 3)}</td>
                     <td className="py-2 px-2 text-slate-500">{r.desc}</td>
@@ -1002,7 +1003,7 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Accuracy impact by attack" subtitle="Mean CRPS. Higher = worse aggregate." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ChartCard title="Accuracy impact by attack" subtitle="Mean CRPS. Higher = worse aggregate." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <BarChart data={attacks} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
               <CartesianGrid {...GRID_PROPS} />
@@ -1074,7 +1075,7 @@ function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, 
           &sigma; drops within ~20 rounds (EWMA half-life &asymp; 7 rounds with &rho; = 0.1).
         </p>
         <p>
-          The Chen arbitrageur reports the mean of others&apos; predictions &mdash; guaranteed nonneg payoff per round.
+          The Chen arbitrageur reports the mean of others&apos; predictions  - guaranteed nonneg payoff per round.
           But in the repeated setting, this strategy earns mediocre scores (it can&apos;t beat the best forecaster),
           so &sigma; stays moderate and the arbitrageur doesn&apos;t dominate.
         </p>
@@ -1152,7 +1153,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
           the marginal value of gains is less than the marginal pain of losses.
         </p>
         <p className="text-sm text-slate-600 max-w-2xl mt-2">
-          <strong>Mechanism impact:</strong> Hedged reports are less informative — they carry less signal about the true outcome.
+          <strong>Mechanism impact:</strong> Hedged reports are less informative and carry less signal about the true outcome.
           The skill layer detects this: hedged agents score worse on average, so their σ drops and they receive less weight
           in the aggregate. The mechanism tolerates hedging without breaking because it measures actual forecast quality,
           not boldness. This is consistent with Lambert&apos;s individual rationality property.
@@ -1169,7 +1170,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4">
-          <ChartCard title="Cumulative error: hedged vs truthful" subtitle="Close tracking means hedging doesn't break the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ChartCard title="Cumulative error: hedged vs truthful" subtitle="Close tracking means hedging doesn't break the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
             <ResponsiveContainer width="100%" height={360}>
               <LineChart data={cumHedgeData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={cumZoomHedge.onMouseDown} onMouseMove={cumZoomHedge.onMouseMove} onMouseUp={cumZoomHedge.onMouseUp}>
@@ -1188,7 +1189,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Average skill estimate (σ)" subtitle="Hedged agents get lower σ because their reports are less accurate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+          <ChartCard title="Average skill estimate (σ)" subtitle="Hedged agents get lower σ because their reports are less accurate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
             <ResponsiveContainer width="100%" height={360}>
               <LineChart data={sigmaHedgeData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
                 onMouseDown={sigZoomHedge.onMouseDown} onMouseMove={sigZoomHedge.onMouseMove} onMouseUp={sigZoomHedge.onMouseUp}>
@@ -1231,7 +1232,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
           <MetricDisplay label="Participation" value={`${(noisyReporter.summary.meanParticipation / N * 100).toFixed(0)}%`} />
         </div>
 
-        <ChartCard title="Cumulative error: noisy vs baseline" subtitle="Noise degrades accuracy but the skill layer limits aggregate damage. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ChartCard title="Cumulative error: noisy vs baseline" subtitle="Noise degrades accuracy but the skill layer limits aggregate damage. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumNoisyData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoomNoisy.onMouseDown} onMouseMove={cumZoomNoisy.onMouseMove} onMouseUp={cumZoomNoisy.onMouseUp}>
@@ -1310,7 +1311,7 @@ function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, 
           <MetricDisplay label="Participation" value={`${(sandbagger.summary.meanParticipation / N * 100).toFixed(0)}%`} />
         </div>
 
-        <ChartCard title="Cumulative error: sandbagger vs baseline" subtitle="Deliberate underperformance degrades the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ChartCard title="Cumulative error: sandbagger vs baseline" subtitle="Deliberate underperformance degrades the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumSandbagData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoomSandbag.onMouseDown} onMouseMove={cumZoomSandbag.onMouseMove} onMouseUp={cumZoomSandbag.onMouseUp}>
@@ -1400,7 +1401,7 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <ChartCard title="Cumulative error: budget-constrained vs baseline" subtitle="Ruin removes agents from the pool, potentially degrading the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+        <ChartCard title="Cumulative error: budget-constrained vs baseline" subtitle="Ruin removes agents from the pool, potentially degrading the aggregate. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
               onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
@@ -1447,7 +1448,7 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
       </div>
 
       {/* Deposit policy comparison bar chart */}
-      <ChartCard title="Deposit policy comparison" subtitle="Mean CRPS across staking strategies. Lower is better." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+      <ChartCard title="Deposit policy comparison" subtitle="Mean CRPS across staking strategies. Lower is better." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
         <ResponsiveContainer width="100%" height={360}>
           <BarChart data={depositPolicies} margin={{ ...CHART_MARGIN_LABELED, bottom: 32 }}>
             <CartesianGrid {...GRID_PROPS} />
@@ -1507,7 +1508,7 @@ function ObjectivesTab({ riskAverse, baseline }: {
         <MetricDisplay label="Gini (risk-averse)" value={fmt(riskAverse.summary.finalGini, 3)} detail={`vs ${fmt(baseline.summary.finalGini, 3)}`} />
       </div>
 
-      <ChartCard title="Cumulative error: risk-averse vs baseline" subtitle="CRRA agents hedge and stake less. If lines track closely, the mechanism tolerates diverse objectives." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+      <ChartCard title="Cumulative error: risk-averse vs baseline" subtitle="CRRA agents hedge and stake less. If lines track closely, the mechanism tolerates diverse objectives." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
         <ResponsiveContainer width="100%" height={360}>
           <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
             onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
@@ -1527,7 +1528,7 @@ function ObjectivesTab({ riskAverse, baseline }: {
       </ChartCard>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note &mdash; Loss aversion, signalling, leaderboard motives</div>
+        <div className="font-semibold text-amber-800">Taxonomy note  - Loss aversion, signalling, leaderboard motives</div>
         <p>
           The full taxonomy also includes <em>loss aversion</em> (asymmetric weighting of gains vs losses,
           Kahneman &amp; Tversky 1979), <em>signalling</em> (agents who participate to demonstrate
@@ -1637,10 +1638,10 @@ function IdentityTab({ sybil, collusion, repReset, baseline }: {
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note &mdash; Dormancy/reactivation</div>
+        <div className="font-semibold text-amber-800">Taxonomy note  - Dormancy/reactivation</div>
         <p>
           The taxonomy also includes <em>dormancy/reactivation</em>: agents who go silent for many
-          rounds then return. The EWMA freeze handles this identically to bursty participation &mdash;
+          rounds then return. The EWMA freeze handles this identically to bursty participation  -
           σ is preserved during absence and resumes updating on return.
         </p>
       </div>
@@ -1673,7 +1674,7 @@ function LearningTab() {
           <p className="text-xs text-slate-600 leading-relaxed">
             The EWMA skill update <em>is</em> the mechanism&apos;s learning rule. Each round, it observes forecast
             quality via CRPS scoring and updates the loss estimate L<sub>i,t</sub>, which maps to a skill weight
-            σ<sub>i</sub>. This is fully specified — no agent cooperation required. The learning rate ρ controls
+            σ<sub>i</sub>. This is fully specified and requires no agent cooperation. The learning rate ρ controls
             how quickly the mechanism adapts: higher ρ means faster response to recent performance but more noise.
           </p>
           <MathBlock accent label="Mechanism learning" latex="L_{i,t} = (1-\\rho)L_{i,t-1} + \\rho\\,\\ell_{i,t}" />
@@ -1705,7 +1706,7 @@ function LearningTab() {
           hedging toward 0.5 reduces variance, the EWMA detects the resulting accuracy drop and
           lowers σ. But if an agent learns to <em>improve</em> their forecasts (genuine learning),
           the mechanism rewards this with higher σ. The design is incentive-compatible with genuine
-          improvement but penalises strategic manipulation — the same property that makes it robust
+          improvement but penalises strategic manipulation, the same property that makes it robust
           to the adversarial attacks tested in other tabs.
         </p>
         <p className="text-xs text-slate-500 leading-relaxed mt-1">
@@ -1717,9 +1718,9 @@ function LearningTab() {
       {/* taxonomy notes for the 3 items */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-1">
         <div className="font-semibold text-slate-700">Taxonomy items in this family</div>
-        <p>• <strong>Reinforcement from profits</strong> — Agents adjust strategy based on payoff history. The mechanism&apos;s EWMA already performs this function on the mechanism side.</p>
-        <p>• <strong>Rule learning</strong> — Agents discover the scoring rule structure and optimise against it. Proper scoring rules are designed to make truthful reporting optimal even when the rule is known.</p>
-        <p>• <strong>Exploration vs exploitation</strong> — Agents balance trying new strategies vs exploiting known ones. This creates non-stationary behaviour that the EWMA must track.</p>
+        <p>• <strong>Reinforcement from profits</strong> - Agents adjust strategy based on payoff history. The mechanism&apos;s EWMA already performs this function on the mechanism side.</p>
+        <p>• <strong>Rule learning</strong> - Agents discover the scoring rule structure and optimise against it. Proper scoring rules are designed to make truthful reporting optimal even when the rule is known.</p>
+        <p>• <strong>Exploration vs exploitation</strong> - Agents balance trying new strategies vs exploiting known ones. This creates non-stationary behaviour that the EWMA must track.</p>
       </div>
     </div>
   );
@@ -1747,7 +1748,7 @@ function OperationalTab({ latencyExploiter, baseline }: {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-slate-400" />
           <span className="text-sm font-semibold text-slate-700">
-            In-browser simulation — latency exploitation
+            In-browser simulation: latency exploitation
           </span>
         </div>
         <p className="text-xs text-slate-500 mt-2">
@@ -1756,7 +1757,7 @@ function OperationalTab({ latencyExploiter, baseline }: {
         </p>
       </div>
       <p className="text-sm text-slate-600 max-w-2xl">
-        Latency exploiters submit reports with partial outcome information &mdash; they observe
+        Latency exploiters submit reports with partial outcome information  - they observe
         a noisy signal of the realisation before the submission deadline. This creates an unfair
         information advantage that concentrates wealth.
       </p>
@@ -1771,7 +1772,7 @@ function OperationalTab({ latencyExploiter, baseline }: {
           detail={latencyExploiter.summary.finalGini > baseline.summary.finalGini ? 'More concentrated' : 'Less concentrated'} />
       </div>
 
-      <ChartCard title="Cumulative error: latency exploiter vs baseline" subtitle="Lower CRPS for the exploiter means they have an unfair advantage. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+      <ChartCard title="Cumulative error: latency exploiter vs baseline" subtitle="Lower CRPS for the exploiter means they have an unfair advantage. Drag to zoom." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
         <ResponsiveContainer width="100%" height={360}>
           <LineChart data={cumData} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}
             onMouseDown={cumZoom.onMouseDown} onMouseMove={cumZoom.onMouseMove} onMouseUp={cumZoom.onMouseUp}>
@@ -1791,7 +1792,7 @@ function OperationalTab({ latencyExploiter, baseline }: {
       </ChartCard>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note &mdash; Interface errors &amp; automation patterns</div>
+        <div className="font-semibold text-amber-800">Taxonomy note  - Interface errors &amp; automation patterns</div>
         <p>
           The full taxonomy also includes <em>interface errors</em> (accidental misreports due to
           UI bugs or fat-finger mistakes) and <em>automation patterns</em> (bot-like agents that
@@ -1855,7 +1856,7 @@ function SensitivityTab({ data }: { data: { lam: number; sig: number; error: num
         <MetricDisplay label="Gini range" value={fmt(Math.max(...data.map(d => d.gini)) - Math.min(...data.map(d => d.gini)), 3)} />
       </div>
 
-      <ChartCard title="Mean CRPS by λ and σ_min" subtitle={`${data.length} configs, ${T} rounds each. Lower is better.`} provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N}, T=${T}` }}>
+      <ChartCard title="Mean CRPS by λ and σ_min" subtitle={`${data.length} configs, ${T} rounds each. Lower is better.`} provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N}, T=${T}` }}>
         <ResponsiveContainer width="100%" height={360}>
           <BarChart data={barData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
             <CartesianGrid {...GRID_PROPS} />

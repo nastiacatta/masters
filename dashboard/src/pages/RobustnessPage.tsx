@@ -82,9 +82,9 @@ export default function RobustnessPage() {
     <div className="flex-1 overflow-y-auto">
     <FigureProvider>
     <EquationProvider>
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
       <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
-      <div className="mb-8">
+      <div>
         <h2 className="text-2xl font-bold text-slate-900">Robustness &amp; attacks</h2>
         <p className="text-sm text-slate-600 mt-2 max-w-2xl">
           Does the mechanism hold up under missingness, identity splitting, and parameter variation?
@@ -187,7 +187,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
 
       <SectionHeader label="B" title="Charts" description="Participation, skill trajectories, m/b ratio. Drag to zoom. Hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Participation under intermittency" subtitle="Active agents per round. Use brush to pan. Hover for values." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
+        <ChartCard title="Participation under intermittency" subtitle="Active agents per round. Use brush to pan. Hover for values." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <BarChart data={participationData} margin={CHART_MARGIN_LABELED}>
               <CartesianGrid {...GRID_PROPS} />
@@ -246,7 +246,7 @@ function IntermittencySection({ bursty, baseline }: { bursty: PipelineResult; ba
         </div>
       </div>
 
-      <ChartCard title="m/b ratio under intermittency" subtitle="Mean ± range across active agents. Shaded band shows min–max. Should stay within [λ, 1]." provenance={{ type: 'demo', label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
+      <ChartCard title="m/b ratio under intermittency" subtitle="Mean ± range across active agents. Shaded band shows min–max. Should stay within [λ, 1]." provenance={{ type: 'demo', label: `In-browser demo, seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
         <ResponsiveContainer width="100%" height={360}>
           <AreaChart data={mOverBData} margin={CHART_MARGIN_LABELED}>
             <CartesianGrid {...GRID_PROPS} />
@@ -322,7 +322,7 @@ function SybilSection({ sybil, baseline }: { sybil: PipelineResult; baseline: Pi
 
       <SectionHeader label="B" title="Charts & explanation" description="Wealth trajectories and why sybil fails. Drag to zoom, hover for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Wealth under sybil attack" subtitle="F1–F2 are sybil clones. Drag to zoom. Hover for values." provenance={{ type: 'demo', label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
+        <ChartCard title="Wealth under sybil attack" subtitle="F1–F2 are sybil clones. Drag to zoom. Hover for values." provenance={{ type: 'demo', label: `In-browser demo, seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
           <div className="cursor-crosshair" role="img" aria-label="Wealth under sybil. Interactive chart.">
           <ResponsiveContainer width="100%" height={360}>
             <LineChart
@@ -423,7 +423,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
 
       <SectionHeader label="B" title="Charts" description="Bar chart and scatter. Hover bars or points for values.">
       <div className="grid lg:grid-cols-2 gap-6 mb-4">
-        <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Hover bars for values. Lower is better." provenance={{ type: "demo", label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
+        <ChartCard title="Mean error by λ and σ_min" subtitle="Grouped by λ, coloured by σ_min. Hover bars for values. Lower is better." provenance={{ type: "demo", label: `In-browser demo, seed=${SEED}, N=${N_AGENTS}, T=${ROUNDS}` }}>
           <ResponsiveContainer width="100%" height={360}>
             <BarChart data={barData} margin={{ ...CHART_MARGIN_LABELED, bottom: 24 }}>
               <CartesianGrid {...GRID_PROPS} />
@@ -493,7 +493,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
           The mechanism is not brittle: mean error varies by {fmt(worst.meanError - best.meanError, 4)} across
           the full grid. Lower <MathBlock inline latex="\lambda" /> gives skill more control,
           while lower <MathBlock inline latex="\sigma_{\min}" /> allows more aggressive
-          downweighting — at the cost of higher concentration (Gini).
+          downweighting, at the cost of higher concentration (Gini).
         </p>
       </div>
 
@@ -517,7 +517,7 @@ function SensitivitySection({ data }: { data: { lam: number; sigmaMin: number; m
         title="Sensitivity of mean CRPS to mechanism parameters"
         metricLabel="Error range"
         baselineLabel="Default config"
-        provenance={{ type: 'demo', label: `In-browser demo — seed=${SEED}, N=${N_AGENTS}, T=100` }}
+        provenance={{ type: 'demo', label: `In-browser demo, seed=${SEED}, N=${N_AGENTS}, T=100` }}
       />
       </SectionHeader>
     </div>
