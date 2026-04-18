@@ -91,7 +91,6 @@ import ResultConsistencyMatrix from '@/components/analysis/ResultConsistencyMatr
 import SensitivityPanel from '@/components/analysis/SensitivityPanel';
 import FailureModePanel from '@/components/analysis/FailureModePanel';
 import BaselineCoverageTable from '@/components/analysis/BaselineCoverageTable';
-import WhenDoesSkillHelpPanel from '@/components/analysis/WhenDoesSkillHelpPanel';
 import AblationInterpretPanel from '@/components/analysis/AblationInterpretPanel';
 import RealDataContextPanel from '@/components/analysis/RealDataContextPanel';
 import RegimeBreakdownTable from '@/components/analysis/RegimeBreakdownTable';
@@ -999,8 +998,10 @@ export default function ResultsPage() {
                         <LineChart data={realSkillConvergence} margin={{ top: 8, right: 24, bottom: 28, left: 52 }}>
                           <CartesianGrid {...GRID_PROPS} />
                           <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                            tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
                             label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
                           <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={sigmaDomain}
+                            tickFormatter={(v: number) => v.toFixed(2)}
                             label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                           <Tooltip content={<SmartTooltip />} />
                           {buildLineRenderOrder(realForecasterCount, selectedForecaster).map((i) => {
@@ -1681,11 +1682,14 @@ export default function ResultsPage() {
 
                 {skillSource === 'real' && hasRealSkill ? (
                   <>
+                    <ForecasterSelector
+                      forecasters={forecasterItems}
+                      selectedIndex={selectedForecaster}
+                      onSelect={setSelectedForecaster}
+                    />
                     <p className="text-xs text-slate-500 mb-3">
-                      The mechanism's EWMA skill gate learns which forecasting model is best over {realData!.config.T.toLocaleString()} hourly rounds.
-                      {' '}{realForecasterCount} models: {realForecasterNames.join(', ')}.
                       Left: skill estimate σ (higher = better forecaster). Right: normalised weight.
-                      Dashed lines show steady-state averages from the last 2,000 rounds.
+                      Dashed line shows steady-state average for the selected model.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -1694,8 +1698,10 @@ export default function ResultsPage() {
                           <LineChart data={realSkillConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
                             <CartesianGrid {...GRID_PROPS} />
                             <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                              tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
                               label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
                             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={sigmaDomain}
+                              tickFormatter={(v: number) => v.toFixed(2)}
                               label={{ value: 'Skill σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             {buildLineRenderOrder(realForecasterCount, selectedForecaster).map((i) => {
@@ -1723,8 +1729,10 @@ export default function ResultsPage() {
                           <LineChart data={realWeightConvergence} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
                             <CartesianGrid {...GRID_PROPS} />
                             <XAxis dataKey="t" tick={AXIS_TICK} stroke={AXIS_STROKE}
+                              tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
                               label={{ value: 'Hour', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
                             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
+                              tickFormatter={(v: number) => v.toFixed(2)}
                               label={{ value: 'Weight', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
                             <Tooltip content={<SmartTooltip />} />
                             {buildLineRenderOrder(realForecasterCount, selectedForecaster).map((i) => {
@@ -2063,18 +2071,8 @@ export default function ResultsPage() {
                 ) : null}
               </section>
 
-              {/* ── When Does Skill Help Panel (placeholder data) ── */}
-              <section>
-                <WhenDoesSkillHelpPanel data={[
-                  { condition: 'Small panel', n: 3, t: 1000, tauSpread: 1.3, deltaCrps: -0.0012, se: 0.0008, ciLow: -0.0028, ciHigh: 0.0004, significant: false },
-                  { condition: 'Medium panel', n: 6, t: 1000, tauSpread: 1.3, deltaCrps: -0.0035, se: 0.0006, ciLow: -0.0047, ciHigh: -0.0023, significant: true },
-                  { condition: 'Large panel', n: 10, t: 1000, tauSpread: 1.3, deltaCrps: -0.0048, se: 0.0005, ciLow: -0.0058, ciHigh: -0.0038, significant: true },
-                  { condition: 'Short horizon', n: 6, t: 200, tauSpread: 1.3, deltaCrps: -0.0018, se: 0.0012, ciLow: -0.0042, ciHigh: 0.0006, significant: false },
-                  { condition: 'Long horizon', n: 6, t: 2000, tauSpread: 1.3, deltaCrps: -0.0042, se: 0.0004, ciLow: -0.0050, ciHigh: -0.0034, significant: true },
-                  { condition: 'Low heterogeneity', n: 6, t: 1000, tauSpread: 0.3, deltaCrps: -0.0008, se: 0.0007, ciLow: -0.0022, ciHigh: 0.0006, significant: false },
-                  { condition: 'High heterogeneity', n: 6, t: 1000, tauSpread: 2.0, deltaCrps: -0.0055, se: 0.0005, ciLow: -0.0065, ciHigh: -0.0045, significant: true },
-                ]} />
-              </section>
+              {/* ── When Does Skill Help Panel ── */}
+              {/* Placeholder removed — needs real experiment data to be meaningful */}
 
               {/* ── Ablation Interpretation Panel ── */}
               <section>
