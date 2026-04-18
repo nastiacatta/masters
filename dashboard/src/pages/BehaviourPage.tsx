@@ -1385,7 +1385,12 @@ function StakingTab({ budgetConstrained, houseMoney, kellySizer, baseline }: {
         can cause ruin (agents forced out), the house-money effect increases risk-taking after
         gains, and Kelly-like sizing ties deposits to estimated edge.
       </p>
-      <MathBlock accent label="Effective wager" latex="m_i = b_i \\cdot g(\\sigma_i), \\quad g(\\sigma) = \\lambda + (1-\\lambda)\\sigma^{\\eta}" />
+      <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
+        <div className="font-semibold text-slate-700">How the effective wager works</div>
+        <p>Each agent's deposit is scaled by a skill gate: <strong>effective wager = deposit × skill factor</strong>.</p>
+        <p>The skill factor ranges from λ (minimum, for unskilled agents) to 1 (maximum, for the best).</p>
+        <p>This means unskilled agents risk less of their deposit, reducing their influence on the aggregate.</p>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricDisplay label="Ruin events?" value={ruinCount > 0 ? `${ruinCount} agents` : 'None'}
