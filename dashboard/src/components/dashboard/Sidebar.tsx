@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 import { useEffect, type FC } from 'react';
 import { useCollapsibleSidebar } from '@/hooks/useCollapsibleSidebar';
@@ -78,8 +78,6 @@ export default function Sidebar() {
     onMouseLeave,
   } = useCollapsibleSidebar();
 
-  const location = useLocation();
-
   const thesis    = NAV_ITEMS.filter((n) => n.step != null);
   const reference = NAV_ITEMS.filter((n) => n.step == null);
 
@@ -103,11 +101,6 @@ export default function Sidebar() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Determine current page title for the breadcrumb area
-  const currentPage = NAV_ITEMS.find(
-    (n) => n.to === '/' ? location.pathname === '/' : location.pathname.startsWith(n.to)
-  );
-
   return (
     <aside
       className="bg-white border-r border-slate-100 flex flex-col h-full shrink-0 overflow-hidden"
@@ -115,7 +108,7 @@ export default function Sidebar() {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Header — toggle + current page name */}
+      {/* Header — toggle */}
       <div className="px-2 py-2.5 flex items-center gap-2">
         <button
           onClick={toggle}
@@ -132,11 +125,6 @@ export default function Sidebar() {
             {isCollapsed ? '»' : '«'}
           </span>
         </button>
-        {showLabels && currentPage && (
-          <span className="text-[11px] font-medium text-slate-400 truncate">
-            {currentPage.label}
-          </span>
-        )}
       </div>
 
       {/* Navigation — clean, no group labels */}
@@ -207,8 +195,8 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
           {showLabel && (
             <span className="whitespace-nowrap overflow-hidden flex-1">{item.label}</span>
           )}
-          {/* Keyboard shortcut hint — only when expanded and not active */}
-          {showLabel && item.shortcut && !isActive && (
+          {/* Keyboard shortcut hint — only for reference items (thesis items already show step number) */}
+          {showLabel && item.shortcut && !isActive && item.step == null && (
             <kbd className="hidden sm:inline-block text-[9px] font-mono text-slate-300 bg-slate-50 border border-slate-100 rounded px-1 py-0.5 ml-auto">
               {item.shortcut}
             </kbd>
