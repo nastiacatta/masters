@@ -5,6 +5,7 @@ import { runRoundExtended } from '@/lib/coreMechanism/runRoundExtended';
 import type { AgentState, AgentAction } from '@/lib/coreMechanism/runRound';
 import type { ExtendedParams } from '@/lib/coreMechanism/runRoundExtended';
 import type { BehaviourPresetId } from './hiddenAttributes';
+import { gini, mean } from '@/components/lab/shared';
 
 // Re-export the canonical 19-preset union from hiddenAttributes.ts
 export type { BehaviourPresetId } from './hiddenAttributes';
@@ -176,21 +177,6 @@ export const PRESET_META: Record<
 
 function clamp(v: number, lo = 0, hi = 1): number {
   return Math.min(hi, Math.max(lo, v));
-}
-
-function mean(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
-
-function gini(arr: number[]): number {
-  const sorted = arr.filter((x) => x >= 0).slice().sort((a, b) => a - b);
-  if (sorted.length === 0) return 0;
-  const total = sorted.reduce((a, b) => a + b, 0);
-  if (total <= 0) return 0;
-  let w = 0;
-  sorted.forEach((x, i) => { w += (i + 1) * x; });
-  return (2 * w - (sorted.length + 1) * total) / (sorted.length * total);
 }
 
 function inverseLossFromSkill(sigma: number, sigmaMin: number, gamma: number): number {

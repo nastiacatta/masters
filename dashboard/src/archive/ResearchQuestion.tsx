@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LineChart,
@@ -39,11 +39,16 @@ export default function ResearchQuestion() {
   const [scenario, setScenario] = useState<BehaviourPresetId>('baseline');
   const [rounds, setRounds] = useState(10000);
   const [running, setRunning] = useState(false);
-  const [results, setResults] = useState<Record<WeightingMode, PipelineResult | null>>({
-    uniform: null,
-    deposit: null,
-    skill: null,
-    full: null,
+
+  // Compute initial results synchronously (runPipeline is sync)
+  const [results, setResults] = useState<Record<WeightingMode, PipelineResult | null>>(() => {
+    const opts = { dgpId: 'baseline' as DGPId, behaviourPreset: 'baseline' as BehaviourPresetId, rounds: 10000, seed: 42, n: 6 };
+    return {
+      uniform: runPipeline({ ...opts, weighting: 'uniform' }),
+      deposit: runPipeline({ ...opts, weighting: 'deposit' }),
+      skill: runPipeline({ ...opts, weighting: 'skill' }),
+      full: runPipeline({ ...opts, weighting: 'full' }),
+    };
   });
 
   const runBenchmark = useCallback(() => {
@@ -59,10 +64,6 @@ export default function ResearchQuestion() {
     setResults(next);
     setRunning(false);
   }, [dgpId, scenario, rounds]);
-
-  useEffect(() => {
-    runBenchmark();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- run once on mount
 
   const chartData = useMemo(() => {
     const full = results.full;
