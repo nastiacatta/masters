@@ -1,0 +1,52 @@
+{
+  "experiment_name": "forecast_aggregation",
+  "config": {
+    "T": 20000,
+    "n_forecasters": 10,
+    "n_seeds": 20,
+    "dgp_name": "latent_fixed",
+    "warm_start": 200
+  },
+  "methods": {
+    "equal": {
+      "mean_crps": 0.0543665358988764,
+      "delta_crps_mean": 0.0,
+      "delta_crps_se": 0.0,
+      "delta_crps_ci_low": 0.0,
+      "delta_crps_ci_high": 0.0,
+      "n_seeds": 20
+    },
+    "stake_only": {
+      "mean_crps": 0.053223822432435765,
+      "delta_crps_mean": -0.001142713466440647,
+      "delta_crps_se": 0.0001262578586341346,
+      "delta_crps_ci_low": -0.001390178869363551,
+      "delta_crps_ci_high": -0.0008952480635177431,
+      "n_seeds": 20
+    },
+    "skill_only": {
+      "mean_crps": 0.05386610976922428,
+      "delta_crps_mean": -0.0005004261296521224,
+      "delta_crps_se": 7.986531670395174e-07,
+      "delta_crps_ci_low": -0.0005019914898595198,
+      "delta_crps_ci_high": -0.0004988607694447249,
+      "n_seeds": 20
+    },
+    "blended": {
+      "mean_crps": 0.0543665358988764,
+      "delta_crps_mean": 0.0,
+      "delta_crps_se": 0.0,
+      "delta_crps_ci_low": 0.0,
+      "delta_crps_ci_high": 0.0,
+      "n_seeds": 20
+    },
+    "bankroll": {
+      "mean_crps": 0.051389091402984644,
+      "delta_crps_mean": -0.0029774444958917674,
+      "delta_crps_se": 0.00010506944804860263,
+      "delta_crps_ci_low": -0.0031833806140670285,
+      "delta_crps_ci_high": -0.0027715083777165063,
+      "n_seeds": 20
+    }
+  }
+}
