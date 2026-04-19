@@ -104,7 +104,7 @@ export default function PositioningMatrixSlide() {
           Adaptive (learns over time)
         </text>
         <text x={chartX + chartW / 2} y={chartY + chartH + 40} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate} fontWeight={600}>
-          {'-->'}
+          Adaptiveness →
         </text>
 
         {/* Y-axis label */}

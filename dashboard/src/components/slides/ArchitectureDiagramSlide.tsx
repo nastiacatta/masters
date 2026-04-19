@@ -84,7 +84,7 @@ export default function ArchitectureDiagramSlide() {
           return (
             <g key={i}>
               <line x1={xPos} y1={arrowY1} x2={xPos} y2={arrowY2} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down-v)" />
-              <text x={xPos} y={midY + 4} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="12" fontWeight={600} fill={PALETTE.slate}>
+              <text x={xPos + 16} y={midY + 4} fontFamily={TYPOGRAPHY.fontFamily} fontSize="12" fontWeight={600} fill={PALETTE.slate}>
                 {labels[i]}
               </text>
             </g>
