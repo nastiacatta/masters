@@ -21,6 +21,8 @@ const IMPERIAL = {
   dark: '#232333',
 } as const;
 
+const BASE = import.meta.env.BASE_URL;
+
 /* ─── Slide data ─────────────────────────────────────────────── */
 
 interface SlideData {
@@ -154,7 +156,7 @@ const SLIDES: SlideData[] = [
       'Key difference from Vitali-Pinson:',
       'Absolute skill — one forecaster improves without reducing another\'s weight',
     ],
-    image: '/presentation-plots/quantiles_crps_recovery.png',
+    image: 'presentation-plots/quantiles_crps_recovery.png',
   },
   {
     id: 'architecture',
@@ -197,7 +199,7 @@ const SLIDES: SlideData[] = [
       '',
       '✓ All 20+ tests PASS (point + quantile)',
     ],
-    image: '/presentation-plots/settlement_sanity.png',
+    image: 'presentation-plots/settlement_sanity.png',
   },
   {
     id: 'deposit-design',
@@ -214,7 +216,7 @@ const SLIDES: SlideData[] = [
       '→ Bankroll vs Fixed: −11.3%',
       '→ Oracle vs Fixed:   −46.3%',
     ],
-    image: '/presentation-plots/deposit_policy_comparison.png',
+    image: 'presentation-plots/deposit_policy_comparison.png',
     highlight: 'How stake enters the system matters more than the weighting rule',
   },
   {
@@ -236,7 +238,7 @@ const SLIDES: SlideData[] = [
       'Forecast combination puzzle:',
       'Equal weights hard to beat (Wang et al., 2023)',
     ],
-    image: '/presentation-plots/weight_rule_comparison.png',
+    image: 'presentation-plots/weight_rule_comparison.png',
   },
   {
     id: 'skill-recovery',
@@ -273,7 +275,7 @@ const SLIDES: SlideData[] = [
       '',
       '⚠ Adaptive adversaries: open challenge',
     ],
-    image: '/presentation-plots/sybil.png',
+    image: 'presentation-plots/sybil.png',
   },
   {
     id: 'calibration',
@@ -293,7 +295,7 @@ const SLIDES: SlideData[] = [
       '⚠ Tails: ~5pp under-dispersion',
       'Inherent to quantile averaging (all methods)',
     ],
-    image: '/presentation-plots/calibration_reliability.png',
+    image: 'presentation-plots/calibration_reliability.png',
   },
   {
     id: 'contributions',
@@ -500,7 +502,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         <div className="w-3/5 flex items-center justify-center">
           {slide.image && (
             <img
-              src={slide.image}
+              src={`${BASE}${slide.image}`}
               alt={slide.title}
               className="max-w-full max-h-full object-contain rounded-lg shadow-sm border border-slate-100"
             />
