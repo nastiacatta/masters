@@ -63,7 +63,7 @@ const SLIDES: SlideData[] = [
       '• Information is distributed and costly to share',
       '→ How to incentivise and weight correctly?',
     ],
-    image: 'presentation-plots/forecast_aggregation_four_panel.png',
+    image: 'presentation-plots/motivation_aggregation.png',
   },
 
   /* ── 3  PREDICTION MARKETS ── */
@@ -87,34 +87,34 @@ const SLIDES: SlideData[] = [
   {
     id: 'existing-work',
     type: 'columns',
-    title: 'Existing Work',
+    title: 'Where This Work Fits',
     ref: '[3] Lambert et al., EC 2008  [4] Raja et al., IJF 2024  [5] Vitali & Pinson, PSCC 2026',
     columns: [
       {
         heading: 'Self-Financed Wagering',
         items: [
           '• Lambert (2008): WSWM',
-          '• 7 properties; uniqueness',
+          '• Budget balance, truthfulness',
           '• Raja (2024): + client utility',
-          '⚠ History-free',
+          '• This work extends this line',
         ],
       },
       {
         heading: 'Online Aggregation',
         items: [
           '• OGD / Hedge algorithms',
-          '• Regret guarantees',
-          '⚠ Non-strategic agents',
-          '⚠ No payments',
+          '• Learns time-varying weights',
+          '• This work borrows EWMA',
+          '• Adds incentive constraints',
         ],
       },
       {
         heading: 'Intermittent Markets',
         items: [
           '• Vitali-Pinson (2025)',
-          '• Correction matrix for missing',
-          '• Shapley + scoring payoff',
-          '⚠ Relative weights (simplex)',
+          '• Handles missing forecasters',
+          '• This work: absolute skill',
+          '• + self-financed settlement',
         ],
       },
     ],
@@ -124,8 +124,8 @@ const SLIDES: SlideData[] = [
   {
     id: 'gap',
     type: 'section',
-    title: 'No existing design couples\nself-financed wagering\nwith online skill learning',
-    subtitle: 'effective wager = deposit × learned skill\nAbsolute · Pre-round · Handles intermittency',
+    title: 'The Gap',
+    subtitle: 'No existing design couples self-financed wagering\nwith an online skill-learning layer\n\nMy contribution:\neffective wager = deposit × learned skill\n\nAbsolute · Pre-round · Handles intermittency',
     dark: true,
   },
 
@@ -142,7 +142,7 @@ const SLIDES: SlideData[] = [
       '5. Update skill from loss',
       '→ Same m controls influence AND exposure',
     ],
-    image: 'presentation-plots/fixed_deposit.png',
+    image: 'presentation-plots/mechanism_steps.png',
     highlight: 'Incentives aligned: influence requires risk',
   },
 
