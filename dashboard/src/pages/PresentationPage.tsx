@@ -67,7 +67,7 @@ const SLIDES: SlideData[] = [
       '• Quality: strictly proper scoring rules (CRPS)',
       '• Information distributed, costly to share',
       '',
-      '• How to incentivise and weight correctly?',
+      '→ How to incentivise and weight correctly?',
     ],
     rightComponent: TheoryFlowSlide,
     slideNumber: 2,
@@ -86,7 +86,7 @@ const SLIDES: SlideData[] = [
       '  [!] Wash trading ~60% of volume [1]',
       '  [!] Prices driven by small elite [2]',
       '',
-      '• Need mechanisms with formal guarantees',
+      '→ Need mechanisms with formal guarantees',
     ],
     ref: '[1] Sirolly et al., 2025  [2] Wu, U. Chicago, 2025',
     rightComponent: MarketFlowSlide,
@@ -106,7 +106,7 @@ const SLIDES: SlideData[] = [
       '• Vitali-Pinson: adaptive + intermittent',
       '  but relative weights, different settlement',
       '',
-      '• This thesis: adaptive AND self-financed',
+      '→ This thesis: adaptive AND self-financed',
     ],
     ref: '[3] Lambert et al., 2008  [4] Raja et al., 2024  [5] Vitali & Pinson, 2025',
     rightComponent: PositioningMatrixSlide,
@@ -126,16 +126,6 @@ const SLIDES: SlideData[] = [
     id: 'mechanism',
     type: 'split',
     title: 'Mechanism: Round-by-Round',
-    bullets: [
-      '1. Submit forecast + deposit',
-      '2. Skill gate: m = b x g(sigma)',
-      '3. Aggregate by effective wager',
-      '4. Settle: Pi = m(1 + s - s_bar)',
-      '5. Update skill from loss',
-      '',
-      '• Same m controls influence AND exposure',
-    ],
-    highlight: 'Incentives aligned: influence requires risk',
     component: MechanismPipelineSlide,
     slideNumber: 6,
   },
@@ -383,6 +373,7 @@ function HighlightBar({ text }: { text: string }) {
 /** Per-bullet inline style */
 function bulletStyle(item: string): React.CSSProperties {
   if (item === '') return { height: '0.6rem' };
+  if (item.startsWith('→')) return { color: C.teal, fontWeight: 700 };
   if (item.startsWith('  [!]')) return { color: C.coral, fontWeight: 600, paddingLeft: '1.5rem' };
   if (item.startsWith('[!]')) return { color: C.coral, fontWeight: 600 };
   if (item.startsWith('    ')) return { paddingLeft: '2.5rem', fontSize: '1.5rem', color: C.slate };
