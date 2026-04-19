@@ -4,7 +4,8 @@ import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT } from './s
 
 /**
  * Slide 6: Mechanism Round-by-Round — horizontal pipeline with
- * plain-English labels ABOVE each formula box. Arrows have 12px gaps.
+ * plain-English labels ABOVE each formula box. Arrows have 15px gaps.
+ * Feedback arrow is BELOW the boxes with proper clearance.
  */
 
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
@@ -136,9 +137,9 @@ function ArrowDivider({ highlight = false }: { highlight?: boolean }) {
 
 function FeedbackArrow() {
   return (
-    <div style={{ position: 'relative', width: '100%', height: 50, marginTop: 8 }}>
+    <div style={{ position: 'relative', width: '100%', height: 56, marginTop: 12 }}>
       <svg
-        viewBox="0 0 1000 50"
+        viewBox="0 0 1000 56"
         style={{ width: '100%', height: '100%' }}
         preserveAspectRatio="xMidYMid meet"
       >
@@ -147,8 +148,9 @@ function FeedbackArrow() {
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
+        {/* Curved path below the boxes — starts at step 5 area, curves down, ends at step 2 area */}
         <path
-          d="M 820 4 C 820 42, 300 42, 300 4"
+          d="M 820 8 C 820 48, 300 48, 300 8"
           fill="none"
           stroke={PALETTE.teal}
           strokeWidth="2.5"
@@ -156,7 +158,7 @@ function FeedbackArrow() {
           markerEnd="url(#feedback-arrow)"
         />
         <text
-          x="560" y="46"
+          x="560" y="52"
           fill={PALETTE.teal}
           fontSize="13"
           fontWeight="600"

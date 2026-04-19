@@ -2,7 +2,8 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 4: Where This Work Fits — 2x2 positioning matrix.
- * Bigger viewBox (1200x700), larger cards (240x80), more theory context.
+ * Bigger viewBox (1200x750), larger cards (260x90).
+ * Connection lines start/end at card EDGES (not centers) to avoid overlap.
  */
 
 interface MatrixNode {
@@ -10,7 +11,7 @@ interface MatrixNode {
   label: string;
   citation: string;
   detail: string;
-  x: number;
+  x: number; // percentage position in chart area
   y: number;
   isThesis?: boolean;
 }
@@ -29,6 +30,41 @@ export default function PositioningMatrixSlide() {
   const chartH = 620;
   const midX = chartX + chartW / 2;
   const midY = chartY + chartH / 2;
+  const cardW = 260;
+  const cardH = 90;
+
+  // Helper: get card center position
+  function getCardCenter(node: MatrixNode) {
+    return {
+      cx: chartX + (node.x / 100) * chartW,
+      cy: chartY + (node.y / 100) * chartH,
+    };
+  }
+
+  // Helper: get the point on the card edge closest to a target point
+  function getEdgePoint(node: MatrixNode, targetX: number, targetY: number) {
+    const { cx, cy } = getCardCenter(node);
+    const dx = targetX - cx;
+    const dy = targetY - cy;
+    const halfW = cardW / 2;
+    const halfH = cardH / 2;
+
+    // Calculate intersection with card rectangle
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    // Check which edge the line intersects
+    const scaleX = halfW / (absDx || 1);
+    const scaleY = halfH / (absDy || 1);
+    const scale = Math.min(scaleX, scaleY);
+
+    return {
+      x: cx + dx * scale,
+      y: cy + dy * scale,
+    };
+  }
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
@@ -89,12 +125,34 @@ export default function PositioningMatrixSlide() {
           Self-financed (budget-balanced)
         </text>
 
-        {/* Nodes as cards — 260px wide, 90px tall */}
+        {/* Dashed connection lines from existing work to thesis — start/end at card edges */}
+        {NODES.filter(n => !n.isThesis).map((node) => {
+          const thesis = NODES.find(n => n.isThesis)!;
+          const { cx: thesisCx, cy: thesisCy } = getCardCenter(thesis);
+          const { cx: nodeCx, cy: nodeCy } = getCardCenter(node);
+
+          // Get edge points
+          const startPt = getEdgePoint(node, thesisCx, thesisCy);
+          const endPt = getEdgePoint(thesis, nodeCx, nodeCy);
+
+          return (
+            <line
+              key={`line-${node.id}`}
+              x1={startPt.x}
+              y1={startPt.y}
+              x2={endPt.x}
+              y2={endPt.y}
+              stroke={PALETTE.border}
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              opacity={0.6}
+            />
+          );
+        })}
+
+        {/* Nodes as cards */}
         {NODES.map((node) => {
-          const cx = chartX + (node.x / 100) * chartW;
-          const cy = chartY + (node.y / 100) * chartH;
-          const cardW = 260;
-          const cardH = 90;
+          const { cx, cy } = getCardCenter(node);
 
           return (
             <g key={node.id}>

@@ -110,9 +110,11 @@ The noise-skill correlation is minus zero point nine eight — the mechanism rel
 
 ## SLIDE 10 — Deposit Design
 
-Deposit design is an important finding from the controlled DGP experiments. Four deposit regimes, same weight rule, twenty seeds each. Random exponential deposits give the worst CRPS. Fixed unit deposits improve slightly. Bankroll-confidence deposits — where stake comes from wealth and the forecaster's own confidence — achieve an 11.3 per cent improvement over fixed. Oracle-precision deposits — using the true signal precision, which no real system could access — reach a 46.3 per cent improvement.
+The DGP experiments reveal that deposit design matters. If deposits correlate with forecast quality — which is what the bankroll-confidence rule achieves by using wealth and forecast width — the mechanism performs better. This is intuitive: more information entering the system means better aggregation.
 
-The practical insight: when deposits carry information about forecast quality, the mechanism works better. The bankroll-confidence rule is a practical default that captures a meaningful portion of the available gain. But this is a design consideration, not the main finding — in practice, we cannot control what forecasters choose to stake. The mechanism must work well regardless.
+The non-obvious finding is quantitative: a simple practical deposit rule captures most of the available gain compared to an oracle that knows the true precision. The gap between bankroll-confidence and oracle is much smaller than the gap between random deposits and fixed deposits.
+
+In practice, we cannot force forecasters to use any particular deposit rule. The mechanism must work regardless. But providing a sensible default — stake proportional to wealth and confidence — helps.
 
 ---
 
