@@ -86,42 +86,22 @@ const SLIDES: SlideData[] = [
     ref: '[1] Sirolly et al., Network-Based Detection of Wash Trading, 2025  [2] Wu, Prediction Markets as Sociotechnical Assemblages, U. Chicago, 2025',
   },
 
-  /* ── 4  EXISTING WORK ── */
+  /* ── 4  WHERE THIS WORK FITS ── */
   {
     id: 'existing-work',
-    type: 'columns',
+    type: 'content',
     title: 'Where This Work Fits',
-    ref: '[3] Lambert et al., EC 2008  [4] Raja et al., IJF 2024  [5] Vitali & Pinson, PSCC 2026',
-    columns: [
-      {
-        heading: 'Self-Financed Wagering',
-        items: [
-          '• Lambert et al. (2008) [3]',
-          '• Budget balance, truthfulness',
-          '• Raja et al. (2024) [4]',
-          '• + client utility component',
-          '• This work extends this line',
-        ],
-      },
-      {
-        heading: 'Online Aggregation',
-        items: [
-          '• OGD / Hedge algorithms',
-          '• Learns time-varying weights',
-          '• This work borrows EWMA',
-          '• Adds incentive constraints',
-        ],
-      },
-      {
-        heading: 'Intermittent Markets',
-        items: [
-          '• Vitali & Pinson (2025) [5]',
-          '• Handles missing forecasters',
-          '• This work: absolute skill',
-          '• + self-financed settlement',
-        ],
-      },
+    bullets: [
+      '                          Budget bal.  Truthful  Skill-adaptive  Intermittent',
+      '',
+      '• Lambert (2008) [3]         ✓           ✓           ✗              ✗',
+      '• Raja (2024) [4]            ✓           ✓           ✗              ✗',
+      '• Online aggregation         ✗           ✗           ✓              ✗',
+      '• Vitali-Pinson (2025) [5]   ✓           ✓           ✓ (relative)   ✓',
+      '',
+      '→ This thesis                ✓           ✓           ✓ (absolute)   ✓',
     ],
+    ref: '[3] Lambert et al., EC 2008  [4] Raja et al., IJF 2024  [5] Vitali & Pinson, PSCC 2026',
   },
 
   /* ── 5  GAP ── */
@@ -179,7 +159,7 @@ const SLIDES: SlideData[] = [
       '• Core consumes without knowing motives',
       '• 20+ invariant tests',
     ],
-    image: 'presentation-plots/parameter_sweep.png',
+    image: 'presentation-plots/fixed_deposit.png',
   },
 
   /* ── 9  CORRECTNESS ── */
@@ -247,16 +227,18 @@ const SLIDES: SlideData[] = [
   /* ── 13  STRATEGIC ROBUSTNESS ── */
   {
     id: 'strategic',
-    type: 'split',
+    type: 'content',
     title: 'Strategic Robustness',
-    leftBullets: [
-      '• Sybil (identical): ratio = 1.000000',
-      '• Sybil (diversified): ratio = 1.065',
-      '• Arbitrage: zero profit (all λ)',
-      '→ Resists standard attacks',
-      '⚠ Adaptive adversaries remain open',
+    bullets: [
+      '• Sybil (identical reports): profit ratio = 1.000000',
+      '• Sybil (diversified reports): ratio = 1.065',
+      '• Strategic deposit manipulation: ratio = 1.000000',
+      '',
+      '• Arbitrage [6]: zero profit extracted across all parameter values',
+      '',
+      '→ Mechanism resists standard attacks',
+      '⚠ Adaptive adversaries remain an open challenge',
     ],
-    image: 'presentation-plots/sybil.png',
     ref: '[6] Chen et al., Removing Arbitrage from Wagering Mechanisms, EC 2014',
   },
 
@@ -266,18 +248,19 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Contributions & Limitations',
     bullets: [
-      '1. Mechanism coupling wagering + online skill learning',
-      '2. Budget balance < 10⁻¹⁴; sybilproof (identical reports)',
-      '3. Deposit design: strongest lever (−11% CRPS)',
-      '4. Skill recovery: Spearman = 1.0000',
+      'Contributions:',
+      '1. Mechanism coupling self-financed wagering + online skill learning',
+      '2. Verified: budget balance < 10e-14, sybilproof, bounded loss',
+      '3. Deposit design is the strongest lever (-11% CRPS vs fixed)',
+      '4. Skill recovery: Spearman = 1.0000 (perfect rank ordering)',
       '5. Sybil-resistant; no arbitrage profit in practice',
-      '6. Modular platform (onlinev2) + test suite + dashboard',
+      '6. Modular platform (onlinev2) + test suite + interactive dashboard',
       '',
       'Limitations:',
-      '• Tail calibration ~5pp (quantile averaging)',
-      '• Equal weights competitive in some settings',
-      '• Truthfulness under risk neutrality only',
-      '• All synthetic data',
+      '⚠ Tail calibration: ~5pp under-dispersion (inherent to quantile averaging)',
+      '⚠ Equal weights competitive in some configurations',
+      '⚠ Truthfulness holds under risk neutrality only',
+      '⚠ All experiments on synthetic data',
     ],
   },
 
@@ -286,7 +269,7 @@ const SLIDES: SlideData[] = [
     id: 'closing',
     type: 'closing',
     title: 'Thank you',
-    subtitle: 'Anastasia Cattaneo\nImperial College London\n2025',
+    subtitle: 'Anastasia Cattaneo\nImperial College London\n2026',
     dark: true,
   },
 ];
@@ -362,6 +345,12 @@ function bulletStyle(item: string): React.CSSProperties {
   if (item.startsWith('✓')) return { color: '#16a34a', fontWeight: 700 };
   if (item.startsWith('•')) return { paddingLeft: '0.5rem' };
   if (/^\d\./.test(item)) return { fontWeight: 600 };
+  if (item.trim().startsWith('Budget') || item.trim().startsWith('Truthful') || item.trim().startsWith('Skill'))
+    return { fontFamily: 'monospace', fontSize: '1.2rem', letterSpacing: '-0.02em' };
+  if (item.startsWith('Contributions:') || item.startsWith('Limitations:'))
+    return { fontWeight: 700, fontSize: '1.4rem', color: '#002147', marginTop: '0.3rem' };
+  if (item.startsWith('Fixed deposits:') || item.startsWith('Bankroll deposits:'))
+    return { fontWeight: 700, color: '#334155' };
   return {};
 }
 
@@ -418,7 +407,7 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
           color: 'rgba(255,255,255,0.5)',
         }}
       >
-        Anastasia Cattaneo · Imperial College London · 2025
+        Anastasia Cattaneo · Imperial College London · 2026
       </div>
     </div>
   );
