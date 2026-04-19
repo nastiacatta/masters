@@ -48,6 +48,7 @@ export interface SlideData {
   dark?: boolean;
   ref?: string;
   component?: React.ComponentType<SlideComponentProps>;
+  rightComponent?: React.ComponentType<SlideComponentProps>;
 }
 
 const SLIDES: SlideData[] = [
@@ -73,13 +74,13 @@ const SLIDES: SlideData[] = [
       '',
       '→ How to incentivise and weight correctly?',
     ],
-    component: TheoryFlowSlide,
+    rightComponent: TheoryFlowSlide,
   },
 
   /* ── 3  PREDICTION MARKETS ── */
   {
     id: 'markets',
-    type: 'content',
+    type: 'split',
     title: 'Prediction Markets',
     bullets: [
       '• Share predictions, not raw data',
@@ -94,7 +95,7 @@ const SLIDES: SlideData[] = [
       '→ Need mechanisms with formal guarantees',
     ],
     ref: '[1] Sirolly et al., 2025  [2] Wu, U. Chicago, 2025',
-    component: MarketFlowSlide,
+    rightComponent: MarketFlowSlide,
   },
 
   /* ── 4  WHERE THIS WORK FITS ── */
@@ -115,7 +116,7 @@ const SLIDES: SlideData[] = [
       '→ This thesis: adaptive AND self-financed',
     ],
     ref: '[3] Lambert et al., 2008  [4] Raja et al., 2024  [5] Vitali & Pinson, 2025',
-    component: PositioningMatrixSlide,
+    rightComponent: PositioningMatrixSlide,
   },
 
   /* ── 5  CONTRIBUTION ── */
@@ -161,7 +162,7 @@ const SLIDES: SlideData[] = [
       '• Pre-round (past losses only)',
       '• Handles intermittent participation',
     ],
-    component: SkillSignalSlide,
+    rightComponent: SkillSignalSlide,
   },
 
   /* ── 8  ARCHITECTURE ── */
@@ -178,7 +179,7 @@ const SLIDES: SlideData[] = [
       '• Core consumes without knowing motives',
       '• 20+ invariant tests, property-based testing',
     ],
-    component: ArchitectureDiagramSlide,
+    rightComponent: ArchitectureDiagramSlide,
   },
 
   /* ── 9  CORRECTNESS ── */
@@ -625,7 +626,12 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
             justifyContent: 'center',
           }}
         >
-          {slide.image && (
+          {slide.rightComponent ? (
+            (() => {
+              const RightComp = slide.rightComponent;
+              return <RightComp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+            })()
+          ) : slide.image ? (
             <img
               src={`${BASE}${slide.image}`}
               alt={slide.title ?? 'Slide image'}
@@ -637,7 +643,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
               }}
             />
-          )}
+          ) : null}
         </div>
       </div>
 
