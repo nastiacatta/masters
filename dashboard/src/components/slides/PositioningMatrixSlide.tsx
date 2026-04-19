@@ -135,6 +135,23 @@ export default function PositioningMatrixSlide() {
           const startPt = getEdgePoint(node, thesisCx, thesisCy);
           const endPt = getEdgePoint(thesis, nodeCx, nodeCy);
 
+          // For the Online Aggregation node (bottom-right), curve the line to avoid passing through Vitali
+          if (node.id === 'online') {
+            const midX = Math.min(startPt.x, endPt.x) - 60;
+            const midY = (startPt.y + endPt.y) / 2;
+            return (
+              <path
+                key={`line-${node.id}`}
+                d={`M ${startPt.x} ${startPt.y} Q ${midX} ${midY} ${endPt.x} ${endPt.y}`}
+                fill="none"
+                stroke={PALETTE.border}
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
+                opacity={0.6}
+              />
+            );
+          }
+
           return (
             <line
               key={`line-${node.id}`}
