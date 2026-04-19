@@ -86,7 +86,7 @@ Column 3 — Intermittent Contributions:
 
 **SCRIPT:**
 
-My work directly extends the self-financed wagering mechanism literature. Lambert and colleagues introduced the weighted-score wagering mechanism, where participants submit a forecast and a wager, and the pool is redistributed based on relative performance under a proper scoring rule. They proved this satisfies seven properties including budget balance, truthfulness, and sybilproofness — and that it is the unique mechanism doing so. Raja and colleagues extended this to include a client who offers a reward for forecast improvement, and demonstrated on a wind energy case study that quantile averaging produces sharper aggregates than linear pooling. But both mechanisms are history-free. Each round is independent, with no memory of past performance.
+My work directly extends the self-financed wagering mechanism literature. Lambert and colleagues introduced the weighted-score wagering mechanism, where participants submit a forecast and a wager, and the pool is redistributed based on relative performance under a proper scoring rule. They proved this satisfies seven properties including budget balance, truthfulness, and sybilproofness — and showed it is the unique mechanism satisfying five of those core properties simultaneously. Raja and colleagues extended this to include a client who offers a reward for forecast improvement, and demonstrated on a wind energy case study that quantile averaging produces sharper aggregates than linear pooling. But both mechanisms are history-free. Each round is independent, with no memory of past performance.
 
 Online forecast aggregation can learn time-varying weights with regret guarantees, but assumes non-strategic forecasters and does not handle payments. Vitali and Pinson designed a market that handles missing submissions and demonstrated it on real Belgian wind data, but their weights are relative and their settlement structure is different.
 
@@ -140,7 +140,7 @@ Fourth, settlement. After the outcome is observed, the payoff follows the Lamber
 
 Fifth, the realised loss is fed back into the system. The skill estimate updates for the next round, and wealth adjusts with profit. Winners accumulate capital; losers see their capacity shrink.
 
-The critical design choice: the same effective wager controls both influence and financial exposure. You cannot have influence without risk. And the skill signal is computed before the round begins, using only past information. This timing separation preserves the truthfulness argument from the original Lambert mechanism.
+The critical design choice: the same effective wager controls both influence and financial exposure. You cannot have influence without risk. And the skill signal is computed before the round begins, using only past information. This timing separation preserves the truthfulness argument from the original Lambert mechanism — provided the confidence proxy that determines the deposit also uses lagged information, not the current round's report.
 
 ---
 

@@ -30,7 +30,7 @@ Fourth, settlement. After the outcome is observed, the payoff follows the Lamber
 
 Fifth, the realised loss is fed back into the system. The skill estimate updates for the next round, and wealth adjusts with profit. Winners accumulate capital; losers see their capacity shrink.
 
-The critical design choice: the same effective wager controls both influence and financial exposure. You cannot have influence without risk. And the skill signal is computed before the round begins, using only past information. This timing separation preserves the truthfulness argument from the original Lambert mechanism.
+The critical design choice: the same effective wager controls both influence and financial exposure. You cannot have influence without risk. And the skill signal is computed before the round begins, using only past information. This timing separation preserves the truthfulness argument from the original Lambert mechanism — provided the confidence proxy that determines the deposit also uses lagged information, not the current round's report.
 
 ---
 
