@@ -38,6 +38,7 @@ interface SlideData {
   image?: string;
   highlight?: string;
   dark?: boolean;
+  ref?: string;
 }
 
 const SLIDES: SlideData[] = [
@@ -79,6 +80,7 @@ const SLIDES: SlideData[] = [
       '→ Need mechanisms with formal guarantees',
     ],
     image: 'presentation-plots/behaviour_concentration.png',
+    ref: '[1] Sirolly et al., Network-Based Detection of Wash Trading, 2025  [2] Wu, Prediction Markets as Sociotechnical Assemblages, U. Chicago, 2025',
   },
 
   /* ── 4  EXISTING WORK ── */
@@ -86,6 +88,7 @@ const SLIDES: SlideData[] = [
     id: 'existing-work',
     type: 'columns',
     title: 'Existing Work',
+    ref: '[3] Lambert et al., EC 2008  [4] Raja et al., IJF 2024  [5] Vitali & Pinson, PSCC 2026',
     columns: [
       {
         heading: 'Self-Financed Wagering',
@@ -250,6 +253,7 @@ const SLIDES: SlideData[] = [
       '⚠ Adaptive adversaries remain open',
     ],
     image: 'presentation-plots/sybil.png',
+    ref: '[6] Chen et al., Removing Arbitrage from Wagering Mechanisms, EC 2014',
   },
 
   /* ── 14  CONTRIBUTIONS ── */
@@ -300,19 +304,26 @@ function AccentBar() {
   );
 }
 
-/** Footer on content slides */
-function SlideFooter() {
+/** Footer on content slides — includes optional reference */
+function SlideFooter({ refText }: { refText?: string }) {
   return (
     <div
       style={{
         flexShrink: 0,
-        paddingTop: 16,
-        fontSize: '0.85rem',
-        color: '#999',
-        textAlign: 'center',
+        paddingTop: 12,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
       }}
     >
-      Anastasia Cattaneo — Imperial College London
+      <span style={{ fontSize: '0.75rem', color: '#999' }}>
+        Anastasia Cattaneo — Imperial College London
+      </span>
+      {refText && (
+        <span style={{ fontSize: '0.7rem', color: '#aaa', maxWidth: '60%', textAlign: 'right' }}>
+          {refText}
+        </span>
+      )}
     </div>
   );
 }
@@ -537,7 +548,7 @@ function ColumnsSlideView({ slide }: { slide: SlideData }) {
         ))}
       </div>
 
-      <SlideFooter />
+      <SlideFooter refText={slide.ref} />
     </div>
   );
 }
@@ -600,7 +611,7 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
         </ul>
       </div>
 
-      <SlideFooter />
+      <SlideFooter refText={slide.ref} />
     </div>
   );
 }
@@ -695,7 +706,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
       </div>
 
       {slide.highlight && <HighlightBar text={slide.highlight} />}
-      <SlideFooter />
+      <SlideFooter refText={slide.ref} />
     </div>
   );
 }
