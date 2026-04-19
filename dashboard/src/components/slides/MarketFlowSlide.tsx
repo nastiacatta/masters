@@ -2,8 +2,8 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 3: Prediction Markets — horizontal pipeline SVG:
- * Client → Forecasters → Operator → Settlement
- * Panel-friendly: no SlideShell wrapper, fills container.
+ * Client -> Forecasters -> Operator -> Settlement
+ * Arrows have 12px gap from box edges. No emojis.
  */
 export default function MarketFlowSlide() {
   const actors = [
@@ -18,13 +18,13 @@ export default function MarketFlowSlide() {
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
-        viewBox="0 0 940 340"
+        viewBox="0 0 940 320"
         style={{ width: '100%', maxWidth: 920, height: 'auto' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="mf-arrow" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
-            <polygon points="0 0, 12 4, 0 8" fill={PALETTE.teal} />
+          <marker id="mf-arrow" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
 
@@ -58,24 +58,24 @@ export default function MarketFlowSlide() {
               textAnchor="middle"
               fontFamily={TYPOGRAPHY.fontFamily}
               fontSize="16"
-              fill={i === 3 ? PALETTE.warmCream : PALETTE.warmGrey}
+              fill={i === 3 ? PALETTE.darkText : PALETTE.slate}
             >
               {actor.subtitle}
             </text>
           </g>
         ))}
 
-        {/* Arrows between actors */}
+        {/* Arrows between actors — 12px gap from edges */}
         {arrowLabels.map((label, i) => {
-          const x1 = actors[i].x + 200;
-          const x2 = actors[i + 1].x;
+          const x1 = actors[i].x + 212;
+          const x2 = actors[i + 1].x - 12;
           const midX = (x1 + x2) / 2;
           return (
             <g key={label}>
               <line
-                x1={x1 + 6}
+                x1={x1}
                 y1={130}
-                x2={x2 - 6}
+                x2={x2}
                 y2={130}
                 stroke={PALETTE.teal}
                 strokeWidth={3}
@@ -87,7 +87,7 @@ export default function MarketFlowSlide() {
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
                 fontSize="14"
-                fill={PALETTE.warmGrey}
+                fill={PALETTE.slate}
               >
                 {label}
               </text>
@@ -95,17 +95,17 @@ export default function MarketFlowSlide() {
           );
         })}
 
-        {/* Bottom warning */}
+        {/* Bottom warning — no emoji, use text */}
         <text
           x={470}
-          y={280}
+          y={260}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="16"
           fontWeight={600}
-          fill={PALETTE.deepRed}
+          fill={PALETTE.coral}
         >
-          ⚠ Wash trading ~60% of volume · Prices driven by small elite
+          Warning: Wash trading ~60% of volume | Prices driven by small elite
         </text>
       </svg>
     </div>

@@ -2,31 +2,52 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 13: Strategic Robustness — attack-outcome panel with pass/fail indicators
- * and shield icon. Wider table, bigger fonts, bigger shield, subtitle.
+ * Slide 13: Strategic Robustness — attack-outcome panel with SVG icons.
+ * Title: "Strategic Robustness", subtitle: "Does the mechanism resist manipulation?"
+ * Fixed centering. No emojis.
  */
 
 interface AttackRow {
   attack: string;
   ratio: string;
   pass: boolean;
-  warning?: boolean;
 }
 
 const ATTACKS: AttackRow[] = [
   { attack: 'Sybil (identical)', ratio: '1.000000', pass: true },
-  { attack: 'Sybil (diversified)', ratio: '1.065', pass: false, warning: true },
+  { attack: 'Sybil (diversified)', ratio: '1.065', pass: false },
   { attack: 'Arbitrage', ratio: '0 profit', pass: true },
   { attack: 'Strategic Deposit', ratio: '1.000000', pass: true },
 ];
 
-/** Simple shield icon SVG — bigger */
+/** SVG checkmark */
+function PassIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" fill="rgba(46, 139, 139, 0.1)" stroke={PALETTE.teal} strokeWidth="2" />
+      <path d="M7 12 L10.5 15.5 L17 9" stroke={PALETTE.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** SVG warning triangle */
+function WarnIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3 L22 20 H2 Z" fill="rgba(196, 150, 12, 0.1)" stroke={PALETTE.gold} strokeWidth="2" strokeLinejoin="round" />
+      <line x1="12" y1="10" x2="12" y2="14" stroke={PALETTE.gold} strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="12" cy="17" r="1.2" fill={PALETTE.gold} />
+    </svg>
+  );
+}
+
+/** Shield icon */
 function ShieldIcon() {
   return (
     <svg width="80" height="90" viewBox="0 0 80 90" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M40 5 L70 20 V45 C70 65 55 80 40 85 C25 80 10 65 10 45 V20 L40 5Z"
-        fill="rgba(0, 132, 127, 0.1)"
+        fill="rgba(46, 139, 139, 0.1)"
         stroke={PALETTE.teal}
         strokeWidth={3.5}
       />
@@ -44,120 +65,99 @@ function ShieldIcon() {
 
 export default function StrategicRobustnessSlide() {
   return (
-    <SlideShell title="Strategic Robustness" refText="[6] Chen et al., EC 2014">
+    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="[6] Chen et al., EC 2014" slideNumber={13}>
       <div
         style={{
           flex: 1,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 24,
+          gap: 48,
         }}
       >
-        {/* Subtitle */}
-        <p
+        {/* Attack table */}
+        <div
           style={{
-            fontSize: '1.2rem',
-            color: PALETTE.warmGrey,
-            fontFamily: TYPOGRAPHY.fontFamily,
-            textAlign: 'center',
-            margin: 0,
+            background: PALETTE.white,
+            borderRadius: 16,
+            padding: '36px 44px',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
+            minWidth: 560,
           }}
         >
-          Does the mechanism resist manipulation attempts?
-        </p>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 48 }}>
-          {/* Attack table — wider */}
+          {/* Header */}
           <div
             style={{
-              background: PALETTE.white,
-              borderRadius: 16,
-              padding: '36px 44px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
-              minWidth: 600,
+              display: 'flex',
+              justifyContent: 'space-between',
+              paddingBottom: 14,
+              borderBottom: `2px solid ${PALETTE.border}`,
+              marginBottom: 10,
             }}
           >
-            {/* Header */}
+            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
+              Attack Type
+            </span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
+              Profit Ratio
+            </span>
+          </div>
+
+          {ATTACKS.map((row) => (
             <div
+              key={row.attack}
               style={{
                 display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                paddingBottom: 14,
-                borderBottom: `2px solid ${PALETTE.lightGrey}`,
-                marginBottom: 10,
+                padding: '16px 0',
+                borderBottom: `1px solid ${PALETTE.border}`,
               }}
             >
-              <span style={{ fontSize: '1.15rem', fontWeight: 700, color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily }}>
-                Attack Type
-              </span>
-              <span style={{ fontSize: '1.15rem', fontWeight: 700, color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily }}>
-                Profit Ratio
-              </span>
-            </div>
-
-            {ATTACKS.map((row) => (
-              <div
-                key={row.attack}
+              <span
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 0',
-                  borderBottom: `1px solid ${PALETTE.lightGrey}`,
+                  fontSize: '1.35rem',
+                  fontWeight: 600,
+                  color: PALETTE.navy,
+                  fontFamily: TYPOGRAPHY.fontFamily,
                 }}
               >
+                {row.attack}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <span
                   style={{
                     fontSize: '1.35rem',
-                    fontWeight: 600,
-                    color: PALETTE.navy,
+                    fontWeight: 700,
+                    color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
+                    fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {row.attack}
+                  {row.ratio}
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <span
-                    style={{
-                      fontSize: '1.35rem',
-                      fontWeight: 700,
-                      color: PALETTE.darkSlate,
-                      fontFamily: TYPOGRAPHY.fontFamily,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {row.ratio}
-                  </span>
-                  {/* Status icon — bigger */}
-                  {row.pass ? (
-                    <span style={{ fontSize: '1.8rem', color: PALETTE.teal }}>✓</span>
-                  ) : (
-                    <span style={{ fontSize: '1.8rem', color: '#D69E2E' }}>⚠</span>
-                  )}
-                </div>
+                {row.pass ? <PassIcon /> : <WarnIcon />}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          {/* Shield icon + message */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
-            <ShieldIcon />
-            <p
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: PALETTE.teal,
-                fontFamily: TYPOGRAPHY.fontFamily,
-                textAlign: 'center',
-                maxWidth: 200,
-                lineHeight: 1.5,
-              }}
-            >
-              Mechanism resists standard attacks
-            </p>
-          </div>
+        {/* Shield icon + message */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+          <ShieldIcon />
+          <p
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: 600,
+              color: PALETTE.teal,
+              fontFamily: TYPOGRAPHY.fontFamily,
+              textAlign: 'center',
+              maxWidth: 200,
+              lineHeight: 1.5,
+            }}
+          >
+            Mechanism resists standard attacks
+          </p>
         </div>
       </div>
     </SlideShell>

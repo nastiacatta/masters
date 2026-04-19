@@ -2,8 +2,7 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 9: Mechanism Guarantees — wider panel, bigger fonts,
- * prominent checkmark column, green left-border on passing rows.
+ * Slide 9: Mechanism Guarantees — table with pass indicators (SVG checkmarks, no emojis).
  */
 
 interface GuaranteeRow {
@@ -17,13 +16,13 @@ const GUARANTEES: GuaranteeRow[] = [
   {
     property: 'Budget gap',
     meaning: 'Self-financed — no external subsidy needed',
-    status: '< 10⁻¹³',
+    status: '< 10^-13',
     pass: true,
   },
   {
     property: 'Mean profit',
     meaning: 'Zero-sum — no money created or destroyed',
-    status: '< 10⁻¹³',
+    status: '< 10^-13',
     pass: true,
   },
   {
@@ -35,14 +34,32 @@ const GUARANTEES: GuaranteeRow[] = [
   {
     property: 'Noise-skill corr.',
     meaning: 'Skilled forecasters reliably rewarded',
-    status: 'r = −0.98',
+    status: 'r = -0.98',
     pass: true,
   },
 ];
 
+/** SVG checkmark icon */
+function CheckIcon({ pass }: { pass: boolean }) {
+  if (pass) {
+    return (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="12" fill="rgba(46, 139, 139, 0.1)" stroke={PALETTE.teal} strokeWidth="2" />
+        <path d="M9 14 L12.5 17.5 L19 11" stroke={PALETTE.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="12" fill="rgba(232, 93, 74, 0.1)" stroke={PALETTE.coral} strokeWidth="2" />
+      <path d="M10 10 L18 18 M18 10 L10 18" stroke={PALETTE.coral} strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function CorrectnessSlide() {
   return (
-    <SlideShell title="Mechanism Guarantees">
+    <SlideShell title="Mechanism Guarantees" slideNumber={9}>
       <div
         style={{
           flex: 1,
@@ -53,11 +70,10 @@ export default function CorrectnessSlide() {
           gap: 20,
         }}
       >
-        {/* Subtitle */}
         <p
           style={{
             fontSize: '1.4rem',
-            color: PALETTE.warmGrey,
+            color: PALETTE.slate,
             fontFamily: TYPOGRAPHY.fontFamily,
             marginBottom: 8,
             textAlign: 'center',
@@ -66,7 +82,6 @@ export default function CorrectnessSlide() {
           Verified to machine precision across all properties
         </p>
 
-        {/* Guarantees panel — wider */}
         <div
           style={{
             width: '100%',
@@ -74,7 +89,7 @@ export default function CorrectnessSlide() {
             background: PALETTE.white,
             borderRadius: 16,
             padding: '36px 44px',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
           }}
         >
           {/* Header row */}
@@ -84,20 +99,20 @@ export default function CorrectnessSlide() {
               gridTemplateColumns: '48px 170px 1fr 160px',
               gap: 16,
               paddingBottom: 14,
-              borderBottom: `2px solid ${PALETTE.lightGrey}`,
+              borderBottom: `2px solid ${PALETTE.border}`,
               marginBottom: 10,
             }}
           >
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center' }}>
-              ✓
+            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center' }}>
+              Status
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               Property
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               What it means
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'right' }}>
+            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'right' }}>
               Result
             </span>
           </div>
@@ -111,23 +126,15 @@ export default function CorrectnessSlide() {
                 gap: 16,
                 alignItems: 'center',
                 padding: '18px 0 18px 0',
-                borderBottom: i < GUARANTEES.length - 1 ? `1px solid ${PALETTE.lightGrey}` : 'none',
+                borderBottom: i < GUARANTEES.length - 1 ? `1px solid ${PALETTE.border}` : 'none',
                 borderLeft: row.pass ? `4px solid ${PALETTE.teal}` : '4px solid transparent',
                 paddingLeft: 12,
                 borderRadius: '4px 0 0 4px',
               }}
             >
-              {/* Checkmark column — larger, more prominent */}
-              <span
-                style={{
-                  fontSize: '36px',
-                  color: row.pass ? PALETTE.teal : PALETTE.deepRed,
-                  textAlign: 'center',
-                  lineHeight: 1,
-                }}
-              >
-                {row.pass ? '✓' : '✗'}
-              </span>
+              <div style={{ textAlign: 'center' }}>
+                <CheckIcon pass={row.pass} />
+              </div>
               <span
                 style={{
                   fontSize: '1.35rem',
@@ -152,7 +159,7 @@ export default function CorrectnessSlide() {
                 style={{
                   fontSize: '1.15rem',
                   fontWeight: 600,
-                  color: PALETTE.darkSlate,
+                  color: PALETTE.charcoal,
                   fontFamily: TYPOGRAPHY.fontFamily,
                   fontVariantNumeric: 'tabular-nums',
                   textAlign: 'right',
