@@ -1,4 +1,4 @@
-# Script Part III — VALIDATION (Slides 9–15, ~7 min)
+# Script Part III — VALIDATION (Slides 9–14, ~7 min)
 
 **Format: ON SLIDE = what the audience sees (concise bullets, key formulas, key numbers). SCRIPT = what you say (plain spoken language, no formulas, no math notation).**
 
@@ -49,7 +49,7 @@ All scoring tests pass: pinball loss is non-negative, CRPS is non-negative, a pe
 
 The single strongest empirical finding: how stake enters the system matters more than the weighting rule.
 
-Four deposit regimes, holding the weight rule fixed at the mechanism rule, twenty seeds each. Random exponential deposits — pure noise — give the worst CRPS at zero point zero four five six. Fixed unit deposits — everyone stakes one — come in at zero point zero four two three. Bankroll-confidence deposits — where stake comes from wealth and the forecaster's own confidence — achieve zero point zero three seven five, an 11.3 per cent improvement over fixed. Oracle-precision deposits — using the true signal precision, which no real system could access — reach zero point zero two two seven, a 46.3 per cent improvement over fixed.
+Four deposit regimes, same weight rule, twenty seeds each. Random exponential deposits — pure noise — give the worst CRPS at zero point zero four five six. Fixed unit deposits — everyone stakes one — come in at zero point zero four two three. Bankroll-confidence deposits — where stake comes from wealth and the forecaster's own confidence — achieve zero point zero three seven five, an 11.3 per cent improvement over fixed. Oracle-precision deposits — using the true signal precision, which no real system could access — reach zero point zero two two seven, a 46.3 per cent improvement over fixed.
 
 A practical deposit rule based only on observable quantities — wealth and forecast width — captures a meaningful portion of the available gain. The oracle remains the ceiling, but bankroll-confidence gets a real fraction of the way there.
 
@@ -78,9 +78,9 @@ The practical implication: the most important design choice is not the weighting
 
 **SCRIPT:**
 
-The second set of results compares weight rules. Under fixed deposits — which isolate the skill signal because all deposits are equal — skill-only weighting achieves a CRPS of zero point zero four one nine, improving over uniform at zero point zero four three four. That is a 3.5 per cent improvement. Deposit weighting matches uniform exactly, as expected — when all deposits are one, deposit weights are uniform weights.
+The second set of results compares weight rules. Under fixed deposits — which isolate the skill signal because all deposits are equal — skill-only weighting achieves a CRPS of zero point zero four one nine, improving over uniform at zero point zero four three four. That is a 3.5 per cent improvement.
 
-Under bankroll deposits, the picture changes. Deposit-only weighting reaches zero point zero two three zero — already close to the best single forecaster at zero point zero two three two. The deposit itself carries so much information that the skill signal adds little on top.
+Under bankroll deposits, deposit-only weighting reaches zero point zero two three zero — already close to the best single forecaster. The deposit itself carries so much information that the skill signal adds little on top.
 
 This connects to the forecast combination puzzle: simple equal-weighted averages are hard to beat. Estimated optimal weights are fragile under estimation error and non-stationarity. Equal weights make no estimation errors.
 
@@ -138,34 +138,7 @@ The overall picture: the mechanism resists the standard attacks. Sybil splitting
 
 ---
 
-## SLIDE 14 — Calibration
-
-**ON SLIDE:**
-- Reliability table (latent-fixed DGP, T=20000, 10 forecasters, 20 seeds):
-  | Nominal τ | Empirical coverage (p_hat) | Deviation |
-  |---|---|---|
-  | 0.10 | 0.054 ± 0.0003 | −0.046 |
-  | 0.25 | 0.194 ± 0.0006 | −0.056 |
-  | 0.50 | 0.499 ± 0.0009 | −0.001 |
-  | 0.75 | 0.804 ± 0.0007 | +0.054 |
-  | 0.90 | 0.945 ± 0.0003 | +0.045 |
-- Median nearly perfectly calibrated
-- Tails: systematic under-dispersion (~5 pp)
-- Note: tail under-dispersion is inherent to quantile averaging, shared across all weighting methods, not specific to this mechanism
-
-**SCRIPT:**
-
-Calibration is a known weakness of quantile averaging, and the results reflect that.
-
-The median quantile is nearly perfectly calibrated: empirical coverage of zero point four nine nine against a nominal zero point five zero. The tails show systematic deviation. The ten per cent quantile has empirical coverage of about five per cent instead of ten. The ninety per cent quantile has coverage of about ninety-five per cent instead of ninety. The aggregate is too sharp in the tails — under-dispersed by roughly five percentage points.
-
-This under-dispersion is a known property of quantile averaging. Even when individual forecasts are well-calibrated, the average of their quantiles tends to be too narrow. This is shared across all weighting methods and is not specific to my mechanism.
-
-Addressing tail calibration — through post-hoc recalibration or ensemble methods that preserve spread — remains a direction for future work.
-
----
-
-## SLIDE 15 — Contributions, Limitations, and Closing
+## SLIDE 14 — Contributions, Limitations, and Closing
 
 **ON SLIDE:**
 - Contributions:
