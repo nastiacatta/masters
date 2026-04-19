@@ -598,7 +598,7 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
         )}
       </div>
       {slide.highlight && <HighlightBar text={slide.highlight} />}
-      <SlideFooter refText={slide.ref} slideNumber={slide.slideNumber} />
+      <SlideFooter refText={slide.ref} />
     </div>
   );
 }
@@ -672,7 +672,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         )}
       </div>
       {slide.highlight && <HighlightBar text={slide.highlight} />}
-      <SlideFooter refText={slide.ref} slideNumber={slide.slideNumber} />
+      <SlideFooter refText={slide.ref} />
     </div>
   );
 }
