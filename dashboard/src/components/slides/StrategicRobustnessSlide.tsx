@@ -2,9 +2,8 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 13: Strategic Robustness — attack-outcome panel with SVG icons.
- * Title: "Strategic Robustness", subtitle: "Does the mechanism resist manipulation?"
- * Fixed centering. No emojis.
+ * Slide 12: Strategic Robustness — properly centred layout.
+ * Title centred, subtitle centred, attack table centred, shield centred below.
  */
 
 interface AttackRow {
@@ -44,7 +43,7 @@ function WarnIcon() {
 /** Shield icon */
 function ShieldIcon() {
   return (
-    <svg width="80" height="90" viewBox="0 0 80 90" xmlns="http://www.w3.org/2000/svg">
+    <svg width="60" height="68" viewBox="0 0 80 90" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M40 5 L70 20 V45 C70 65 55 80 40 85 C25 80 10 65 10 45 V20 L40 5Z"
         fill="rgba(46, 139, 139, 0.1)"
@@ -65,24 +64,27 @@ function ShieldIcon() {
 
 export default function StrategicRobustnessSlide() {
   return (
-    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="[6] Chen et al., EC 2014" slideNumber={13}>
+    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="[6] Chen et al., EC 2014" slideNumber={12}>
       <div
         style={{
           flex: 1,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 48,
+          gap: 28,
         }}
       >
-        {/* Attack table */}
+        {/* Attack table — centred */}
         <div
           style={{
             background: PALETTE.white,
-            borderRadius: 16,
-            padding: '36px 44px',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
-            minWidth: 560,
+            borderRadius: 12,
+            border: `1.5px solid ${PALETTE.border}`,
+            padding: '28px 40px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            width: '100%',
+            maxWidth: 620,
           }}
         >
           {/* Header */}
@@ -95,10 +97,10 @@ export default function StrategicRobustnessSlide() {
               marginBottom: 10,
             }}
           >
-            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               Attack Type
             </span>
-            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               Profit Ratio
             </span>
           </div>
@@ -110,13 +112,13 @@ export default function StrategicRobustnessSlide() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '16px 0',
+                padding: '14px 0',
                 borderBottom: `1px solid ${PALETTE.border}`,
               }}
             >
               <span
                 style={{
-                  fontSize: '1.35rem',
+                  fontSize: '1.25rem',
                   fontWeight: 600,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
@@ -124,10 +126,10 @@ export default function StrategicRobustnessSlide() {
               >
                 {row.attack}
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span
                   style={{
-                    fontSize: '1.35rem',
+                    fontSize: '1.25rem',
                     fontWeight: 700,
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
@@ -142,18 +144,19 @@ export default function StrategicRobustnessSlide() {
           ))}
         </div>
 
-        {/* Shield icon + message */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+        {/* Shield icon + message — centred below table */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <ShieldIcon />
           <p
             style={{
-              fontSize: '1.25rem',
+              fontSize: '1.15rem',
               fontWeight: 600,
               color: PALETTE.teal,
               fontFamily: TYPOGRAPHY.fontFamily,
               textAlign: 'center',
-              maxWidth: 200,
+              maxWidth: 280,
               lineHeight: 1.5,
+              margin: 0,
             }}
           >
             Mechanism resists standard attacks

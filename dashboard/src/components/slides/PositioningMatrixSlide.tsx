@@ -2,39 +2,39 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 4: Where This Work Fits — 2x2 positioning matrix.
- * X-axis: Static -> Adaptive. Y-axis: No financial guarantees -> Self-financed.
- * Bigger cards with year citations. No emojis.
+ * Bigger viewBox (1200x700), larger cards (240x80), more theory context.
  */
 
 interface MatrixNode {
   id: string;
   label: string;
   citation: string;
+  detail: string;
   x: number;
   y: number;
   isThesis?: boolean;
 }
 
 const NODES: MatrixNode[] = [
-  { id: 'lambert', label: 'Lambert (2008) / Raja (2024)', citation: 'Self-financed, static', x: 22, y: 22 },
-  { id: 'online', label: 'Online Aggregation (OGD, Hedge)', citation: 'Adaptive, no payments', x: 78, y: 78 },
-  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, relative weights', x: 72, y: 55 },
-  { id: 'thesis', label: 'THIS THESIS', citation: 'Adaptive + self-financed', x: 78, y: 20, isThesis: true },
+  { id: 'lambert', label: 'Lambert (2008) / Raja (2024)', citation: 'Self-financed, static', detail: '7 properties, uniqueness theorem', x: 22, y: 22 },
+  { id: 'online', label: 'Online Aggregation (OGD, Hedge)', citation: 'Adaptive, no payments', detail: 'Regret bounds, non-strategic', x: 78, y: 78 },
+  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, relative weights', detail: 'Online regression, Shapley payoff', x: 72, y: 55 },
+  { id: 'thesis', label: 'THIS THESIS', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 78, y: 20, isThesis: true },
 ];
 
 export default function PositioningMatrixSlide() {
   const chartX = 80;
-  const chartY = 30;
-  const chartW = 820;
-  const chartH = 520;
+  const chartY = 40;
+  const chartW = 1000;
+  const chartH = 560;
   const midX = chartX + chartW / 2;
   const midY = chartY + chartH / 2;
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
-        viewBox="0 0 1050 660"
-        style={{ width: '100%', maxWidth: 980, height: 'auto' }}
+        viewBox="0 0 1200 700"
+        style={{ width: '100%', maxWidth: 1100, height: 'auto' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
@@ -89,12 +89,12 @@ export default function PositioningMatrixSlide() {
           Self-financed (budget-balanced)
         </text>
 
-        {/* Nodes as cards */}
+        {/* Nodes as cards — 240px wide, 80px tall */}
         {NODES.map((node) => {
           const cx = chartX + (node.x / 100) * chartW;
           const cy = chartY + (node.y / 100) * chartH;
-          const cardW = node.isThesis ? 240 : 260;
-          const cardH = node.isThesis ? 80 : 72;
+          const cardW = 240;
+          const cardH = 80;
 
           return (
             <g key={node.id}>
@@ -120,10 +120,10 @@ export default function PositioningMatrixSlide() {
               />
               <text
                 x={cx}
-                y={cy - 6}
+                y={cy - 14}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize={node.isThesis ? '18' : '15'}
+                fontSize={node.isThesis ? '18' : '16'}
                 fontWeight={700}
                 fill={node.isThesis ? PALETTE.teal : PALETTE.navy}
               >
@@ -131,13 +131,24 @@ export default function PositioningMatrixSlide() {
               </text>
               <text
                 x={cx}
-                y={cy + 18}
+                y={cy + 6}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="13"
+                fontSize="14"
                 fill={PALETTE.slate}
               >
                 {node.citation}
+              </text>
+              <text
+                x={cx}
+                y={cy + 26}
+                textAnchor="middle"
+                fontFamily={TYPOGRAPHY.fontFamily}
+                fontSize="12"
+                fontStyle="italic"
+                fill={node.isThesis ? PALETTE.teal : PALETTE.gold}
+              >
+                {node.detail}
               </text>
             </g>
           );

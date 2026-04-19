@@ -57,13 +57,29 @@ export const EMPHASIS: Record<'result' | 'method' | 'warning' | 'numeric', React
 export const DARK_GRADIENT = 'linear-gradient(135deg, #1B2A4A 0%, #0F172A 100%)' as const;
 
 /**
+ * Section bar height — thicker for visual impact.
+ */
+export const SECTION_BAR_HEIGHT = 6;
+
+/**
+ * Consistent card styling tokens used across all slides.
+ */
+export const CARD_STYLE: React.CSSProperties = {
+  borderRadius: 12,
+  border: `1.5px solid #CBD5E1`,
+  background: '#FFFFFF',
+  boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+  padding: '24px 28px',
+};
+
+/**
  * Section definitions for the presentation flow.
  */
 export const SECTIONS = {
   PROBLEM: { label: 'PROBLEM', colour: '#003E74', slides: [1, 2, 3, 4, 5] },
   SOLUTION: { label: 'SOLUTION', colour: '#2E8B8B', slides: [6, 7, 8] },
-  VALIDATION: { label: 'VALIDATION', colour: '#C4960C', slides: [9, 10, 11, 12, 13, 14] },
-  CLOSING: { label: '', colour: 'transparent', slides: [15] },
+  VALIDATION: { label: 'VALIDATION', colour: '#C4960C', slides: [9, 10, 11, 12, 13] },
+  CLOSING: { label: '', colour: 'transparent', slides: [14] },
 } as const;
 
 /** Get section info for a given slide number */

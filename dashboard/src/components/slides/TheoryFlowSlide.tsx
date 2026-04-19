@@ -3,7 +3,7 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 /**
  * Slide 2: Why Forecast Aggregation — SVG flow diagram showing
  * distributed data sources converging into aggregation then single forecast.
- * Arrows have 12px gap from box edges.
+ * Arrows have 20px gap from box edges. refX set so arrowhead doesn't overlap.
  */
 export default function TheoryFlowSlide() {
   return (
@@ -14,10 +14,10 @@ export default function TheoryFlowSlide() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="tf-arrow" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+          <marker id="tf-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.slate} />
           </marker>
-          <marker id="tf-arrow-teal" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+          <marker id="tf-arrow-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
@@ -35,7 +35,7 @@ export default function TheoryFlowSlide() {
               y={src.y}
               width={220}
               height={80}
-              rx={14}
+              rx={12}
               fill={PALETTE.lightBg}
               stroke={PALETTE.navy}
               strokeWidth={2.5}
@@ -51,11 +51,11 @@ export default function TheoryFlowSlide() {
             >
               {src.label}
             </text>
-            {/* Arrow from source to convergence — starts 12px after box, ends 12px before target */}
+            {/* Arrow from source to aggregation — starts 20px after box right edge, ends 20px before target left edge */}
             <line
-              x1={262}
+              x1={270}
               y1={src.y + 40}
-              x2={388}
+              x2={380}
               y2={250}
               stroke={PALETTE.slate}
               strokeWidth={2.5}
@@ -70,7 +70,7 @@ export default function TheoryFlowSlide() {
           y={205}
           width={220}
           height={90}
-          rx={16}
+          rx={12}
           fill={PALETTE.white}
           stroke={PALETTE.teal}
           strokeWidth={3.5}
@@ -97,11 +97,11 @@ export default function TheoryFlowSlide() {
           Weighted combination
         </text>
 
-        {/* Arrow from aggregation to output — 12px gaps */}
+        {/* Arrow from aggregation to output — 20px gaps */}
         <line
-          x1={632}
+          x1={640}
           y1={250}
-          x2={728}
+          x2={720}
           y2={250}
           stroke={PALETTE.teal}
           strokeWidth={3}
@@ -127,7 +127,7 @@ export default function TheoryFlowSlide() {
           y={205}
           width={220}
           height={90}
-          rx={16}
+          rx={12}
           fill={PALETTE.teal}
           stroke={PALETTE.teal}
           strokeWidth={2}
