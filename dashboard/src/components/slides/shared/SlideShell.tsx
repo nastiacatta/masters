@@ -77,7 +77,9 @@ function HighlightBar({ text }: { text: string }) {
         borderRadius: '0 10px 10px 0',
         lineHeight: 1.4,
       }}
-    />
+    >
+      {text}
+    </div>
   );
 }
 
