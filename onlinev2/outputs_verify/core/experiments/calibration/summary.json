@@ -1,0 +1,51 @@
+{
+  "experiment_name": "calibration",
+  "description": "Quantile reliability curve: empirical coverage vs nominal tau.",
+  "config": {
+    "dgp_name": "latent_fixed",
+    "T": 20000,
+    "n_forecasters": 10,
+    "n_seeds": 20,
+    "scoring_mode": "quantiles_crps"
+  },
+  "full_config": {
+    "experiment_name": "calibration",
+    "dgp_name": "latent_fixed",
+    "T": 20000,
+    "n_forecasters": 10,
+    "n_seeds": 20,
+    "scoring_mode": "quantiles_crps"
+  },
+  "headline_results": {
+    "coverage_tau_0.10": {
+      "mean": 0.053669999999999995,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "coverage_tau_0.25": {
+      "mean": 0.19410499999999997,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "coverage_tau_0.50": {
+      "mean": 0.4992325,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "coverage_tau_0.75": {
+      "mean": 0.8043849999999999,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "coverage_tau_0.90": {
+      "mean": 0.9453700000000003,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

@@ -50,20 +50,20 @@ export default function PageHeader({
         {title}
       </h2>
       {subtitle && (
-        <p className="text-sm text-slate-600 mt-1 max-w-2xl">
+        <p className="text-sm text-slate-600 mt-1">
           {subtitle}
         </p>
       )}
       {description && (
-        <p className="text-sm text-slate-500 mt-1 max-w-2xl">{description}</p>
+        <p className="text-sm text-slate-500 mt-1">{description}</p>
       )}
       {question && (
-        <p className="text-sm font-medium text-slate-700 mt-2 max-w-2xl">
+        <p className="text-sm font-medium text-slate-700 mt-2">
           {question}
         </p>
       )}
       {takeaway && (
-        <p className="text-sm text-slate-600 mt-1 max-w-2xl italic">
+        <p className="text-sm text-slate-600 mt-1 italic">
           {takeaway}
         </p>
       )}

@@ -1,0 +1,7 @@
+metric,value
+n_rounds,1000
+mean_profit,3.0141089380218675e-17
+std_profit,1.407258046692267
+mean_roi,-0.0012806680606429256
+max_abs_budget_gap,2.842170943040401e-14
+equal_scores_ok,1

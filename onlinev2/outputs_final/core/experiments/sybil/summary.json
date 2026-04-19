@@ -1,0 +1,56 @@
+{
+  "experiment_name": "sybil",
+  "description": "Split one agent into k identities \u2014 verify Sybil resistance.",
+  "config": {
+    "dgp_name": "sybil",
+    "T": "N/A",
+    "n_forecasters": "N/A",
+    "n_seeds": 20,
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "sybil",
+    "T": "N/A",
+    "n_seeds": 20,
+    "k_max": 8,
+    "n_trials": 20
+  },
+  "headline_results": {
+    "identical_mean_ratio": {
+      "mean": 0.9999999999999993,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "identical_max_abs_delta": {
+      "mean": 2.0677903833643537e-17,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "diversified_mean_ratio": {
+      "mean": 1.064505964805978,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "diversified_max_abs_delta": {
+      "mean": 0.0010288527895906095,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "strategic_deposit_mean_ratio": {
+      "mean": 0.999999999999999,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "strategic_deposit_max_abs_delta": {
+      "mean": 2.6432848965196602e-17,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

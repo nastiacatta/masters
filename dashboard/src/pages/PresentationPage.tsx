@@ -69,11 +69,11 @@ const SLIDES: SlideData[] = [
       'Share predictions, not raw data',
       'Client → forecasts + wagers → settlement',
       'Platforms: Numerai, Polymarket, Kalshi',
-      '⚠ Wash trading ~60% volume',
-      '⚠ Small core drives prices',
+      '⚠ Wash trading ~60% volume (Sirolly 2025)',
+      '⚠ Small core drives prices (Wu 2025)',
       '→ Need formal guarantees',
     ],
-    image: 'presentation-plots/behaviour_wealth.png',
+    image: 'presentation-plots/behaviour_concentration.png',
   },
 
   /* ── 4  EXISTING WORK ── */
@@ -121,12 +121,7 @@ const SLIDES: SlideData[] = [
     dark: true,
   },
 
-  /* ── 6  SOLUTION DIVIDER ── */
-  {
-    id: 'solution-divider',
-    type: 'section',
-    title: 'Solution',
-  },
+  /* solution section — no divider needed */
 
   /* ── 7  MECHANISM ── */
   {
@@ -135,13 +130,13 @@ const SLIDES: SlideData[] = [
     title: 'Mechanism: Round-by-Round',
     leftBullets: [
       '1. Submit — quantile forecast + deposit',
-      '2. Skill Gate — effective wager = deposit × skill',
-      '3. Aggregate — weighted combination',
-      '4. Settle — redistribute by relative scores',
-      '5. Update — loss → EWMA → skill recomputed',
+      '2. Skill Gate — m = b × (λ + (1−λ)σ^η)',
+      '3. Aggregate — weighted by effective wager',
+      '4. Settle — Π_i = m_i(1 + s_i − s̄)',
+      '5. Update — loss → EWMA → σ recomputed',
     ],
-    image: 'presentation-plots/scoring_validation.png',
-    highlight: 'Same effective wager controls BOTH influence and exposure → incentives aligned',
+    image: 'presentation-plots/fixed_deposit.png',
+    highlight: 'Same m_i controls BOTH influence and exposure → incentives aligned',
   },
 
   /* ── 8  SKILL SIGNAL ── */
@@ -150,14 +145,18 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'The Skill Signal',
     leftBullets: [
-      'EWMA blends previous loss with current',
-      'Staleness decay when absent',
-      'Exponential mapping → skill ∈ [σ_min, 1.0]',
+      'Present: EWMA blends loss with history',
+      'Absent: staleness decay → baseline',
+      'Mapping: exp(−γL) → σ ∈ [σ_min, 1]',
       '',
-      'Properties:',
-      '• Absolute (not relative)',
+      'Key properties:',
+      '• Absolute (not relative to others)',
       '• Pre-round (past losses only)',
-      '• Handles intermittency',
+      '• Handles intermittent participation',
+      '',
+      'vs Vitali-Pinson:',
+      '⚠ Their weights are relative (simplex)',
+      '→ Mine are absolute (per-user)',
     ],
     image: 'presentation-plots/skill_wager.png',
   },
@@ -166,37 +165,43 @@ const SLIDES: SlideData[] = [
   {
     id: 'architecture',
     type: 'split',
-    title: 'Architecture',
+    title: 'Architecture & Testing',
     leftBullets: [
       'Three layers:',
-      '• Environment — data-generating processes',
-      '• Agents — behaviour policies',
-      '• Platform — scoring → aggregation → settlement',
+      '• Environment — DGPs (exogenous / endogenous)',
+      '• Agents — honest, noisy, adversarial',
+      '• Platform — deterministic core mechanism',
+      '',
+      'Contract: agents output (participate, report, deposit)',
+      'Core consumes without knowing motives',
       '',
       'onlinev2 Python package',
       '20+ invariant tests (Hypothesis)',
+      'Experiment ladder: correctness → forecasting → robustness',
     ],
-    image: 'presentation-plots/selective_participation.png',
+    image: 'presentation-plots/parameter_sweep.png',
   },
 
-  /* ── 10  VALIDATION DIVIDER ── */
-  {
-    id: 'validation-divider',
-    type: 'section',
-    title: 'Validation',
-  },
+  /* validation section — no divider needed */
 
   /* ── 11  CORRECTNESS ── */
   {
     id: 'correctness',
     type: 'split',
-    title: 'Correctness: The Mechanism Works',
+    title: 'Correctness',
     leftBullets: [
       'Budget gap: 2.84 × 10⁻¹⁴',
-      'Mean profit: 3.01 × 10⁻¹⁷',
-      'Sybil ratio: 1.000000',
+      'Mean profit: 3.01 × 10⁻¹⁷ (zero-sum)',
+      'Equal-score → zero profit ✓',
       '',
-      '✓ All 20+ tests PASS',
+      'Sybil ratio (identical): 1.000000',
+      'Sybil max|Δ|: 2.07 × 10⁻¹⁷',
+      '',
+      'Noise-skill corr (MAE): −0.952',
+      'Noise-skill corr (CRPS): −0.979',
+      '',
+      '✓ All 20+ invariant tests PASS',
+      '✓ Both point_mae and quantiles_crps',
     ],
     image: 'presentation-plots/settlement_sanity.png',
   },
@@ -263,31 +268,24 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Strategic Robustness',
     leftBullets: [
-      'Sybil identical: ratio 1.000000',
-      'Sybil diversified: 1.065',
+      'Sybil (identical reports):',
+      '  ratio = 1.000000 ± 2×10⁻¹⁷',
       '',
-      'Arbitrage: zero profit in practice',
+      'Sybil (diversified reports):',
+      '  ratio = 1.065 (not sybilproof)',
+      '',
+      'Strategic deposit: ratio = 1.000000',
+      '',
+      'Arbitrage (Chen et al. 2014):',
+      '  Zero profit across all λ values',
+      '',
+      '→ Resists standard attacks',
+      '⚠ Adaptive adversaries remain open',
     ],
-    image: 'presentation-plots/sybil.png',
+    image: 'presentation-plots/arbitrage_heatmap.png',
   },
 
-  /* ── 16  CALIBRATION ── */
-  {
-    id: 'calibration',
-    type: 'split',
-    title: 'Calibration',
-    leftBullets: [
-      'τ=0.10: dev −0.046',
-      'τ=0.25: dev −0.056',
-      'τ=0.50: dev −0.001 ✓',
-      'τ=0.75: dev +0.054',
-      'τ=0.90: dev +0.045',
-      '',
-      'Median perfect, tails ~5pp off',
-      'Inherent to quantile averaging',
-    ],
-    image: 'presentation-plots/calibration_reliability.png',
-  },
+  /* calibration folded into contributions slide */
 
   /* ── 17  CONTRIBUTIONS ── */
   {
@@ -301,8 +299,14 @@ const SLIDES: SlideData[] = [
       '4. Skill recovery: ρ = 1.0000',
       '5. Sybil-resistant; no arbitrage profit',
       '6. Modular platform + test suite',
+      '',
+      'Limitations:',
+      '• Tail calibration ~5pp (quantile avg.)',
+      '• Equal weights competitive',
+      '• Risk neutrality assumption',
+      '• Synthetic data only',
     ],
-    image: 'presentation-plots/master_comparison.png',
+    image: 'presentation-plots/master_comparison_four_panel.png',
   },
 
   /* ── 18  CLOSING ── */
@@ -433,27 +437,27 @@ function bulletStyle(item: string): React.CSSProperties {
 function ColumnsSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
-      className="w-full h-full flex flex-col px-16 py-12"
+      className="w-full h-full flex flex-col px-14 py-10"
       style={{ background: IMPERIAL.white }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 mb-8">
+      <div className="flex-shrink-0 mb-6">
         <h2
           className="font-bold"
-          style={{ fontSize: '2.5rem', color: IMPERIAL.navy, lineHeight: 1.2 }}
+          style={{ fontSize: '2.8rem', color: IMPERIAL.navy, lineHeight: 1.15 }}
         >
           {slide.title}
         </h2>
-        <div className="mt-3 h-1 w-20" style={{ background: IMPERIAL.blue }} />
+        <div className="mt-3 h-1 w-24" style={{ background: IMPERIAL.blue }} />
       </div>
 
       {/* Columns */}
-      <div className="flex-1 flex gap-10 min-h-0">
+      <div className="flex-1 flex gap-8 min-h-0">
         {slide.columns?.map((col) => (
-          <div key={col.heading} className="flex-1 flex flex-col">
+          <div key={col.heading} className="flex-1 flex flex-col rounded-xl border border-slate-200 p-6">
             <h3
-              className="font-bold mb-5"
-              style={{ fontSize: '1.6rem', color: IMPERIAL.blue, lineHeight: 1.3 }}
+              className="font-bold mb-4"
+              style={{ fontSize: '1.7rem', color: IMPERIAL.blue, lineHeight: 1.3 }}
             >
               {col.heading}
             </h3>
@@ -462,7 +466,7 @@ function ColumnsSlideView({ slide }: { slide: SlideData }) {
                 <li
                   key={i}
                   style={{
-                    fontSize: '1.25rem',
+                    fontSize: '1.35rem',
                     lineHeight: 1.5,
                     color: item.startsWith('⚠') ? '#dc2626' : '#334155',
                     fontWeight: item.startsWith('⚠') ? 600 : 400,
@@ -533,36 +537,36 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
 function SplitSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
-      className="w-full h-full flex flex-col px-16 py-12"
+      className="w-full h-full flex flex-col px-14 py-10"
       style={{ background: IMPERIAL.white }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 mb-6">
+      <div className="flex-shrink-0 mb-5">
         <h2
           className="font-bold"
-          style={{ fontSize: '2.5rem', color: IMPERIAL.navy, lineHeight: 1.2 }}
+          style={{ fontSize: '2.8rem', color: IMPERIAL.navy, lineHeight: 1.15 }}
         >
           {slide.title}
         </h2>
         {slide.subtitle && (
-          <p className="mt-2" style={{ fontSize: '1.25rem', color: IMPERIAL.smoke }}>
+          <p className="mt-2" style={{ fontSize: '1.3rem', color: IMPERIAL.smoke }}>
             {slide.subtitle}
           </p>
         )}
-        <div className="mt-3 h-1 w-20" style={{ background: IMPERIAL.blue }} />
+        <div className="mt-3 h-1 w-24" style={{ background: IMPERIAL.blue }} />
       </div>
 
       {/* Split body */}
-      <div className="flex-1 flex gap-10 min-h-0">
-        {/* Left — text (40%) */}
-        <div className="flex flex-col justify-center" style={{ width: '40%' }}>
-          <ul className="space-y-3">
+      <div className="flex-1 flex gap-8 min-h-0">
+        {/* Left — text (38%) */}
+        <div className="flex flex-col justify-center" style={{ width: '38%' }}>
+          <ul className="space-y-2.5">
             {slide.leftBullets?.map((item, i) => (
               <li
                 key={i}
                 style={{
-                  fontSize: '1.3rem',
-                  lineHeight: 1.55,
+                  fontSize: '1.4rem',
+                  lineHeight: 1.5,
                   color: '#1e293b',
                   ...bulletStyle(item),
                 }}
@@ -573,10 +577,10 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
           </ul>
         </div>
 
-        {/* Right — image (60%) */}
+        {/* Right — image (62%) */}
         <div
           className="flex items-center justify-center"
-          style={{ width: '60%' }}
+          style={{ width: '62%' }}
         >
           {slide.image && (
             <img
@@ -586,8 +590,8 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
-                borderRadius: '0.5rem',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                borderRadius: '0.75rem',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.10)',
               }}
             />
           )}

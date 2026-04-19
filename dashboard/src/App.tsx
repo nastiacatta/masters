@@ -32,7 +32,8 @@ export default function App() {
         <HashRouter>
           <Routes>
             {/* Full-screen presentation mode — no sidebar */}
-            <Route path="/presentation" element={<PresentationPage />} />
+            <Route path="/slides" element={<PresentationPage />} />
+            <Route path="/presentation" element={<Navigate to="/slides" replace />} />
 
             {/* Main app with sidebar */}
             <Route path="*" element={<MainLayout />} />
@@ -68,7 +69,7 @@ function MainLayout() {
               <Route path="/results" element={<Navigate to="/evidence" replace />} />
               <Route path="/behaviour" element={<Navigate to="/robustness" replace />} />
               <Route path="/mechanism" element={<Navigate to="/explorer" replace />} />
-              <Route path="/slides" element={<Navigate to="/presentation" replace />} />
+              <Route path="/presentation" element={<Navigate to="/slides" replace />} />
               <Route path="/lab" element={<Navigate to="/appendix" replace />} />
               <Route path="/walkthrough" element={<Navigate to="/explorer" replace />} />
               <Route path="/experiments" element={<Navigate to="/appendix/experiments" replace />} />

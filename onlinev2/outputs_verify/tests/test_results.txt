@@ -1,0 +1,7 @@
+Unit tests
+==========
+pinball_nonneg: PASS
+crps_nonneg: PASS
+crps_perfect_better: PASS
+crps_bound: PASS
+latent_generator_determinism: PASS

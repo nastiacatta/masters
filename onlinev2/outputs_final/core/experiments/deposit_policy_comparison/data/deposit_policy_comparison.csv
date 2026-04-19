@@ -1,0 +1,5 @@
+deposit_policy,mean_crps_all,se_all,mean_crps_warmstart,se_ws
+iid_exp,0.045492,0.000226,0.045643,0.000292
+fixed_unit,0.042368,0.000107,0.042336,0.000150
+oracle_precision,0.022711,0.000071,0.022744,0.000085
+bankroll_conf,0.037958,0.000115,0.037491,0.000143
