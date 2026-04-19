@@ -2,13 +2,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, Responsive
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 7: The Skill Signal — Recharts LineChart showing σ vs accumulated loss
- * (exponential decay curve) with σ_min reference line, property badges,
- * and a staleness decay mini-chart.
- * Panel-friendly: no SlideShell wrapper, fills container.
+ * Slide 7: The Skill Signal — LineChart showing sigma vs accumulated loss
+ * (exponential decay curve) with sigma_min reference line and property badges.
  */
 
-// Generate exponential decay data: σ = σ_min + (1 - σ_min) * exp(-γ * L)
 const SIGMA_MIN = 0.1;
 const GAMMA = 0.5;
 const FALLBACK_DATA = Array.from({ length: 50 }, (_, i) => {
@@ -17,7 +14,6 @@ const FALLBACK_DATA = Array.from({ length: 50 }, (_, i) => {
   return { loss: parseFloat(loss.toFixed(1)), sigma: parseFloat(sigma.toFixed(4)) };
 });
 
-// Staleness decay data: σ decays toward σ_min over rounds of absence
 const STALENESS_DATA = Array.from({ length: 20 }, (_, i) => {
   const rounds = i;
   const sigma = SIGMA_MIN + (0.95 - SIGMA_MIN) * Math.exp(-0.15 * rounds);
@@ -40,28 +36,28 @@ export default function SkillSignalSlide() {
             fontFamily: TYPOGRAPHY.fontFamily,
           }}
         >
-          Skill Mapping: σ vs Accumulated Loss
+          Skill Mapping: sigma vs Accumulated Loss
         </p>
         <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={FALLBACK_DATA} margin={{ top: 12, right: 28, left: 20, bottom: 44 }}>
-              <CartesianGrid strokeDasharray="4 4" stroke={PALETTE.lightGrey} />
+              <CartesianGrid strokeDasharray="4 4" stroke={PALETTE.border} />
               <XAxis
                 dataKey="loss"
-                label={{ value: 'Accumulated Loss (L)', position: 'bottom', offset: 20, style: { fontSize: '14px', fill: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily } }}
-                tick={{ fontSize: 13, fill: PALETTE.warmGrey }}
+                label={{ value: 'Accumulated Loss (L)', position: 'bottom', offset: 20, style: { fontSize: '14px', fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily } }}
+                tick={{ fontSize: 13, fill: PALETTE.slate }}
               />
               <YAxis
                 domain={[0, 1]}
-                label={{ value: 'σ (skill)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: '14px', fill: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily } }}
-                tick={{ fontSize: 13, fill: PALETTE.warmGrey }}
+                label={{ value: 'sigma (skill)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: '14px', fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily } }}
+                tick={{ fontSize: 13, fill: PALETTE.slate }}
               />
               <ReferenceLine
                 y={SIGMA_MIN}
-                stroke={PALETTE.deepRed}
+                stroke={PALETTE.coral}
                 strokeDasharray="6 4"
                 strokeWidth={3}
-                label={{ value: 'σ_min', position: 'right', fill: PALETTE.deepRed, fontSize: 12, fontWeight: 600 }}
+                label={{ value: 'sigma_min', position: 'right', fill: PALETTE.coral, fontSize: 12, fontWeight: 600 }}
               />
               <Line
                 type="monotone"
@@ -120,7 +116,7 @@ export default function SkillSignalSlide() {
           style={{
             marginTop: 12,
             padding: '10px 12px',
-            background: 'rgba(0, 132, 127, 0.04)',
+            background: 'rgba(46, 139, 139, 0.04)',
             borderRadius: 10,
             borderLeft: `3px solid ${PALETTE.teal}`,
           }}
@@ -131,15 +127,15 @@ export default function SkillSignalSlide() {
           <div style={{ height: 70 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={STALENESS_DATA} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                <XAxis dataKey="rounds" tick={{ fontSize: 9, fill: PALETTE.warmGrey }} tickCount={5} />
-                <YAxis domain={[0, 1]} tick={{ fontSize: 9, fill: PALETTE.warmGrey }} tickCount={3} />
-                <ReferenceLine y={SIGMA_MIN} stroke={PALETTE.deepRed} strokeDasharray="3 3" strokeWidth={1.5} />
-                <Line type="monotone" dataKey="sigma" stroke={PALETTE.warmGrey} strokeWidth={2.5} dot={false} />
+                <XAxis dataKey="rounds" tick={{ fontSize: 9, fill: PALETTE.slate }} tickCount={5} />
+                <YAxis domain={[0, 1]} tick={{ fontSize: 9, fill: PALETTE.slate }} tickCount={3} />
+                <ReferenceLine y={SIGMA_MIN} stroke={PALETTE.coral} strokeDasharray="3 3" strokeWidth={1.5} />
+                <Line type="monotone" dataKey="sigma" stroke={PALETTE.slate} strokeWidth={2.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p style={{ fontSize: '0.7rem', color: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily, margin: '4px 0 0 0', textAlign: 'center' }}>
-            Rounds absent → σ decays to σ_min
+          <p style={{ fontSize: '0.7rem', color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, margin: '4px 0 0 0', textAlign: 'center' }}>
+            Rounds absent: sigma decays to sigma_min
           </p>
         </div>
       </div>

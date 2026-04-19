@@ -1,10 +1,10 @@
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide } from './shared/presentationConstants';
 
 /**
  * Slide 5: My Contribution — dark background with KaTeX equation
- * and three property badges.
+ * and three property badges. No emojis.
  */
 export default function ContributionSlide() {
   const equationHtml = katex.renderToString('m_i = b_i \\times g(\\sigma_i)', {
@@ -13,6 +13,7 @@ export default function ContributionSlide() {
   });
 
   const properties = ['Absolute', 'Pre-round', 'Handles Intermittency'] as const;
+  const section = getSectionForSlide(5);
 
   return (
     <div
@@ -28,8 +29,18 @@ export default function ContributionSlide() {
         background: DARK_GRADIENT,
         fontFamily: TYPOGRAPHY.fontFamily,
         boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
+      {/* Section bar */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: section.colour }} />
+      {/* Slide number */}
+      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.darkText }}>5 / 15</div>
+      {/* Section label */}
+      <div style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: PALETTE.darkText, marginBottom: 16, opacity: 0.8 }}>
+        PROBLEM
+      </div>
+
       {/* Title */}
       <h1
         style={{
@@ -47,7 +58,7 @@ export default function ContributionSlide() {
       <p
         style={{
           fontSize: '1.6rem',
-          color: PALETTE.lightGrey,
+          color: PALETTE.darkText,
           lineHeight: 1.6,
           maxWidth: 800,
           marginBottom: 48,
@@ -59,7 +70,7 @@ export default function ContributionSlide() {
       {/* Equation highlight box */}
       <div
         style={{
-          background: 'rgba(0, 132, 127, 0.12)',
+          background: 'rgba(46, 139, 139, 0.12)',
           border: `2px solid ${PALETTE.teal}`,
           borderRadius: 16,
           padding: '32px 56px',
@@ -74,10 +85,10 @@ export default function ContributionSlide() {
           style={{
             marginTop: 12,
             fontSize: '1.2rem',
-            color: PALETTE.lightGrey,
+            color: PALETTE.darkText,
           }}
         >
-          effective wager = deposit × learned skill
+          effective wager = deposit x learned skill
         </p>
       </div>
 
@@ -105,7 +116,7 @@ export default function ContributionSlide() {
         style={{
           marginTop: 48,
           fontSize: '1.1rem',
-          color: PALETTE.lightGrey,
+          color: PALETTE.darkText,
         }}
       >
         Preserves budget balance and sybilproofness

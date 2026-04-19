@@ -1,32 +1,29 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, LabelList, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList, ReferenceLine } from 'recharts';
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 11: Weight Rules — Recharts grouped BarChart comparing weight rules
- * under Fixed and Bankroll deposit regimes.
- * Wider bars, value labels on top, prominent annotation, reference line.
+ * Slide 11: Weight Rules — horizontal bar chart showing CRPS for each method
+ * under FIXED deposits only (isolates the skill signal).
  */
 
 interface WeightData {
-  rule: string;
-  fixed: number;
-  bankroll: number;
-  annotation?: string;
-  fixedLabel: string;
-  bankrollLabel: string;
+  method: string;
+  crps: number;
+  annotation: string;
+  highlight?: boolean;
 }
 
 const FALLBACK_DATA: WeightData[] = [
-  { rule: 'Uniform', fixed: 0.0434, bankroll: 0.0230, fixedLabel: '0.043', bankrollLabel: '0.023' },
-  { rule: 'Skill', fixed: 0.0419, bankroll: 0.0225, annotation: '−3.5%', fixedLabel: '0.042', bankrollLabel: '0.023' },
-  { rule: 'Mechanism', fixed: 0.0415, bankroll: 0.0220, fixedLabel: '0.042', bankrollLabel: '0.022' },
-  { rule: 'Best-Single', fixed: 0.0450, bankroll: 0.0240, fixedLabel: '0.045', bankrollLabel: '0.024' },
+  { method: 'Best Single', crps: 0.0232, annotation: 'ceiling' },
+  { method: 'Mechanism', crps: 0.0423, annotation: '' },
+  { method: 'Skill-only', crps: 0.0419, annotation: '-3.5%', highlight: true },
+  { method: 'Uniform', crps: 0.0434, annotation: 'baseline' },
 ];
 
 export default function WeightRulesSlide() {
   return (
-    <SlideShell title="Weight Rules">
+    <SlideShell title="Weight Rules (Fixed Deposits)" slideNumber={11}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <p
@@ -38,9 +35,8 @@ export default function WeightRulesSlide() {
               margin: 0,
             }}
           >
-            CRPS by Weight Rule × Deposit Regime
+            CRPS by Weight Rule (fixed deposits isolate skill signal)
           </p>
-          {/* Prominent −3.5% badge */}
           <div
             style={{
               background: PALETTE.teal,
@@ -52,47 +48,49 @@ export default function WeightRulesSlide() {
               fontFamily: TYPOGRAPHY.fontFamily,
             }}
           >
-            Skill: −3.5% vs Uniform
+            Skill improves over uniform by 3.5%
           </div>
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={FALLBACK_DATA} margin={{ top: 36, right: 40, left: 24, bottom: 36 }}>
-              <CartesianGrid strokeDasharray="4 4" stroke={PALETTE.lightGrey} vertical={false} />
+            <BarChart
+              data={FALLBACK_DATA}
+              layout="vertical"
+              margin={{ top: 20, right: 100, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="4 4" stroke={PALETTE.border} horizontal={false} />
               <XAxis
-                dataKey="rule"
-                tick={{ fontSize: 16, fill: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }}
+                type="number"
+                domain={[0, 0.05]}
+                tick={{ fontSize: 15, fill: PALETTE.slate }}
+                label={{ value: 'CRPS', position: 'bottom', offset: 0, style: { fontSize: '16px', fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily } }}
                 axisLine={{ strokeWidth: 2 }}
               />
               <YAxis
-                domain={[0, 0.05]}
-                tick={{ fontSize: 15, fill: PALETTE.warmGrey }}
-                label={{ value: 'CRPS', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: '16px', fill: PALETTE.warmGrey, fontFamily: TYPOGRAPHY.fontFamily } }}
+                type="category"
+                dataKey="method"
+                tick={{ fontSize: 17, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }}
                 axisLine={{ strokeWidth: 2 }}
+                width={130}
               />
-              {/* Horizontal reference line at Uniform fixed baseline */}
               <ReferenceLine
-                y={0.0434}
-                stroke={PALETTE.warmGrey}
+                x={0.0434}
+                stroke={PALETTE.slate}
                 strokeDasharray="6 4"
                 strokeWidth={2}
-                label={{ value: 'Uniform baseline', position: 'right', fill: PALETTE.warmGrey, fontSize: 12 }}
+                label={{ value: 'Uniform baseline', position: 'top', fill: PALETTE.slate, fontSize: 12 }}
               />
-              <Legend
-                wrapperStyle={{ fontSize: 15, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }}
-              />
-              <Bar dataKey="fixed" name="Fixed Deposits" fill={PALETTE.navy} radius={[6, 6, 0, 0]} barSize={40}>
+              <Bar dataKey="crps" radius={[0, 8, 8, 0]} barSize={40}>
+                {FALLBACK_DATA.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={entry.highlight ? PALETTE.teal : PALETTE.imperial}
+                  />
+                ))}
                 <LabelList
-                  dataKey="fixedLabel"
-                  position="top"
-                  style={{ fontSize: 13, fontWeight: 600, fill: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}
-                />
-              </Bar>
-              <Bar dataKey="bankroll" name="Bankroll Deposits" fill={PALETTE.teal} radius={[6, 6, 0, 0]} barSize={40}>
-                <LabelList
-                  dataKey="bankrollLabel"
-                  position="top"
-                  style={{ fontSize: 13, fontWeight: 600, fill: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}
+                  dataKey="annotation"
+                  position="right"
+                  style={{ fontSize: 15, fontWeight: 700, fill: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}
                 />
               </Bar>
             </BarChart>

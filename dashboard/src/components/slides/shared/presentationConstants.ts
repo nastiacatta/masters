@@ -1,20 +1,30 @@
 import type React from 'react';
 
 /**
- * Imperial Palette — single source of truth for all presentation colours.
+ * Clean academic palette — single source of truth for all presentation colours.
  * Every colour used in text, SVG fills, or chart data series must come from this set.
  */
 export const PALETTE = {
-  navy: '#002147',
-  teal: '#00847F',
-  warmGrey: '#4A5568',
-  lightBg: '#F7FAFC',
-  white: '#FFFFFF',
-  dark: '#1a1a2e',
-  darkSlate: '#1A202C',
-  deepRed: '#C53030',
-  lightGrey: '#E2E8F0',
-  warmCream: '#FFFBF0',
+  // Primary
+  navy: '#1B2A4A',        // Deep navy — headings, primary text
+  white: '#FFFFFF',       // Backgrounds
+  offWhite: '#F8FAFC',   // Slide backgrounds (light)
+
+  // Accent
+  imperial: '#003E74',    // Imperial blue — strong accent
+  teal: '#2E8B8B',       // Teal — results, positive
+  coral: '#E85D4A',      // Coral red — warnings, negative
+  gold: '#C4960C',       // Gold — highlights, annotations
+
+  // Neutral
+  charcoal: '#2D3748',   // Body text
+  slate: '#64748B',      // Secondary text, subtitles
+  border: '#CBD5E1',     // Borders, grid lines
+  lightBg: '#F1F5F9',    // Card backgrounds
+
+  // Dark mode
+  darkBg: '#0F172A',     // Dark slide backgrounds
+  darkText: '#E2E8F0',   // Text on dark backgrounds
 } as const;
 
 /**
@@ -22,27 +32,44 @@ export const PALETTE = {
  */
 export const TYPOGRAPHY = {
   fontFamily: "'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, sans-serif",
-  heading: { fontSize: '2.8rem', fontWeight: 700, lineHeight: 1.15 },
-  body: { fontSize: '1.6rem', lineHeight: 2.0, marginBottom: '14px' },
-  bodySplit: { fontSize: '1.6rem', lineHeight: 2.0, marginBottom: '14px' },
-  bodyContent: { fontSize: '1.7rem', lineHeight: 2.0, marginBottom: '14px' },
-  chartTitle: { fontSize: '20px', fontWeight: 700 },
+  heading: { fontSize: '3.2rem', fontWeight: 700, lineHeight: 1.15 },
+  body: { fontSize: '1.8rem', lineHeight: 2.2, marginBottom: '16px' },
+  bodySplit: { fontSize: '1.7rem', lineHeight: 2.0, marginBottom: '14px' },
+  bodyContent: { fontSize: '1.9rem', lineHeight: 2.2, marginBottom: '16px' },
+  chartTitle: { fontSize: '22px', fontWeight: 700 },
   chartAxis: { fontSize: '16px' },
-  chartDataLabel: { fontSize: '15px', fontWeight: 600 },
+  chartDataLabel: { fontSize: '17px', fontWeight: 600 },
 } as const;
 
 /**
  * Emphasis style mappings for inline text highlighting within bullet items.
- * Each maps to a React.CSSProperties-compatible object.
  */
 export const EMPHASIS: Record<'result' | 'method' | 'warning' | 'numeric', React.CSSProperties> = {
-  result: { color: '#00847F', fontWeight: 700 },
-  method: { color: '#002147', fontWeight: 700 },
-  warning: { color: '#C53030', fontWeight: 600 },
-  numeric: { color: '#1A202C', fontWeight: 700 },
+  result: { color: '#2E8B8B', fontWeight: 700 },
+  method: { color: '#1B2A4A', fontWeight: 700 },
+  warning: { color: '#E85D4A', fontWeight: 600 },
+  numeric: { color: '#2D3748', fontWeight: 700 },
 } as const;
 
 /**
  * Dark gradient used for section/dark slide backgrounds.
  */
-export const DARK_GRADIENT = 'linear-gradient(135deg, #002147 0%, #1a1a2e 100%)' as const;
+export const DARK_GRADIENT = 'linear-gradient(135deg, #1B2A4A 0%, #0F172A 100%)' as const;
+
+/**
+ * Section definitions for the presentation flow.
+ */
+export const SECTIONS = {
+  PROBLEM: { label: 'PROBLEM', colour: '#003E74', slides: [1, 2, 3, 4, 5] },
+  SOLUTION: { label: 'SOLUTION', colour: '#2E8B8B', slides: [6, 7, 8] },
+  VALIDATION: { label: 'VALIDATION', colour: '#C4960C', slides: [9, 10, 11, 12, 13, 14] },
+  CLOSING: { label: '', colour: 'transparent', slides: [15] },
+} as const;
+
+/** Get section info for a given slide number */
+export function getSectionForSlide(slideNumber: number): { label: string; colour: string } {
+  if (SECTIONS.PROBLEM.slides.includes(slideNumber as never)) return SECTIONS.PROBLEM;
+  if (SECTIONS.SOLUTION.slides.includes(slideNumber as never)) return SECTIONS.SOLUTION;
+  if (SECTIONS.VALIDATION.slides.includes(slideNumber as never)) return SECTIONS.VALIDATION;
+  return SECTIONS.CLOSING;
+}

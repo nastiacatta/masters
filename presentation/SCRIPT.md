@@ -198,7 +198,7 @@ Experiments follow a strict ladder: first establish correctness, then test pure 
 
 ---
 
-## SLIDE 9 — Correctness: The Mechanism Works
+## SLIDE 9 le— Correctness: The Mechanism Works
 
 **ON SLIDE:**
 - Invariant checks (1000 rounds, 20 seeds):
@@ -354,7 +354,7 @@ I designed a self-financed wagering mechanism that couples weighted-score settle
 
 The strongest empirical finding is that deposit design matters more than the weighting rule. Bankroll-confidence deposits achieve an 11.3 per cent improvement over fixed deposits. The skill signal recovers the correct forecaster ordering perfectly — Spearman correlation of one point zero zero zero zero over twenty thousand rounds.
 
-Critically, this is not just synthetic. On real Elia wind power data — seventeen thousand data points, five real forecasters including ARIMA, XGBoost, and a neural network — the mechanism achieves a twenty-one per cent CRPS improvement over equal weights. On electricity data the improvement is smaller, confirming that gains are conditional on forecaster heterogeneity.
+Critically, this is not just synthetic. On real Elia wind power data — seventeen thousand data points, five real forecasters — ARIMA for linear time series, XGBoost for gradient-boosted trees, a multi-layer perceptron neural network, a moving average baseline, and a naive persistence model — the mechanism achieves a twenty-one per cent CRPS improvement over equal weights. On electricity data the improvement is smaller, confirming that gains are conditional on forecaster heterogeneity.
 
 The main limitations: tail calibration shows under-dispersion of about five percentage points, equal weights remain competitive when forecasters are similar in quality, and truthfulness holds only under risk neutrality.
 

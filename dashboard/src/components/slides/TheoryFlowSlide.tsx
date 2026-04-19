@@ -2,8 +2,8 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 2: Why Forecast Aggregation — SVG flow diagram showing
- * distributed data sources converging into aggregation → single forecast.
- * Panel-friendly: no SlideShell wrapper, fills container.
+ * distributed data sources converging into aggregation then single forecast.
+ * Arrows have 12px gap from box edges.
  */
 export default function TheoryFlowSlide() {
   return (
@@ -14,15 +14,15 @@ export default function TheoryFlowSlide() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="tf-arrow" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
-            <polygon points="0 0, 12 4, 0 8" fill={PALETTE.warmGrey} />
+          <marker id="tf-arrow" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.slate} />
           </marker>
-          <marker id="tf-arrow-teal" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
-            <polygon points="0 0, 12 4, 0 8" fill={PALETTE.teal} />
+          <marker id="tf-arrow-teal" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
 
-        {/* Data source boxes — 4 sources including Weather */}
+        {/* Data source boxes */}
         {[
           { label: 'Energy', y: 30 },
           { label: 'Logistics', y: 145 },
@@ -51,20 +51,20 @@ export default function TheoryFlowSlide() {
             >
               {src.label}
             </text>
-            {/* Arrow from source to convergence */}
+            {/* Arrow from source to convergence — starts 12px after box, ends 12px before target */}
             <line
-              x1={250}
+              x1={262}
               y1={src.y + 40}
-              x2={390}
+              x2={388}
               y2={250}
-              stroke={PALETTE.warmGrey}
-              strokeWidth={3}
+              stroke={PALETTE.slate}
+              strokeWidth={2.5}
               markerEnd="url(#tf-arrow)"
             />
           </g>
         ))}
 
-        {/* Convergence / Aggregation box */}
+        {/* Aggregation box */}
         <rect
           x={400}
           y={205}
@@ -73,7 +73,7 @@ export default function TheoryFlowSlide() {
           rx={16}
           fill={PALETTE.white}
           stroke={PALETTE.teal}
-          strokeWidth={4}
+          strokeWidth={3.5}
         />
         <text
           x={510}
@@ -92,16 +92,16 @@ export default function TheoryFlowSlide() {
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="16"
-          fill={PALETTE.warmGrey}
+          fill={PALETTE.slate}
         >
           Weighted combination
         </text>
 
-        {/* Arrow from aggregation to output */}
+        {/* Arrow from aggregation to output — 12px gaps */}
         <line
-          x1={620}
+          x1={632}
           y1={250}
-          x2={730}
+          x2={728}
           y2={250}
           stroke={PALETTE.teal}
           strokeWidth={3}
@@ -110,7 +110,7 @@ export default function TheoryFlowSlide() {
 
         {/* "Reduces error" annotation */}
         <text
-          x={675}
+          x={680}
           y={235}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
@@ -149,7 +149,7 @@ export default function TheoryFlowSlide() {
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="16"
-          fill={PALETTE.warmCream}
+          fill={PALETTE.darkText}
         >
           Lower error
         </text>
@@ -161,7 +161,7 @@ export default function TheoryFlowSlide() {
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="17"
-          fill={PALETTE.warmGrey}
+          fill={PALETTE.slate}
         >
           Distributed data sources
         </text>
@@ -171,7 +171,7 @@ export default function TheoryFlowSlide() {
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="17"
-          fill={PALETTE.warmGrey}
+          fill={PALETTE.slate}
         >
           Improved output
         </text>

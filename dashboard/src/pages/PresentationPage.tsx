@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PasswordGate from '@/components/slides/PasswordGate';
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT } from '@/components/slides/shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide } from '@/components/slides/shared/presentationConstants';
 import { formatBulletText } from '@/components/slides/shared/formatBulletText';
 import TheoryFlowSlide from '@/components/slides/TheoryFlowSlide';
 import MarketFlowSlide from '@/components/slides/MarketFlowSlide';
@@ -18,15 +18,12 @@ import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide
 
 /**
  * Full-screen presentation mode for thesis defence.
- * Imperial College styling with warm teal accent.
+ * Academic styling with section indicators, slide numbers, and new palette.
  */
-
-/* ─── Palette (local shorthand) ──────────────────────────────── */
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-
-const BASE = import.meta.env.BASE_URL;
+const TOTAL_SLIDES = 15;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -47,261 +44,314 @@ export interface SlideData {
   highlight?: string;
   dark?: boolean;
   ref?: string;
+  slideNumber?: number;
   component?: React.ComponentType<SlideComponentProps>;
   rightComponent?: React.ComponentType<SlideComponentProps>;
 }
 
 const SLIDES: SlideData[] = [
-  /* ── 1  TITLE ── */
   {
     id: 'title',
     type: 'title',
     title: 'Adaptive Skill and Stake\nin Forecast Markets',
     subtitle: 'Coupling Self-Financed Wagering with Online Skill Learning',
     dark: true,
+    slideNumber: 1,
   },
-
-  /* ── 2  WHY FORECAST AGGREGATION ── */
   {
     id: 'motivation',
     type: 'split',
     title: 'Why Forecast Aggregation?',
     bullets: [
-      '• Combining forecasts reduces error',
-      '• Full probabilistic forecasts (not point estimates)',
-      '• Quality: strictly proper scoring rules (CRPS)',
-      '• Information distributed, costly to share',
+      '  Combining forecasts reduces error',
+      '  Full probabilistic forecasts (not point estimates)',
+      '  Quality: strictly proper scoring rules (CRPS)',
+      '  Information distributed, costly to share',
       '',
-      '→ How to incentivise and weight correctly?',
+      '  How to incentivise and weight correctly?',
     ],
     rightComponent: TheoryFlowSlide,
+    slideNumber: 2,
   },
-
-  /* ── 3  PREDICTION MARKETS ── */
   {
     id: 'markets',
     type: 'split',
     title: 'Prediction Markets',
     bullets: [
-      '• Share predictions, not raw data',
-      '• Reward based on forecast quality',
-      '• Client posts task; forecasters submit reports + wagers',
-      '• Market operator aggregates and settles',
+      '  Share predictions, not raw data',
+      '  Reward based on forecast quality',
+      '  Client posts task; forecasters submit reports + wagers',
+      '  Market operator aggregates and settles',
       '',
-      '• Platforms: Numerai, Polymarket, Kalshi',
-      '⚠ Wash trading ~60% of volume [1]',
-      '⚠ Prices driven by small elite [2]',
+      '  Platforms: Numerai, Polymarket, Kalshi',
+      '  [!] Wash trading ~60% of volume [1]',
+      '  [!] Prices driven by small elite [2]',
       '',
-      '→ Need mechanisms with formal guarantees',
+      '  Need mechanisms with formal guarantees',
     ],
     ref: '[1] Sirolly et al., 2025  [2] Wu, U. Chicago, 2025',
     rightComponent: MarketFlowSlide,
+    slideNumber: 3,
   },
-
-  /* ── 4  WHERE THIS WORK FITS ── */
   {
     id: 'existing-work',
     type: 'split',
     title: 'Where This Work Fits',
     bullets: [
-      '• Lambert/Raja: self-financed, truthful',
-      '  but static (no skill learning)',
+      '  Lambert/Raja: self-financed, truthful',
+      '    but static (no skill learning)',
       '',
-      '• Online aggregation: adaptive weights',
-      '  but no payments or guarantees',
+      '  Online aggregation: adaptive weights',
+      '    but no payments or guarantees',
       '',
-      '• Vitali-Pinson: adaptive + intermittent',
-      '  but relative weights, different settlement',
+      '  Vitali-Pinson: adaptive + intermittent',
+      '    but relative weights, different settlement',
       '',
-      '→ This thesis: adaptive AND self-financed',
+      '  This thesis: adaptive AND self-financed',
     ],
     ref: '[3] Lambert et al., 2008  [4] Raja et al., 2024  [5] Vitali & Pinson, 2025',
     rightComponent: PositioningMatrixSlide,
+    slideNumber: 4,
   },
-
-  /* ── 5  CONTRIBUTION ── */
   {
     id: 'contribution',
     type: 'section',
     title: 'My Contribution',
     subtitle:
-      'I extend self-financed wagering with an online skill-learning layer\n\neffective wager = deposit × learned skill\n\nAbsolute · Pre-round · Handles intermittency\nPreserves budget balance and sybilproofness',
+      'I extend self-financed wagering with an online skill-learning layer\n\neffective wager = deposit x learned skill\n\nAbsolute - Pre-round - Handles intermittency\nPreserves budget balance and sybilproofness',
     dark: true,
     component: ContributionSlide,
+    slideNumber: 5,
   },
-
-  /* ── 6  MECHANISM ── */
   {
     id: 'mechanism',
     type: 'split',
     title: 'Mechanism: Round-by-Round',
     bullets: [
       '1. Submit forecast + deposit',
-      '2. Skill gate: m = b × g(σ)',
+      '2. Skill gate: m = b x g(sigma)',
       '3. Aggregate by effective wager',
-      '4. Settle: Π = m(1 + s − s̄)',
+      '4. Settle: Pi = m(1 + s - s_bar)',
       '5. Update skill from loss',
       '',
-      '→ Same m controls influence AND exposure',
+      '  Same m controls influence AND exposure',
     ],
     highlight: 'Incentives aligned: influence requires risk',
     component: MechanismPipelineSlide,
+    slideNumber: 6,
   },
-
-  /* ── 7  SKILL SIGNAL ── */
   {
     id: 'skill-signal',
     type: 'split',
     title: 'The Skill Signal',
     bullets: [
-      '• Present: EWMA blends loss with history',
-      '• Absent: staleness decay toward baseline',
-      '• Mapping: loss → σ ∈ [σ_min, 1]',
+      '  Present: EWMA blends loss with history',
+      '  Absent: staleness decay toward baseline',
+      '  Mapping: loss to sigma in [sigma_min, 1]',
       '',
-      '• Absolute (not relative to others)',
-      '• Pre-round (past losses only)',
-      '• Handles intermittent participation',
+      '  Absolute (not relative to others)',
+      '  Pre-round (past losses only)',
+      '  Handles intermittent participation',
     ],
     rightComponent: SkillSignalSlide,
+    slideNumber: 7,
   },
-
-  /* ── 8  ARCHITECTURE ── */
   {
     id: 'architecture',
     type: 'split',
     title: 'Architecture',
     bullets: [
-      '• Environment: DGPs (synthetic + real data)',
-      '• Agents: honest, noisy, adversarial',
-      '• Platform: deterministic core mechanism',
+      '  Environment: DGPs (synthetic + real data)',
+      '  Agents: honest, noisy, adversarial',
+      '  Platform: deterministic core mechanism',
       '',
-      '• Agents output (participate, report, deposit)',
-      '• Core consumes without knowing motives',
-      '• 20+ invariant tests, property-based testing',
+      '  Agents output (participate, report, deposit)',
+      '  Core consumes without knowing motives',
+      '  20+ invariant tests, property-based testing',
     ],
     rightComponent: ArchitectureDiagramSlide,
+    slideNumber: 8,
   },
-
-  /* ── 9  CORRECTNESS ── */
   {
     id: 'correctness',
     type: 'split',
     title: 'Correctness',
     bullets: [
-      '• Budget gap: 2.84 × 10⁻¹⁴',
-      '• Mean profit: 3.01 × 10⁻¹⁷ (zero-sum)',
-      '• Sybil ratio: 1.000000',
-      '• Noise-skill correlation: −0.98',
+      '  Budget gap: 2.84 x 10^-14',
+      '  Mean profit: 3.01 x 10^-17 (zero-sum)',
+      '  Sybil ratio: 1.000000',
+      '  Noise-skill correlation: -0.98',
       '',
-      '✓ All 20+ tests PASS (both modes)',
+      '  All 20+ tests PASS (both modes)',
     ],
     component: CorrectnessSlide,
+    slideNumber: 9,
   },
-
-  /* ── 10  DEPOSIT DESIGN ── */
   {
     id: 'deposit-design',
     type: 'split',
     title: 'Deposit Design',
     bullets: [
-      '• Random (IID Exp): 0.0456',
-      '• Fixed (b=1):      0.0423',
-      '• Bankroll+Conf:    0.0375  (−11%)',
-      '• Oracle:           0.0227  (−46%)',
+      '  Random (IID Exp): 0.0456',
+      '  Fixed (b=1):      0.0423',
+      '  Bankroll+Conf:    0.0375  (-11%)',
+      '  Oracle:           0.0227  (-46%)',
       '',
-      '→ How stake enters > weighting rule',
+      '  How stake enters > weighting rule',
     ],
     highlight: 'Deposit design is the strongest lever',
     component: DepositAblationSlide,
+    slideNumber: 10,
   },
-
-  /* ── 11  WEIGHT RULES ── */
   {
     id: 'weight-rules',
     type: 'split',
     title: 'Weight Rules',
     bullets: [
       'Fixed deposits:',
-      '• Uniform:     0.0434',
-      '• Skill-only:  0.0419  (−3.5%)',
+      '  Uniform:     0.0434',
+      '  Skill-only:  0.0419  (-3.5%)',
       '',
       'Bankroll deposits:',
-      '• Deposit-only: 0.0230',
+      '  Deposit-only: 0.0230',
       '',
-      '→ Equal weights remain a strong baseline',
+      '  Equal weights remain a strong baseline',
     ],
     component: WeightRulesSlide,
+    slideNumber: 11,
   },
-
-  /* ── 12  SKILL RECOVERY ── */
   {
     id: 'skill-recovery',
     type: 'split',
     title: 'Skill Recovery',
     bullets: [
-      '• 6 forecasters, T=20000, 20 seeds',
-      '• Least noisy (τ=0.15): σ = 0.959',
-      '• Most noisy (τ=1.00): σ = 0.820',
-      '• Spearman rank correlation = 1.0000',
+      '  6 forecasters, T=20000, 20 seeds',
+      '  Least noisy (tau=0.15): sigma = 0.959',
+      '  Most noisy (tau=1.00): sigma = 0.820',
+      '  Spearman rank correlation = 1.0000',
       '',
-      '→ Staleness decay prevents gaming',
+      '  Staleness decay prevents gaming',
     ],
     component: SkillRecoverySlide,
+    slideNumber: 12,
   },
-
-  /* ── 13  STRATEGIC ROBUSTNESS ── */
   {
     id: 'strategic',
     type: 'content',
     title: 'Strategic Robustness',
     bullets: [
-      '• Sybil (identical reports): ratio = 1.000000',
-      '  Sybilproof under standard assumption',
+      '  Sybil (identical reports): ratio = 1.000000',
+      '    Sybilproof under standard assumption',
       '',
-      '• Arbitrage [6]: zero profit extracted',
-      '  Skill gate limits sustained exploitation',
+      '  Arbitrage [6]: zero profit extracted',
+      '    Skill gate limits sustained exploitation',
       '',
-      '→ Mechanism resists standard attacks',
-      '⚠ Adaptive adversaries remain open',
+      '  Mechanism resists standard attacks',
+      '  [!] Adaptive adversaries remain open',
     ],
     ref: '[6] Chen et al., EC 2014',
     component: StrategicRobustnessSlide,
+    slideNumber: 13,
   },
-
-  /* ── 14  CONTRIBUTIONS & CLOSING ── */
   {
     id: 'contributions',
     type: 'content',
     title: 'Contributions',
     bullets: [
       '1. Mechanism coupling wagering + online skill learning',
-      '2. Verified: budget balance < 10⁻¹⁴, sybilproof',
-      '3. Deposit design: strongest lever (−11% CRPS)',
+      '2. Verified: budget balance < 10^-14, sybilproof',
+      '3. Deposit design: strongest lever (-11% CRPS)',
       '4. Skill recovery: Spearman = 1.0000',
-      '5. Real data: −21% CRPS on Elia wind (ARIMA, XGBoost, MLP)',
+      '5. Real data: -21% CRPS on Elia wind (ARIMA, XGBoost, MLP, MA, Naive)',
       '6. Modular platform + test suite + dashboard',
       '',
       'Limitations:',
-      '⚠ Tail calibration ~5pp (quantile averaging)',
-      '⚠ Equal weights competitive on some datasets',
-      '⚠ Truthfulness under risk neutrality only',
+      '  [!] Tail calibration ~5pp (quantile averaging)',
+      '  [!] Equal weights competitive on some datasets',
+      '  [!] Truthfulness under risk neutrality only',
     ],
     component: ContributionsChartSlide,
+    slideNumber: 14,
   },
-
-  /* ── 15  CLOSING ── */
   {
     id: 'closing',
     type: 'closing',
     title: 'Thank you',
     subtitle: 'Anastasia Cattaneo\nImperial College London\n2026',
     dark: true,
+    slideNumber: 15,
   },
 ];
 
+/* ─── Section bar component ──────────────────────────────────── */
+
+function SectionBar({ slideNumber }: { slideNumber?: number }) {
+  if (!slideNumber) return null;
+  const section = getSectionForSlide(slideNumber);
+  if (!section.colour || section.colour === 'transparent') return null;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        background: section.colour,
+        zIndex: 10,
+      }}
+    />
+  );
+}
+
+/* ─── Slide number indicator ─────────────────────────────────── */
+
+function SlideNumberBadge({ slideNumber, dark }: { slideNumber?: number; dark?: boolean }) {
+  if (!slideNumber) return null;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 16,
+        right: 24,
+        fontSize: '0.8rem',
+        fontWeight: 500,
+        color: dark ? PALETTE.darkText : PALETTE.slate,
+        fontFamily: FONT_FAMILY,
+        zIndex: 10,
+      }}
+    >
+      {slideNumber} / {TOTAL_SLIDES}
+    </div>
+  );
+}
+
+/* ─── Section label ──────────────────────────────────────────── */
+
+function SectionLabel({ slideNumber, dark }: { slideNumber?: number; dark?: boolean }) {
+  if (!slideNumber) return null;
+  const section = getSectionForSlide(slideNumber);
+  if (!section.label) return null;
+  return (
+    <div
+      style={{
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase' as const,
+        color: dark ? PALETTE.darkText : PALETTE.slate,
+        marginBottom: 8,
+        fontFamily: FONT_FAMILY,
+        opacity: 0.8,
+      }}
+    >
+      {section.label}
+    </div>
+  );
+}
+
 /* ─── Shared style helpers ───────────────────────────────────── */
 
-/** Accent bar under slide titles: 4px tall, 60px wide, teal */
 function AccentBar() {
   return (
     <div
@@ -316,8 +366,8 @@ function AccentBar() {
   );
 }
 
-/** Footer — left: name, right: optional reference */
-function SlideFooter({ refText }: { refText?: string }) {
+function SlideFooter({ refText, slideNumber }: { refText?: string; slideNumber?: number }) {
+  const dark = false;
   return (
     <div
       style={{
@@ -328,34 +378,35 @@ function SlideFooter({ refText }: { refText?: string }) {
         alignItems: 'flex-end',
       }}
     >
-      <span style={{ fontSize: '0.8rem', color: C.warmGrey, textAlign: 'left' }}>
+      <span style={{ fontSize: '0.85rem', color: C.slate }}>
         Anastasia Cattaneo — Imperial College London
       </span>
-      {refText && (
-        <span
-          style={{
-            fontSize: '0.72rem',
-            color: C.warmGrey,
-            maxWidth: '55%',
-            textAlign: 'right',
-            lineHeight: 1.4,
-          }}
-        >
-          {refText}
-        </span>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {refText && (
+          <span
+            style={{
+              fontSize: '0.75rem',
+              color: C.slate,
+              maxWidth: '45%',
+              textAlign: 'right',
+              lineHeight: 1.4,
+            }}
+          >
+            {refText}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-/** Warm teal highlight bar with left border accent */
 function HighlightBar({ text }: { text: string }) {
   return (
     <div
       style={{
         flexShrink: 0,
         marginTop: 20,
-        background: 'rgba(0, 132, 127, 0.07)',
+        background: 'rgba(46, 139, 139, 0.07)',
         borderLeft: `4px solid ${C.teal}`,
         color: C.navy,
         fontSize: '1.35rem',
@@ -373,31 +424,29 @@ function HighlightBar({ text }: { text: string }) {
 /** Per-bullet inline style */
 function bulletStyle(item: string): React.CSSProperties {
   if (item === '') return { height: '0.6rem' };
-  if (item.startsWith('⚠')) return { color: C.deepRed, fontWeight: 600 };
-  if (item.startsWith('→')) return { color: C.teal, fontWeight: 700 };
-  if (item.startsWith('✓')) return { color: C.teal, fontWeight: 700 };
-  if (item.startsWith('  ')) return { paddingLeft: '1.5rem', fontSize: '1.45rem', color: C.warmGrey };
-  if (item.startsWith('•')) return {};
+  if (item.startsWith('  [!]')) return { color: C.coral, fontWeight: 600, paddingLeft: '1.5rem' };
+  if (item.startsWith('[!]')) return { color: C.coral, fontWeight: 600 };
+  if (item.startsWith('    ')) return { paddingLeft: '2.5rem', fontSize: '1.5rem', color: C.slate };
+  if (item.startsWith('  ')) return { paddingLeft: '0.5rem' };
   if (/^\d\./.test(item)) return { fontWeight: 600 };
   if (item.startsWith('Limitations:'))
-    return { fontWeight: 700, fontSize: '1.55rem', color: C.navy, marginTop: '0.4rem' };
+    return { fontWeight: 700, fontSize: '1.6rem', color: C.navy, marginTop: '0.4rem' };
   if (item.startsWith('Fixed deposits:') || item.startsWith('Bankroll deposits:'))
-    return { fontWeight: 700, color: C.darkSlate };
+    return { fontWeight: 700, color: C.charcoal };
   return {};
 }
 
-/** Dark gradient used by title, section, and closing slides */
 const darkGradient = DARK_GRADIENT;
 
-/* ─── Slide renderers ────────────────────────────────────────── */
+/* ─── Slide view components ──────────────────────────────────── */
 
-/** Slide 1 — Title (dark, centred) */
+/** Title slide */
 function TitleSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -405,70 +454,70 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
         textAlign: 'center',
         padding: '80px',
         background: darkGradient,
+        fontFamily: FONT_FAMILY,
+        boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
+      <SectionBar slideNumber={slide.slideNumber} />
+      <SlideNumberBadge slideNumber={slide.slideNumber} dark />
       <h1
         style={{
-          fontSize: '5rem',
-          fontWeight: 700,
-          color: C.white,
-          lineHeight: 1.08,
-          maxWidth: '1100px',
-          whiteSpace: 'pre-line',
-        }}
-      >
-        {slide.title}
-      </h1>
-      {slide.subtitle && (
-        <p
-          style={{
-            marginTop: 36,
-            fontSize: '2.1rem',
-            color: C.teal,
-            lineHeight: 1.4,
-            maxWidth: '900px',
-          }}
-        >
-          {slide.subtitle}
-        </p>
-      )}
-      <div
-        style={{
-          marginTop: 72,
-          fontSize: '1.3rem',
-          color: C.lightGrey,
-        }}
-      >
-        Anastasia Cattaneo · Imperial College London · 2026
-      </div>
-    </div>
-  );
-}
-
-/** Section / gap divider (dark, centred) */
-function SectionSlideView({ slide }: { slide: SlideData }) {
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '80px',
-        background: darkGradient,
-      }}
-    >
-      <h1
-        style={{
-          fontSize: '3.4rem',
+          fontSize: '3.6rem',
           fontWeight: 700,
           color: C.white,
           lineHeight: 1.2,
-          maxWidth: '1000px',
           whiteSpace: 'pre-line',
+          marginBottom: 24,
+        }}
+      >
+        {slide.title}
+      </h1>
+      {slide.subtitle && (
+        <p style={{ fontSize: '1.6rem', color: C.darkText, lineHeight: 1.6, maxWidth: 700 }}>
+          {slide.subtitle}
+        </p>
+      )}
+      <p style={{ marginTop: 48, fontSize: '1.1rem', color: C.darkText }}>
+        Anastasia Cattaneo — Imperial College London
+      </p>
+    </div>
+  );
+}
+
+/** Section slide (dark, centred) */
+function SectionSlideView({ slide }: { slide: SlideData }) {
+  if (slide.component) {
+    const Comp = slide.component;
+    return <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+  }
+  return (
+    <div
+      style={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '80px',
+        background: darkGradient,
+        fontFamily: FONT_FAMILY,
+        boxSizing: 'border-box',
+        position: 'relative',
+      }}
+    >
+      <SectionBar slideNumber={slide.slideNumber} />
+      <SlideNumberBadge slideNumber={slide.slideNumber} dark />
+      <SectionLabel slideNumber={slide.slideNumber} dark />
+      <h1
+        style={{
+          fontSize: TYPOGRAPHY.heading.fontSize,
+          fontWeight: 700,
+          color: C.white,
+          lineHeight: 1.2,
+          marginBottom: 24,
         }}
       >
         {slide.title}
@@ -476,12 +525,11 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            marginTop: 44,
-            fontSize: '1.8rem',
-            color: C.teal,
-            lineHeight: 1.55,
-            maxWidth: '900px',
+            fontSize: '1.5rem',
+            color: C.darkText,
+            lineHeight: 1.7,
             whiteSpace: 'pre-line',
+            maxWidth: 800,
           }}
         >
           {slide.subtitle}
@@ -491,123 +539,56 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Content slides — text only, left-aligned, max-width 900px */
+/** Content slide (full-width bullets + optional component) */
 function ContentSlideView({ slide }: { slide: SlideData }) {
+  if (slide.component) {
+    const Comp = slide.component;
+    return <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+  }
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '56px 72px',
-        background: C.lightBg,
-      }}
-    >
-      {/* Header */}
-      <div style={{ flexShrink: 0, marginBottom: 36 }}>
-        <h2
-          style={{
-            fontSize: '3rem',
-            fontWeight: 700,
-            color: C.navy,
-            lineHeight: 1.15,
-          }}
-        >
-          {slide.title}
-        </h2>
-        <AccentBar />
-      </div>
-
-      {/* Bullets — left-aligned, generous spacing */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          maxWidth: 900,
-        }}
-      >
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {slide.bullets?.map((item, i) => (
-            <li
-              key={i}
-              style={{
-                fontSize: '1.7rem',
-                lineHeight: 2.0,
-                color: C.warmGrey,
-                marginBottom: 14,
-                ...bulletStyle(item),
-              }}
-            >
-              {formatBulletText(item)}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <SlideFooter refText={slide.ref} />
-    </div>
-  );
-}
-
-/** Split slides — 35% text left, 65% graph right, left-aligned */
-function SplitSlideView({ slide }: { slide: SlideData }) {
-  const items = slide.bullets || slide.leftBullets || [];
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         padding: '52px 56px',
-        background: C.lightBg,
+        paddingTop: 56,
+        background: C.offWhite,
+        fontFamily: FONT_FAMILY,
+        boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
-      {/* Header */}
+      <SectionBar slideNumber={slide.slideNumber} />
+      <SlideNumberBadge slideNumber={slide.slideNumber} />
       <div style={{ flexShrink: 0, marginBottom: 24 }}>
+        <SectionLabel slideNumber={slide.slideNumber} />
         <h2
           style={{
-            fontSize: '3rem',
-            fontWeight: 700,
+            fontSize: TYPOGRAPHY.heading.fontSize,
+            fontWeight: TYPOGRAPHY.heading.fontWeight,
             color: C.navy,
-            lineHeight: 1.15,
+            lineHeight: TYPOGRAPHY.heading.lineHeight,
+            margin: 0,
           }}
         >
           {slide.title}
         </h2>
         <AccentBar />
       </div>
-
-      {/* Split body */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          gap: 36,
-          minHeight: 0,
-        }}
-      >
-        {/* Left — text (35%) */}
-        <div
-          style={{
-            width: '35%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {slide.bullets && (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {items.map((item, i) => (
+            {slide.bullets.map((item, i) => (
               <li
                 key={i}
                 style={{
-                  fontSize: '1.6rem',
-                  lineHeight: 2.0,
-                  color: C.warmGrey,
-                  marginBottom: 14,
+                  fontSize: TYPOGRAPHY.bodyContent.fontSize,
+                  lineHeight: TYPOGRAPHY.bodyContent.lineHeight,
+                  marginBottom: TYPOGRAPHY.bodyContent.marginBottom,
+                  color: C.charcoal,
+                  fontFamily: FONT_FAMILY,
                   ...bulletStyle(item),
                 }}
               >
@@ -615,51 +596,95 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Right — graph (65%) */}
-        <div
-          style={{
-            width: '65%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {slide.rightComponent ? (
-            (() => {
-              const RightComp = slide.rightComponent;
-              return <RightComp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
-            })()
-          ) : slide.image ? (
-            <img
-              src={`${BASE}${slide.image}`}
-              alt={slide.title ?? 'Slide image'}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 10,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              }}
-            />
-          ) : null}
-        </div>
+        )}
       </div>
-
       {slide.highlight && <HighlightBar text={slide.highlight} />}
-      <SlideFooter refText={slide.ref} />
+      <SlideFooter refText={slide.ref} slideNumber={slide.slideNumber} />
     </div>
   );
 }
 
-/** Closing slide (dark, centred) */
+/** Split slide (left bullets + right component) */
+function SplitSlideView({ slide }: { slide: SlideData }) {
+  if (slide.component && !slide.rightComponent) {
+    const Comp = slide.component;
+    return <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+  }
+  return (
+    <div
+      style={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '52px 56px',
+        paddingTop: 56,
+        background: C.offWhite,
+        fontFamily: FONT_FAMILY,
+        boxSizing: 'border-box',
+        position: 'relative',
+      }}
+    >
+      <SectionBar slideNumber={slide.slideNumber} />
+      <SlideNumberBadge slideNumber={slide.slideNumber} />
+      <div style={{ flexShrink: 0, marginBottom: 24 }}>
+        <SectionLabel slideNumber={slide.slideNumber} />
+        <h2
+          style={{
+            fontSize: TYPOGRAPHY.heading.fontSize,
+            fontWeight: TYPOGRAPHY.heading.fontWeight,
+            color: C.navy,
+            lineHeight: TYPOGRAPHY.heading.lineHeight,
+            margin: 0,
+          }}
+        >
+          {slide.title}
+        </h2>
+        <AccentBar />
+      </div>
+      <div style={{ flex: 1, display: 'flex', gap: 36, minHeight: 0 }}>
+        {/* Left: bullets */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {slide.bullets && (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {slide.bullets.map((item, i) => (
+                <li
+                  key={i}
+                  style={{
+                    fontSize: TYPOGRAPHY.bodySplit.fontSize,
+                    lineHeight: TYPOGRAPHY.bodySplit.lineHeight,
+                    marginBottom: TYPOGRAPHY.bodySplit.marginBottom,
+                    color: C.charcoal,
+                    fontFamily: FONT_FAMILY,
+                    ...bulletStyle(item),
+                  }}
+                >
+                  {formatBulletText(item)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {/* Right: component */}
+        {slide.rightComponent && (
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <slide.rightComponent slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />
+          </div>
+        )}
+      </div>
+      {slide.highlight && <HighlightBar text={slide.highlight} />}
+      <SlideFooter refText={slide.ref} slideNumber={slide.slideNumber} />
+    </div>
+  );
+}
+
+/** Closing slide */
 function ClosingSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -667,13 +692,18 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
         textAlign: 'center',
         padding: '80px',
         background: darkGradient,
+        fontFamily: FONT_FAMILY,
+        boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
+      <SlideNumberBadge slideNumber={slide.slideNumber} dark />
       <h1
         style={{
-          fontSize: '5rem',
+          fontSize: '3.6rem',
           fontWeight: 700,
           color: C.white,
+          marginBottom: 32,
         }}
       >
         {slide.title}
@@ -681,10 +711,9 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            marginTop: 44,
-            fontSize: '1.9rem',
-            color: C.teal,
-            lineHeight: 1.7,
+            fontSize: '1.5rem',
+            color: C.darkText,
+            lineHeight: 1.8,
             whiteSpace: 'pre-line',
           }}
         >
@@ -695,213 +724,63 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Dispatch to the correct renderer by slide type — component field takes priority */
-function SlideRenderer({ slide }: { slide: SlideData }) {
-  if (slide.component) {
-    const Component = slide.component;
-    return <Component slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
-  }
-  switch (slide.type) {
-    case 'title':
-      return <TitleSlideView slide={slide} />;
-    case 'section':
-      return <SectionSlideView slide={slide} />;
-    case 'content':
-      return <ContentSlideView slide={slide} />;
-    case 'split':
-      return <SplitSlideView slide={slide} />;
-    case 'closing':
-      return <ClosingSlideView slide={slide} />;
-    default:
-      return null;
-  }
-}
-
-
-/* ─── Main presentation component ────────────────────────────── */
+/* ─── Main component ─────────────────────────────────────────── */
 
 export default function PresentationPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [showNav, setShowNav] = useState(true);
-  const [fadeKey, setFadeKey] = useState(0);
-  const total = SLIDES.length;
+  const [authenticated, setAuthenticated] = useState(false);
 
-  const goTo = useCallback(
-    (idx: number) => {
-      const clamped = Math.max(0, Math.min(idx, total - 1));
-      if (clamped !== current) {
-        setFadeKey((k) => k + 1);
-        setCurrent(clamped);
-      }
-    },
-    [total, current],
-  );
+  const next = useCallback(() => setCurrent((c) => Math.min(c + 1, SLIDES.length - 1)), []);
+  const prev = useCallback(() => setCurrent((c) => Math.max(c - 1, 0)), []);
 
-  /* Keyboard navigation */
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const handleKey = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowRight':
-        case 'ArrowDown':
-        case ' ':
-          e.preventDefault();
-          goTo(current + 1);
-          break;
-        case 'ArrowLeft':
-        case 'ArrowUp':
-          e.preventDefault();
-          goTo(current - 1);
-          break;
-        case 'Home':
-          e.preventDefault();
-          goTo(0);
-          break;
-        case 'End':
-          e.preventDefault();
-          goTo(total - 1);
-          break;
-        case 'Escape':
-          setShowNav((v) => !v);
-          break;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prev();
       }
-    };
+    }
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [current, goTo, total, isAuthenticated]);
+  }, [next, prev]);
 
-  /* Auto-hide nav bar after 3s */
-  useEffect(() => {
-    if (!showNav) return;
-    const timer = setTimeout(() => setShowNav(false), 3000);
-    return () => clearTimeout(timer);
-  }, [showNav, current]);
-
-  /* Show nav on mouse move */
-  useEffect(() => {
-    const handleMove = () => setShowNav(true);
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
-
-  /* ── Password gate ── */
-  if (!isAuthenticated) {
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 50,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: FONT_FAMILY,
-          background: darkGradient,
-        }}
-      >
-        <PasswordGate onAuthenticate={() => setIsAuthenticated(true)} />
-      </div>
-    );
+  if (!authenticated) {
+    return <PasswordGate onAuthenticate={() => setAuthenticated(true)} />;
   }
 
   const slide = SLIDES[current];
 
+  let content: React.ReactNode;
+  switch (slide.type) {
+    case 'title':
+      content = <TitleSlideView slide={slide} />;
+      break;
+    case 'section':
+      content = <SectionSlideView slide={slide} />;
+      break;
+    case 'content':
+      content = <ContentSlideView slide={slide} />;
+      break;
+    case 'split':
+      content = <SplitSlideView slide={slide} />;
+      break;
+    case 'closing':
+      content = <ClosingSlideView slide={slide} />;
+      break;
+    default:
+      content = <ContentSlideView slide={slide} />;
+  }
+
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        fontFamily: FONT_FAMILY,
-        background: '#0a0a0a',
-      }}
-      onMouseMove={() => setShowNav(true)}
+      style={{ width: '100vw', height: '100vh', overflow: 'hidden', cursor: 'none' }}
+      onClick={next}
+      onContextMenu={(e) => { e.preventDefault(); prev(); }}
     >
-      {/* Full-viewport slide with opacity fade transition */}
-      <div
-        key={`slide-${slide.id}-${fadeKey}`}
-        style={{
-          position: 'relative',
-          width: '100vw',
-          height: '100vh',
-          animation: 'slideFadeIn 0.28s ease',
-        }}
-      >
-        <SlideRenderer slide={slide} />
-      </div>
-
-      {/* CSS keyframe for fade */}
-      <style>{`
-        @keyframes slideFadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-      `}</style>
-
-      {/* Bottom navigation bar — darker, more subtle, auto-hides */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 32px',
-          background: 'rgba(0, 10, 20, 0.75)',
-          backdropFilter: 'blur(10px)',
-          opacity: showNav ? 1 : 0,
-          pointerEvents: showNav ? 'auto' : 'none',
-          transition: 'opacity 0.3s ease',
-        }}
-      >
-        <button
-          onClick={() => goTo(current - 1)}
-          disabled={current === 0}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: current === 0 ? 'rgba(255,255,255,0.25)' : C.lightGrey,
-            fontSize: '0.95rem',
-            cursor: current === 0 ? 'default' : 'pointer',
-            padding: '4px 16px',
-            fontFamily: FONT_FAMILY,
-          }}
-        >
-          ← Prev
-        </button>
-        <span
-          style={{
-            color: C.lightGrey,
-            fontSize: '0.9rem',
-            fontVariantNumeric: 'tabular-nums',
-            fontFamily: FONT_FAMILY,
-          }}
-        >
-          {current + 1} / {total}
-        </span>
-        <button
-          onClick={() => goTo(current + 1)}
-          disabled={current === total - 1}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: current === total - 1 ? 'rgba(255,255,255,0.25)' : C.lightGrey,
-            fontSize: '0.95rem',
-            cursor: current === total - 1 ? 'default' : 'pointer',
-            padding: '4px 16px',
-            fontFamily: FONT_FAMILY,
-          }}
-        >
-          Next →
-        </button>
-      </div>
+      {content}
     </div>
   );
 }
