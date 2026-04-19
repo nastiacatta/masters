@@ -108,7 +108,7 @@ The positioning matrix shows where each approach sits. Existing work occupies th
 - KaTeX equation in teal-bordered box: m_i = b_i × g(σ_i)
 - Below equation: "effective wager = deposit × learned skill"
 - Three teal pill badges: "Absolute", "Pre-round", "Handles Intermittency"
-- Gold footer: "Preserves budget balance and sybilproofness"
+- Purple footer: "Preserves budget balance and sybilproofness"
 
 **SCRIPT:**
 
@@ -159,13 +159,11 @@ The critical design choice: the same effective wager controls both influence and
 ## SLIDE 7 — The Skill Signal
 
 **ON SLIDE:**
-- Split layout: bullets on left, custom SkillSignalSlide component on right
+- Split layout: bullets on left, skill_wager.png graph on right
 - Right panel shows:
-  - "Skill Mapping: Loss → Skill" header
-  - Gradient bar (teal → gold → coral) with labels: "Low loss → σ ≈ 1" on left, "High loss → σ → σ_min" on right
-  - Three example forecaster cards with skill circles: Strong (0.96, teal), Average (0.85, gold), Weak (0.55, coral)
-  - Three teal property badges: "Absolute", "Pre-round", "Handles Intermittency"
-  - Gold-bordered note: "Staleness decay: absent forecasters revert toward baseline — no gaming by disappearing"
+  - Title: "Skill Signal: Loss → Skill → Effective Wager"
+  - Graph from experiments showing the exponential mapping from accumulated loss to skill score
+  - Three teal property badges below: "Absolute", "Pre-round", "Handles Intermittency"
 - Bullets:
   - Present: EWMA blends loss with history
   - Absent: staleness decay toward baseline
@@ -247,15 +245,12 @@ The noise-skill correlation is minus zero point nine eight — the mechanism rel
 ## SLIDE 10 — Deposit Design
 
 **ON SLIDE:**
-- Split layout: bullets on left, custom DepositAblationSlide component on right
+- Split layout: bullets on left, deposit_policy_comparison.png graph on right
 - Right panel shows:
-  - Title: "CRPS by Deposit Policy (lower is better)"
-  - Horizontal bar chart with four bars:
-    - Oracle: 0.0227 (−46%)
-    - Bankroll+Conf: 0.0375 (−11%) — highlighted in teal
-    - Fixed (b=1): 0.0423 (baseline)
-    - Random: 0.0456
-  - Gold-bordered annotation: "Weight rule comparison: Skill adds 3.5% over uniform under fixed deposits — but deposit design dominates"
+  - Title: "CRPS by Deposit Policy"
+  - Purple badge: "Bankroll+Conf: −11% vs Fixed"
+  - Graph from experiments comparing four deposit policies (Oracle, Bankroll+Conf, Fixed, Random)
+  - Footer note: "Practical deposit rules capture most of the available gain"
 - Highlight bar: "Practical deposit rules capture most of the available gain"
 - Bullets:
   - Random (IID Exp): 0.0456
@@ -304,14 +299,11 @@ On the electricity dataset, the improvement is smaller. The forecasters are more
 ## SLIDE 12 — Skill Recovery
 
 **ON SLIDE:**
-- Split layout: bullets on left, custom SkillRecoverySlide component on right
+- Split layout: bullets on left, quantiles_crps_recovery.png graph on right
 - Right panel shows:
-  - Title: "True Noise (tau) vs Learned Skill (sigma)"
+  - Title: "Skill Recovery: True Noise vs Learned Skill"
   - Teal badge: "Spearman ρ = 1.0000"
-  - Scatter chart: 6 forecaster points (F1–F6) with tau on x-axis, sigma on y-axis
-  - Each point labelled with its tau value
-  - Dashed imperial fitted curve showing exponential decay relationship
-  - Axes: "True Noise (tau)" and "Learned Skill (sigma)"
+  - Graph: quantiles_crps_recovery.png from dashboard experiments (scatter showing 6 forecasters with perfect rank ordering)
 - Bullets:
   - 6 forecasters, T=20000, 20 seeds
   - Least noisy (tau=0.15): sigma = 0.959
