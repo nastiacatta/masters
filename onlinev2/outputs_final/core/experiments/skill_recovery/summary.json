@@ -1,0 +1,49 @@
+{
+  "experiment_name": "skill_recovery",
+  "description": "Latent truth + Bayes-consistent forecasters \u2014 verify skill recovery.",
+  "config": {
+    "dgp_name": "latent_fixed",
+    "T": 20000,
+    "n_forecasters": 6,
+    "n_seeds": 20,
+    "scoring_mode": "both"
+  },
+  "full_config": {
+    "experiment_name": "skill_recovery",
+    "dgp_name": "latent_fixed",
+    "T": 20000,
+    "n_forecasters": 6,
+    "n_seeds": 20,
+    "scoring_mode": "both",
+    "T0": 500,
+    "gamma": 4.0,
+    "rho": 0.1,
+    "sigma_min": 0.1
+  },
+  "headline_results": {
+    "point_mae_spearman_sigma": {
+      "mean": 1.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "point_mae_spearman_loss": {
+      "mean": 1.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "quantiles_crps_spearman_sigma": {
+      "mean": 1.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "quantiles_crps_spearman_loss": {
+      "mean": 1.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}
