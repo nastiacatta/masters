@@ -3,12 +3,15 @@
 Run from onlinev2/: python scripts/gen_slides_plots.py
 Outputs to dashboard/public/presentation-plots/
 """
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 from pathlib import Path
+
+import matplotlib
+import numpy as np
+
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch  # noqa: E402
 
 OUT = Path(__file__).resolve().parent.parent.parent / 'dashboard' / 'public' / 'presentation-plots'
 OUT.mkdir(parents=True, exist_ok=True)

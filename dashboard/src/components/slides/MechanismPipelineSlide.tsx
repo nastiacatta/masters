@@ -9,6 +9,8 @@ const C = {
   white: '#FFFFFF',
   lightGrey: '#F8F9FA',
   dark: '#1a1a2e',
+  warmGrey: '#4A5568',
+  teal: '#00847F',
 } as const;
 
 const FONT_FAMILY =
@@ -60,7 +62,6 @@ const STEPS: StepConfig[] = [
   },
 ];
 
-
 /* ─── KaTeX helper ───────────────────────────────────────────── */
 
 function renderLatex(latex: string, displayMode = true): string {
@@ -74,43 +75,43 @@ function StepBox({ step }: { step: StepConfig }) {
 
   const boxStyle: React.CSSProperties = {
     background: isEmphasised ? 'rgba(0, 145, 213, 0.05)' : C.white,
-    border: isEmphasised ? `2px solid ${C.accent}` : `1px solid ${C.navy}`,
-    borderRadius: 12,
-    padding: '20px 24px',
+    border: isEmphasised ? `2.5px solid ${C.accent}` : `1.5px solid ${C.navy}`,
+    borderRadius: 14,
+    padding: '28px 32px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
     minWidth: 0,
     flex: 1,
   };
 
   const labelStyle: React.CSSProperties = {
-    fontSize: '1.4rem',
+    fontSize: '1.6rem',
     fontWeight: 700,
     color: C.navy,
-    marginBottom: 8,
+    marginBottom: 10,
     fontFamily: FONT_FAMILY,
     lineHeight: 1.2,
   };
 
   const formulaStyle: React.CSSProperties = {
-    fontSize: '1.1rem',
-    marginBottom: 6,
+    fontSize: '1.15rem',
+    marginBottom: 8,
     lineHeight: 1.4,
   };
 
   const secondaryFormulaStyle: React.CSSProperties = {
-    fontSize: '0.9rem',
-    marginBottom: 6,
+    fontSize: '0.95rem',
+    marginBottom: 8,
     opacity: 0.8,
     lineHeight: 1.3,
   };
 
   const subtitleStyle: React.CSSProperties = {
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     color: '#64748b',
     fontStyle: 'italic',
     fontFamily: FONT_FAMILY,
@@ -135,143 +136,79 @@ function StepBox({ step }: { step: StepConfig }) {
   );
 }
 
+/* ─── Arrow divider between steps — bigger ───────────────────── */
 
-/* ─── ArrowOverlay sub-component ─────────────────────────────── */
-
-function ArrowOverlay() {
+function ArrowDivider({ colour = '#94a3b8', thick = false }: { colour?: string; thick?: boolean }) {
   return (
-    <svg
-      viewBox="0 0 1000 600"
+    <div
       style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        overflow: 'visible',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 6px',
+        flexShrink: 0,
       }}
-      xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Arrowhead markers */}
-      <defs>
-        <marker
-          id="arrow-grey"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
-          orient="auto"
-        >
-          <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
-        </marker>
-        <marker
-          id="arrow-cyan"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
-          orient="auto"
-        >
-          <polygon points="0 0, 10 3.5, 0 7" fill={C.accent} />
-        </marker>
-        <marker
-          id="arrow-green"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
-          orient="auto"
-        >
-          <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a" />
-        </marker>
-        <marker
-          id="arrow-red"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
-          orient="auto"
-        >
-          <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
-        </marker>
-      </defs>
-
-      {/* 1. Submit → Effective Wager (grey) */}
-      <line
-        x1="230" y1="100" x2="430" y2="100"
-        stroke="#94a3b8" strokeWidth="2"
-        markerEnd="url(#arrow-grey)"
-      />
-
-      {/* 2. Effective Wager → Aggregate (CYAN, thick) */}
-      <line
-        x1="570" y1="100" x2="770" y2="100"
-        stroke={C.accent} strokeWidth="3"
-        markerEnd="url(#arrow-cyan)"
-      />
-
-      {/* 3. Aggregate → Settle (grey) */}
-      <line
-        x1="833" y1="180" x2="700" y2="350"
-        stroke="#94a3b8" strokeWidth="2"
-        markerEnd="url(#arrow-grey)"
-      />
-
-      {/* 4. Effective Wager → Settle (CYAN, thick — m goes to settle) */}
-      <line
-        x1="500" y1="180" x2="640" y2="350"
-        stroke={C.accent} strokeWidth="3"
-        markerEnd="url(#arrow-cyan)"
-      />
-
-      {/* 5. Settle → Skill Update (grey) */}
-      <line
-        x1="600" y1="420" x2="430" y2="420"
-        stroke="#94a3b8" strokeWidth="2"
-        markerEnd="url(#arrow-grey)"
-      />
-
-      {/* 6. Feedback: Skill Update → Effective Wager (dashed green, curved) */}
-      <path
-        d="M 333 350 C 333 250, 500 250, 500 180"
-        fill="none"
-        stroke="#16a34a"
-        strokeWidth="2"
-        strokeDasharray="6 4"
-        markerEnd="url(#arrow-green)"
-      />
-      {/* Feedback label */}
-      <text
-        x="370" y="270"
-        fill="#16a34a"
-        fontSize="14"
-        fontFamily={FONT_FAMILY}
-        fontStyle="italic"
-      >
-        σ (next round)
-      </text>
-
-      {/* 7. Outcome: external → Settle (red) */}
-      <line
-        x1="750" y1="280" x2="700" y2="350"
-        stroke="#dc2626" strokeWidth="2"
-        markerEnd="url(#arrow-red)"
-      />
-      {/* Outcome label */}
-      <text
-        x="755" y="295"
-        fill="#dc2626"
-        fontSize="14"
-        fontFamily={FONT_FAMILY}
-        fontStyle="italic"
-      >
-        outcome y
-      </text>
-    </svg>
+      <svg width="36" height="24" viewBox="0 0 36 24">
+        <path
+          d="M2 12 L26 12 M21 6 L28 12 L21 18"
+          stroke={colour}
+          strokeWidth={thick ? 3.5 : 2.5}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
   );
 }
 
+/* ─── Feedback arrow (step 5 back to step 2) — more prominent ── */
+
+function FeedbackArrow() {
+  return (
+    <div style={{ position: 'relative', width: '100%', height: 56, marginTop: 10 }}>
+      <svg
+        viewBox="0 0 1000 56"
+        style={{ width: '100%', height: '100%' }}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <defs>
+          <marker
+            id="feedback-arrow"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
+            <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a" />
+          </marker>
+        </defs>
+        {/* Curved path from right (step 5 area) back to left (step 2 area) */}
+        <path
+          d="M 820 4 C 820 46, 300 46, 300 4"
+          fill="none"
+          stroke="#16a34a"
+          strokeWidth="3"
+          strokeDasharray="8 5"
+          markerEnd="url(#feedback-arrow)"
+        />
+        <text
+          x="560" y="50"
+          fill="#16a34a"
+          fontSize="14"
+          fontWeight="600"
+          fontFamily={FONT_FAMILY}
+          fontStyle="italic"
+          textAnchor="middle"
+        >
+          σ feeds back (next round)
+        </text>
+      </svg>
+    </div>
+  );
+}
 
 /* ─── InsightBanner sub-component ────────────────────────────── */
 
@@ -281,8 +218,8 @@ function InsightBanner() {
     border: '1px solid rgba(0, 145, 213, 0.25)',
     borderLeft: `4px solid ${C.accent}`,
     borderRadius: 8,
-    padding: '12px 24px',
-    fontSize: '1.2rem',
+    padding: '14px 28px',
+    fontSize: '1.3rem',
     fontWeight: 700,
     color: C.navy,
     fontFamily: FONT_FAMILY,
@@ -299,9 +236,6 @@ function InsightBanner() {
 /* ─── Main component ─────────────────────────────────────────── */
 
 export default function MechanismPipelineSlide() {
-  const topRow = STEPS.filter((s) => ['submit', 'wager', 'aggregate'].includes(s.id));
-  const bottomRow = STEPS.filter((s) => ['skill', 'settle'].includes(s.id));
-
   return (
     <div
       style={{
@@ -340,54 +274,61 @@ export default function MechanismPipelineSlide() {
         />
       </div>
 
-      {/* Step grid with SVG overlay */}
+      {/* Steps as horizontal flow with arrow dividers */}
       <div
         style={{
           flex: 1,
-          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          gap: 24,
           minHeight: 0,
         }}
       >
-        {/* Top row: Submit → Effective Wager → Aggregate */}
         <div
           style={{
             display: 'flex',
-            gap: 20,
-            justifyContent: 'center',
             alignItems: 'stretch',
+            gap: 0,
+            position: 'relative',
           }}
         >
-          {topRow.map((step) => (
-            <StepBox key={step.id} step={step} />
+          {STEPS.map((step, i) => (
+            <div key={step.id} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+              <StepBox step={step} />
+              {i < STEPS.length - 1 && (
+                <ArrowDivider
+                  colour={step.id === 'wager' ? C.accent : '#94a3b8'}
+                  thick={step.id === 'wager'}
+                />
+              )}
+            </div>
           ))}
+
+          {/* "outcome y" annotation near step 4 (settle) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: -28,
+              left: '62%',
+              fontSize: '0.85rem',
+              color: C.warmGrey,
+              fontStyle: 'italic',
+              fontFamily: FONT_FAMILY,
+              background: 'rgba(0,132,127,0.06)',
+              padding: '3px 10px',
+              borderRadius: 6,
+            }}
+          >
+            outcome y ↓
+          </div>
         </div>
 
-        {/* Bottom row: Skill Update ← Settle */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 20,
-            justifyContent: 'center',
-            alignItems: 'stretch',
-            paddingLeft: '16%',
-            paddingRight: '16%',
-          }}
-        >
-          {bottomRow.map((step) => (
-            <StepBox key={step.id} step={step} />
-          ))}
-        </div>
-
-        {/* SVG arrow overlay */}
-        <ArrowOverlay />
+        {/* Feedback arrow below the row */}
+        <FeedbackArrow />
       </div>
 
       {/* Insight banner */}
-      <div style={{ flexShrink: 0, marginTop: 20 }}>
+      <div style={{ flexShrink: 0, marginTop: 16 }}>
         <InsightBanner />
       </div>
 

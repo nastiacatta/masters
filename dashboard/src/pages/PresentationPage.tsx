@@ -1,35 +1,42 @@
 import { useState, useEffect, useCallback } from 'react';
 import PasswordGate from '@/components/slides/PasswordGate';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT } from '@/components/slides/shared/presentationConstants';
+import { formatBulletText } from '@/components/slides/shared/formatBulletText';
+import TheoryFlowSlide from '@/components/slides/TheoryFlowSlide';
+import MarketFlowSlide from '@/components/slides/MarketFlowSlide';
+import PositioningMatrixSlide from '@/components/slides/PositioningMatrixSlide';
+import ContributionSlide from '@/components/slides/ContributionSlide';
+import MechanismPipelineSlide from '@/components/slides/MechanismPipelineSlide';
+import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
+import ArchitectureDiagramSlide from '@/components/slides/ArchitectureDiagramSlide';
+import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
+import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
+import WeightRulesSlide from '@/components/slides/WeightRulesSlide';
+import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
+import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
+import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
 
 /**
  * Full-screen presentation mode for thesis defence.
  * Imperial College styling with warm teal accent.
- *
- * Palette: Navy #002147, Teal #00847F, Warm grey #4A5568, Light bg #F7FAFC
- * Layout: Title/closing centred; content/split left-aligned.
- * Split slides: 35% text / 65% graph.
- * Font sizes: title 5rem, content headings 3rem, body 1.5rem.
  */
 
-/* ─── Palette ────────────────────────────────────────────────── */
+/* ─── Palette (local shorthand) ──────────────────────────────── */
 
-const C = {
-  navy: '#002147',
-  teal: '#00847F',
-  warmGrey: '#4A5568',
-  lightBg: '#F7FAFC',
-  white: '#FFFFFF',
-  dark: '#1a1a2e',
-} as const;
-
-const FONT_FAMILY =
-  "'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, sans-serif";
+const C = PALETTE;
+const FONT_FAMILY = TYPOGRAPHY.fontFamily;
 
 const BASE = import.meta.env.BASE_URL;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
-interface SlideData {
+export interface SlideComponentProps {
+  slide: SlideData;
+  palette: typeof PALETTE;
+  fontFamily: string;
+}
+
+export interface SlideData {
   id: string;
   type: 'title' | 'section' | 'content' | 'split' | 'closing';
   title?: string;
@@ -40,6 +47,7 @@ interface SlideData {
   highlight?: string;
   dark?: boolean;
   ref?: string;
+  component?: React.ComponentType<SlideComponentProps>;
 }
 
 const SLIDES: SlideData[] = [
@@ -65,7 +73,7 @@ const SLIDES: SlideData[] = [
       '',
       '→ How to incentivise and weight correctly?',
     ],
-    image: 'presentation-plots/motivation_aggregation.png',
+    component: TheoryFlowSlide,
   },
 
   /* ── 3  PREDICTION MARKETS ── */
@@ -86,6 +94,7 @@ const SLIDES: SlideData[] = [
       '→ Need mechanisms with formal guarantees',
     ],
     ref: '[1] Sirolly et al., 2025  [2] Wu, U. Chicago, 2025',
+    component: MarketFlowSlide,
   },
 
   /* ── 4  WHERE THIS WORK FITS ── */
@@ -105,8 +114,8 @@ const SLIDES: SlideData[] = [
       '',
       '→ This thesis: adaptive AND self-financed',
     ],
-    image: 'presentation-plots/positioning_matrix.png',
     ref: '[3] Lambert et al., 2008  [4] Raja et al., 2024  [5] Vitali & Pinson, 2025',
+    component: PositioningMatrixSlide,
   },
 
   /* ── 5  CONTRIBUTION ── */
@@ -117,6 +126,7 @@ const SLIDES: SlideData[] = [
     subtitle:
       'I extend self-financed wagering with an online skill-learning layer\n\neffective wager = deposit × learned skill\n\nAbsolute · Pre-round · Handles intermittency\nPreserves budget balance and sybilproofness',
     dark: true,
+    component: ContributionSlide,
   },
 
   /* ── 6  MECHANISM ── */
@@ -133,8 +143,8 @@ const SLIDES: SlideData[] = [
       '',
       '→ Same m controls influence AND exposure',
     ],
-    image: 'presentation-plots/mechanism_steps.png',
     highlight: 'Incentives aligned: influence requires risk',
+    component: MechanismPipelineSlide,
   },
 
   /* ── 7  SKILL SIGNAL ── */
@@ -151,7 +161,7 @@ const SLIDES: SlideData[] = [
       '• Pre-round (past losses only)',
       '• Handles intermittent participation',
     ],
-    image: 'presentation-plots/skill_wager.png',
+    component: SkillSignalSlide,
   },
 
   /* ── 8  ARCHITECTURE ── */
@@ -168,7 +178,7 @@ const SLIDES: SlideData[] = [
       '• Core consumes without knowing motives',
       '• 20+ invariant tests, property-based testing',
     ],
-    image: 'presentation-plots/fixed_deposit.png',
+    component: ArchitectureDiagramSlide,
   },
 
   /* ── 9  CORRECTNESS ── */
@@ -184,7 +194,7 @@ const SLIDES: SlideData[] = [
       '',
       '✓ All 20+ tests PASS (both modes)',
     ],
-    image: 'presentation-plots/settlement_sanity.png',
+    component: CorrectnessSlide,
   },
 
   /* ── 10  DEPOSIT DESIGN ── */
@@ -200,8 +210,8 @@ const SLIDES: SlideData[] = [
       '',
       '→ How stake enters > weighting rule',
     ],
-    image: 'presentation-plots/deposit_policy_comparison.png',
     highlight: 'Deposit design is the strongest lever',
+    component: DepositAblationSlide,
   },
 
   /* ── 11  WEIGHT RULES ── */
@@ -219,7 +229,7 @@ const SLIDES: SlideData[] = [
       '',
       '→ Equal weights remain a strong baseline',
     ],
-    image: 'presentation-plots/weight_rule_comparison.png',
+    component: WeightRulesSlide,
   },
 
   /* ── 12  SKILL RECOVERY ── */
@@ -235,7 +245,7 @@ const SLIDES: SlideData[] = [
       '',
       '→ Staleness decay prevents gaming',
     ],
-    image: 'presentation-plots/quantiles_crps_recovery.png',
+    component: SkillRecoverySlide,
   },
 
   /* ── 13  STRATEGIC ROBUSTNESS ── */
@@ -254,6 +264,7 @@ const SLIDES: SlideData[] = [
       '⚠ Adaptive adversaries remain open',
     ],
     ref: '[6] Chen et al., EC 2014',
+    component: StrategicRobustnessSlide,
   },
 
   /* ── 14  CONTRIBUTIONS & CLOSING ── */
@@ -274,6 +285,7 @@ const SLIDES: SlideData[] = [
       '⚠ Equal weights competitive on some datasets',
       '⚠ Truthfulness under risk neutrality only',
     ],
+    component: ContributionsChartSlide,
   },
 
   /* ── 15  CLOSING ── */
@@ -315,14 +327,14 @@ function SlideFooter({ refText }: { refText?: string }) {
         alignItems: 'flex-end',
       }}
     >
-      <span style={{ fontSize: '0.8rem', color: '#718096', textAlign: 'left' }}>
+      <span style={{ fontSize: '0.8rem', color: C.warmGrey, textAlign: 'left' }}>
         Anastasia Cattaneo — Imperial College London
       </span>
       {refText && (
         <span
           style={{
             fontSize: '0.72rem',
-            color: '#A0AEC0',
+            color: C.warmGrey,
             maxWidth: '55%',
             textAlign: 'right',
             lineHeight: 1.4,
@@ -360,21 +372,21 @@ function HighlightBar({ text }: { text: string }) {
 /** Per-bullet inline style */
 function bulletStyle(item: string): React.CSSProperties {
   if (item === '') return { height: '0.6rem' };
-  if (item.startsWith('⚠')) return { color: '#C53030', fontWeight: 600 };
+  if (item.startsWith('⚠')) return { color: C.deepRed, fontWeight: 600 };
   if (item.startsWith('→')) return { color: C.teal, fontWeight: 700 };
   if (item.startsWith('✓')) return { color: C.teal, fontWeight: 700 };
-  if (item.startsWith('  ')) return { paddingLeft: '1.5rem', fontSize: '1.35rem', color: '#718096' };
+  if (item.startsWith('  ')) return { paddingLeft: '1.5rem', fontSize: '1.45rem', color: C.warmGrey };
   if (item.startsWith('•')) return {};
   if (/^\d\./.test(item)) return { fontWeight: 600 };
   if (item.startsWith('Limitations:'))
-    return { fontWeight: 700, fontSize: '1.45rem', color: C.navy, marginTop: '0.4rem' };
+    return { fontWeight: 700, fontSize: '1.55rem', color: C.navy, marginTop: '0.4rem' };
   if (item.startsWith('Fixed deposits:') || item.startsWith('Bankroll deposits:'))
-    return { fontWeight: 700, color: '#2D3748' };
+    return { fontWeight: 700, color: C.darkSlate };
   return {};
 }
 
 /** Dark gradient used by title, section, and closing slides */
-const darkGradient = `linear-gradient(135deg, ${C.navy} 0%, ${C.dark} 100%)`;
+const darkGradient = DARK_GRADIENT;
 
 /* ─── Slide renderers ────────────────────────────────────────── */
 
@@ -423,7 +435,7 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
         style={{
           marginTop: 72,
           fontSize: '1.3rem',
-          color: 'rgba(255,255,255,0.45)',
+          color: C.lightGrey,
         }}
       >
         Anastasia Cattaneo · Imperial College London · 2026
@@ -521,14 +533,14 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
             <li
               key={i}
               style={{
-                fontSize: '1.5rem',
-                lineHeight: 1.7,
+                fontSize: '1.7rem',
+                lineHeight: 2.0,
                 color: C.warmGrey,
-                marginBottom: 6,
+                marginBottom: 14,
                 ...bulletStyle(item),
               }}
             >
-              {item}
+              {formatBulletText(item)}
             </li>
           ))}
         </ul>
@@ -591,14 +603,14 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
               <li
                 key={i}
                 style={{
-                  fontSize: '1.4rem',
-                  lineHeight: 1.6,
+                  fontSize: '1.6rem',
+                  lineHeight: 2.0,
                   color: C.warmGrey,
-                  marginBottom: 7,
+                  marginBottom: 14,
                   ...bulletStyle(item),
                 }}
               >
-                {item}
+                {formatBulletText(item)}
               </li>
             ))}
           </ul>
@@ -677,8 +689,12 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Dispatch to the correct renderer by slide type */
+/** Dispatch to the correct renderer by slide type — component field takes priority */
 function SlideRenderer({ slide }: { slide: SlideData }) {
+  if (slide.component) {
+    const Component = slide.component;
+    return <Component slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+  }
   switch (slide.type) {
     case 'title':
       return <TitleSlideView slide={slide} />;
@@ -694,6 +710,7 @@ function SlideRenderer({ slide }: { slide: SlideData }) {
       return null;
   }
 }
+
 
 /* ─── Main presentation component ────────────────────────────── */
 
@@ -844,7 +861,7 @@ export default function PresentationPage() {
           style={{
             background: 'none',
             border: 'none',
-            color: current === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)',
+            color: current === 0 ? 'rgba(255,255,255,0.25)' : C.lightGrey,
             fontSize: '0.95rem',
             cursor: current === 0 ? 'default' : 'pointer',
             padding: '4px 16px',
@@ -855,7 +872,7 @@ export default function PresentationPage() {
         </button>
         <span
           style={{
-            color: 'rgba(255,255,255,0.6)',
+            color: C.lightGrey,
             fontSize: '0.9rem',
             fontVariantNumeric: 'tabular-nums',
             fontFamily: FONT_FAMILY,
@@ -869,7 +886,7 @@ export default function PresentationPage() {
           style={{
             background: 'none',
             border: 'none',
-            color: current === total - 1 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)',
+            color: current === total - 1 ? 'rgba(255,255,255,0.25)' : C.lightGrey,
             fontSize: '0.95rem',
             cursor: current === total - 1 ? 'default' : 'pointer',
             padding: '4px 16px',

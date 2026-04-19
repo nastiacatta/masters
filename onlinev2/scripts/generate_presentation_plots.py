@@ -4,13 +4,15 @@ Larger fonts, cleaner labels, white background, minimal clutter.
 Outputs to dashboard/public/presentation-plots/
 """
 import sys
-sys.path.insert(0, 'src')
-
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 from pathlib import Path
+
+import matplotlib
+import numpy as np
+
+sys.path.insert(0, 'src')
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt  # noqa: E402
 
 OUT = Path(__file__).resolve().parent.parent.parent / 'dashboard' / 'public' / 'presentation-plots'
 OUT.mkdir(parents=True, exist_ok=True)
