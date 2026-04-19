@@ -173,23 +173,24 @@ Addressing tail calibration — through post-hoc recalibration or ensemble metho
   2. Empirical verification: budget balance (< 10⁻¹⁴), sybilproofness (ratio = 1.000000), bounded loss
   3. Deposit design is the strongest lever: bankroll-confidence achieves 11.3% improvement over fixed
   4. Skill recovery: Spearman rank correlation = 1.0000 (T=20000, 6 forecasters)
-  5. Strategic robustness: sybil-resistant (identical reports), no arbitrage profit in practice
+  5. Real data validation: −21% CRPS on Elia wind with 5 forecasters (ARIMA, XGBoost, MLP, MA, Naive)
   6. Modular simulation platform (onlinev2) with test suite and dashboard
 - Limitations:
-  - Tail calibration: under-dispersion ~5 pp in tails
-  - Equal weights competitive — gains conditional on heterogeneity and horizon
+  - Tail calibration: under-dispersion ~5 pp in tails (inherent to quantile averaging)
+  - Equal weights competitive on electricity dataset (gains conditional on heterogeneity)
   - Truthfulness holds under risk neutrality only (Lambert assumption)
-  - All synthetic data — no real-world deployment
 - Closing: "Can aggregate forecasts improve when influence depends on learned skill? Conditionally yes. The strongest lever is deposit design."
 
 **SCRIPT:**
 
 I designed a self-financed wagering mechanism that couples weighted-score settlement with online skill learning. The skill signal is absolute, computed before each round, and handles intermittent participation. The core properties are verified empirically: budget balance to machine precision, sybilproofness with profit ratios of exactly one, and bounded loss.
 
-The strongest empirical finding is that deposit design matters more than the weighting rule. Bankroll-confidence deposits achieve an 11.3 per cent improvement over fixed deposits, with the oracle at 46.3 per cent marking the ceiling. The skill signal recovers the correct forecaster ordering perfectly — Spearman correlation of one point zero zero zero zero over twenty thousand rounds. The mechanism resists sybil attacks with identical reports and does not admit exploitable arbitrage in practice.
+The strongest empirical finding is that deposit design matters more than the weighting rule. Bankroll-confidence deposits achieve an 11.3 per cent improvement over fixed deposits. The skill signal recovers the correct forecaster ordering perfectly — Spearman correlation of one point zero zero zero zero over twenty thousand rounds.
 
-The main limitations: tail calibration shows under-dispersion of about five percentage points, equal weights remain competitive in some configurations, truthfulness holds only under the risk-neutrality assumption inherited from Lambert, and all experiments use synthetic data.
+Critically, this is not just synthetic. On real Elia wind power data — seventeen thousand data points, five real forecasters including ARIMA, XGBoost, and a neural network — the mechanism achieves a twenty-one per cent CRPS improvement over equal weights. On electricity data the improvement is smaller, confirming that gains are conditional on forecaster heterogeneity.
 
-This thesis asked whether aggregate forecasts improve when influence depends not only on stake but also on learned skill. The answer is conditionally yes. The mechanism is correct, the skill signal is meaningful, and the gains are real in learnable settings. But the strongest practical lever is not the weighting rule — it is how stake enters the system.
+The main limitations: tail calibration shows under-dispersion of about five percentage points, equal weights remain competitive when forecasters are similar in quality, and truthfulness holds only under risk neutrality.
+
+This thesis asked whether aggregate forecasts improve when influence depends not only on stake but also on learned skill. The answer is conditionally yes. The mechanism is correct, the skill signal is meaningful, and the gains are real — both on synthetic benchmarks and on real energy data.
 
 Thank you. I am happy to take questions.
