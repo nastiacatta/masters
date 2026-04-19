@@ -182,21 +182,21 @@ function FeedbackArrow() {
             refY="3.5"
             orient="auto"
           >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a" />
+            <polygon points="0 0, 10 3.5, 0 7" fill="#005F56" />
           </marker>
         </defs>
         {/* Curved path from right (step 5 area) back to left (step 2 area) */}
         <path
           d="M 820 4 C 820 46, 300 46, 300 4"
           fill="none"
-          stroke="#16a34a"
+          stroke="#005F56"
           strokeWidth="3"
           strokeDasharray="8 5"
           markerEnd="url(#feedback-arrow)"
         />
         <text
           x="560" y="50"
-          fill="#16a34a"
+          fill="#005F56"
           fontSize="14"
           fontWeight="600"
           fontFamily={FONT_FAMILY}
