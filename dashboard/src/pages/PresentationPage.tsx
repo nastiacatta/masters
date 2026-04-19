@@ -107,12 +107,12 @@ const SLIDES: SlideData[] = [
     ref: '[3] Lambert et al., EC 2008  [4] Raja et al., IJF 2024  [5] Vitali & Pinson, PSCC 2026',
   },
 
-  /* ── 5  GAP ── */
+  /* ── 5  CONTRIBUTION ── */
   {
-    id: 'gap',
+    id: 'contribution',
     type: 'section',
-    title: 'The Gap',
-    subtitle: 'No existing design couples self-financed wagering\nwith an online skill-learning layer\n\nMy contribution:\neffective wager = deposit × learned skill\n\nAbsolute · Pre-round · Handles intermittency',
+    title: 'My Contribution',
+    subtitle: 'I extend self-financed wagering with an online skill-learning layer\n\neffective wager = deposit × learned skill\n\nThe skill signal is absolute, pre-round, and handles intermittent participation\nwhile preserving budget balance and sybilproofness',
     dark: true,
   },
 
