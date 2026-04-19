@@ -173,32 +173,15 @@ const SLIDES: SlideData[] = [
   },
   {
     id: 'correctness',
-    type: 'split',
+    type: 'content',
     title: 'Correctness',
-    bullets: [
-      '• Budget gap: 2.84 x 10^-14',
-      '• Mean profit: 3.01 x 10^-17 (zero-sum)',
-      '• Sybil ratio: 1.000000',
-      '• Noise-skill correlation: -0.98',
-      '',
-      '• All 20+ tests PASS (both modes)',
-    ],
     component: CorrectnessSlide,
     slideNumber: 9,
   },
   {
     id: 'deposit-design',
-    type: 'split',
+    type: 'content',
     title: 'Deposit Design',
-    bullets: [
-      '• Random (IID Exp): 0.0456',
-      '• Fixed (b=1):      0.0423',
-      '• Bankroll+Conf:    0.0375  (-11%)',
-      '• Oracle:           0.0227  (-46%)',
-      '',
-      '• Bankroll-confidence: practical default',
-      '• Cannot control what forecasters stake',
-    ],
     highlight: 'Practical deposit rules capture most of the available gain',
     component: DepositAblationSlide,
     slideNumber: 10,
@@ -235,7 +218,7 @@ const SLIDES: SlideData[] = [
   },
   {
     id: 'strategic',
-    type: 'split',
+    type: 'content',
     title: 'Strategic Robustness',
     bullets: [
       '• 18 behaviour presets tested across 9 families',
@@ -247,7 +230,7 @@ const SLIDES: SlideData[] = [
       '[!] Adaptive adversaries remain open',
     ],
     ref: '[6] Chen et al., EC 2014',
-    rightComponent: StrategicRobustnessSlide,
+    component: StrategicRobustnessSlide,
     slideNumber: 13,
   },
   {
