@@ -1,77 +1,80 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 14: Real Data: CRPS by Method — bar chart showing CRPS for
- * Equal Weights, Mechanism, and Best Single Forecaster on both datasets.
- * Mentions the 5 forecaster models used.
+ * Slide 13: Real Data Validation — bar chart showing Equal Weights vs Mechanism.
+ * Clear framing: "Mechanism achieves −21% CRPS improvement on Elia wind data"
  */
 
 interface MethodData {
   method: string;
-  wind: number;
-  electricity: number;
+  crps: number;
+  label: string;
 }
 
 const DATA: MethodData[] = [
-  { method: 'Equal Weights', wind: 0.0456, electricity: 0.0380 },
-  { method: 'Mechanism', wind: 0.0360, electricity: 0.0355 },
-  { method: 'Best Single', wind: 0.0320, electricity: 0.0340 },
+  { method: 'Equal Weights', crps: 0.0456, label: '0.0456' },
+  { method: 'Mechanism', crps: 0.0360, label: '0.0360' },
 ];
 
 export default function ContributionsChartSlide() {
   return (
-    <SlideShell title="Real Data: CRPS by Method" slideNumber={14}>
+    <SlideShell title="Real Data Validation" slideNumber={13}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        {/* Header with annotation */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div>
+        {/* Header with key finding */}
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              background: 'rgba(46, 139, 139, 0.06)',
+              border: `1.5px solid ${PALETTE.teal}`,
+              borderRadius: 12,
+              padding: '16px 24px',
+              marginBottom: 12,
+            }}
+          >
             <p
               style={{
-                fontSize: TYPOGRAPHY.chartTitle.fontSize,
-                fontWeight: TYPOGRAPHY.chartTitle.fontWeight,
-                color: PALETTE.navy,
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                color: PALETTE.teal,
                 fontFamily: TYPOGRAPHY.fontFamily,
                 margin: 0,
               }}
             >
-              Elia Wind and Electricity Datasets
+              Mechanism achieves −21% CRPS improvement on Elia wind data
             </p>
             <p
               style={{
-                fontSize: '0.95rem',
-                color: PALETTE.slate,
+                fontSize: '1rem',
+                color: PALETTE.charcoal,
                 fontFamily: TYPOGRAPHY.fontFamily,
-                margin: '4px 0 0 0',
+                margin: '6px 0 0 0',
               }}
             >
-              5 forecasters: ARIMA, XGBoost, MLP, Moving Average, Naive
+              17,544 rounds, 5 forecasters
             </p>
           </div>
-          <div
+          <p
             style={{
-              background: PALETTE.teal,
-              color: PALETTE.white,
-              fontSize: '1.2rem',
-              fontWeight: 700,
-              padding: '10px 22px',
-              borderRadius: 20,
+              fontSize: '1rem',
+              color: PALETTE.slate,
               fontFamily: TYPOGRAPHY.fontFamily,
+              margin: 0,
             }}
           >
-            -21% improvement on wind
-          </div>
+            Forecasters: ARIMA, XGBoost, MLP, Moving Average, Naive
+          </p>
         </div>
 
-        {/* Chart */}
+        {/* Chart: Equal Weights baseline vs Mechanism */}
         <div style={{ flex: 1, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={DATA} margin={{ top: 30, right: 40, left: 24, bottom: 40 }}>
+            <BarChart data={DATA} margin={{ top: 30, right: 60, left: 24, bottom: 40 }}>
               <CartesianGrid strokeDasharray="4 4" stroke={PALETTE.border} vertical={false} />
               <XAxis
                 dataKey="method"
-                tick={{ fontSize: 17, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }}
+                tick={{ fontSize: 18, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }}
                 axisLine={{ strokeWidth: 2 }}
               />
               <YAxis
@@ -80,43 +83,30 @@ export default function ContributionsChartSlide() {
                 label={{ value: 'CRPS (lower is better)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: '16px', fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily } }}
                 axisLine={{ strokeWidth: 2 }}
               />
-              <Legend wrapperStyle={{ fontSize: 15, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }} />
-              <Bar dataKey="wind" name="Elia Wind" radius={[6, 6, 0, 0]} barSize={50}>
+              <Bar dataKey="crps" name="CRPS" radius={[8, 8, 0, 0]} barSize={80}>
                 {DATA.map((_, i) => (
                   <Cell key={i} fill={i === 1 ? PALETTE.teal : PALETTE.imperial} />
                 ))}
                 <LabelList
-                  dataKey="wind"
+                  dataKey="label"
                   position="top"
-                  formatter={(v: unknown) => typeof v === 'number' ? v.toFixed(3) : String(v)}
-                  style={{ fontSize: 14, fontWeight: 600, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}
-                />
-              </Bar>
-              <Bar dataKey="electricity" name="Elia Electricity" radius={[6, 6, 0, 0]} barSize={50}>
-                {DATA.map((_, i) => (
-                  <Cell key={i} fill={i === 1 ? 'rgba(46, 139, 139, 0.5)' : 'rgba(0, 62, 116, 0.5)'} />
-                ))}
-                <LabelList
-                  dataKey="electricity"
-                  position="top"
-                  formatter={(v: unknown) => typeof v === 'number' ? v.toFixed(3) : String(v)}
-                  style={{ fontSize: 14, fontWeight: 600, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}
+                  style={{ fontSize: 16, fontWeight: 700, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}
                 />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Key findings */}
-        <div style={{ display: 'flex', gap: 24, marginTop: 12 }}>
-          <div style={{ flex: 1, background: 'rgba(46, 139, 139, 0.06)', borderLeft: `4px solid ${PALETTE.teal}`, borderRadius: '0 8px 8px 0', padding: '10px 16px' }}>
+        {/* Key findings row */}
+        <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
+          <div style={{ flex: 1, background: 'rgba(46, 139, 139, 0.06)', borderLeft: `6px solid ${PALETTE.teal}`, borderRadius: '0 12px 12px 0', padding: '12px 16px' }}>
             <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
-              Wind: Mechanism beats equal weights by 21%
+              Wind: −21% CRPS improvement over equal weights
             </span>
           </div>
-          <div style={{ flex: 1, background: 'rgba(100, 116, 139, 0.06)', borderLeft: `4px solid ${PALETTE.slate}`, borderRadius: '0 8px 8px 0', padding: '10px 16px' }}>
-            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}>
-              Electricity: Smaller improvement (gains conditional on heterogeneity)
+          <div style={{ flex: 1, background: 'rgba(232, 93, 74, 0.06)', borderLeft: `6px solid ${PALETTE.coral}`, borderRadius: '0 12px 12px 0', padding: '12px 16px' }}>
+            <span style={{ fontSize: '1.05rem', fontWeight: 600, color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}>
+              Limitation: gains conditional on forecaster heterogeneity
             </span>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PasswordGate from '@/components/slides/PasswordGate';
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide } from '@/components/slides/shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT } from '@/components/slides/shared/presentationConstants';
 import { formatBulletText } from '@/components/slides/shared/formatBulletText';
 import TheoryFlowSlide from '@/components/slides/TheoryFlowSlide';
 import MarketFlowSlide from '@/components/slides/MarketFlowSlide';
@@ -11,7 +11,6 @@ import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
 import ArchitectureDiagramSlide from '@/components/slides/ArchitectureDiagramSlide';
 import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
 import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
-import WeightRulesSlide from '@/components/slides/WeightRulesSlide';
 import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
@@ -23,7 +22,7 @@ import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-const TOTAL_SLIDES = 15;
+const TOTAL_SLIDES = 14;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -198,27 +197,11 @@ const SLIDES: SlideData[] = [
       '  Oracle:           0.0227  (-46%)',
       '',
       '  How stake enters > weighting rule',
+      '  Skill adds 3.5% over uniform (fixed deposits)',
     ],
     highlight: 'Deposit design is the strongest lever',
     component: DepositAblationSlide,
     slideNumber: 10,
-  },
-  {
-    id: 'weight-rules',
-    type: 'split',
-    title: 'Weight Rules',
-    bullets: [
-      'Fixed deposits:',
-      '  Uniform:     0.0434',
-      '  Skill-only:  0.0419  (-3.5%)',
-      '',
-      'Bankroll deposits:',
-      '  Deposit-only: 0.0230',
-      '',
-      '  Equal weights remain a strong baseline',
-    ],
-    component: WeightRulesSlide,
-    slideNumber: 11,
   },
   {
     id: 'skill-recovery',
@@ -233,7 +216,7 @@ const SLIDES: SlideData[] = [
       '  Staleness decay prevents gaming',
     ],
     component: SkillRecoverySlide,
-    slideNumber: 12,
+    slideNumber: 11,
   },
   {
     id: 'strategic',
@@ -251,7 +234,7 @@ const SLIDES: SlideData[] = [
     ],
     ref: '[6] Chen et al., EC 2014',
     component: StrategicRobustnessSlide,
-    slideNumber: 13,
+    slideNumber: 12,
   },
   {
     id: 'contributions',
@@ -271,7 +254,7 @@ const SLIDES: SlideData[] = [
       '  [!] Truthfulness under risk neutrality only',
     ],
     component: ContributionsChartSlide,
-    slideNumber: 14,
+    slideNumber: 13,
   },
   {
     id: 'closing',
@@ -279,7 +262,7 @@ const SLIDES: SlideData[] = [
     title: 'Thank you',
     subtitle: 'Anastasia Cattaneo\nImperial College London\n2026',
     dark: true,
-    slideNumber: 15,
+    slideNumber: 14,
   },
 ];
 
@@ -296,7 +279,7 @@ function SectionBar({ slideNumber }: { slideNumber?: number }) {
         top: 0,
         left: 0,
         right: 0,
-        height: 4,
+        height: SECTION_BAR_HEIGHT,
         background: section.colour,
         zIndex: 10,
       }}
@@ -406,7 +389,7 @@ function HighlightBar({ text }: { text: string }) {
         flexShrink: 0,
         marginTop: 20,
         background: 'rgba(46, 139, 139, 0.07)',
-        borderLeft: `4px solid ${C.teal}`,
+        borderLeft: `6px solid ${C.teal}`,
         color: C.navy,
         fontSize: '1.35rem',
         fontWeight: 700,

@@ -1,6 +1,6 @@
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { PALETTE, TYPOGRAPHY, getSectionForSlide } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT } from './shared/presentationConstants';
 
 /**
  * Slide 6: Mechanism Round-by-Round — horizontal pipeline with
@@ -21,32 +21,32 @@ const STEPS: StepConfig[] = [
   {
     id: 'submit',
     label: '1. Submit',
-    description: 'Forecaster submits quantile forecast and deposit',
+    description: 'Forecaster submits quantile forecast q and deposit b',
     latex: 'q_i(\\tau),\\; b_i',
   },
   {
     id: 'wager',
     label: '2. Effective Wager',
-    description: 'Skill gate modulates deposit',
+    description: 'Effective wager = deposit × skill factor (KEY equation)',
     latex: 'm_i = b_i \\cdot g(\\sigma_i)',
     emphasised: true,
   },
   {
     id: 'aggregate',
     label: '3. Aggregate',
-    description: 'Weighted average of forecasts',
+    description: 'Weighted average using effective wagers as weights',
     latex: '\\hat{q}(\\tau) = \\sum_i w_i \\cdot q_i(\\tau)',
   },
   {
     id: 'settle',
     label: '4. Settle',
-    description: 'Budget-balanced redistribution',
+    description: 'Payoff based on relative score — budget balanced',
     latex: '\\Pi_i = m_i(1 + s_i - \\bar{s})',
   },
   {
     id: 'skill',
     label: '5. Skill Update',
-    description: 'Online skill learning (EWMA)',
+    description: 'Skill updates from loss via exponential smoothing',
     latex: '\\sigma_i = \\sigma_{\\min} + (1-\\sigma_{\\min})e^{-\\gamma L_i}',
   },
 ];
@@ -191,9 +191,9 @@ export default function MechanismPipelineSlide() {
       }}
     >
       {/* Section bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: section.colour }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>6 / 15</div>
+      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>6 / 14</div>
 
       {/* Title */}
       <div style={{ flexShrink: 0, marginBottom: 20 }}>

@@ -1,4 +1,4 @@
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide } from './presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT } from './presentationConstants';
 
 export interface SlideShellProps {
   title: string;
@@ -11,7 +11,7 @@ export interface SlideShellProps {
   children: React.ReactNode;
 }
 
-/** Section bar at the top of each slide — 4px tall, full width */
+/** Section bar at the top of each slide — 6px tall, full width */
 function SectionBar({ slideNumber }: { slideNumber?: number }) {
   if (!slideNumber) return null;
   const section = getSectionForSlide(slideNumber);
@@ -23,7 +23,7 @@ function SectionBar({ slideNumber }: { slideNumber?: number }) {
         top: 0,
         left: 0,
         right: 0,
-        height: 4,
+        height: SECTION_BAR_HEIGHT,
         background: section.colour,
         zIndex: 10,
       }}

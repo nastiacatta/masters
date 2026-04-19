@@ -3,8 +3,8 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 10: How Deposit Policy Affects Accuracy — horizontal bar chart.
- * Key message: Bankroll+Confidence is practical and captures most of the gain.
+ * Slide 10: Deposit Design — horizontal bar chart showing deposit policies
+ * PLUS a small annotation about weight rule comparison (merged from old slide 11).
  */
 
 interface PolicyData {
@@ -23,14 +23,14 @@ const FALLBACK_DATA: PolicyData[] = [
 
 export default function DepositAblationSlide() {
   return (
-    <SlideShell title="How Deposit Policy Affects Accuracy" highlight="Bankroll+Confidence is practical and captures most of the gain" slideNumber={10}>
+    <SlideShell title="Deposit Design Is the Strongest Lever" highlight="How stake enters the system matters more than the weighting rule" slideNumber={10}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <p
           style={{
             fontSize: TYPOGRAPHY.chartTitle.fontSize,
             fontWeight: TYPOGRAPHY.chartTitle.fontWeight,
             color: PALETTE.navy,
-            marginBottom: 16,
+            marginBottom: 12,
             fontFamily: TYPOGRAPHY.fontFamily,
           }}
         >
@@ -73,6 +73,27 @@ export default function DepositAblationSlide() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Weight rule annotation (merged from old slide 11) */}
+        <div
+          style={{
+            marginTop: 12,
+            background: 'rgba(196, 150, 12, 0.06)',
+            borderLeft: `4px solid ${PALETTE.gold}`,
+            borderRadius: '0 8px 8px 0',
+            padding: '10px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.gold, fontFamily: TYPOGRAPHY.fontFamily }}>
+            Weight rule comparison:
+          </span>
+          <span style={{ fontSize: '1.05rem', fontWeight: 600, color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}>
+            Skill adds 3.5% over uniform under fixed deposits — but deposit design dominates
+          </span>
         </div>
       </div>
     </SlideShell>

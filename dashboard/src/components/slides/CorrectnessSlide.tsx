@@ -87,9 +87,10 @@ export default function CorrectnessSlide() {
             width: '100%',
             maxWidth: 850,
             background: PALETTE.white,
-            borderRadius: 16,
+            borderRadius: 12,
+            border: `1.5px solid ${PALETTE.border}`,
             padding: '36px 44px',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
           }}
         >
           {/* Header row */}
