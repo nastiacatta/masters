@@ -14,10 +14,10 @@ export default function ArchitectureDiagramSlide() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="arch-down" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="arch-down" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.slate} />
           </marker>
-          <marker id="arch-up" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="arch-up" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
@@ -36,8 +36,8 @@ export default function ArchitectureDiagramSlide() {
           </g>
         ))}
 
-        {/* Arrow: Environment → Agents (20px gap) */}
-        <line x1={430} y1={160} x2={430} y2={180} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
+        {/* Arrow: Environment → Agents (15px gap) */}
+        <line x1={430} y1={155} x2={430} y2={185} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
 
         {/* Agents layer */}
         <rect x={30} y={200} width={800} height={130} rx={12} fill="rgba(27, 42, 74, 0.03)" stroke={PALETTE.border} strokeWidth={1.5} />
@@ -53,10 +53,10 @@ export default function ArchitectureDiagramSlide() {
           </g>
         ))}
 
-        {/* Arrows: Agents → Platform (20px gap) */}
-        <line x1={310} y1={330} x2={310} y2={380} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
-        <line x1={430} y1={330} x2={430} y2={380} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
-        <line x1={550} y1={330} x2={550} y2={380} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
+        {/* Arrows: Agents → Platform (15px gap) */}
+        <line x1={310} y1={345} x2={310} y2={385} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
+        <line x1={430} y1={345} x2={430} y2={385} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
+        <line x1={550} y1={345} x2={550} y2={385} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down)" />
 
         {/* Arrow labels */}
         <text x={310} y={362} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="12" fontWeight={600} fill={PALETTE.slate}>participate</text>

@@ -80,8 +80,8 @@ export default function DepositAblationSlide() {
         <div
           style={{
             marginTop: 12,
-            background: 'rgba(196, 150, 12, 0.06)',
-            borderLeft: `4px solid ${PALETTE.gold}`,
+            background: 'rgba(124, 58, 237, 0.06)',
+            borderLeft: `4px solid ${PALETTE.purple}`,
             borderRadius: '0 8px 8px 0',
             padding: '10px 16px',
             display: 'flex',
@@ -89,7 +89,7 @@ export default function DepositAblationSlide() {
             gap: 12,
           }}
         >
-          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.gold, fontFamily: TYPOGRAPHY.fontFamily }}>
+          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.purple, fontFamily: TYPOGRAPHY.fontFamily }}>
             Weight rule comparison:
           </span>
           <span style={{ fontSize: '1.05rem', fontWeight: 600, color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}>

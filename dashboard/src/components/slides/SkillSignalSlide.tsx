@@ -16,7 +16,7 @@ interface ForecasterExample {
 
 const EXAMPLES: ForecasterExample[] = [
   { label: 'Strong forecaster', skill: 0.96, loss: 'Low loss', colour: PALETTE.teal },
-  { label: 'Average forecaster', skill: 0.85, loss: 'Medium loss', colour: PALETTE.gold },
+  { label: 'Average forecaster', skill: 0.85, loss: 'Medium loss', colour: PALETTE.purple },
   { label: 'Weak forecaster', skill: 0.55, loss: 'High loss', colour: PALETTE.coral },
 ];
 
@@ -30,7 +30,7 @@ export default function SkillSignalSlide() {
         </p>
 
         {/* Gradient bar */}
-        <div style={{ position: 'relative', height: 36, borderRadius: 18, background: `linear-gradient(to right, ${PALETTE.teal}, ${PALETTE.gold}, ${PALETTE.coral})`, overflow: 'hidden', border: `1.5px solid ${PALETTE.border}` }}>
+        <div style={{ position: 'relative', height: 36, borderRadius: 18, background: `linear-gradient(to right, ${PALETTE.teal}, ${PALETTE.purple}, ${PALETTE.coral})`, overflow: 'hidden', border: `1.5px solid ${PALETTE.border}` }}>
           {/* Labels on gradient */}
           <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem', fontWeight: 700, color: PALETTE.white, fontFamily: TYPOGRAPHY.fontFamily }}>
             Low loss → σ ≈ 1
@@ -62,7 +62,7 @@ export default function SkillSignalSlide() {
             {/* Skill circle */}
             <div style={{
               width: 52, height: 52, borderRadius: '50%',
-              background: `rgba(${ex.colour === PALETTE.teal ? '46,139,139' : ex.colour === PALETTE.gold ? '196,150,12' : '232,93,74'}, 0.12)`,
+              background: `rgba(${ex.colour === PALETTE.teal ? '46,139,139' : ex.colour === PALETTE.purple ? '124,58,237' : '232,93,74'}, 0.12)`,
               border: `3px solid ${ex.colour}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '1rem', fontWeight: 700, color: ex.colour, fontFamily: TYPOGRAPHY.fontFamily,
@@ -105,8 +105,8 @@ export default function SkillSignalSlide() {
       {/* Staleness decay note */}
       <div
         style={{
-          background: 'rgba(196, 150, 12, 0.06)',
-          borderLeft: `4px solid ${PALETTE.gold}`,
+          background: 'rgba(124, 58, 237, 0.06)',
+          borderLeft: `4px solid ${PALETTE.purple}`,
           borderRadius: '0 8px 8px 0',
           padding: '10px 14px',
         }}

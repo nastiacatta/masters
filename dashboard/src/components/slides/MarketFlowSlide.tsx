@@ -24,7 +24,7 @@ export default function MarketFlowSlide() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="mf-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="mf-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
@@ -66,10 +66,10 @@ export default function MarketFlowSlide() {
           </g>
         ))}
 
-        {/* Arrows between actors — 20px gap from edges */}
+        {/* Arrows between actors — 15px gap from edges */}
         {arrowLabels.map((label, i) => {
-          const x1 = actors[i].x + 200 + 20; // 20px after source right edge
-          const x2 = actors[i + 1].x - 20;   // 20px before target left edge
+          const x1 = actors[i].x + 200 + 15; // 15px after source right edge
+          const x2 = actors[i + 1].x - 15;   // 15px before target left edge
           const midX = (x1 + x2) / 2;
           return (
             <g key={label}>
