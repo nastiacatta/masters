@@ -25,8 +25,9 @@ onlinev2/outputs/
 dashboard/public/data/core
 dashboard/public/data/behaviour
 
-# PDFs
+# PDFs (except theory/)
 *.pdf
+!theory/**/*.pdf
 
 # Local editor state
 .vscode/
