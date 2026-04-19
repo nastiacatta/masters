@@ -111,18 +111,7 @@ export default function MarketFlowSlide() {
           );
         })}
 
-        {/* Bottom warning */}
-        <text
-          x={500}
-          y={250}
-          textAnchor="middle"
-          fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
-          fontWeight={600}
-          fill={PALETTE.coral}
-        >
-          Warning: Wash trading ~60% of volume | Prices driven by small elite
-        </text>
+        {/* Bottom — removed duplicate warning (already in bullets on left) */}
       </svg>
     </div>
   );

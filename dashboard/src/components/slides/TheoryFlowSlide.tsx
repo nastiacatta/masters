@@ -78,12 +78,12 @@ export default function TheoryFlowSlide() {
             >
               {src.label}
             </text>
-            {/* Arrow from source center-right to aggregation center-left */}
+            {/* Arrow from source center-right to aggregation — spread endpoints vertically */}
             <line
               x1={arrowStartX}
               y1={src.y + boxH / 2}
               x2={arrowEndX}
-              y2={aggCenterY}
+              y2={aggCenterY - 30 + (sources.indexOf(src) * 20)}
               stroke={PALETTE.slate}
               strokeWidth={2.5}
               markerEnd="url(#tf-arrow)"
