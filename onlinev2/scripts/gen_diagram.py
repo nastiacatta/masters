@@ -1,10 +1,13 @@
 """Generate detailed mechanism system diagram."""
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch
 from pathlib import Path
+
+import matplotlib
+import numpy as np
+
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import FancyBboxPatch  # noqa: E402
 
 OUT = Path(__file__).resolve().parent.parent.parent / 'dashboard' / 'public' / 'presentation-plots'
 NAVY = '#002147'; CYAN = '#0091D5'; GREEN = '#16a34a'; RED = '#dc2626'
