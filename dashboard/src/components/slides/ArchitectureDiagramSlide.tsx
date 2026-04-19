@@ -83,8 +83,10 @@ export default function ArchitectureDiagramSlide() {
           const midY = (arrowY1 + arrowY2) / 2;
           return (
             <g key={i}>
-              <line x1={xPos} y1={arrowY1} x2={xPos} y2={arrowY2} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down-v)" />
-              <text x={xPos + 16} y={midY + 4} fontFamily={TYPOGRAPHY.fontFamily} fontSize="12" fontWeight={600} fill={PALETTE.slate}>
+              <line x1={xPos} y1={arrowY1} x2={xPos} y2={arrowY2} stroke={PALETTE.slate} strokeWidth={2.5} markerEnd="url(#arch-down-v)" />
+              {/* Label offset to the right with small background for readability */}
+              <rect x={xPos + 8} y={midY - 10} width={75} height={16} rx={3} fill={PALETTE.offWhite} opacity={0.9} />
+              <text x={xPos + 12} y={midY + 2} fontFamily={TYPOGRAPHY.fontFamily} fontSize="11" fontWeight={600} fill={PALETTE.slate}>
                 {labels[i]}
               </text>
             </g>
