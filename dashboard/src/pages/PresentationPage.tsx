@@ -366,8 +366,7 @@ function AccentBar() {
   );
 }
 
-function SlideFooter({ refText, slideNumber }: { refText?: string; slideNumber?: number }) {
-  const dark = false;
+function SlideFooter({ refText }: { refText?: string }) {
   return (
     <div
       style={{
