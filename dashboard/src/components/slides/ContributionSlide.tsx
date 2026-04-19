@@ -116,7 +116,7 @@ export default function ContributionSlide() {
         style={{
           marginTop: 48,
           fontSize: '1.1rem',
-          color: PALETTE.gold,
+          color: PALETTE.purple,
           fontWeight: 600,
         }}
       >

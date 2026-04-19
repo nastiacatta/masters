@@ -23,18 +23,18 @@ const NODES: MatrixNode[] = [
 ];
 
 export default function PositioningMatrixSlide() {
-  const chartX = 80;
-  const chartY = 40;
-  const chartW = 1000;
-  const chartH = 560;
+  const chartX = 60;
+  const chartY = 30;
+  const chartW = 1080;
+  const chartH = 620;
   const midX = chartX + chartW / 2;
   const midY = chartY + chartH / 2;
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
       <svg
-        viewBox="0 0 1200 700"
-        style={{ width: '100%', maxWidth: 1100, height: 'auto' }}
+        viewBox="0 0 1200 750"
+        style={{ width: '100%', height: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
@@ -89,12 +89,12 @@ export default function PositioningMatrixSlide() {
           Self-financed (budget-balanced)
         </text>
 
-        {/* Nodes as cards — 240px wide, 80px tall */}
+        {/* Nodes as cards — 260px wide, 90px tall */}
         {NODES.map((node) => {
           const cx = chartX + (node.x / 100) * chartW;
           const cy = chartY + (node.y / 100) * chartH;
-          const cardW = 240;
-          const cardH = 80;
+          const cardW = 260;
+          const cardH = 90;
 
           return (
             <g key={node.id}>
@@ -120,10 +120,10 @@ export default function PositioningMatrixSlide() {
               />
               <text
                 x={cx}
-                y={cy - 14}
+                y={cy - 16}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize={node.isThesis ? '18' : '16'}
+                fontSize={node.isThesis ? '20' : '18'}
                 fontWeight={700}
                 fill={node.isThesis ? PALETTE.teal : PALETTE.navy}
               >
@@ -131,22 +131,22 @@ export default function PositioningMatrixSlide() {
               </text>
               <text
                 x={cx}
-                y={cy + 6}
+                y={cy + 8}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="14"
+                fontSize="15"
                 fill={PALETTE.slate}
               >
                 {node.citation}
               </text>
               <text
                 x={cx}
-                y={cy + 26}
+                y={cy + 30}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="12"
+                fontSize="13"
                 fontStyle="italic"
-                fill={node.isThesis ? PALETTE.teal : PALETTE.gold}
+                fill={node.isThesis ? PALETTE.teal : PALETTE.purple}
               >
                 {node.detail}
               </text>

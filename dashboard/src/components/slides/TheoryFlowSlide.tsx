@@ -14,10 +14,10 @@ export default function TheoryFlowSlide() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="tf-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="tf-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.slate} />
           </marker>
-          <marker id="tf-arrow-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker id="tf-arrow-teal" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
@@ -51,11 +51,11 @@ export default function TheoryFlowSlide() {
             >
               {src.label}
             </text>
-            {/* Arrow from source to aggregation — starts 20px after box right edge, ends 20px before target left edge */}
+            {/* Arrow from source to aggregation — starts 15px after box right edge, ends 15px before target left edge */}
             <line
-              x1={270}
+              x1={265}
               y1={src.y + 40}
-              x2={380}
+              x2={385}
               y2={250}
               stroke={PALETTE.slate}
               strokeWidth={2.5}
@@ -97,11 +97,11 @@ export default function TheoryFlowSlide() {
           Weighted combination
         </text>
 
-        {/* Arrow from aggregation to output — 20px gaps */}
+        {/* Arrow from aggregation to output — 15px gaps */}
         <line
-          x1={640}
+          x1={635}
           y1={250}
-          x2={720}
+          x2={725}
           y2={250}
           stroke={PALETTE.teal}
           strokeWidth={3}

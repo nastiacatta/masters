@@ -33,9 +33,9 @@ function PassIcon() {
 function WarnIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3 L22 20 H2 Z" fill="rgba(196, 150, 12, 0.1)" stroke={PALETTE.gold} strokeWidth="2" strokeLinejoin="round" />
-      <line x1="12" y1="10" x2="12" y2="14" stroke={PALETTE.gold} strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="12" cy="17" r="1.2" fill={PALETTE.gold} />
+      <path d="M12 3 L22 20 H2 Z" fill="rgba(124, 58, 237, 0.1)" stroke={PALETTE.purple} strokeWidth="2" strokeLinejoin="round" />
+      <line x1="12" y1="10" x2="12" y2="14" stroke={PALETTE.purple} strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="12" cy="17" r="1.2" fill={PALETTE.purple} />
     </svg>
   );
 }

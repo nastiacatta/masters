@@ -14,7 +14,7 @@ export const PALETTE = {
   imperial: '#003E74',    // Imperial blue — strong accent
   teal: '#2E8B8B',       // Teal — results, positive
   coral: '#E85D4A',      // Coral red — warnings, negative
-  gold: '#C4960C',       // Gold — highlights, annotations
+  purple: '#7C3AED',     // Light purple — highlights, annotations
 
   // Neutral
   charcoal: '#2D3748',   // Body text
@@ -78,7 +78,7 @@ export const CARD_STYLE: React.CSSProperties = {
 export const SECTIONS = {
   PROBLEM: { label: 'PROBLEM', colour: '#003E74', slides: [1, 2, 3, 4, 5] },
   SOLUTION: { label: 'SOLUTION', colour: '#2E8B8B', slides: [6, 7, 8] },
-  VALIDATION: { label: 'VALIDATION', colour: '#C4960C', slides: [9, 10, 11, 12, 13] },
+  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED', slides: [9, 10, 11, 12, 13] },
   CLOSING: { label: '', colour: 'transparent', slides: [14] },
 } as const;
 
