@@ -144,18 +144,18 @@ function FeedbackArrow() {
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          <marker id="feedback-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
+          <marker id="feedback-arrow" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+            <polygon points="10 0, 0 3.5, 10 7" fill={PALETTE.teal} />
           </marker>
         </defs>
-        {/* Curved path below the boxes — starts at step 5 area, curves down, ends at step 2 area */}
+        {/* Curved path below the boxes — from step 5 (right) curving down to step 2 (left) */}
         <path
           d="M 820 8 C 820 48, 300 48, 300 8"
           fill="none"
           stroke={PALETTE.teal}
           strokeWidth="2.5"
           strokeDasharray="8 5"
-          markerEnd="url(#feedback-arrow)"
+          markerStart="url(#feedback-arrow)"
         />
         <text
           x="560" y="52"
