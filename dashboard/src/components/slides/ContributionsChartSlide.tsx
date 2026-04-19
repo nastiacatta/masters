@@ -82,24 +82,24 @@ export default function ContributionsChartSlide() {
               />
               <Legend wrapperStyle={{ fontSize: 15, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }} />
               <Bar dataKey="wind" name="Elia Wind" radius={[6, 6, 0, 0]} barSize={50}>
-                {DATA.map((entry, i) => (
+                {DATA.map((_, i) => (
                   <Cell key={i} fill={i === 1 ? PALETTE.teal : PALETTE.imperial} />
                 ))}
                 <LabelList
                   dataKey="wind"
                   position="top"
-                  formatter={(v: number) => v.toFixed(3)}
+                  formatter={(v: unknown) => typeof v === 'number' ? v.toFixed(3) : String(v)}
                   style={{ fontSize: 14, fontWeight: 600, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}
                 />
               </Bar>
               <Bar dataKey="electricity" name="Elia Electricity" radius={[6, 6, 0, 0]} barSize={50}>
-                {DATA.map((entry, i) => (
+                {DATA.map((_, i) => (
                   <Cell key={i} fill={i === 1 ? 'rgba(46, 139, 139, 0.5)' : 'rgba(0, 62, 116, 0.5)'} />
                 ))}
                 <LabelList
                   dataKey="electricity"
                   position="top"
-                  formatter={(v: number) => v.toFixed(3)}
+                  formatter={(v: unknown) => typeof v === 'number' ? v.toFixed(3) : String(v)}
                   style={{ fontSize: 14, fontWeight: 600, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}
                 />
               </Bar>
