@@ -69,17 +69,20 @@ const SLIDES: SlideData[] = [
   /* ── 3  PREDICTION MARKETS ── */
   {
     id: 'markets',
-    type: 'split',
+    type: 'content',
     title: 'Prediction Markets',
-    leftBullets: [
+    bullets: [
       '• Share predictions, not raw data',
-      '• Reward based on forecast quality',
+      '• Reward based on forecast quality (proper scoring rules)',
+      '• Client posts task; forecasters submit reports + wagers',
+      '• Market operator aggregates and settles',
+      '',
       '• Platforms: Numerai, Polymarket, Kalshi',
-      '⚠ Wash trading ~60% volume (Sirolly 2025)',
-      '⚠ Prices driven by small elite (Wu 2025)',
+      '⚠ Wash trading ~60% of volume [1]',
+      '⚠ Prices driven by small elite, not broad participation [2]',
+      '',
       '→ Need mechanisms with formal guarantees',
     ],
-    image: 'presentation-plots/behaviour_concentration.png',
     ref: '[1] Sirolly et al., Network-Based Detection of Wash Trading, 2025  [2] Wu, Prediction Markets as Sociotechnical Assemblages, U. Chicago, 2025',
   },
 
@@ -93,9 +96,10 @@ const SLIDES: SlideData[] = [
       {
         heading: 'Self-Financed Wagering',
         items: [
-          '• Lambert (2008): WSWM',
+          '• Lambert et al. (2008) [3]',
           '• Budget balance, truthfulness',
-          '• Raja (2024): + client utility',
+          '• Raja et al. (2024) [4]',
+          '• + client utility component',
           '• This work extends this line',
         ],
       },
@@ -111,7 +115,7 @@ const SLIDES: SlideData[] = [
       {
         heading: 'Intermittent Markets',
         items: [
-          '• Vitali-Pinson (2025)',
+          '• Vitali & Pinson (2025) [5]',
           '• Handles missing forecasters',
           '• This work: absolute skill',
           '• + self-financed settlement',
