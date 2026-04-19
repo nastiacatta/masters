@@ -277,7 +277,7 @@ The practical implication: the most important design choice is not the weighting
   | Deposit only | 0.0230 ± 0.0001 |
   | Mechanism | 0.0375 ± 0.0001 |
 - Caveat: gains from skill are conditional on heterogeneity and horizon
-- Reference: forecast combination puzzle — equal weights hard to beat (Wang et al., 2023)
+- Reference: forecast combination puzzle — equal weights hard to beat (Claeskens et al., 2016)
 
 **SCRIPT:**
 
@@ -285,7 +285,7 @@ The second set of results compares weight rules. Under fixed deposits — which 
 
 Under bankroll deposits, the picture changes. Deposit-only weighting reaches zero point zero two three zero — already close to the best single forecaster at zero point zero two three two. The deposit itself carries so much information that the skill signal adds little on top.
 
-This connects to the forecast combination puzzle: simple equal-weighted averages are hard to beat. Estimated optimal weights are fragile under estimation error and non-stationarity. Equal weights make no estimation errors.
+This connects to the forecast combination puzzle identified by Claeskens and colleagues: simple equal-weighted averages are hard to beat. Estimated optimal weights are fragile under estimation error and non-stationarity. Equal weights make no estimation errors.
 
 The results are honest about this. The mechanism does not claim universal superiority. It claims that when there is genuine heterogeneity in forecaster quality and enough rounds for learning to converge, adaptive skill-weighted aggregation adds value. The conditions matter.
 

@@ -1,0 +1,57 @@
+{
+  "experiment_name": "forecast_aggregation",
+  "description": "Mechanism | Bankroll-Confidence vs baselines.",
+  "config": {
+    "dgp_name": "latent_fixed",
+    "T": 20000,
+    "n_forecasters": 10,
+    "n_seeds": 20,
+    "scoring_mode": "quantiles_crps"
+  },
+  "full_config": {
+    "experiment_name": "forecast_aggregation",
+    "dgp_name": "latent_fixed",
+    "T": 20000,
+    "n_forecasters": 10,
+    "n_seeds": 20,
+    "scoring_mode": "quantiles_crps"
+  },
+  "headline_results": {
+    "mean_crps": {
+      "mean": 0.0543665358988764,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "delta_crps_mean": {
+      "mean": 0.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "delta_crps_se": {
+      "mean": 0.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "delta_crps_ci_low": {
+      "mean": 0.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "delta_crps_ci_high": {
+      "mean": 0.0,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "n_seeds": {
+      "mean": 20,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

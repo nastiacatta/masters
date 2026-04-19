@@ -41,7 +41,7 @@ const SLIDES: SlideData[] = [
   {
     id: 'title',
     type: 'title',
-    title: 'Adaptive Skill and Stake in Forecast Markets',
+    title: 'Adaptive Skill and Stake\nin Forecast Markets',
     subtitle: 'Coupling Self-Financed Wagering with Online Skill Learning',
     dark: true,
   },
@@ -52,10 +52,13 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Why Forecast Aggregation?',
     leftBullets: [
-      'Combining forecasts reduces error',
-      'Modern standard: probabilistic forecasts',
-      'Quality: strictly proper scoring rules (CRPS)',
-      'Open question: incentivise + weight correctly?',
+      '• Combining forecasts reduces error',
+      '• Modern standard: full probabilistic forecasts',
+      '• Quality measured by proper scoring rules (CRPS)',
+      '• Information is distributed and costly to share',
+      '',
+      '→ How to incentivise participation?',
+      '→ How to weight forecasters correctly?',
     ],
     image: 'presentation-plots/forecast_aggregation_four_panel.png',
   },
@@ -66,12 +69,14 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Prediction Markets',
     leftBullets: [
-      'Share predictions, not raw data',
-      'Client → forecasts + wagers → settlement',
-      'Platforms: Numerai, Polymarket, Kalshi',
+      '• Share predictions, not raw data',
+      '• Reward based on forecast quality',
+      '• Platforms: Numerai, Polymarket, Kalshi',
+      '',
       '⚠ Wash trading ~60% volume (Sirolly 2025)',
-      '⚠ Small core drives prices (Wu 2025)',
-      '→ Need formal guarantees',
+      '⚠ Prices driven by small elite (Wu 2025)',
+      '',
+      '→ Need mechanisms with formal guarantees',
     ],
     image: 'presentation-plots/behaviour_concentration.png',
   },
@@ -85,28 +90,31 @@ const SLIDES: SlideData[] = [
       {
         heading: 'Self-Financed Wagering',
         items: [
-          'Lambert (2008) WSWM',
-          '7 properties; uniqueness',
-          'Raja (2024) + client',
+          '• Lambert (2008): WSWM',
+          '• 7 properties; uniqueness result',
+          '• Raja (2024): + client utility',
+          '',
           '⚠ History-free',
         ],
       },
       {
         heading: 'Online Aggregation',
         items: [
-          'OGD / Hedge algorithms',
-          'Regret guarantees',
-          '⚠ Non-strategic',
+          '• OGD / Hedge algorithms',
+          '• Regret guarantees',
+          '',
+          '⚠ Non-strategic agents',
           '⚠ No payments',
         ],
       },
       {
-        heading: 'Intermittent',
+        heading: 'Intermittent Markets',
         items: [
-          'Vitali-Pinson (2025)',
-          'Correction matrix',
-          'Shapley payoff',
-          '⚠ Relative weights',
+          '• Vitali-Pinson (2025)',
+          '• Correction matrix for missing',
+          '• Shapley + scoring payoff',
+          '',
+          '⚠ Relative weights (simplex)',
         ],
       },
     ],
@@ -116,200 +124,177 @@ const SLIDES: SlideData[] = [
   {
     id: 'gap',
     type: 'section',
-    title: 'No existing design couples self-financed wagering with online skill learning',
-    subtitle: 'effective wager = deposit × learned skill\nAbsolute · Pre-round · Handles intermittency',
+    title: 'No existing design couples\nself-financed wagering\nwith online skill learning',
+    subtitle: 'My contribution: effective wager = deposit × learned skill\nAbsolute · Pre-round · Handles intermittency',
     dark: true,
   },
 
-  /* solution section — no divider needed */
-
-  /* ── 7  MECHANISM ── */
+  /* ── 6  MECHANISM ── */
   {
     id: 'mechanism',
     type: 'split',
     title: 'Mechanism: Round-by-Round',
     leftBullets: [
-      '1. Submit — quantile forecast + deposit',
-      '2. Skill Gate — m = b × (λ + (1−λ)σ^η)',
-      '3. Aggregate — weighted by effective wager',
-      '4. Settle — Π_i = m_i(1 + s_i − s̄)',
-      '5. Update — loss → EWMA → σ recomputed',
+      '1. Submit forecast + deposit',
+      '2. Skill gate: m = b × g(σ)',
+      '3. Aggregate by effective wager',
+      '4. Settle: Π = m(1 + s − s̄)',
+      '5. Update skill from loss',
+      '',
+      '→ Same m controls influence AND exposure',
+      '→ σ fixed before round (truthfulness)',
     ],
     image: 'presentation-plots/fixed_deposit.png',
-    highlight: 'Same m_i controls BOTH influence and exposure → incentives aligned',
+    highlight: 'Incentives aligned: influence requires risk',
   },
 
-  /* ── 8  SKILL SIGNAL ── */
+  /* ── 7  SKILL SIGNAL ── */
   {
     id: 'skill-signal',
     type: 'split',
     title: 'The Skill Signal',
     leftBullets: [
-      'Present: EWMA blends loss with history',
-      'Absent: staleness decay → baseline',
-      'Mapping: exp(−γL) → σ ∈ [σ_min, 1]',
+      '• Present: EWMA blends loss with history',
+      '• Absent: staleness decay toward baseline',
+      '• Mapping: loss → σ ∈ [σ_min, 1]',
       '',
-      'Key properties:',
       '• Absolute (not relative to others)',
       '• Pre-round (past losses only)',
       '• Handles intermittent participation',
-      '',
-      'vs Vitali-Pinson:',
-      '⚠ Their weights are relative (simplex)',
-      '→ Mine are absolute (per-user)',
     ],
     image: 'presentation-plots/skill_wager.png',
   },
 
-  /* ── 9  ARCHITECTURE ── */
+  /* ── 8  ARCHITECTURE ── */
   {
     id: 'architecture',
     type: 'split',
-    title: 'Architecture & Testing',
+    title: 'Architecture',
     leftBullets: [
-      'Three layers:',
-      '• Environment — DGPs (exogenous / endogenous)',
-      '• Agents — honest, noisy, adversarial',
-      '• Platform — deterministic core mechanism',
+      '• Environment: DGPs (exogenous / endogenous)',
+      '• Agents: honest, noisy, adversarial',
+      '• Platform: deterministic core mechanism',
       '',
-      'Contract: agents output (participate, report, deposit)',
-      'Core consumes without knowing motives',
+      '• Agents output (participate, report, deposit)',
+      '• Core consumes without knowing motives',
       '',
-      'onlinev2 Python package',
-      '20+ invariant tests (Hypothesis)',
-      'Experiment ladder: correctness → forecasting → robustness',
+      '• 20+ invariant tests',
+      '• Experiment ladder: correctness → robustness',
     ],
     image: 'presentation-plots/parameter_sweep.png',
   },
 
-  /* validation section — no divider needed */
-
-  /* ── 11  CORRECTNESS ── */
+  /* ── 9  CORRECTNESS ── */
   {
     id: 'correctness',
     type: 'split',
     title: 'Correctness',
     leftBullets: [
-      'Budget gap: 2.84 × 10⁻¹⁴',
-      'Mean profit: 3.01 × 10⁻¹⁷ (zero-sum)',
-      'Equal-score → zero profit ✓',
+      '• Budget gap: 2.84 × 10⁻¹⁴',
+      '• Mean profit: 3.01 × 10⁻¹⁷ (zero-sum)',
+      '• Equal-score → zero profit',
       '',
-      'Sybil ratio (identical): 1.000000',
-      'Sybil max|Δ|: 2.07 × 10⁻¹⁷',
+      '• Sybil ratio (identical): 1.000000',
+      '• Noise-skill correlation: −0.98',
       '',
-      'Noise-skill corr (MAE): −0.952',
-      'Noise-skill corr (CRPS): −0.979',
-      '',
-      '✓ All 20+ invariant tests PASS',
-      '✓ Both point_mae and quantiles_crps',
+      '✓ All 20+ tests PASS (both modes)',
     ],
     image: 'presentation-plots/settlement_sanity.png',
   },
 
-  /* ── 12  DEPOSIT DESIGN ── */
+  /* ── 10  DEPOSIT DESIGN ── */
   {
     id: 'deposit-design',
     type: 'split',
-    title: 'Deposit Design Is the Strongest Lever',
+    title: 'Deposit Design',
     leftBullets: [
-      'IID Exponential:  0.0456',
-      'Fixed Unit:       0.0423',
-      'Bankroll + Conf:  0.0375',
-      'Oracle Precision: 0.0227',
+      '• Random (IID Exp): 0.0456',
+      '• Fixed (b=1):      0.0423',
+      '• Bankroll+Conf:    0.0375  (−11%)',
+      '• Oracle:           0.0227  (−46%)',
       '',
-      '→ Bankroll vs Fixed: −11.3%',
-      '→ Oracle vs Fixed:   −46.3%',
+      '→ How stake enters > weighting rule',
     ],
     image: 'presentation-plots/deposit_policy_comparison.png',
-    highlight: 'How stake enters matters more than the weighting rule',
+    highlight: 'Deposit design is the strongest lever',
   },
 
-  /* ── 13  WEIGHT RULES ── */
+  /* ── 11  WEIGHT RULES ── */
   {
     id: 'weight-rules',
     type: 'split',
-    title: 'Weight Rules & the Combination Puzzle',
+    title: 'Weight Rules',
     leftBullets: [
       'Fixed deposits:',
-      '  Uniform:  0.0434',
-      '  Skill:    0.0419 (−3.5%)',
+      '• Uniform:     0.0434',
+      '• Skill-only:  0.0419  (−3.5%)',
       '',
       'Bankroll deposits:',
-      '  Deposit-only: 0.0230',
+      '• Deposit-only: 0.0230',
       '',
-      'Forecast combination puzzle:',
-      'Equal weights hard to beat',
+      '→ Equal weights remain a strong baseline',
     ],
     image: 'presentation-plots/weight_rule_comparison.png',
   },
 
-  /* ── 14  SKILL RECOVERY ── */
+  /* ── 12  SKILL RECOVERY ── */
   {
     id: 'skill-recovery',
     type: 'split',
     title: 'Skill Recovery',
     leftBullets: [
-      'f0: τ=0.15 → σ=0.959',
-      'f1: τ=0.22 → σ=0.942',
-      'f2: τ=0.32 → σ=0.919',
-      'f3: τ=0.46 → σ=0.890',
-      'f4: τ=0.68 → σ=0.854',
-      'f5: τ=1.00 → σ=0.820',
+      '• 6 forecasters, T=20000, 20 seeds',
+      '• Least noisy (τ=0.15): σ = 0.959',
+      '• Most noisy (τ=1.00): σ = 0.820',
       '',
-      'Spearman = 1.0000',
+      '• Spearman rank correlation = 1.0000',
+      '• Perfect ordering recovered',
+      '',
+      '→ Staleness decay prevents gaming',
     ],
     image: 'presentation-plots/quantiles_crps_recovery.png',
-    highlight: 'Staleness decay prevents strategic absence',
   },
 
-  /* ── 15  STRATEGIC ROBUSTNESS ── */
+  /* ── 13  STRATEGIC ROBUSTNESS ── */
   {
     id: 'strategic',
     type: 'split',
     title: 'Strategic Robustness',
     leftBullets: [
-      'Sybil (identical reports):',
-      '  ratio = 1.000000 ± 2×10⁻¹⁷',
+      '• Sybil (identical): ratio = 1.000000',
+      '• Sybil (diversified): ratio = 1.065',
+      '• Strategic deposit: ratio = 1.000000',
       '',
-      'Sybil (diversified reports):',
-      '  ratio = 1.065 (not sybilproof)',
-      '',
-      'Strategic deposit: ratio = 1.000000',
-      '',
-      'Arbitrage (Chen et al. 2014):',
-      '  Zero profit across all λ values',
+      '• Arbitrage: zero profit (all λ)',
       '',
       '→ Resists standard attacks',
       '⚠ Adaptive adversaries remain open',
     ],
-    image: 'presentation-plots/arbitrage_heatmap.png',
+    image: 'presentation-plots/sybil.png',
   },
 
-  /* calibration folded into contributions slide */
-
-  /* ── 17  CONTRIBUTIONS ── */
+  /* ── 14  CONTRIBUTIONS ── */
   {
     id: 'contributions',
-    type: 'split',
+    type: 'content',
     title: 'Contributions & Limitations',
-    leftBullets: [
-      '1. Mechanism coupling wagering + skill',
-      '2. Budget balance < 10⁻¹⁴; sybilproof',
-      '3. Deposit design: −11.3% CRPS',
-      '4. Skill recovery: ρ = 1.0000',
-      '5. Sybil-resistant; no arbitrage profit',
-      '6. Modular platform + test suite',
+    bullets: [
+      '1. Mechanism coupling wagering + online skill learning',
+      '2. Budget balance < 10⁻¹⁴; sybilproof (identical reports)',
+      '3. Deposit design: strongest lever (−11% CRPS)',
+      '4. Skill recovery: Spearman = 1.0000',
+      '5. Sybil-resistant; no arbitrage profit in practice',
+      '6. Modular platform (onlinev2) + test suite + dashboard',
       '',
       'Limitations:',
-      '• Tail calibration ~5pp (quantile avg.)',
-      '• Equal weights competitive',
-      '• Risk neutrality assumption',
-      '• Synthetic data only',
+      '• Tail calibration ~5pp under-dispersion (quantile averaging)',
+      '• Equal weights competitive in some settings',
+      '• Truthfulness under risk neutrality only',
+      '• All synthetic data — no real-world deployment',
     ],
-    image: 'presentation-plots/master_comparison_four_panel.png',
   },
 
-  /* ── 18  CLOSING ── */
+  /* ── 15  CLOSING ── */
   {
     id: 'closing',
     type: 'closing',
@@ -420,16 +405,14 @@ function HighlightBar({ text }: { text: string }) {
   );
 }
 
-/** Bullet styling helper — returns inline style + className for a bullet string */
+/** Bullet styling helper */
 function bulletStyle(item: string): React.CSSProperties {
-  if (item === '') return { height: '0.75rem' };
+  if (item === '') return { height: '0.6rem' };
   if (item.startsWith('⚠')) return { color: '#dc2626', fontWeight: 600 };
   if (item.startsWith('→')) return { color: '#047857', fontWeight: 700 };
   if (item.startsWith('✓')) return { color: '#047857', fontWeight: 700 };
-  if (item.startsWith('  '))
-    return { paddingLeft: '1.5rem', fontFamily: 'monospace', fontSize: '1.15rem', color: '#475569' };
-  if (item.startsWith('•'))
-    return { paddingLeft: '0.75rem' };
+  if (item.startsWith('•')) return { paddingLeft: '0.5rem' };
+  if (/^\d\./.test(item)) return { fontWeight: 600 };
   return {};
 }
 

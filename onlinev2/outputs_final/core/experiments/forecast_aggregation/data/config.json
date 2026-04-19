@@ -1,0 +1,8 @@
+{
+  "experiment_name": "forecast_aggregation",
+  "T": 20000,
+  "n_forecasters": 10,
+  "n_seeds": 20,
+  "dgp_name": "latent_fixed",
+  "warm_start": 200
+}
