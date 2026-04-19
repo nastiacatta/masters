@@ -55,13 +55,22 @@ const ShieldIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const SlidesIcon: FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="3" width="12" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M6 14H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M8 12V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
 /** Thesis argument flow — numbered steps + unnumbered reference pages */
 const NAV_ITEMS: NavItem[] = [
-  { to: '/',           label: 'Overview',     icon: HomeIcon,     step: 1, shortcut: '1' },
-  { to: '/evidence',   label: 'Evidence',     icon: ChartBarIcon, step: 2, shortcut: '2' },
-  { to: '/robustness', label: 'Robustness',   icon: ShieldIcon,   step: 3, shortcut: '3' },
-  { to: '/notes',      label: 'Notes',        icon: BookIcon,     step: null, shortcut: 'n' },
-  { to: '/explorer',   label: 'Explorer',     icon: CogIcon,      step: null, shortcut: 'e' },
+  { to: '/',              label: 'Overview',       icon: HomeIcon,     step: 1, shortcut: '1' },
+  { to: '/evidence',      label: 'Evidence',       icon: ChartBarIcon, step: 2, shortcut: '2' },
+  { to: '/robustness',    label: 'Robustness',     icon: ShieldIcon,   step: 3, shortcut: '3' },
+  { to: '/presentation',  label: 'Slides',         icon: SlidesIcon,   step: null, shortcut: 'p' },
+  { to: '/notes',         label: 'Notes',          icon: BookIcon,     step: null, shortcut: 'n' },
+  { to: '/explorer',      label: 'Explorer',       icon: CogIcon,      step: null, shortcut: 'e' },
 ];
 
 /* ------------------------------------------------------------------ */
