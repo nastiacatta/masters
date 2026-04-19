@@ -3,20 +3,22 @@ import PasswordGate from '@/components/slides/PasswordGate';
 
 /**
  * Full-screen presentation mode for thesis defence.
- * Imperial College styling: Avenir font, navy (#002147) / cyan (#0091D5) palette.
- * Arrow keys navigate between slides. Spacebar advances. Escape toggles nav bar.
+ * Imperial College styling with warm teal accent.
  *
- * FORMATTING: All text sized for projection — title 4rem, headings 2.6rem,
- * body 1.5rem, sub-items 1.3rem. Split slides: 45/55 text/image.
+ * Palette: Navy #002147, Teal #00847F, Warm grey #4A5568, Light bg #F7FAFC
+ * Layout: Title/closing centred; content/split left-aligned.
+ * Split slides: 35% text / 65% graph.
+ * Font sizes: title 5rem, content headings 3rem, body 1.5rem.
  */
 
 /* ─── Palette ────────────────────────────────────────────────── */
 
 const C = {
   navy: '#002147',
-  accent: '#0091D5',
+  teal: '#00847F',
+  warmGrey: '#4A5568',
+  lightBg: '#F7FAFC',
   white: '#FFFFFF',
-  lightGrey: '#F8F9FA',
   dark: '#1a1a2e',
 } as const;
 
@@ -29,11 +31,10 @@ const BASE = import.meta.env.BASE_URL;
 
 interface SlideData {
   id: string;
-  type: 'title' | 'section' | 'content' | 'split' | 'columns' | 'closing';
+  type: 'title' | 'section' | 'content' | 'split' | 'closing';
   title?: string;
   subtitle?: string;
   bullets?: string[];
-  columns?: { heading: string; items: string[] }[];
   leftBullets?: string[];
   image?: string;
   highlight?: string;
@@ -56,11 +57,12 @@ const SLIDES: SlideData[] = [
     id: 'motivation',
     type: 'split',
     title: 'Why Forecast Aggregation?',
-    leftBullets: [
+    bullets: [
       '• Combining forecasts reduces error',
-      '• Modern standard: full probabilistic forecasts',
-      '• Quality measured by proper scoring rules (CRPS)',
-      '• Information is distributed and costly to share',
+      '• Full probabilistic forecasts (not point estimates)',
+      '• Quality: strictly proper scoring rules (CRPS)',
+      '• Information distributed, costly to share',
+      '',
       '→ How to incentivise and weight correctly?',
     ],
     image: 'presentation-plots/motivation_aggregation.png',
@@ -73,17 +75,17 @@ const SLIDES: SlideData[] = [
     title: 'Prediction Markets',
     bullets: [
       '• Share predictions, not raw data',
-      '• Reward based on forecast quality (proper scoring rules)',
+      '• Reward based on forecast quality',
       '• Client posts task; forecasters submit reports + wagers',
       '• Market operator aggregates and settles',
       '',
       '• Platforms: Numerai, Polymarket, Kalshi',
       '⚠ Wash trading ~60% of volume [1]',
-      '⚠ Prices driven by small elite, not broad participation [2]',
+      '⚠ Prices driven by small elite [2]',
       '',
       '→ Need mechanisms with formal guarantees',
     ],
-    ref: '[1] Sirolly et al., Network-Based Detection of Wash Trading, 2025  [2] Wu, Prediction Markets as Sociotechnical Assemblages, U. Chicago, 2025',
+    ref: '[1] Sirolly et al., 2025  [2] Wu, U. Chicago, 2025',
   },
 
   /* ── 4  WHERE THIS WORK FITS ── */
@@ -91,7 +93,7 @@ const SLIDES: SlideData[] = [
     id: 'existing-work',
     type: 'split',
     title: 'Where This Work Fits',
-    leftBullets: [
+    bullets: [
       '• Lambert/Raja: self-financed, truthful',
       '  but static (no skill learning)',
       '',
@@ -101,10 +103,10 @@ const SLIDES: SlideData[] = [
       '• Vitali-Pinson: adaptive + intermittent',
       '  but relative weights, different settlement',
       '',
-      '→ This thesis: adaptive + self-financed',
+      '→ This thesis: adaptive AND self-financed',
     ],
     image: 'presentation-plots/positioning_matrix.png',
-    ref: '[3] Lambert et al., EC 2008  [4] Raja et al., IJF 2024  [5] Vitali & Pinson, PSCC 2026',
+    ref: '[3] Lambert et al., 2008  [4] Raja et al., 2024  [5] Vitali & Pinson, 2025',
   },
 
   /* ── 5  CONTRIBUTION ── */
@@ -112,7 +114,8 @@ const SLIDES: SlideData[] = [
     id: 'contribution',
     type: 'section',
     title: 'My Contribution',
-    subtitle: 'I extend self-financed wagering with an online skill-learning layer\n\neffective wager = deposit × learned skill\n\nThe skill signal is absolute, pre-round, and handles intermittent participation\nwhile preserving budget balance and sybilproofness',
+    subtitle:
+      'I extend self-financed wagering with an online skill-learning layer\n\neffective wager = deposit × learned skill\n\nAbsolute · Pre-round · Handles intermittency\nPreserves budget balance and sybilproofness',
     dark: true,
   },
 
@@ -121,12 +124,13 @@ const SLIDES: SlideData[] = [
     id: 'mechanism',
     type: 'split',
     title: 'Mechanism: Round-by-Round',
-    leftBullets: [
+    bullets: [
       '1. Submit forecast + deposit',
       '2. Skill gate: m = b × g(σ)',
       '3. Aggregate by effective wager',
       '4. Settle: Π = m(1 + s − s̄)',
       '5. Update skill from loss',
+      '',
       '→ Same m controls influence AND exposure',
     ],
     image: 'presentation-plots/mechanism_steps.png',
@@ -138,10 +142,11 @@ const SLIDES: SlideData[] = [
     id: 'skill-signal',
     type: 'split',
     title: 'The Skill Signal',
-    leftBullets: [
+    bullets: [
       '• Present: EWMA blends loss with history',
       '• Absent: staleness decay toward baseline',
       '• Mapping: loss → σ ∈ [σ_min, 1]',
+      '',
       '• Absolute (not relative to others)',
       '• Pre-round (past losses only)',
       '• Handles intermittent participation',
@@ -154,13 +159,14 @@ const SLIDES: SlideData[] = [
     id: 'architecture',
     type: 'split',
     title: 'Architecture',
-    leftBullets: [
-      '• Environment: DGPs (exogenous / endogenous)',
+    bullets: [
+      '• Environment: DGPs (synthetic + real data)',
       '• Agents: honest, noisy, adversarial',
       '• Platform: deterministic core mechanism',
+      '',
       '• Agents output (participate, report, deposit)',
       '• Core consumes without knowing motives',
-      '• 20+ invariant tests',
+      '• 20+ invariant tests, property-based testing',
     ],
     image: 'presentation-plots/fixed_deposit.png',
   },
@@ -170,11 +176,12 @@ const SLIDES: SlideData[] = [
     id: 'correctness',
     type: 'split',
     title: 'Correctness',
-    leftBullets: [
+    bullets: [
       '• Budget gap: 2.84 × 10⁻¹⁴',
       '• Mean profit: 3.01 × 10⁻¹⁷ (zero-sum)',
-      '• Sybil ratio (identical): 1.000000',
+      '• Sybil ratio: 1.000000',
       '• Noise-skill correlation: −0.98',
+      '',
       '✓ All 20+ tests PASS (both modes)',
     ],
     image: 'presentation-plots/settlement_sanity.png',
@@ -185,11 +192,12 @@ const SLIDES: SlideData[] = [
     id: 'deposit-design',
     type: 'split',
     title: 'Deposit Design',
-    leftBullets: [
+    bullets: [
       '• Random (IID Exp): 0.0456',
       '• Fixed (b=1):      0.0423',
       '• Bankroll+Conf:    0.0375  (−11%)',
       '• Oracle:           0.0227  (−46%)',
+      '',
       '→ How stake enters > weighting rule',
     ],
     image: 'presentation-plots/deposit_policy_comparison.png',
@@ -201,12 +209,14 @@ const SLIDES: SlideData[] = [
     id: 'weight-rules',
     type: 'split',
     title: 'Weight Rules',
-    leftBullets: [
+    bullets: [
       'Fixed deposits:',
       '• Uniform:     0.0434',
       '• Skill-only:  0.0419  (−3.5%)',
+      '',
       'Bankroll deposits:',
       '• Deposit-only: 0.0230',
+      '',
       '→ Equal weights remain a strong baseline',
     ],
     image: 'presentation-plots/weight_rule_comparison.png',
@@ -217,11 +227,12 @@ const SLIDES: SlideData[] = [
     id: 'skill-recovery',
     type: 'split',
     title: 'Skill Recovery',
-    leftBullets: [
+    bullets: [
       '• 6 forecasters, T=20000, 20 seeds',
       '• Least noisy (τ=0.15): σ = 0.959',
       '• Most noisy (τ=1.00): σ = 0.820',
       '• Spearman rank correlation = 1.0000',
+      '',
       '→ Staleness decay prevents gaming',
     ],
     image: 'presentation-plots/quantiles_crps_recovery.png',
@@ -233,36 +244,35 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Strategic Robustness',
     bullets: [
-      '• Sybil (identical reports): profit ratio = 1.000000',
-      '• Sybil (diversified reports): ratio = 1.065',
-      '• Strategic deposit manipulation: ratio = 1.000000',
+      '• Sybil (identical reports): ratio = 1.000000',
+      '  Sybilproof under standard assumption',
       '',
-      '• Arbitrage [6]: zero profit extracted across all parameter values',
+      '• Arbitrage [6]: zero profit extracted',
+      '  Skill gate limits sustained exploitation',
       '',
       '→ Mechanism resists standard attacks',
-      '⚠ Adaptive adversaries remain an open challenge',
+      '⚠ Adaptive adversaries remain open',
     ],
-    ref: '[6] Chen et al., Removing Arbitrage from Wagering Mechanisms, EC 2014',
+    ref: '[6] Chen et al., EC 2014',
   },
 
-  /* ── 14  CONTRIBUTIONS ── */
+  /* ── 14  CONTRIBUTIONS & CLOSING ── */
   {
     id: 'contributions',
     type: 'content',
-    title: 'Contributions & Limitations',
+    title: 'Contributions',
     bullets: [
-      'Contributions:',
-      '1. Mechanism coupling self-financed wagering + online skill learning',
-      '2. Verified: budget balance < 10e-14, sybilproof, bounded loss',
-      '3. Deposit design is the strongest lever (-11% CRPS vs fixed)',
-      '4. Skill recovery: Spearman = 1.0000 (perfect rank ordering)',
-      '5. Real data: -21% CRPS on Elia wind (5 forecasters: ARIMA, XGBoost, MLP...)',
-      '6. Modular platform (onlinev2) + test suite + interactive dashboard',
+      '1. Mechanism coupling wagering + online skill learning',
+      '2. Verified: budget balance < 10⁻¹⁴, sybilproof',
+      '3. Deposit design: strongest lever (−11% CRPS)',
+      '4. Skill recovery: Spearman = 1.0000',
+      '5. Real data: −21% CRPS on Elia wind (ARIMA, XGBoost, MLP)',
+      '6. Modular platform + test suite + dashboard',
       '',
       'Limitations:',
-      '⚠ Tail calibration: ~5pp under-dispersion (inherent to quantile averaging)',
-      '⚠ Equal weights competitive on electricity dataset',
-      '⚠ Truthfulness holds under risk neutrality only',
+      '⚠ Tail calibration ~5pp (quantile averaging)',
+      '⚠ Equal weights competitive on some datasets',
+      '⚠ Truthfulness under risk neutrality only',
     ],
   },
 
@@ -278,38 +288,46 @@ const SLIDES: SlideData[] = [
 
 /* ─── Shared style helpers ───────────────────────────────────── */
 
-/** Accent bar under slide titles: 3px tall, 80px wide, Imperial cyan */
+/** Accent bar under slide titles: 4px tall, 60px wide, teal */
 function AccentBar() {
   return (
     <div
       style={{
-        width: 80,
-        height: 3,
-        background: C.accent,
+        width: 60,
+        height: 4,
+        background: C.teal,
         borderRadius: 2,
-        marginTop: 12,
+        marginTop: 14,
       }}
     />
   );
 }
 
-/** Footer on content slides — includes optional reference */
+/** Footer — left: name, right: optional reference */
 function SlideFooter({ refText }: { refText?: string }) {
   return (
     <div
       style={{
         flexShrink: 0,
-        paddingTop: 12,
+        paddingTop: 16,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-end',
       }}
     >
-      <span style={{ fontSize: '0.75rem', color: '#999' }}>
+      <span style={{ fontSize: '0.8rem', color: '#718096', textAlign: 'left' }}>
         Anastasia Cattaneo — Imperial College London
       </span>
       {refText && (
-        <span style={{ fontSize: '0.7rem', color: '#aaa', maxWidth: '60%', textAlign: 'right' }}>
+        <span
+          style={{
+            fontSize: '0.72rem',
+            color: '#A0AEC0',
+            maxWidth: '55%',
+            textAlign: 'right',
+            lineHeight: 1.4,
+          }}
+        >
           {refText}
         </span>
       )}
@@ -317,20 +335,20 @@ function SlideFooter({ refText }: { refText?: string }) {
   );
 }
 
-/** Blue-tinted highlight bar below split content */
+/** Warm teal highlight bar with left border accent */
 function HighlightBar({ text }: { text: string }) {
   return (
     <div
       style={{
         flexShrink: 0,
-        marginTop: 16,
-        background: 'rgba(0, 145, 213, 0.08)',
-        border: '1px solid rgba(0, 145, 213, 0.25)',
+        marginTop: 20,
+        background: 'rgba(0, 132, 127, 0.07)',
+        borderLeft: `4px solid ${C.teal}`,
         color: C.navy,
         fontSize: '1.35rem',
         fontWeight: 700,
-        padding: '0.85rem 1.5rem',
-        borderRadius: 12,
+        padding: '0.9rem 1.5rem',
+        borderRadius: '0 10px 10px 0',
         lineHeight: 1.4,
       }}
     >
@@ -341,27 +359,26 @@ function HighlightBar({ text }: { text: string }) {
 
 /** Per-bullet inline style */
 function bulletStyle(item: string): React.CSSProperties {
-  if (item === '') return { height: '0.5rem' };
-  if (item.startsWith('⚠')) return { color: '#dc2626', fontWeight: 600 };
-  if (item.startsWith('→')) return { color: '#16a34a', fontWeight: 700 };
-  if (item.startsWith('✓')) return { color: '#16a34a', fontWeight: 700 };
-  if (item.startsWith('•')) return { paddingLeft: '0.5rem' };
+  if (item === '') return { height: '0.6rem' };
+  if (item.startsWith('⚠')) return { color: '#C53030', fontWeight: 600 };
+  if (item.startsWith('→')) return { color: C.teal, fontWeight: 700 };
+  if (item.startsWith('✓')) return { color: C.teal, fontWeight: 700 };
+  if (item.startsWith('  ')) return { paddingLeft: '1.5rem', fontSize: '1.35rem', color: '#718096' };
+  if (item.startsWith('•')) return {};
   if (/^\d\./.test(item)) return { fontWeight: 600 };
-  if (item.trim().startsWith('Budget') || item.trim().startsWith('Truthful') || item.trim().startsWith('Skill'))
-    return { fontFamily: 'monospace', fontSize: '1.2rem', letterSpacing: '-0.02em' };
-  if (item.startsWith('Contributions:') || item.startsWith('Limitations:'))
-    return { fontWeight: 700, fontSize: '1.4rem', color: '#002147', marginTop: '0.3rem' };
+  if (item.startsWith('Limitations:'))
+    return { fontWeight: 700, fontSize: '1.45rem', color: C.navy, marginTop: '0.4rem' };
   if (item.startsWith('Fixed deposits:') || item.startsWith('Bankroll deposits:'))
-    return { fontWeight: 700, color: '#334155' };
+    return { fontWeight: 700, color: '#2D3748' };
   return {};
 }
 
-/** Dark gradient used by title, gap, and closing slides */
+/** Dark gradient used by title, section, and closing slides */
 const darkGradient = `linear-gradient(135deg, ${C.navy} 0%, ${C.dark} 100%)`;
 
 /* ─── Slide renderers ────────────────────────────────────────── */
 
-/** Slide 1 — Title (dark, centered) */
+/** Slide 1 — Title (dark, centred) */
 function TitleSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
@@ -379,10 +396,10 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
     >
       <h1
         style={{
-          fontSize: '4rem',
+          fontSize: '5rem',
           fontWeight: 700,
           color: C.white,
-          lineHeight: 1.1,
+          lineHeight: 1.08,
           maxWidth: '1100px',
           whiteSpace: 'pre-line',
         }}
@@ -392,9 +409,9 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            marginTop: 32,
-            fontSize: '2rem',
-            color: C.accent,
+            marginTop: 36,
+            fontSize: '2.1rem',
+            color: C.teal,
             lineHeight: 1.4,
             maxWidth: '900px',
           }}
@@ -404,9 +421,9 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
       )}
       <div
         style={{
-          marginTop: 64,
+          marginTop: 72,
           fontSize: '1.3rem',
-          color: 'rgba(255,255,255,0.5)',
+          color: 'rgba(255,255,255,0.45)',
         }}
       >
         Anastasia Cattaneo · Imperial College London · 2026
@@ -415,7 +432,7 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Slide 5 — Section / gap divider (dark, centered) */
+/** Section / gap divider (dark, centred) */
 function SectionSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
@@ -433,10 +450,10 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
     >
       <h1
         style={{
-          fontSize: '3rem',
+          fontSize: '3.4rem',
           fontWeight: 700,
           color: C.white,
-          lineHeight: 1.25,
+          lineHeight: 1.2,
           maxWidth: '1000px',
           whiteSpace: 'pre-line',
         }}
@@ -446,10 +463,10 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            marginTop: 40,
+            marginTop: 44,
             fontSize: '1.8rem',
-            color: C.accent,
-            lineHeight: 1.5,
+            color: C.teal,
+            lineHeight: 1.55,
             maxWidth: '900px',
             whiteSpace: 'pre-line',
           }}
@@ -461,8 +478,8 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Slide 4 — 3-column layout (no graph, full width) */
-function ColumnsSlideView({ slide }: { slide: SlideData }) {
+/** Content slides — text only, left-aligned, max-width 900px */
+function ContentSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
       style={{
@@ -470,15 +487,15 @@ function ColumnsSlideView({ slide }: { slide: SlideData }) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        padding: '48px 56px',
-        background: C.white,
+        padding: '56px 72px',
+        background: C.lightBg,
       }}
     >
       {/* Header */}
-      <div style={{ flexShrink: 0, marginBottom: 24 }}>
+      <div style={{ flexShrink: 0, marginBottom: 36 }}>
         <h2
           style={{
-            fontSize: '2.6rem',
+            fontSize: '3rem',
             fontWeight: 700,
             color: C.navy,
             lineHeight: 1.15,
@@ -489,103 +506,14 @@ function ColumnsSlideView({ slide }: { slide: SlideData }) {
         <AccentBar />
       </div>
 
-      {/* Columns */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          gap: 28,
-          minHeight: 0,
-          alignItems: 'stretch',
-        }}
-      >
-        {slide.columns?.map((col) => (
-          <div
-            key={col.heading}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: 12,
-              border: '1px solid #e2e8f0',
-              padding: '24px 20px',
-              background: C.lightGrey,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: C.accent,
-                lineHeight: 1.3,
-                marginBottom: 16,
-              }}
-            >
-              {col.heading}
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {col.items.map((item, i) => (
-                <li
-                  key={i}
-                  style={{
-                    fontSize: '1.3rem',
-                    lineHeight: 1.55,
-                    color: C.dark,
-                    marginBottom: 8,
-                    ...bulletStyle(item),
-                  }}
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      <SlideFooter refText={slide.ref} />
-    </div>
-  );
-}
-
-/** Slide 14 — Content (text only, full width, centered) */
-function ContentSlideView({ slide }: { slide: SlideData }) {
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '48px 64px',
-        background: C.white,
-      }}
-    >
-      {/* Header */}
-      <div style={{ flexShrink: 0, marginBottom: 32, width: '100%', maxWidth: 960 }}>
-        <h2
-          style={{
-            fontSize: '2.6rem',
-            fontWeight: 700,
-            color: C.navy,
-            lineHeight: 1.2,
-          }}
-        >
-          {slide.title}
-        </h2>
-        <AccentBar />
-      </div>
-
-      {/* Bullets */}
+      {/* Bullets — left-aligned, generous spacing */}
       <div
         style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          width: '100%',
-          maxWidth: 960,
+          maxWidth: 900,
         }}
       >
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -594,8 +522,8 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
               key={i}
               style={{
                 fontSize: '1.5rem',
-                lineHeight: 1.6,
-                color: C.dark,
+                lineHeight: 1.7,
+                color: C.warmGrey,
                 marginBottom: 6,
                 ...bulletStyle(item),
               }}
@@ -611,8 +539,9 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Split slides — 45% text left, 55% graph right */
+/** Split slides — 35% text left, 65% graph right, left-aligned */
 function SplitSlideView({ slide }: { slide: SlideData }) {
+  const items = slide.bullets || slide.leftBullets || [];
   return (
     <div
       style={{
@@ -620,15 +549,15 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        padding: '48px 56px',
-        background: C.white,
+        padding: '52px 56px',
+        background: C.lightBg,
       }}
     >
       {/* Header */}
-      <div style={{ flexShrink: 0, marginBottom: 20 }}>
+      <div style={{ flexShrink: 0, marginBottom: 24 }}>
         <h2
           style={{
-            fontSize: '2.6rem',
+            fontSize: '3rem',
             fontWeight: 700,
             color: C.navy,
             lineHeight: 1.15,
@@ -644,28 +573,28 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         style={{
           flex: 1,
           display: 'flex',
-          gap: 32,
+          gap: 36,
           minHeight: 0,
         }}
       >
-        {/* Left — text (45%) */}
+        {/* Left — text (35%) */}
         <div
           style={{
-            width: '45%',
+            width: '35%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
           }}
         >
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {slide.leftBullets?.map((item, i) => (
+            {items.map((item, i) => (
               <li
                 key={i}
                 style={{
-                  fontSize: '1.5rem',
-                  lineHeight: 1.55,
-                  color: C.dark,
-                  marginBottom: 8,
+                  fontSize: '1.4rem',
+                  lineHeight: 1.6,
+                  color: C.warmGrey,
+                  marginBottom: 7,
                   ...bulletStyle(item),
                 }}
               >
@@ -675,10 +604,10 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
           </ul>
         </div>
 
-        {/* Right — graph (55%) */}
+        {/* Right — graph (65%) */}
         <div
           style={{
-            width: '55%',
+            width: '65%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -692,8 +621,8 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
-                borderRadius: 12,
-                boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
+                borderRadius: 10,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
               }}
             />
           )}
@@ -706,7 +635,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Slide 15 — Closing (dark, centered) */
+/** Closing slide (dark, centred) */
 function ClosingSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
@@ -724,7 +653,7 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
     >
       <h1
         style={{
-          fontSize: '4rem',
+          fontSize: '5rem',
           fontWeight: 700,
           color: C.white,
         }}
@@ -734,10 +663,10 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            marginTop: 40,
-            fontSize: '1.8rem',
-            color: C.accent,
-            lineHeight: 1.6,
+            marginTop: 44,
+            fontSize: '1.9rem',
+            color: C.teal,
+            lineHeight: 1.7,
             whiteSpace: 'pre-line',
           }}
         >
@@ -757,8 +686,6 @@ function SlideRenderer({ slide }: { slide: SlideData }) {
       return <SectionSlideView slide={slide} />;
     case 'content':
       return <ContentSlideView slide={slide} />;
-    case 'columns':
-      return <ColumnsSlideView slide={slide} />;
     case 'split':
       return <SplitSlideView slide={slide} />;
     case 'closing':
@@ -868,7 +795,7 @@ export default function PresentationPage() {
         justifyContent: 'center',
         overflow: 'hidden',
         fontFamily: FONT_FAMILY,
-        background: '#000',
+        background: '#0a0a0a',
       }}
       onMouseMove={() => setShowNav(true)}
     >
@@ -879,13 +806,13 @@ export default function PresentationPage() {
           position: 'relative',
           width: '100vw',
           height: '100vh',
-          animation: 'slideFadeIn 0.3s ease',
+          animation: 'slideFadeIn 0.28s ease',
         }}
       >
         <SlideRenderer slide={slide} />
       </div>
 
-      {/* CSS keyframe for fade (injected once) */}
+      {/* CSS keyframe for fade */}
       <style>{`
         @keyframes slideFadeIn {
           from { opacity: 0; }
@@ -893,7 +820,7 @@ export default function PresentationPage() {
         }
       `}</style>
 
-      {/* Bottom navigation bar — semi-transparent, auto-hides */}
+      {/* Bottom navigation bar — darker, more subtle, auto-hides */}
       <div
         style={{
           position: 'fixed',
@@ -904,8 +831,8 @@ export default function PresentationPage() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 32px',
-          background: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(8px)',
+          background: 'rgba(0, 10, 20, 0.75)',
+          backdropFilter: 'blur(10px)',
           opacity: showNav ? 1 : 0,
           pointerEvents: showNav ? 'auto' : 'none',
           transition: 'opacity 0.3s ease',
@@ -917,8 +844,8 @@ export default function PresentationPage() {
           style={{
             background: 'none',
             border: 'none',
-            color: current === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)',
-            fontSize: '1rem',
+            color: current === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)',
+            fontSize: '0.95rem',
             cursor: current === 0 ? 'default' : 'pointer',
             padding: '4px 16px',
             fontFamily: FONT_FAMILY,
@@ -928,8 +855,8 @@ export default function PresentationPage() {
         </button>
         <span
           style={{
-            color: 'rgba(255,255,255,0.8)',
-            fontSize: '0.95rem',
+            color: 'rgba(255,255,255,0.6)',
+            fontSize: '0.9rem',
             fontVariantNumeric: 'tabular-nums',
             fontFamily: FONT_FAMILY,
           }}
@@ -942,8 +869,8 @@ export default function PresentationPage() {
           style={{
             background: 'none',
             border: 'none',
-            color: current === total - 1 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)',
-            fontSize: '1rem',
+            color: current === total - 1 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)',
+            fontSize: '0.95rem',
             cursor: current === total - 1 ? 'default' : 'pointer',
             padding: '4px 16px',
             fontFamily: FONT_FAMILY,
