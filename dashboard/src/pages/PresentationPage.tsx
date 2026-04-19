@@ -3,21 +3,25 @@ import PasswordGate from '@/components/slides/PasswordGate';
 
 /**
  * Full-screen presentation mode for thesis defence.
- * Imperial College styling: Arial font, navy (#000080) / blue (#0000CD) palette.
- * Arrow keys navigate between slides. Spacebar advances. Escape toggles controls.
+ * Imperial College styling: Avenir font, navy (#002147) / cyan (#0091D5) palette.
+ * Arrow keys navigate between slides. Spacebar advances. Escape toggles nav bar.
  *
- * FORMATTING: All text sized for projection — title 4rem+, headings 2.5rem+,
- * body 1.5rem+, bullets text-xl minimum. Split slides: 40/60 text/image.
+ * FORMATTING: All text sized for projection — title 4rem, headings 2.6rem,
+ * body 1.5rem, sub-items 1.3rem. Split slides: 45/55 text/image.
  */
 
-const IMPERIAL = {
-  navy: '#000080',
-  blue: '#0000CD',
-  lightGrey: '#F5F5F5',
-  smoke: '#708090',
+/* ─── Palette ────────────────────────────────────────────────── */
+
+const C = {
+  navy: '#002147',
+  accent: '#0091D5',
   white: '#FFFFFF',
-  dark: '#232333',
+  lightGrey: '#F8F9FA',
+  dark: '#1a1a2e',
 } as const;
+
+const FONT_FAMILY =
+  "'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, sans-serif";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -56,9 +60,7 @@ const SLIDES: SlideData[] = [
       '• Modern standard: full probabilistic forecasts',
       '• Quality measured by proper scoring rules (CRPS)',
       '• Information is distributed and costly to share',
-      '',
-      '→ How to incentivise participation?',
-      '→ How to weight forecasters correctly?',
+      '→ How to incentivise and weight correctly?',
     ],
     image: 'presentation-plots/forecast_aggregation_four_panel.png',
   },
@@ -72,10 +74,8 @@ const SLIDES: SlideData[] = [
       '• Share predictions, not raw data',
       '• Reward based on forecast quality',
       '• Platforms: Numerai, Polymarket, Kalshi',
-      '',
       '⚠ Wash trading ~60% volume (Sirolly 2025)',
       '⚠ Prices driven by small elite (Wu 2025)',
-      '',
       '→ Need mechanisms with formal guarantees',
     ],
     image: 'presentation-plots/behaviour_concentration.png',
@@ -91,9 +91,8 @@ const SLIDES: SlideData[] = [
         heading: 'Self-Financed Wagering',
         items: [
           '• Lambert (2008): WSWM',
-          '• 7 properties; uniqueness result',
+          '• 7 properties; uniqueness',
           '• Raja (2024): + client utility',
-          '',
           '⚠ History-free',
         ],
       },
@@ -102,7 +101,6 @@ const SLIDES: SlideData[] = [
         items: [
           '• OGD / Hedge algorithms',
           '• Regret guarantees',
-          '',
           '⚠ Non-strategic agents',
           '⚠ No payments',
         ],
@@ -113,7 +111,6 @@ const SLIDES: SlideData[] = [
           '• Vitali-Pinson (2025)',
           '• Correction matrix for missing',
           '• Shapley + scoring payoff',
-          '',
           '⚠ Relative weights (simplex)',
         ],
       },
@@ -125,7 +122,7 @@ const SLIDES: SlideData[] = [
     id: 'gap',
     type: 'section',
     title: 'No existing design couples\nself-financed wagering\nwith online skill learning',
-    subtitle: 'My contribution: effective wager = deposit × learned skill\nAbsolute · Pre-round · Handles intermittency',
+    subtitle: 'effective wager = deposit × learned skill\nAbsolute · Pre-round · Handles intermittency',
     dark: true,
   },
 
@@ -140,9 +137,7 @@ const SLIDES: SlideData[] = [
       '3. Aggregate by effective wager',
       '4. Settle: Π = m(1 + s − s̄)',
       '5. Update skill from loss',
-      '',
       '→ Same m controls influence AND exposure',
-      '→ σ fixed before round (truthfulness)',
     ],
     image: 'presentation-plots/fixed_deposit.png',
     highlight: 'Incentives aligned: influence requires risk',
@@ -157,7 +152,6 @@ const SLIDES: SlideData[] = [
       '• Present: EWMA blends loss with history',
       '• Absent: staleness decay toward baseline',
       '• Mapping: loss → σ ∈ [σ_min, 1]',
-      '',
       '• Absolute (not relative to others)',
       '• Pre-round (past losses only)',
       '• Handles intermittent participation',
@@ -174,12 +168,9 @@ const SLIDES: SlideData[] = [
       '• Environment: DGPs (exogenous / endogenous)',
       '• Agents: honest, noisy, adversarial',
       '• Platform: deterministic core mechanism',
-      '',
       '• Agents output (participate, report, deposit)',
       '• Core consumes without knowing motives',
-      '',
       '• 20+ invariant tests',
-      '• Experiment ladder: correctness → robustness',
     ],
     image: 'presentation-plots/parameter_sweep.png',
   },
@@ -192,11 +183,8 @@ const SLIDES: SlideData[] = [
     leftBullets: [
       '• Budget gap: 2.84 × 10⁻¹⁴',
       '• Mean profit: 3.01 × 10⁻¹⁷ (zero-sum)',
-      '• Equal-score → zero profit',
-      '',
       '• Sybil ratio (identical): 1.000000',
       '• Noise-skill correlation: −0.98',
-      '',
       '✓ All 20+ tests PASS (both modes)',
     ],
     image: 'presentation-plots/settlement_sanity.png',
@@ -212,7 +200,6 @@ const SLIDES: SlideData[] = [
       '• Fixed (b=1):      0.0423',
       '• Bankroll+Conf:    0.0375  (−11%)',
       '• Oracle:           0.0227  (−46%)',
-      '',
       '→ How stake enters > weighting rule',
     ],
     image: 'presentation-plots/deposit_policy_comparison.png',
@@ -228,10 +215,8 @@ const SLIDES: SlideData[] = [
       'Fixed deposits:',
       '• Uniform:     0.0434',
       '• Skill-only:  0.0419  (−3.5%)',
-      '',
       'Bankroll deposits:',
       '• Deposit-only: 0.0230',
-      '',
       '→ Equal weights remain a strong baseline',
     ],
     image: 'presentation-plots/weight_rule_comparison.png',
@@ -246,10 +231,7 @@ const SLIDES: SlideData[] = [
       '• 6 forecasters, T=20000, 20 seeds',
       '• Least noisy (τ=0.15): σ = 0.959',
       '• Most noisy (τ=1.00): σ = 0.820',
-      '',
       '• Spearman rank correlation = 1.0000',
-      '• Perfect ordering recovered',
-      '',
       '→ Staleness decay prevents gaming',
     ],
     image: 'presentation-plots/quantiles_crps_recovery.png',
@@ -263,10 +245,7 @@ const SLIDES: SlideData[] = [
     leftBullets: [
       '• Sybil (identical): ratio = 1.000000',
       '• Sybil (diversified): ratio = 1.065',
-      '• Strategic deposit: ratio = 1.000000',
-      '',
       '• Arbitrage: zero profit (all λ)',
-      '',
       '→ Resists standard attacks',
       '⚠ Adaptive adversaries remain open',
     ],
@@ -287,10 +266,10 @@ const SLIDES: SlideData[] = [
       '6. Modular platform (onlinev2) + test suite + dashboard',
       '',
       'Limitations:',
-      '• Tail calibration ~5pp under-dispersion (quantile averaging)',
+      '• Tail calibration ~5pp (quantile averaging)',
       '• Equal weights competitive in some settings',
       '• Truthfulness under risk neutrality only',
-      '• All synthetic data — no real-world deployment',
+      '• All synthetic data',
     ],
   },
 
@@ -304,67 +283,169 @@ const SLIDES: SlideData[] = [
   },
 ];
 
-/* ─── Slide renderers ────────────────────────────────────────── */
+/* ─── Shared style helpers ───────────────────────────────────── */
 
-/** Slide 1 — dark navy gradient title card */
-function TitleSlideView({ slide }: { slide: SlideData }) {
+/** Accent bar under slide titles: 3px tall, 80px wide, Imperial cyan */
+function AccentBar() {
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-center text-center px-20 py-16"
       style={{
-        background: `linear-gradient(135deg, ${IMPERIAL.navy} 0%, ${IMPERIAL.dark} 100%)`,
+        width: 80,
+        height: 3,
+        background: C.accent,
+        borderRadius: 2,
+        marginTop: 12,
+      }}
+    />
+  );
+}
+
+/** Footer on content slides */
+function SlideFooter() {
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        paddingTop: 16,
+        fontSize: '0.85rem',
+        color: '#999',
+        textAlign: 'center',
       }}
     >
-      <h1
-        className="font-bold text-white leading-tight max-w-5xl"
-        style={{ fontSize: '4.5rem', lineHeight: 1.1 }}
-      >
-        {slide.title}
-      </h1>
-      {slide.subtitle && (
-        <p
-          className="mt-8 max-w-4xl"
-          style={{ fontSize: '2rem', color: '#93c5fd', lineHeight: 1.4 }}
-        >
-          {slide.subtitle}
-        </p>
-      )}
-      <div className="mt-16" style={{ fontSize: '1.4rem', color: 'rgba(147,197,253,0.7)' }}>
-        Anastasia Cattaneo — Imperial College London — 2025
-      </div>
+      Anastasia Cattaneo — Imperial College London
     </div>
   );
 }
 
-/** Slides 5, 6, 10 — section dividers */
-function SectionSlideView({ slide }: { slide: SlideData }) {
-  const isDark = slide.dark;
+/** Blue-tinted highlight bar below split content */
+function HighlightBar({ text }: { text: string }) {
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-center text-center px-20 py-16"
       style={{
-        background: isDark
-          ? `linear-gradient(135deg, ${IMPERIAL.navy} 0%, ${IMPERIAL.blue} 100%)`
-          : IMPERIAL.lightGrey,
+        flexShrink: 0,
+        marginTop: 16,
+        background: 'rgba(0, 145, 213, 0.08)',
+        border: '1px solid rgba(0, 145, 213, 0.25)',
+        color: C.navy,
+        fontSize: '1.35rem',
+        fontWeight: 700,
+        padding: '0.85rem 1.5rem',
+        borderRadius: 12,
+        lineHeight: 1.4,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+/** Per-bullet inline style */
+function bulletStyle(item: string): React.CSSProperties {
+  if (item === '') return { height: '0.5rem' };
+  if (item.startsWith('⚠')) return { color: '#dc2626', fontWeight: 600 };
+  if (item.startsWith('→')) return { color: '#16a34a', fontWeight: 700 };
+  if (item.startsWith('✓')) return { color: '#16a34a', fontWeight: 700 };
+  if (item.startsWith('•')) return { paddingLeft: '0.5rem' };
+  if (/^\d\./.test(item)) return { fontWeight: 600 };
+  return {};
+}
+
+/** Dark gradient used by title, gap, and closing slides */
+const darkGradient = `linear-gradient(135deg, ${C.navy} 0%, ${C.dark} 100%)`;
+
+/* ─── Slide renderers ────────────────────────────────────────── */
+
+/** Slide 1 — Title (dark, centered) */
+function TitleSlideView({ slide }: { slide: SlideData }) {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '80px',
+        background: darkGradient,
       }}
     >
       <h1
-        className="font-bold leading-snug max-w-5xl"
         style={{
-          fontSize: '3.2rem',
-          color: isDark ? IMPERIAL.white : IMPERIAL.navy,
-          lineHeight: 1.25,
+          fontSize: '4rem',
+          fontWeight: 700,
+          color: C.white,
+          lineHeight: 1.1,
+          maxWidth: '1100px',
+          whiteSpace: 'pre-line',
         }}
       >
         {slide.title}
       </h1>
       {slide.subtitle && (
         <p
-          className="mt-10 max-w-4xl whitespace-pre-line"
           style={{
+            marginTop: 32,
             fontSize: '2rem',
-            color: isDark ? '#93c5fd' : IMPERIAL.smoke,
+            color: C.accent,
+            lineHeight: 1.4,
+            maxWidth: '900px',
+          }}
+        >
+          {slide.subtitle}
+        </p>
+      )}
+      <div
+        style={{
+          marginTop: 64,
+          fontSize: '1.3rem',
+          color: 'rgba(255,255,255,0.5)',
+        }}
+      >
+        Anastasia Cattaneo · Imperial College London · 2025
+      </div>
+    </div>
+  );
+}
+
+/** Slide 5 — Section / gap divider (dark, centered) */
+function SectionSlideView({ slide }: { slide: SlideData }) {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '80px',
+        background: darkGradient,
+      }}
+    >
+      <h1
+        style={{
+          fontSize: '3rem',
+          fontWeight: 700,
+          color: C.white,
+          lineHeight: 1.25,
+          maxWidth: '1000px',
+          whiteSpace: 'pre-line',
+        }}
+      >
+        {slide.title}
+      </h1>
+      {slide.subtitle && (
+        <p
+          style={{
+            marginTop: 40,
+            fontSize: '1.8rem',
+            color: C.accent,
             lineHeight: 1.5,
+            maxWidth: '900px',
+            whiteSpace: 'pre-line',
           }}
         >
           {slide.subtitle}
@@ -374,85 +455,78 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Slide footer — small text at bottom of content slides */
-function SlideFooter() {
-  return (
-    <div
-      className="flex-shrink-0 pt-4"
-      style={{ fontSize: '0.85rem', color: IMPERIAL.smoke }}
-    >
-      Anastasia Cattaneo — Imperial College London
-    </div>
-  );
-}
-
-/** Highlight / key-takeaway bar */
-function HighlightBar({ text }: { text: string }) {
-  return (
-    <div
-      className="flex-shrink-0 rounded-lg mt-4"
-      style={{
-        background: '#dbeafe',
-        color: IMPERIAL.navy,
-        fontSize: '1.35rem',
-        fontWeight: 700,
-        padding: '0.9rem 1.5rem',
-        lineHeight: 1.4,
-      }}
-    >
-      {text}
-    </div>
-  );
-}
-
-/** Bullet styling helper */
-function bulletStyle(item: string): React.CSSProperties {
-  if (item === '') return { height: '0.6rem' };
-  if (item.startsWith('⚠')) return { color: '#dc2626', fontWeight: 600 };
-  if (item.startsWith('→')) return { color: '#047857', fontWeight: 700 };
-  if (item.startsWith('✓')) return { color: '#047857', fontWeight: 700 };
-  if (item.startsWith('•')) return { paddingLeft: '0.5rem' };
-  if (/^\d\./.test(item)) return { fontWeight: 600 };
-  return {};
-}
-
-/** Slide 4 — 3-column layout (no image, full width) */
+/** Slide 4 — 3-column layout (no graph, full width) */
 function ColumnsSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
-      className="w-full h-full flex flex-col px-14 py-10"
-      style={{ background: IMPERIAL.white }}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '48px 56px',
+        background: C.white,
+      }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 mb-6">
+      <div style={{ flexShrink: 0, marginBottom: 24 }}>
         <h2
-          className="font-bold"
-          style={{ fontSize: '2.8rem', color: IMPERIAL.navy, lineHeight: 1.15 }}
+          style={{
+            fontSize: '2.6rem',
+            fontWeight: 700,
+            color: C.navy,
+            lineHeight: 1.15,
+          }}
         >
           {slide.title}
         </h2>
-        <div className="mt-3 h-1 w-24" style={{ background: IMPERIAL.blue }} />
+        <AccentBar />
       </div>
 
       {/* Columns */}
-      <div className="flex-1 flex gap-8 min-h-0">
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          gap: 28,
+          minHeight: 0,
+          alignItems: 'stretch',
+        }}
+      >
         {slide.columns?.map((col) => (
-          <div key={col.heading} className="flex-1 flex flex-col rounded-xl border border-slate-200 p-6">
+          <div
+            key={col.heading}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 12,
+              border: '1px solid #e2e8f0',
+              padding: '24px 20px',
+              background: C.lightGrey,
+            }}
+          >
             <h3
-              className="font-bold mb-4"
-              style={{ fontSize: '1.7rem', color: IMPERIAL.blue, lineHeight: 1.3 }}
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: C.accent,
+                lineHeight: 1.3,
+                marginBottom: 16,
+              }}
             >
               {col.heading}
             </h3>
-            <ul className="space-y-3">
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {col.items.map((item, i) => (
                 <li
                   key={i}
                   style={{
-                    fontSize: '1.35rem',
-                    lineHeight: 1.5,
-                    color: item.startsWith('⚠') ? '#dc2626' : '#334155',
-                    fontWeight: item.startsWith('⚠') ? 600 : 400,
+                    fontSize: '1.3rem',
+                    lineHeight: 1.55,
+                    color: C.dark,
+                    marginBottom: 8,
+                    ...bulletStyle(item),
                   }}
                 >
                   {item}
@@ -468,39 +542,55 @@ function ColumnsSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Content slide — bullets only, full width (unused in current deck but kept for flexibility) */
+/** Slide 14 — Content (text only, full width, centered) */
 function ContentSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
-      className="w-full h-full flex flex-col px-16 py-12"
-      style={{ background: IMPERIAL.white }}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '48px 64px',
+        background: C.white,
+      }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 mb-8">
+      <div style={{ flexShrink: 0, marginBottom: 32, width: '100%', maxWidth: 960 }}>
         <h2
-          className="font-bold"
-          style={{ fontSize: '2.5rem', color: IMPERIAL.navy, lineHeight: 1.2 }}
+          style={{
+            fontSize: '2.6rem',
+            fontWeight: 700,
+            color: C.navy,
+            lineHeight: 1.2,
+          }}
         >
           {slide.title}
         </h2>
-        {slide.subtitle && (
-          <p className="mt-2" style={{ fontSize: '1.25rem', color: IMPERIAL.smoke }}>
-            {slide.subtitle}
-          </p>
-        )}
-        <div className="mt-3 h-1 w-20" style={{ background: IMPERIAL.blue }} />
+        <AccentBar />
       </div>
 
       {/* Bullets */}
-      <div className="flex-1 flex flex-col justify-center">
-        <ul className="space-y-4 max-w-5xl">
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          width: '100%',
+          maxWidth: 960,
+        }}
+      >
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {slide.bullets?.map((item, i) => (
             <li
               key={i}
               style={{
                 fontSize: '1.5rem',
                 lineHeight: 1.6,
-                color: '#1e293b',
+                color: C.dark,
+                marginBottom: 6,
                 ...bulletStyle(item),
               }}
             >
@@ -510,47 +600,66 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
         </ul>
       </div>
 
-      {slide.highlight && <HighlightBar text={slide.highlight} />}
       <SlideFooter />
     </div>
   );
 }
 
-/** Split slide — 40% text left, 60% image right */
+/** Split slides — 45% text left, 55% graph right */
 function SplitSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
-      className="w-full h-full flex flex-col px-14 py-10"
-      style={{ background: IMPERIAL.white }}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '48px 56px',
+        background: C.white,
+      }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 mb-5">
+      <div style={{ flexShrink: 0, marginBottom: 20 }}>
         <h2
-          className="font-bold"
-          style={{ fontSize: '2.8rem', color: IMPERIAL.navy, lineHeight: 1.15 }}
+          style={{
+            fontSize: '2.6rem',
+            fontWeight: 700,
+            color: C.navy,
+            lineHeight: 1.15,
+          }}
         >
           {slide.title}
         </h2>
-        {slide.subtitle && (
-          <p className="mt-2" style={{ fontSize: '1.3rem', color: IMPERIAL.smoke }}>
-            {slide.subtitle}
-          </p>
-        )}
-        <div className="mt-3 h-1 w-24" style={{ background: IMPERIAL.blue }} />
+        <AccentBar />
       </div>
 
       {/* Split body */}
-      <div className="flex-1 flex gap-8 min-h-0">
-        {/* Left — text (38%) */}
-        <div className="flex flex-col justify-center" style={{ width: '38%' }}>
-          <ul className="space-y-2.5">
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          gap: 32,
+          minHeight: 0,
+        }}
+      >
+        {/* Left — text (45%) */}
+        <div
+          style={{
+            width: '45%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {slide.leftBullets?.map((item, i) => (
               <li
                 key={i}
                 style={{
-                  fontSize: '1.4rem',
-                  lineHeight: 1.5,
-                  color: '#1e293b',
+                  fontSize: '1.5rem',
+                  lineHeight: 1.55,
+                  color: C.dark,
+                  marginBottom: 8,
                   ...bulletStyle(item),
                 }}
               >
@@ -560,10 +669,14 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
           </ul>
         </div>
 
-        {/* Right — image (62%) */}
+        {/* Right — graph (55%) */}
         <div
-          className="flex items-center justify-center"
-          style={{ width: '62%' }}
+          style={{
+            width: '55%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           {slide.image && (
             <img
@@ -573,8 +686,8 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
-                borderRadius: '0.75rem',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.10)',
+                borderRadius: 12,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
               }}
             />
           )}
@@ -587,25 +700,40 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
   );
 }
 
-/** Slide 18 — closing card */
+/** Slide 15 — Closing (dark, centered) */
 function ClosingSlideView({ slide }: { slide: SlideData }) {
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-center text-center px-20 py-16"
       style={{
-        background: `linear-gradient(135deg, ${IMPERIAL.navy} 0%, ${IMPERIAL.dark} 100%)`,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '80px',
+        background: darkGradient,
       }}
     >
       <h1
-        className="font-bold text-white"
-        style={{ fontSize: '5rem' }}
+        style={{
+          fontSize: '4rem',
+          fontWeight: 700,
+          color: C.white,
+        }}
       >
         {slide.title}
       </h1>
       {slide.subtitle && (
         <p
-          className="mt-10 whitespace-pre-line"
-          style={{ fontSize: '1.8rem', color: '#93c5fd', lineHeight: 1.6 }}
+          style={{
+            marginTop: 40,
+            fontSize: '1.8rem',
+            color: C.accent,
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line',
+          }}
         >
           {slide.subtitle}
         </p>
@@ -639,48 +767,64 @@ function SlideRenderer({ slide }: { slide: SlideData }) {
 export default function PresentationPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [showControls, setShowControls] = useState(true);
+  const [showNav, setShowNav] = useState(true);
+  const [fadeKey, setFadeKey] = useState(0);
   const total = SLIDES.length;
 
   const goTo = useCallback(
-    (idx: number) => setCurrent(Math.max(0, Math.min(idx, total - 1))),
-    [total],
+    (idx: number) => {
+      const clamped = Math.max(0, Math.min(idx, total - 1));
+      if (clamped !== current) {
+        setFadeKey((k) => k + 1);
+        setCurrent(clamped);
+      }
+    },
+    [total, current],
   );
 
   /* Keyboard navigation */
   useEffect(() => {
     if (!isAuthenticated) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault();
-        goTo(current + 1);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        goTo(current - 1);
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        goTo(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        goTo(total - 1);
-      } else if (e.key === 'Escape') {
-        setShowControls((v) => !v);
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case ' ':
+          e.preventDefault();
+          goTo(current + 1);
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          goTo(current - 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          goTo(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          goTo(total - 1);
+          break;
+        case 'Escape':
+          setShowNav((v) => !v);
+          break;
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [current, goTo, total, isAuthenticated]);
 
-  /* Auto-hide controls after 4 s of inactivity */
+  /* Auto-hide nav bar after 3s */
   useEffect(() => {
-    if (!showControls) return;
-    const timer = setTimeout(() => setShowControls(false), 4000);
+    if (!showNav) return;
+    const timer = setTimeout(() => setShowNav(false), 3000);
     return () => clearTimeout(timer);
-  }, [showControls, current]);
+  }, [showNav, current]);
 
-  /* Show controls on mouse move */
+  /* Show nav on mouse move */
   useEffect(() => {
-    const handleMove = () => setShowControls(true);
+    const handleMove = () => setShowNav(true);
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
@@ -689,10 +833,15 @@ export default function PresentationPage() {
   if (!isAuthenticated) {
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center"
         style={{
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          background: `linear-gradient(135deg, ${IMPERIAL.navy} 0%, ${IMPERIAL.dark} 100%)`,
+          position: 'fixed',
+          inset: 0,
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: FONT_FAMILY,
+          background: darkGradient,
         }}
       >
         <PasswordGate onAuthenticate={() => setIsAuthenticated(true)} />
@@ -704,41 +853,95 @@ export default function PresentationPage() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
-      style={{ fontFamily: 'Arial, Helvetica, sans-serif', background: '#000' }}
-      onMouseMove={() => setShowControls(true)}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        fontFamily: FONT_FAMILY,
+        background: '#000',
+      }}
+      onMouseMove={() => setShowNav(true)}
     >
-      {/* Full-viewport slide */}
-      <div className="relative w-full h-full" style={{ maxWidth: '100vw', maxHeight: '100vh' }}>
+      {/* Full-viewport slide with opacity fade transition */}
+      <div
+        key={`slide-${slide.id}-${fadeKey}`}
+        style={{
+          position: 'relative',
+          width: '100vw',
+          height: '100vh',
+          animation: 'slideFadeIn 0.3s ease',
+        }}
+      >
         <SlideRenderer slide={slide} />
       </div>
 
-      {/* Bottom navigation bar — auto-hides */}
+      {/* CSS keyframe for fade (injected once) */}
+      <style>{`
+        @keyframes slideFadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+      `}</style>
+
+      {/* Bottom navigation bar — semi-transparent, auto-hides */}
       <div
-        className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-8 py-3 transition-opacity duration-300"
         style={{
-          background: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(6px)',
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? 'auto' : 'none',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 32px',
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)',
+          opacity: showNav ? 1 : 0,
+          pointerEvents: showNav ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease',
         }}
       >
         <button
           onClick={() => goTo(current - 1)}
           disabled={current === 0}
-          className="text-white/80 hover:text-white disabled:opacity-30 px-4 py-1"
-          style={{ fontSize: '1rem' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: current === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)',
+            fontSize: '1rem',
+            cursor: current === 0 ? 'default' : 'pointer',
+            padding: '4px 16px',
+            fontFamily: FONT_FAMILY,
+          }}
         >
           ← Prev
         </button>
-        <span className="text-white/80 font-mono" style={{ fontSize: '0.95rem' }}>
+        <span
+          style={{
+            color: 'rgba(255,255,255,0.8)',
+            fontSize: '0.95rem',
+            fontVariantNumeric: 'tabular-nums',
+            fontFamily: FONT_FAMILY,
+          }}
+        >
           {current + 1} / {total}
         </span>
         <button
           onClick={() => goTo(current + 1)}
           disabled={current === total - 1}
-          className="text-white/80 hover:text-white disabled:opacity-30 px-4 py-1"
-          style={{ fontSize: '1rem' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: current === total - 1 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)',
+            fontSize: '1rem',
+            cursor: current === total - 1 ? 'default' : 'pointer',
+            padding: '4px 16px',
+            fontFamily: FONT_FAMILY,
+          }}
         >
           Next →
         </button>
