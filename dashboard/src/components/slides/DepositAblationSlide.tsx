@@ -5,6 +5,7 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 /**
  * Slide 10: Deposit Design — horizontal bar chart showing deposit policies
  * PLUS a small annotation about weight rule comparison (merged from old slide 11).
+ * Reframed: practical deposit rules capture most gain, but we can't control what forecasters stake.
  */
 
 interface PolicyData {
@@ -23,7 +24,7 @@ const FALLBACK_DATA: PolicyData[] = [
 
 export default function DepositAblationSlide() {
   return (
-    <SlideShell title="Deposit Design Is the Strongest Lever" highlight="How stake enters the system matters more than the weighting rule" slideNumber={10}>
+    <SlideShell title="Deposit Design Is the Strongest Lever" highlight="Practical deposit rules capture most of the available gain" slideNumber={10}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <p
           style={{

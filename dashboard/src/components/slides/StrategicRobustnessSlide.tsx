@@ -2,7 +2,7 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 12: Strategic Robustness — properly centred layout.
+ * Slide 13: Strategic Robustness — properly centred layout.
  * Title centred, subtitle centred, attack table centred, shield centred below.
  */
 
@@ -64,7 +64,7 @@ function ShieldIcon() {
 
 export default function StrategicRobustnessSlide() {
   return (
-    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="[6] Chen et al., EC 2014" slideNumber={12}>
+    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="[6] Chen et al., EC 2014" slideNumber={13}>
       <div
         style={{
           flex: 1,

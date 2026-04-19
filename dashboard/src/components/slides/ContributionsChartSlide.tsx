@@ -3,7 +3,7 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 13: Real Data Validation — bar chart showing Equal Weights vs Mechanism.
+ * Slide 11: Real Data Validation — bar chart showing Equal Weights vs Mechanism.
  * Clear framing: "Mechanism achieves −21% CRPS improvement on Elia wind data"
  */
 
@@ -20,7 +20,7 @@ const DATA: MethodData[] = [
 
 export default function ContributionsChartSlide() {
   return (
-    <SlideShell title="Real Data Validation" slideNumber={13}>
+    <SlideShell title="Real Data Validation" slideNumber={11}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header with key finding */}
         <div style={{ marginBottom: 16 }}>
