@@ -86,34 +86,25 @@ Column 3 — Intermittent Contributions:
 
 **SCRIPT:**
 
-To position my contribution, I need to describe three areas of existing work that each solve part of the problem but not all of it.
+My work directly extends the self-financed wagering mechanism literature. Lambert and colleagues introduced the weighted-score wagering mechanism, where participants submit a forecast and a wager, and the pool is redistributed based on relative performance under a proper scoring rule. They proved this satisfies seven properties including budget balance, truthfulness, and sybilproofness — and that it is the unique mechanism doing so. Raja and colleagues extended this to include a client who offers a reward for forecast improvement, and demonstrated on a wind energy case study that quantile averaging produces sharper aggregates than linear pooling. But both mechanisms are history-free. Each round is independent, with no memory of past performance.
 
-The first — and the one my work directly extends — is self-financed wagering mechanisms. Lambert and colleagues introduced the weighted-score wagering mechanism, where participants submit a forecast and a wager, and the pool is redistributed based on relative performance under a proper scoring rule. Their Theorem 1 establishes seven properties: budget balance, anonymity, truthfulness, sybilproofness, normality, individual rationality, and monotonicity. Their uniqueness result is stronger: WSWMs parameterised by total wager are the only mechanisms satisfying five of those properties simultaneously. This assumes risk-neutral players.
+Online forecast aggregation can learn time-varying weights with regret guarantees, but assumes non-strategic forecasters and does not handle payments. Vitali and Pinson designed a market that handles missing submissions and demonstrated it on real Belgian wind data, but their weights are relative and their settlement structure is different.
 
-Raja and colleagues extended this to include a client who posts a task and a reward. Their mechanism is conditionally truthful for players — meaning a risk-averse player who lacks enough information to manipulate the system does best by reporting honestly — and truthful for the client. They demonstrated on a wind energy case study that quantile averaging produces sharper aggregates than linear opinion pooling. But both mechanisms are history-free. Each round is independent, with no memory of past performance.
-
-Second, online forecast aggregation. Online convex optimisation learns time-varying weights with regret guarantees and can track changes in expert quality. But it assumes non-strategic, always-available forecasters and does not handle payments.
-
-Third, Vitali and Pinson designed a market that handles missing submissions through a correction matrix in an online robust regression framework. Weights are updated by gradient descent on pinball loss and projected onto the simplex. Payoffs blend in-sample Shapley values with out-of-sample scoring. They demonstrated this on real Belgian offshore wind data — in the IEEE version, nine sellers built from three weather model sources and three machine learning models. But their weights are relative and their settlement structure differs from the self-financed wagering framework.
+The positioning matrix on the right shows where each approach sits. The x-axis is whether the mechanism adapts to forecaster quality over time. The y-axis is whether it provides self-financed guarantees. Existing work occupies three corners. My thesis occupies the fourth — adaptive and self-financed.
 
 ---
 
-## SLIDE 5 — The Gap and My Contribution
+## SLIDE 5 — My Contribution
 
 **ON SLIDE:**
-- Problem: "Stake alone is not a good proxy for information quality"
-- Diagram: {High Wealth + Low Skill} → dominates aggregate in history-free mechanism
-- Gap: no existing design couples self-financed wagering (with its guarantees) with an online skill-learning layer producing an absolute per-user skill signal
-- Contribution: mechanism where effective wager = deposit × learned skill factor
-  - Skill signal is absolute (not relative), pre-round (preserving truthfulness), handles intermittent participation
-  - Mechanism preserves budget balance, sybilproofness, bounded loss
+- Dark slide, centred text:
+  - Title: "My Contribution"
+  - "I extend self-financed wagering with an online skill-learning layer"
+  - "effective wager = deposit × learned skill"
+  - "The skill signal is absolute, pre-round, and handles intermittent participation while preserving budget balance and sybilproofness"
 
 **SCRIPT:**
 
-Here is the gap. The wagering mechanisms of Lambert and Raja have strong economic properties, but they are history-free. Stake alone determines influence, and stake is not a reliable proxy for information quality. A wealthy but poor forecaster can deposit a large wager and dominate the aggregate even when their predictions are consistently wrong.
+My contribution is to extend self-financed wagering with an online skill-learning layer. The effective wager — the single object that determines both how much weight your forecast gets and how much money you have at risk — is your deposit multiplied by a learned skill factor. Strong past performance means nearly all of your deposit counts. Poor performance means most is refunded and only a fraction enters the market.
 
-Online learning can identify who is good over time, but it does not handle payments, incentives, or strategic behaviour. Vitali and Pinson bridge part of this gap, but their weights are relative and their settlement is structurally different.
-
-No existing design couples self-financed wagering — with its guarantees of budget balance, sybilproofness, and truthfulness — with an online learning layer that produces an absolute, per-user skill signal.
-
-That is what I built. The effective wager — the single object that determines both how much weight your forecast gets and how much money you have at risk — is your deposit multiplied by a learned skill factor. Strong past performance means nearly all of your deposit counts. Poor performance means most is refunded and only a fraction enters the market. The skill signal is absolute: it represents your reliability independently of who else participates. It is computed before the round begins, preserving truthfulness. And it handles intermittent participation through a staleness decay that prevents absent forecasters from freezing their reputation.
+The skill signal is absolute: it represents your reliability independently of who else participates. It is computed before the round begins, preserving the truthfulness argument. And it handles intermittent participation through a staleness decay that prevents absent forecasters from freezing their reputation. The mechanism preserves budget balance and sybilproofness from the original Lambert framework.
