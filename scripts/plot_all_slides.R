@@ -78,44 +78,68 @@ ggsave(file.path(OUT, "skill_signal_clean.png"), p1,
 
 # ═══════════════════════════════════════════════════════════════════
 # 2. REAL DATA VALIDATION (Slide 11)
+#    Rolling-average CRPS over time — shows mechanism learning and
+#    pulling ahead of equal weights as rounds progress.
 # ═══════════════════════════════════════════════════════════════════
 cat("2. Real data validation...\n")
 
-uniform_crps <- 0.0679646275779488
+comp <- jsonlite::fromJSON("dashboard/public/data/real_data/elia_wind/data/comparison.json")
+pr <- comp$per_round
 
-methods_df <- data.frame(
-  method = c("Trimmed Mean", "Skill-only", "Inverse Variance",
-             "Median", "Mechanism", "Best Single (Naive)", "Oracle"),
-  crps   = c(0.053938, 0.047852, 0.046581,
-             0.045293, 0.045042, 0.036267, 0.034005),
+# Compute cumulative mean CRPS for key methods
+n <- nrow(pr)
+cum_mean <- function(x) cumsum(x) / seq_along(x)
+
+ts_df <- data.frame(
+  round = rep(pr$t, 4),
+  crps  = c(cum_mean(pr$crps_uniform),
+            cum_mean(pr$crps_mechanism),
+            cum_mean(pr$crps_median),
+            cum_mean(pr$crps_best_single)),
+  method = rep(c("Equal weights", "Mechanism (skill \u00D7 stake)",
+                 "Median", "Best single (Naive)"), each = n),
   stringsAsFactors = FALSE
-) |>
-  mutate(
-    pct = round((crps - uniform_crps) / uniform_crps * 100, 1),
-    highlight = ifelse(method == "Mechanism", "yes", "no"),
-    method = factor(method, levels = rev(method))
+)
+
+# Subsample for plotting speed (every 20th point)
+ts_df <- ts_df[ts_df$round %% 20 == 0 | ts_df$round == max(ts_df$round), ]
+
+ts_df$method <- factor(ts_df$method,
+  levels = c("Equal weights", "Median", "Mechanism (skill \u00D7 stake)", "Best single (Naive)"))
+
+method_cols <- c(
+  "Equal weights"                  = SLATE,
+  "Median"                         = PURPLE,
+  "Mechanism (skill \u00D7 stake)" = TEAL,
+  "Best single (Naive)"            = NAVY
+)
+
+p2 <- ggplot(ts_df, aes(x = round, y = crps, colour = method, linewidth = method)) +
+  geom_line() +
+  scale_colour_manual(values = method_cols, name = NULL) +
+  scale_linewidth_manual(values = c(1.0, 1.0, 1.8, 1.0), guide = "none") +
+  scale_x_continuous(
+    name = "Round",
+    labels = scales::comma
+  ) +
+  scale_y_continuous(
+    name = "Cumulative mean CRPS (lower is better)",
+    labels = scales::number_format(accuracy = 0.001)
+  ) +
+  labs(
+    title = "Elia Wind \u2014 17,544 rounds, 7 forecasters (\u03B3 = 16, \u03C1 = 0.5)",
+    subtitle = "Mechanism learns skill and pulls ahead of equal weights over time"
+  ) +
+  theme_thesis() +
+  theme(
+    legend.position = c(0.75, 0.85),
+    legend.background = element_rect(fill = "white", colour = "#E2E8F0", linewidth = 0.5),
+    legend.text = element_text(size = 12),
+    legend.key.width = unit(1.5, "cm")
   )
 
-p2 <- ggplot(methods_df, aes(x = pct, y = method, fill = highlight)) +
-  geom_col(width = 0.65, show.legend = FALSE) +
-  geom_text(aes(label = paste0(pct, "%")),
-            hjust = 1.12, size = 5, fontface = "bold", colour = "white", family = "inter") +
-  geom_vline(xintercept = 0, linewidth = 0.9, colour = NAVY) +
-  scale_fill_manual(values = c("yes" = TEAL, "no" = SLATE)) +
-  scale_x_continuous(
-    name = "\u0394CRPS vs equal weights (%)",
-    limits = c(-55, 2),
-    breaks = seq(-50, 0, 10),
-    labels = function(x) paste0(x, "%")
-  ) +
-  labs(y = NULL,
-       title = "Elia Wind \u2014 17,544 rounds, 7 forecasters (\u03B3 = 16, \u03C1 = 0.5)") +
-  theme_thesis() +
-  theme(panel.grid.major.y = element_blank(),
-        axis.text.y = element_text(face = "bold", colour = NAVY, size = 14))
-
 ggsave(file.path(OUT, "real_data_validation.png"), p2,
-       width = 10, height = 5.5, dpi = 220, bg = "white")
+       width = 10, height = 6, dpi = 220, bg = "white")
 
 
 # ═══════════════════════════════════════════════════════════════════
