@@ -44,8 +44,11 @@ curve_df$sigma <- skill_fn(curve_df$L)
 
 dots <- data.frame(
   L     = c(0.10, 0.90, 2.20),
-  label = c("Skilled  (\u03C3 = 0.96)", "Medium  (\u03C3 = 0.52)", "Weak  (\u03C3 = 0.16)"),
+  label = c("Skilled (\u03C3 = 0.96)", "Medium (\u03C3 = 0.52)", "Weak (\u03C3 = 0.16)"),
   col   = c(TEAL, PURPLE, CORAL),
+  # Position labels BELOW each dot so they never overlap the curve
+  nudge_x = c(0.35, 0.35, 0.0),
+  nudge_y = c(-0.10, -0.10, 0.08),
   stringsAsFactors = FALSE
 )
 dots$sigma <- skill_fn(dots$L)
@@ -57,8 +60,8 @@ p1 <- ggplot(curve_df, aes(L, sigma)) +
            colour = CORAL, size = 5, family = "inter") +
   geom_point(data = dots, aes(L, sigma), size = 6, shape = 21,
              fill = dots$col, colour = "white", stroke = 2) +
-  geom_text(data = dots, aes(L, sigma, label = label),
-            hjust = -0.08, vjust = 0.4, size = 5, fontface = "bold",
+  geom_text(data = dots, aes(L + nudge_x, sigma + nudge_y, label = label),
+            hjust = 0, vjust = 0.5, size = 5, fontface = "bold",
             colour = dots$col, family = "inter") +
   labs(
     title = expression(bold("Skill mapping:") ~~ sigma == sigma[min] + (1 - sigma[min]) %.% e^{-gamma %.% L}),
