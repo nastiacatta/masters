@@ -79,7 +79,7 @@ const SLIDES: SlideData[] = [
     bullets: [
       '• Share predictions instead of raw data',
       '• Reward forecasters based on accuracy',
-      '• Structure: client posts task, forecasters submit reports + wagers, operator aggregates, settlement',
+      '• Structure: client → forecasters → operator → settlement',
       '',
       '• Real platforms: Numerai, Polymarket, Kalshi',
       '',
@@ -136,7 +136,7 @@ const SLIDES: SlideData[] = [
     bullets: [
       '• When present: EWMA blends past loss with current round',
       '• When absent: staleness decay reverts skill toward baseline',
-      '• Mapping: accumulated loss → skill score σ ∈ [σ_min, 1]',
+      '• Mapping: loss → σ via exponential decay σ = σ_min + (1−σ_min)e^(−γL)',
       '',
       '• Absolute — independent of other participants',
       '• Pre-round — computed before the round begins',
@@ -151,7 +151,7 @@ const SLIDES: SlideData[] = [
     title: 'Architecture',
     bullets: [
       '• One round as a five-step pipeline',
-      '• Submit → Skill Gate → Aggregate → Settle → Update',
+      '• Submit → Eff. Wager → Aggregate → Settle → Update',
       '',
       '• Effective wager mᵢ = bᵢ · g(σᵢ) is the key object',
       '• Same mᵢ controls weight AND financial exposure',
@@ -164,7 +164,7 @@ const SLIDES: SlideData[] = [
   {
     id: 'correctness',
     type: 'content',
-    title: 'Correctness',
+    title: 'Mechanism Guarantees',
     component: CorrectnessSlide,
     slideNumber: 9,
   },
