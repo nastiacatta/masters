@@ -15,7 +15,7 @@ export default function ContributionsChartSlide() {
       <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
           src={`${BASE}presentation-plots/real_data_validation.png`}
-          alt="ΔCRPS by method vs equal weights on Elia wind data — mechanism highlighted"
+          alt="Cumulative mean CRPS over time — mechanism pulls ahead of equal weights as skill is learned"
           style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
         />
       </div>
