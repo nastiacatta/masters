@@ -49,7 +49,7 @@ Prediction markets offer a clean solution. Instead of asking people to hand over
 
 This is already happening. Numerai runs data science tournaments where participants stake cryptocurrency on their predictions. Polymarket and Kalshi operate prediction exchanges for events from elections to economic indicators.
 
-But recent evidence reveals serious problems. Sirolly and colleagues found that wash trading on Polymarket peaked at roughly sixty per cent of weekly share volume in December 2024. Wu's analysis shows that prices are shaped by specialised competition among a small core of highly active traders, not broad participation.
+But recent evidence reveals serious problems. Sirolly and colleagues found that wash trading on Polymarket peaked at roughly sixty per cent of volume in December 2024. Wu's analysis shows that prices are shaped by specialised competition among a small core of highly active traders, not broad participation.
 
 Real forecasting markets are strategically adversarial in ways that classical forecast combination does not capture. This motivates mechanisms with stronger formal guarantees.
 
