@@ -18,9 +18,9 @@ export function formatBulletText(text: string): React.ReactNode {
   // Strip [!] markers — visual styling handled by bulletStyle in PresentationPage
   text = text.replace(/\[!\]\s*/g, '');
 
-  // Full-line emphasis for warning lines (⚠ or • Warning:) — wrap numerics in coral
-  const stripped = text.trimStart().replace(/^[•⚠]\s*/, '');
-  if (stripped.startsWith('Warning:') || text.trimStart().startsWith('⚠')) {
+  // Full-line emphasis for warning lines (▲ or ⚠ or • Warning:) — wrap numerics in coral
+  const stripped = text.trimStart().replace(/^[•⚠▲]\s*/, '');
+  if (stripped.startsWith('Warning:') || text.trimStart().startsWith('⚠') || text.trimStart().startsWith('▲')) {
     // Wrap any numeric patterns in explicit coral bold spans
     const numericRe = /([−\-~]?\d+\.?\d*%)/g;
     const warningParts: React.ReactNode[] = [];
