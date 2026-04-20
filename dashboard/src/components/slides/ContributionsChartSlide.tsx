@@ -1,22 +1,12 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
+const BASE = import.meta.env.BASE_URL;
+
 /**
- * Slide 11: Real Data Validation — bar chart showing Equal Weights vs Mechanism.
- * Clear framing: "Mechanism achieves −21% CRPS improvement on Elia wind data"
+ * Slide 11: Real Data Validation — uses master_comparison.png for a professional
+ * multi-method comparison chart instead of a sparse 2-bar Recharts chart.
  */
-
-interface MethodData {
-  method: string;
-  crps: number;
-  label: string;
-}
-
-const DATA: MethodData[] = [
-  { method: 'Equal Weights', crps: 0.0456, label: '0.0456' },
-  { method: 'Mechanism', crps: 0.0360, label: '0.0360' },
-];
 
 export default function ContributionsChartSlide() {
   return (
@@ -67,34 +57,13 @@ export default function ContributionsChartSlide() {
           </p>
         </div>
 
-        {/* Chart: Equal Weights baseline vs Mechanism */}
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={DATA} margin={{ top: 30, right: 60, left: 24, bottom: 40 }}>
-              <CartesianGrid strokeDasharray="4 4" stroke={PALETTE.border} vertical={false} />
-              <XAxis
-                dataKey="method"
-                tick={{ fontSize: 18, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: 600 }}
-                axisLine={{ strokeWidth: 2 }}
-              />
-              <YAxis
-                domain={[0, 0.055]}
-                tick={{ fontSize: 15, fill: PALETTE.slate }}
-                label={{ value: 'CRPS (lower is better)', angle: -90, position: 'insideLeft', offset: -5, style: { fontSize: '16px', fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily } }}
-                axisLine={{ strokeWidth: 2 }}
-              />
-              <Bar dataKey="crps" name="CRPS" radius={[8, 8, 0, 0]} barSize={80}>
-                {DATA.map((_, i) => (
-                  <Cell key={i} fill={i === 1 ? PALETTE.teal : PALETTE.imperial} />
-                ))}
-                <LabelList
-                  dataKey="label"
-                  position="top"
-                  style={{ fontSize: 16, fontWeight: 700, fill: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily }}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Real experimental comparison chart */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={`${BASE}presentation-plots/master_comparison.png`}
+            alt="CRPS comparison across methods on real data"
+            style={{ maxWidth: '100%', maxHeight: '60%', objectFit: 'contain', borderRadius: 10 }}
+          />
         </div>
 
         {/* Key findings row */}

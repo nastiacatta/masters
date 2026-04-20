@@ -5,14 +5,14 @@ const BASE = import.meta.env.BASE_URL;
 export default function SkillSignalSlide() {
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 20 }}>
-      <p style={{ fontSize: TYPOGRAPHY.chartTitle.fontSize, fontWeight: TYPOGRAPHY.chartTitle.fontWeight, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily, margin: '0 0 12px 0' }}>
+      <p style={{ fontSize: TYPOGRAPHY.chartTitle.fontSize, fontWeight: TYPOGRAPHY.chartTitle.fontWeight, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily, margin: '0 0 20px 0' }}>
         Skill Signal: Loss → Skill → Effective Wager
       </p>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
         <img
           src={`${BASE}presentation-plots/skill_wager.png`}
           alt="Skill signal mapping: accumulated loss to skill score to effective wager"
-          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
+          style={{ maxWidth: '100%', maxHeight: '75%', objectFit: 'contain', borderRadius: 8 }}
         />
       </div>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
