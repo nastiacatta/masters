@@ -1,46 +1,34 @@
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 3: Prediction Markets — horizontal pipeline SVG:
- * Client -> Forecasters -> Operator -> Settlement
- *
- * Layout (viewBox 1000x300, no overlaps):
- * - Box width: 190
- * - Box 1: x=20, right=210
- * - Box 2: x=280, right=470
- * - Box 3: x=540, right=730
- * - Box 4: x=800, right=990
- * - Arrow 1: from 225 to 265 (40px arrow)
- * - Arrow 2: from 485 to 525 (40px arrow)
- * - Arrow 3: from 745 to 785 (40px arrow)
- * - refX=12 so arrowhead tip doesn't overlap target box
+ * Slide 3 right panel: Market flow — vertical pipeline SVG.
+ * Taller layout so it fills the right panel properly.
  */
 export default function MarketFlowSlide() {
-  const boxW = 160;
-  const boxH = 100;
-  const boxY = 80;
-  const GAP = 15;
+  const boxW = 260;
+  const boxH = 80;
+  const centerX = 200;
+  const GAP = 20;
 
   const actors = [
-    { label: 'Client', subtitle: 'Posts task', x: 20 },
-    { label: 'Forecasters', subtitle: 'Reports + wagers', x: 250 },
-    { label: 'Operator', subtitle: 'Aggregates', x: 500 },
-    { label: 'Settlement', subtitle: 'Payoffs', x: 750 },
+    { label: 'Client', subtitle: 'Posts forecasting task', y: 30 },
+    { label: 'Forecasters', subtitle: 'Submit reports + wagers', y: 160 },
+    { label: 'Operator', subtitle: 'Aggregates forecasts', y: 290 },
+    { label: 'Settlement', subtitle: 'Redistributes payoffs', y: 420 },
   ] as const;
 
-  const arrowLabels = ['task', 'reports', 'aggregate'];
-  const centerY = boxY + boxH / 2; // 130
+  const arrowLabels = ['task', 'reports + wagers', 'aggregate'];
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
-        viewBox="0 0 1000 300"
-        style={{ width: '100%', maxWidth: 960, height: 'auto' }}
+        viewBox="0 0 400 540"
+        style={{ width: '100%', height: '100%', maxHeight: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="mf-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto">
-            <polygon points="0 0, 12 4, 0 8" fill={PALETTE.teal} />
+          <marker id="mf-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
 
@@ -48,8 +36,8 @@ export default function MarketFlowSlide() {
         {actors.map((actor, i) => (
           <g key={actor.label}>
             <rect
-              x={actor.x}
-              y={boxY}
+              x={centerX - boxW / 2}
+              y={actor.y}
               width={boxW}
               height={boxH}
               rx={12}
@@ -58,22 +46,22 @@ export default function MarketFlowSlide() {
               strokeWidth={2.5}
             />
             <text
-              x={actor.x + boxW / 2}
-              y={centerY - 8}
+              x={centerX}
+              y={actor.y + boxH / 2 - 8}
               textAnchor="middle"
               fontFamily={TYPOGRAPHY.fontFamily}
-              fontSize="20"
+              fontSize="22"
               fontWeight={700}
               fill={i === 3 ? PALETTE.white : PALETTE.navy}
             >
               {actor.label}
             </text>
             <text
-              x={actor.x + boxW / 2}
-              y={centerY + 18}
+              x={centerX}
+              y={actor.y + boxH / 2 + 16}
               textAnchor="middle"
               fontFamily={TYPOGRAPHY.fontFamily}
-              fontSize="14"
+              fontSize="15"
               fill={i === 3 ? PALETTE.darkText : PALETTE.slate}
             >
               {actor.subtitle}
@@ -83,26 +71,26 @@ export default function MarketFlowSlide() {
 
         {/* Arrows between actors */}
         {arrowLabels.map((label, i) => {
-          const x1 = actors[i].x + boxW + GAP;
-          const x2 = actors[i + 1].x - GAP;
-          const midX = (x1 + x2) / 2;
+          const y1 = actors[i].y + boxH + GAP / 2;
+          const y2 = actors[i + 1].y - GAP / 2;
+          const midY = (y1 + y2) / 2;
           return (
             <g key={label}>
               <line
-                x1={x1}
-                y1={centerY}
-                x2={x2}
-                y2={centerY}
+                x1={centerX}
+                y1={y1}
+                x2={centerX}
+                y2={y2}
                 stroke={PALETTE.teal}
                 strokeWidth={3}
                 markerEnd="url(#mf-arrow)"
               />
               <text
-                x={midX}
-                y={centerY - 24}
-                textAnchor="middle"
+                x={centerX + 20}
+                y={midY + 5}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="11"
+                fontSize="13"
+                fontWeight={600}
                 fill={PALETTE.slate}
               >
                 {label}
@@ -110,8 +98,6 @@ export default function MarketFlowSlide() {
             </g>
           );
         })}
-
-        {/* Bottom — removed duplicate warning (already in bullets on left) */}
       </svg>
     </div>
   );
