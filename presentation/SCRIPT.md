@@ -80,7 +80,7 @@ The skill signal is absolute: it represents your reliability independently of wh
 
 Each round has five steps.
 
-First, each participant submits a probabilistic forecast — a set of quantiles — and decides how much to deposit. The deposit comes from the forecaster's current wealth, scaled by a confidence measure derived from how narrow their forecast distribution is.
+First, each participant submits a probabilistic forecast — a set of quantiles — and decides how much to deposit. The deposit is a strategic choice: it can be fixed, proportional to wealth, or scaled by confidence in the forecast.
 
 Second, the skill gate. The deposit is multiplied by a factor that depends on the forecaster's learned skill — a number between a minimum floor and one. If past performance has been poor, most of the deposit is refunded immediately and only a small fraction enters the market as the effective wager.
 
@@ -123,7 +123,7 @@ The critical insight: the same effective wager determines both how much your for
 
 ---
 
-## [SLIDE 9] Correctness
+## [SLIDE 9] Mechanism Guarantees
 
 Before any forecasting claim, the mechanism must be correct.
 
@@ -163,7 +163,7 @@ On the electricity dataset, the improvement is smaller at around four per cent. 
 
 The skill recovery experiment validates that the mechanism correctly identifies who is good. This is evidence the skill signal works as intended.
 
-Six forecasters with known noise levels, simulated over twenty thousand rounds, twenty seeds. The learned skill scores correctly rank-order all forecasters: the least noisy — with a true noise of zero point one five — achieves a skill of zero point nine five nine. The noisiest — true noise one point zero zero — gets zero point eight two zero. The Spearman rank correlation between true noise and learned skill is one point zero zero zero zero for both point and quantile modes. Perfect rank recovery.
+Six forecasters with known noise levels, simulated over twenty thousand rounds, twenty seeds. The learned skill scores correctly rank-order all forecasters: the least noisy — with a noise level of zero point one five — achieves a skill of zero point nine five nine. The noisiest — noise level one point zero zero — gets zero point eight two zero. The Spearman rank correlation between noise level and learned skill is one point zero zero zero zero for both point and quantile modes. Perfect rank recovery.
 
 The staleness decay parameter is critical. When a forecaster is absent, their skill gradually reverts toward baseline. This removes the incentive for strategic absence — participating only when you expect to score well and hiding otherwise.
 
