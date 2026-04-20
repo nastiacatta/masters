@@ -49,5 +49,5 @@ p <- ggplot(curve_df, aes(L, sigma)) +
   )
 
 ggsave("dashboard/public/presentation-plots/skill_signal_clean.png", p,
-       width = 7, height = 5, dpi = 200, bg = "white")
+       width = 8, height = 5.5, dpi = 220, bg = "white")
 cat("Saved skill_signal_clean.png\n")

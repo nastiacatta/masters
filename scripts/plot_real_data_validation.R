@@ -50,5 +50,5 @@ p <- ggplot(df, aes(x = pct, y = method, fill = highlight)) +
   )
 
 ggsave("dashboard/public/presentation-plots/real_data_validation.png", p,
-       width = 9, height = 5, dpi = 200, bg = "white")
+       width = 10, height = 5.5, dpi = 220, bg = "white")
 cat("Saved real_data_validation.png\n")
