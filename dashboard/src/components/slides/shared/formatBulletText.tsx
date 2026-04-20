@@ -9,9 +9,18 @@ const METHOD_NAMES = /\b(WSWM|EWMA|CRPS|sybilproofness|budget balance|sybilproof
 const NUMERIC_PATTERNS = /([−\-]?\d+\.?\d*%|[−\-]?\d+\.\d{4,}|\d+\s*[×x]\s*10[⁻\-]?\d+)/g;
 
 export function formatBulletText(text: string): React.ReactNode {
+  // Lines starting with [!] get full warning styling — don't do inline numeric detection
+  // which would override the coral colour from bulletStyle
+  if (text.trimStart().startsWith('[!]')) {
+    return <span style={EMPHASIS.warning}>{text.replace(/\[!\]\s*/g, '')}</span>;
+  }
+
+  // Strip [!] markers — visual styling handled by bulletStyle in PresentationPage
+  text = text.replace(/\[!\]\s*/g, '');
+
   // Full-line emphasis for arrow and warning lines — don't apply inline spans
   // so that the parent <li> bulletStyle colour (coral) is not overridden
-  if (text.trimStart().startsWith('[!]') || text.startsWith('Warning:')) {
+  if (text.trimStart().startsWith('Warning:') || text.startsWith('Warning:')) {
     return text;
   }
 

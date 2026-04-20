@@ -99,7 +99,9 @@ function SlideFooter({ refText, dark }: { refText?: string; dark?: boolean }) {
         paddingTop: 16,
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-end',
+        alignItems: 'center',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
       }}
     >
       <span
@@ -116,9 +118,12 @@ function SlideFooter({ refText, dark }: { refText?: string; dark?: boolean }) {
           style={{
             fontSize: '0.72rem',
             color: dark ? PALETTE.darkText : PALETTE.slate,
-            maxWidth: '55%',
+            marginLeft: 'auto',
+            paddingLeft: 16,
             textAlign: 'right',
             lineHeight: 1.4,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
         >
           {refText}

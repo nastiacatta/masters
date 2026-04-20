@@ -1,3 +1,26 @@
+# Slide Map
+
+| Slide | Title | Section | Time |
+|-------|-------|---------|------|
+| 1 | Title | PROBLEM | — |
+| 2 | Why Forecast Aggregation? | PROBLEM | ~1 min |
+| 3 | Prediction Markets | PROBLEM | ~1.5 min |
+| 4 | Where This Work Fits | PROBLEM | ~1.5 min |
+| 5 | My Contribution | PROBLEM | ~1 min |
+| 6 | Mechanism: Round-by-Round | SOLUTION | ~2 min |
+| 7 | The Skill Signal | SOLUTION | ~1.5 min |
+| 8 | Architecture | SOLUTION | ~1.5 min |
+| 9 | Mechanism Guarantees | VALIDATION | ~1 min |
+| 10 | Deposit Design | VALIDATION | ~1 min |
+| 11 | Real Data Validation | VALIDATION | ~2 min |
+| 12 | Skill Recovery | VALIDATION | ~1 min |
+| 13 | Strategic Robustness | VALIDATION | ~1.5 min |
+| 14 | Closing | — | ~1 min |
+
+Total: ~18 min
+
+---
+
 # Script Part I — PROBLEM (Slides 1–5, ~6 min)
 
 ---

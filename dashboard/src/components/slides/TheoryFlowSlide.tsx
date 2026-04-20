@@ -28,7 +28,7 @@ export default function TheoryFlowSlide() {
   const aggW = 180;
   const aggH = 90;
   const aggCenterY = 250;
-  const outX = 680;
+  const outX = 720;
   const outW = 180;
   const outH = 90;
   const GAP = 15;
@@ -36,13 +36,13 @@ export default function TheoryFlowSlide() {
   const arrowStartX = srcX + srcW + GAP; // 235
   const arrowEndX = aggX - GAP; // 405
   const outArrowStartX = aggX + aggW + GAP; // 615
-  const outArrowEndX = outX - GAP; // 665
+  const outArrowEndX = outX - GAP; // 705
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
-        viewBox="0 0 900 520"
-        style={{ width: '100%', maxWidth: 900, height: 'auto' }}
+        viewBox="0 0 960 520"
+        style={{ width: '100%', maxWidth: 960, height: 'auto' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>

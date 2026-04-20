@@ -164,9 +164,9 @@ export default function StrategicRobustnessSlide() {
         </div>
 
         {/* Behaviour analysis evidence — text summary */}
-        <div style={{ marginTop: 20, textAlign: 'center' }}>
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
           <p style={{ fontSize: '1rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, margin: 0, lineHeight: 1.6 }}>
-            Tested 18 behaviour presets across 9 families — all contained by the skill gate.
+            Tested across 18 behaviour presets in 9 families
           </p>
         </div>
       </div>

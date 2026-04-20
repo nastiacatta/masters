@@ -86,8 +86,6 @@ export default function MarketFlowSlide() {
           const x1 = actors[i].x + boxW + GAP;
           const x2 = actors[i + 1].x - GAP;
           const midX = (x1 + x2) / 2;
-          // Shorten long labels to avoid overlap in narrow gaps
-          const displayLabel = label === 'reports + wagers' ? 'reports' : label;
           return (
             <g key={label}>
               <line
@@ -107,7 +105,7 @@ export default function MarketFlowSlide() {
                 fontSize="11"
                 fill={PALETTE.slate}
               >
-                {displayLabel}
+                {label}
               </text>
             </g>
           );

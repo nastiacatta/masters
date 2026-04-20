@@ -8,11 +8,11 @@ export default function SkillSignalSlide() {
       <p style={{ fontSize: TYPOGRAPHY.chartTitle.fontSize, fontWeight: TYPOGRAPHY.chartTitle.fontWeight, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily, margin: '0 0 20px 0' }}>
         Skill Signal: Loss → Skill → Effective Wager
       </p>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, marginBottom: 8 }}>
         <img
           src={`${BASE}presentation-plots/skill_wager.png`}
           alt="Skill signal mapping: accumulated loss to skill score to effective wager"
-          style={{ maxWidth: '100%', maxHeight: '75%', objectFit: 'contain', borderRadius: 8 }}
+          style={{ maxWidth: '100%', maxHeight: '70%', objectFit: 'contain', borderRadius: 8 }}
         />
       </div>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>

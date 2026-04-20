@@ -18,7 +18,8 @@ interface MatrixNode {
 
 const NODES: MatrixNode[] = [
   { id: 'lambert', label: 'Lambert (2008) / Raja (2024)', citation: 'Self-financed, static', detail: '7 properties, uniqueness theorem', x: 22, y: 22 },
-  { id: 'online', label: 'Online Aggregation', citation: '(OGD, Hedge) — Adaptive, no payments', detail: 'Regret bounds, non-strategic', x: 78, y: 78 },
+  { id: 'online', label: 'Online Aggregation', citation: 'OGD, Hedge — adaptive, no payments', detail: 'Regret bounds, non-strategic', x: 78, y: 78 },
+
   { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, relative weights', detail: 'Online regression, Shapley payoff', x: 72, y: 55 },
   { id: 'thesis', label: 'THIS THESIS', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 78, y: 20, isThesis: true },
 ];
