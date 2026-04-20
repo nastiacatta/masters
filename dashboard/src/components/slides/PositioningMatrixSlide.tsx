@@ -110,20 +110,12 @@ export default function PositioningMatrixSlide() {
 
         {/* Y-axis label */}
         <text
-          x={chartX - 40} y={chartY + chartH - 20}
-          fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate}
+          x={chartX - 40} y={chartY + chartH / 2}
+          fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate} fontWeight={600}
           transform={`rotate(-90, ${chartX - 40}, ${chartY + chartH / 2})`}
           textAnchor="middle"
         >
-          No financial guarantees
-        </text>
-        <text
-          x={chartX - 60} y={chartY + chartH / 2}
-          fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate} fontWeight={600}
-          transform={`rotate(-90, ${chartX - 60}, ${chartY + chartH / 2})`}
-          textAnchor="middle"
-        >
-          Self-financed (budget-balanced)
+          Self-financed →
         </text>
 
         {/* Dashed connection lines from existing work to thesis — start/end at card edges */}

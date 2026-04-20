@@ -16,19 +16,19 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
  * - refX=12 so arrowhead tip doesn't overlap target box
  */
 export default function MarketFlowSlide() {
-  const boxW = 190;
+  const boxW = 160;
   const boxH = 100;
   const boxY = 80;
   const GAP = 15;
 
   const actors = [
     { label: 'Client', subtitle: 'Posts task', x: 20 },
-    { label: 'Forecasters', subtitle: 'Reports + wagers', x: 280 },
-    { label: 'Operator', subtitle: 'Aggregates', x: 540 },
-    { label: 'Settlement', subtitle: 'Payoffs', x: 800 },
+    { label: 'Forecasters', subtitle: 'Reports + wagers', x: 250 },
+    { label: 'Operator', subtitle: 'Aggregates', x: 500 },
+    { label: 'Settlement', subtitle: 'Payoffs', x: 750 },
   ] as const;
 
-  const arrowLabels = ['task', 'reports + wagers', 'aggregate'];
+  const arrowLabels = ['task', 'reports', 'aggregate'];
   const centerY = boxY + boxH / 2; // 130
 
   return (

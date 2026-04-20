@@ -19,7 +19,8 @@ export function formatBulletText(text: string): React.ReactNode {
   text = text.replace(/\[!\]\s*/g, '');
 
   // Full-line emphasis for arrow and warning lines — wrap numerics in coral
-  if (text.trimStart().startsWith('Warning:') || text.startsWith('Warning:')) {
+  const stripped = text.trimStart().replace(/^•\s*/, '');
+  if (stripped.startsWith('Warning:')) {
     // Wrap any numeric patterns in explicit coral bold spans
     const numericRe = /([−\-~]?\d+\.?\d*%)/g;
     const warningParts: React.ReactNode[] = [];
