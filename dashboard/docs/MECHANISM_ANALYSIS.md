@@ -199,6 +199,8 @@ The mechanism correctly identifies forecaster quality:
 
 ### 5.4 Deposit Policy Sensitivity
 
+These results are from the **synthetic benchmark** (latent_fixed DGP, N=10, default parameters γ=4, ρ=0.1):
+
 | Deposit Policy | CRPS Improvement | Mechanism |
 |---------------|------------------|-----------|
 | Fixed (b=1) | -21% | Full skill signal |
