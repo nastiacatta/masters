@@ -59,7 +59,7 @@ function CheckIcon({ pass }: { pass: boolean }) {
 
 export default function CorrectnessSlide() {
   return (
-    <SlideShell title="Mechanism Guarantees" slideNumber={9}>
+    <SlideShell title="Sanity Checks" slideNumber={11}>
       <div
         style={{
           flex: 1,
