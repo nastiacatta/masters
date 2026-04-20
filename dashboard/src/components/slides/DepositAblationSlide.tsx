@@ -16,7 +16,7 @@ export default function DepositAblationSlide() {
       <img
         src={`${BASE}presentation-plots/deposit_policy_comparison.png`}
         alt="Deposit policy comparison showing Oracle, Bankroll+Confidence, Fixed, and Random"
-        style={{ maxWidth: '100%', maxHeight: '78%', objectFit: 'contain', borderRadius: 10 }}
+        style={{ maxWidth: '100%', maxHeight: '85%', objectFit: 'contain', borderRadius: 10 }}
       />
       <p style={{ fontSize: '0.9rem', color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, marginTop: 12, textAlign: 'center' }}>
         Practical deposit rules capture most of the available gain — but we cannot control what forecasters stake

@@ -83,8 +83,9 @@ const SLIDES: SlideData[] = [
       '• Market operator aggregates and settles',
       '',
       '• Platforms: Numerai, Polymarket, Kalshi',
-      '  [!] Wash trading ~60% of volume [1]',
-      '  [!] Prices driven by small elite [2]',
+      '',
+      '• Warning: wash trading ~60% of volume [1]',
+      '• Warning: prices driven by small elite [2]',
       '',
       '→ Need mechanisms with formal guarantees',
     ],
@@ -324,27 +325,30 @@ function SlideFooter({ refText }: { refText?: string }) {
         paddingTop: 16,
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-end',
+        alignItems: 'center',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
       }}
     >
       <span style={{ fontSize: '0.85rem', color: C.slate }}>
         Anastasia Cattaneo — Imperial College London
       </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        {refText && (
-          <span
-            style={{
-              fontSize: '0.75rem',
-              color: C.slate,
-              maxWidth: '45%',
-              textAlign: 'right',
-              lineHeight: 1.4,
-            }}
-          >
-            {refText}
-          </span>
-        )}
-      </div>
+      {refText && (
+        <span
+          style={{
+            fontSize: '0.75rem',
+            color: C.slate,
+            marginLeft: 'auto',
+            paddingLeft: 16,
+            textAlign: 'right',
+            lineHeight: 1.4,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {refText}
+        </span>
+      )}
     </div>
   );
 }
@@ -374,6 +378,7 @@ function HighlightBar({ text }: { text: string }) {
 function bulletStyle(item: string): React.CSSProperties {
   if (item === '') return { height: '0.6rem' };
   if (item.startsWith('→')) return { color: C.teal, fontWeight: 700 };
+  if (item.startsWith('• Warning:')) return { color: C.coral, fontWeight: 600 };
   if (item.startsWith('  [!]')) return { color: C.coral, fontWeight: 600, paddingLeft: '1.5rem' };
   if (item.startsWith('[!]')) return { color: C.coral, fontWeight: 600 };
   if (item.startsWith('    ')) return { paddingLeft: '2.5rem', fontSize: '1.5rem', color: C.slate };

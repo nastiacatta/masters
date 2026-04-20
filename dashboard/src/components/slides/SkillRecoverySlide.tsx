@@ -16,7 +16,7 @@ export default function SkillRecoverySlide() {
       <img
         src={`${BASE}presentation-plots/quantiles_crps_recovery.png`}
         alt="Skill recovery: true noise vs learned skill showing perfect rank correlation"
-        style={{ maxWidth: '100%', maxHeight: '80%', objectFit: 'contain', borderRadius: 10 }}
+        style={{ maxWidth: '100%', maxHeight: '85%', objectFit: 'contain', borderRadius: 10 }}
       />
     </div>
   );
