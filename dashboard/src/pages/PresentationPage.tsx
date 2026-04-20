@@ -8,11 +8,8 @@ import PositioningMatrixSlide from '@/components/slides/PositioningMatrixSlide';
 import ContributionSlide from '@/components/slides/ContributionSlide';
 import MechanismPipelineSlide from '@/components/slides/MechanismPipelineSlide';
 import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
-import ArchitectureDiagramSlide from '@/components/slides/ArchitectureDiagramSlide';
 import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
-import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
 import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
-import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
 
 /**
