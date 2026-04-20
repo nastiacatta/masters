@@ -19,7 +19,7 @@ import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-const TOTAL_SLIDES = 12;
+const TOTAL_SLIDES = 11;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -95,35 +95,19 @@ const SLIDES: SlideData[] = [
     slideNumber: 4,
   },
   {
-    id: 'lambert',
+    id: 'literature',
     type: 'split',
-    title: 'Theoretical Starting Point',
+    title: 'Where This Work Sits',
     bullets: [
-      '▸ Lambert: self-financed weighted-score wagering',
-      '▸ Forecast plus wager, settlement by relative performance',
-      '▸ Strong economic structure: no outside subsidy needed',
+      '▸ Lambert: self-financed wagering — strong one-shot structure',
+      '▸ Raja: forecasting market with client and payoff allocation',
+      '▸ Vitali: adaptation over time, intermittent participation',
       '',
-      '→ Gives the core settlement logic and incentive design',
+      '→ Gap: adaptive + self-financed + absolute skill learning',
     ],
-    ref: '[1] Lambert et al., 2008',
+    ref: '[1] Lambert et al., 2008  [2] Raja et al., 2024  [3] Vitali & Pinson, 2025',
     rightComponent: PositioningMatrixSlide,
     slideNumber: 5,
-  },
-  {
-    id: 'later-work',
-    type: 'content',
-    title: 'What Later Work Adds',
-    bullets: [
-      '▸ Raja: explicit forecasting market with client and payoff allocation',
-      '  but each instance is history-free',
-      '',
-      '▸ Vitali: adaptation over time and intermittent participation',
-      '  but relative weights, not absolute skill',
-      '',
-      '→ Gap: adaptive self-financed mechanism with absolute skill',
-    ],
-    ref: '[2] Raja et al., 2024  [3] Vitali & Pinson, 2025',
-    slideNumber: 6,
   },
   {
     id: 'contribution',
@@ -133,14 +117,22 @@ const SLIDES: SlideData[] = [
       'Self-financed forecasting market\nwith online skill-learning layer\n\nInfluence depends on deposit and learned reliability\nSkill is absolute and pre-round',
     dark: true,
     component: ContributionSlide,
-    slideNumber: 7,
+    slideNumber: 6,
   },
   {
     id: 'mechanism',
     type: 'split',
-    title: 'Mechanism Overview',
+    title: 'System and Mechanism',
+    bullets: [
+      '▸ Environment: synthetic DGPs + real Elia wind and electricity',
+      '▸ Agents: 7 forecasters — Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble',
+      '▸ Behaviour: honest, noisy, strategic, adversarial presets',
+      '',
+      '▸ Core pipeline: submit → skill gate → aggregate → settle → update',
+      '▸ Same effective wager controls weight and exposure',
+    ],
     component: MechanismPipelineSlide,
-    slideNumber: 8,
+    slideNumber: 7,
   },
   {
     id: 'skill-layer',
@@ -155,7 +147,7 @@ const SLIDES: SlideData[] = [
       '→ Future influence depends on accumulated evidence',
     ],
     rightComponent: SkillSignalSlide,
-    slideNumber: 9,
+    slideNumber: 8,
   },
   {
     id: 'main-result',
@@ -168,7 +160,7 @@ const SLIDES: SlideData[] = [
       '→ Gains depend on forecaster heterogeneity',
     ],
     component: ContributionsChartSlide,
-    slideNumber: 10,
+    slideNumber: 9,
   },
   {
     id: 'credibility',
@@ -183,7 +175,7 @@ const SLIDES: SlideData[] = [
     ],
     rightComponent: SkillRecoverySlide,
     component: CorrectnessSlide,
-    slideNumber: 11,
+    slideNumber: 10,
   },
   {
     id: 'conclusion',
@@ -191,7 +183,7 @@ const SLIDES: SlideData[] = [
     title: 'Conclusion',
     subtitle: 'Influence depends on earned reliability\nStrong gain on wind, modest gain on electricity\nBest single can still win — not a dominance claim\nCalibration and richer adversaries remain open\n\nAnastasia Cattaneo · Imperial College London · 2026',
     dark: true,
-    slideNumber: 12,
+    slideNumber: 11,
   },
 ];
 

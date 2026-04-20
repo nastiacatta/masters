@@ -13,7 +13,7 @@ export default function ContributionSlide() {
   });
 
   const properties = ['Absolute', 'Pre-round', 'Handles Intermittency'] as const;
-  const section = getSectionForSlide(7);
+  const section = getSectionForSlide(6);
 
   return (
     <div
@@ -35,7 +35,7 @@ export default function ContributionSlide() {
       {/* Section bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.darkText }}>7 / 12</div>
+      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.darkText }}>6 / 11</div>
       {/* Section label */}
       <div style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: PALETTE.darkText, marginBottom: 16, opacity: 0.8 }}>
         PROBLEM
