@@ -25,8 +25,8 @@ The dashboard has **partial coverage**: the core mechanism and a substantial sub
 | Item | Status | Notes |
 |------|--------|--------|
 | Precision of private signal | Taxonomy only | |
-| Bias (systematic error) | Not in dashboard | |
-| Miscalibration | Not in dashboard | |
+| Bias (systematic error) | **Experiment** | `biased` preset — agent adds +0.15 directional bias |
+| Miscalibration | **Experiment** | `miscalibrated` preset — overconfident reports pushed away from 0.5 |
 | Correlated errors across agents | Not in dashboard | |
 | Drift adaptation | **Experiment** | Drift adaptation |
 | Costly information | Not in dashboard | |
@@ -38,11 +38,11 @@ The dashboard has **partial coverage**: the core mechanism and a substantial sub
 | Item | Status | Notes |
 |------|--------|--------|
 | Truthful reporting | **Experiment** | Baseline in behaviour matrix, preference stress |
-| Noisy reporting | Taxonomy only | |
+| Noisy reporting | **Experiment** | `noisy_reporter` preset — agent adds σ=0.15 Gaussian noise |
 | Hedged reports | **Experiment** | Preference stress (risk-averse) |
 | Strategic misreporting | **Experiment** | Strategic reporting |
-| Reputation gaming | Taxonomy only | |
-| Sandbagging | Taxonomy only | |
+| Reputation gaming | **Experiment** | `reputation_gamer` preset — anchors to previous aggregate |
+| Sandbagging | **Experiment** | `sandbagger` preset — deliberately adds large noise |
 
 ---
 
@@ -50,7 +50,7 @@ The dashboard has **partial coverage**: the core mechanism and a substantial sub
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Budget constraints | Taxonomy only | |
+| Budget constraints | **Experiment** | `budget_constrained` preset — agents stop when wealth < 0.1 |
 | Deposits (how much to lock in) | **Experiment** | Stake policy matrix, core effective wager |
 | Fixed-fraction, Kelly-like, etc. | **Experiment** | Stake policy matrix |
 | Caps, house-money, break-even, lumpy | Taxonomy only / partial | Stake policy matrix touches some |
