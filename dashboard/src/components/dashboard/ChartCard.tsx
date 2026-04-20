@@ -11,7 +11,7 @@ import { VERDICT_COLOURS } from '@/lib/palette';
 export interface KeyInsight {
   /** ≤ 12 words */
   headline: string;
-  /** e.g. "−21% CRPS" */
+  /** e.g. "−34% CRPS" */
   statistic: string;
   /** One sentence */
   interpretation: string;

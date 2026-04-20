@@ -108,9 +108,15 @@ The critical difference from Vitali and Pinson: their weights are relative — t
 
 ## [SLIDE 8] Architecture
 
-The implementation separates three layers cleanly. The environment layer defines the data-generating process — how outcomes and forecaster signals are produced. This includes both synthetic DGPs for controlled testing and real data from the Elia Belgian grid operator. The agent layer generates per-round actions: participation decisions, reports, and deposits. It can produce honest forecasters or adversarial ones — sybils, arbitrageurs, colluders — without touching the core. The platform layer applies the mechanism: scoring, aggregation, settlement, and skill updates. It is deterministic and consumes standardised inputs without knowing why they were chosen.
+This diagram shows one round of the mechanism as a five-step pipeline.
 
-This separation makes clean experimentation possible. The same mechanism can be tested under different environments, participation patterns, and attack strategies, all without modifying the core. The system has over twenty invariant tests covering budget balance, zero-sum accounting, sybil invariance, and scoring bounds, with property-based testing using Hypothesis to stress the invariants.
+First, each forecaster submits a probabilistic report and a deposit. Second, the skill gate transforms the deposit into an effective wager — the key object that controls both influence and financial exposure. The formula is simple: the effective wager equals the deposit multiplied by a skill-dependent factor. If your skill is high, nearly all your deposit enters the market. If it is low, most is refunded immediately.
+
+Third, effective wagers serve as aggregation weights to produce the market forecast. Fourth, after the outcome is observed, each forecaster is scored and the settlement redistributes the effective wagers based on relative performance — total payouts always equal total wagers, by construction.
+
+Fifth, the realised loss feeds into the EWMA skill estimator. Updated wealth and skill carry forward to the next round, closing the loop.
+
+The critical insight: the same effective wager determines both how much your forecast counts and how much money you have at risk. You cannot have influence without exposure.
 
 
 # Script Part III — VALIDATION (Slides 9–14, ~7 min)
@@ -145,11 +151,11 @@ In practice, we cannot force forecasters to use any particular deposit rule. The
 
 This is the key validation. Everything before this was controlled simulation — synthetic DGPs where we know the ground truth. Now we test on real data.
 
-On real Elia wind power data — seventeen thousand five hundred and forty-four data points from the Belgian grid operator — with five real forecasters: ARIMA for linear time series modelling, XGBoost for gradient-boosted trees, a multi-layer perceptron neural network, a moving average baseline, and a naive persistence model — the mechanism achieves a twenty-one per cent CRPS improvement over equal weights.
+On real Elia wind power data — seventeen thousand five hundred and forty-four data points from the Belgian grid operator — with seven real forecasters: Naive persistence, an exponentially weighted moving average, ARIMA for linear time series modelling, XGBoost for gradient-boosted trees, a multi-layer perceptron neural network, the Theta method, and a Naive-plus-EWMA ensemble — the mechanism achieves a thirty-four per cent CRPS improvement over equal weights with tuned parameters.
 
-These are not toy models. ARIMA captures linear temporal structure. XGBoost captures nonlinear interactions. The MLP learns flexible function approximations. The moving average and naive models provide baselines of varying sophistication. The heterogeneity between these models is what gives the mechanism something to work with.
+These are not toy models. The naive persistence baseline exploits the high autocorrelation in wind power. The EWMA smooths recent observations with exponential decay. ARIMA captures linear temporal structure. XGBoost captures nonlinear interactions through gradient-boosted trees. The MLP learns flexible function approximations. The Theta method decomposes the series into trend components. The ensemble combines naive and EWMA for diversification. The heterogeneity between these seven models is what gives the mechanism something to work with.
 
-On the electricity dataset, the improvement is smaller. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms that gains are conditional on forecaster diversity — when everyone is roughly equally good, equal weights are hard to beat.
+On the electricity dataset, the improvement is smaller at around four per cent. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms that gains are conditional on forecaster diversity — when everyone is roughly equally good, equal weights are hard to beat.
 
 ---
 
@@ -183,7 +189,7 @@ The overall picture: the mechanism resists the standard attacks. But sophisticat
 
 To close. I designed a self-financed wagering mechanism that couples weighted-score settlement with online skill learning. The skill signal is absolute, computed before each round, and handles intermittent participation.
 
-The key contributions: first, the mechanism design itself — coupling wagering with online skill learning. Second, empirical verification of correctness to machine precision. Third, the deposit design finding — bankroll-confidence captures most of the available gain as a practical default. Fourth, perfect skill recovery with Spearman correlation of one. Fifth — and most importantly — real data validation. On Elia wind power data with seventeen thousand data points and five real forecasters — ARIMA, XGBoost, MLP, moving average, and naive — the mechanism achieves a twenty-one per cent CRPS improvement over equal weights. Sixth, the modular simulation platform with test suite and dashboard.
+The key contributions: first, the mechanism design itself — coupling wagering with online skill learning. Second, empirical verification of correctness to machine precision. Third, the deposit design finding — bankroll-confidence captures most of the available gain as a practical default. Fourth, perfect skill recovery with Spearman correlation of one. Fifth — and most importantly — real data validation. On Elia wind power data with seventeen thousand data points and seven real forecasters, the mechanism achieves a thirty-four per cent CRPS improvement over equal weights with tuned parameters — though the best single forecaster still wins due to high autocorrelation. Sixth, the modular simulation platform with test suite and dashboard.
 
 The main limitations: tail calibration shows under-dispersion of about five percentage points, equal weights remain competitive when forecasters are similar in quality, and truthfulness holds only under risk neutrality.
 

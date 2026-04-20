@@ -32,7 +32,7 @@ export default function ContributionsChartSlide() {
                 margin: 0,
               }}
             >
-              Mechanism achieves −21% CRPS improvement on Elia wind data
+              Mechanism achieves −34% CRPS improvement on Elia wind data (tuned params)
             </p>
             <p
               style={{
@@ -42,7 +42,7 @@ export default function ContributionsChartSlide() {
                 margin: '6px 0 0 0',
               }}
             >
-              17,544 rounds, 5 forecasters
+              17,544 rounds, 7 forecasters
             </p>
           </div>
           <p
@@ -53,7 +53,7 @@ export default function ContributionsChartSlide() {
               margin: 0,
             }}
           >
-            Forecasters: ARIMA, XGBoost, MLP, Moving Average, Naive
+            Forecasters: Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble
           </p>
         </div>
 
@@ -70,7 +70,7 @@ export default function ContributionsChartSlide() {
         <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
           <div style={{ flex: 1, background: 'rgba(46, 139, 139, 0.06)', borderLeft: `6px solid ${PALETTE.teal}`, borderRadius: '0 12px 12px 0', padding: '12px 16px' }}>
             <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
-              Wind: −21% CRPS improvement over equal weights
+              Wind: −34% CRPS improvement over equal weights (tuned params)
             </span>
           </div>
           <div style={{ flex: 1, background: 'rgba(232, 93, 74, 0.06)', borderLeft: `6px solid ${PALETTE.coral}`, borderRadius: '0 12px 12px 0', padding: '12px 16px' }}>
