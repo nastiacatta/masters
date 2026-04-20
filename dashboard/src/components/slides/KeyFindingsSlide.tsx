@@ -9,18 +9,18 @@ const findings = [
       'Skill-weighted aggregation improves accuracy over equal weighting on real data.',
   },
   {
-    icon: '↔',
+    icon: '↘',
     color: 'bg-teal-500',
-    title: 'Mechanism achieves lowest CRPS',
+    title: 'Mechanism improves over equal weighting',
     description:
-      'The mechanism (skill + stake) achieves the lowest CRPS among aggregation methods.',
+      'The mechanism (skill + stake) improves mean CRPS versus equal weighting on both Elia wind and electricity.',
   },
   {
     icon: '⚖',
     color: 'bg-amber-500',
-    title: 'Equal weighting remains a strong baseline',
+    title: 'Best single can still win',
     description:
-      'Equal weighting remains a strong baseline, especially on the electricity dataset where improvements are smaller.',
+      'Even when the mechanism improves the aggregate, the best single forecaster can still outperform it on some datasets, so the claim is conditional rather than dominance.',
   },
 ];
 

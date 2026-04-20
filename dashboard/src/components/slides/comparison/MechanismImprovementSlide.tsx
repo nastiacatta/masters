@@ -177,7 +177,7 @@ export default function MechanismImprovementSlide() {
             icon="⚡"
             color="amber"
             title="Electricity vs Wind improvement gap"
-            description="Electricity improvement is tiny (ΔCRPS ≈ −0.000061) while wind improvement is substantial (ΔCRPS ≈ −0.0196, ~21%). The mechanism adds little value when forecasters are already well-calibrated."
+            description="Electricity improvement is modest (ΔCRPS ≈ −0.00064, ~3.77%) while wind improvement is substantial (ΔCRPS ≈ −0.0229, ~33.7%). The mechanism adds less value when forecasters are more similar in quality."
           />
           <InsightCard
             icon="🔬"
