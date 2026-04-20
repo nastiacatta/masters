@@ -83,7 +83,8 @@ ggsave(file.path(OUT, "skill_signal_clean.png"), p1,
 
 # ═══════════════════════════════════════════════════════════════════
 # 2. MAIN RESULT (Slide 9) — per-forecaster learned skill on real data
-#    Shows how the mechanism differentiates the 7 real forecasters
+#    Shows how the mechanism differentiates the 7 real forecasters.
+#    Final sigma labels on the right edge for instant readability.
 # ═══════════════════════════════════════════════════════════════════
 cat("2. Main result — per-forecaster skill on real data...\n")
 
@@ -103,42 +104,58 @@ skill_long <- do.call(rbind, lapply(seq_along(forecaster_names), function(i) {
   )
 }))
 
-# Subsample for speed
-skill_long <- skill_long[skill_long$t %% 50 == 0 | skill_long$t == max(skill_long$t), ]
+# Subsample for speed (every 40th point + last)
+skill_long <- skill_long[skill_long$t %% 40 == 0 | skill_long$t == max(skill_long$t), ]
 
-# Order by final sigma (best at top of legend)
+# Order by final sigma (best at top)
 final_sigma <- skill_long %>%
   filter(t == max(t)) %>%
-  arrange(desc(sigma))
+  arrange(desc(sigma)) %>%
+  mutate(label = paste0(forecaster, "  \u03C3 = ", sprintf("%.3f", sigma)))
 
 skill_long$forecaster <- factor(skill_long$forecaster, levels = final_sigma$forecaster)
+final_sigma$forecaster <- factor(final_sigma$forecaster, levels = levels(skill_long$forecaster))
 
-# Colour palette: best forecaster in teal, worst in coral
+# Distinct colours for each forecaster
 n_f <- length(forecaster_names)
-fcols <- colorRampPalette(c(TEAL, NAVY, PURPLE, CORAL))(n_f)
+fcols <- c(
+  TEAL,                    # Naive — best
+  "#1a7a7a",               # MLP
+  "#2d6b8a",               # Ensemble
+  NAVY,                    # EWMA
+  "#4a5a8a",               # XGBoost
+  PURPLE,                  # Theta
+  CORAL                    # ARIMA — worst
+)
 names(fcols) <- levels(skill_long$forecaster)
 
 p2 <- ggplot(skill_long, aes(x = t, y = sigma, colour = forecaster)) +
-  geom_line(linewidth = 1.3, alpha = 0.85) +
-  scale_colour_manual(values = fcols, name = "Forecaster") +
-  scale_x_continuous(name = "Round", labels = scales::comma) +
+  geom_line(linewidth = 1.5, alpha = 0.9) +
+  # Final sigma labels on the right edge
+  geom_text(data = final_sigma,
+            aes(x = t + 300, y = sigma, label = label, colour = forecaster),
+            hjust = 0, size = 4.5, fontface = "bold", family = "inter",
+            show.legend = FALSE) +
+  scale_colour_manual(values = fcols, guide = "none") +
+  scale_x_continuous(
+    name = "Round",
+    labels = scales::comma,
+    expand = expansion(mult = c(0.02, 0.28))  # room for labels on right
+  ) +
   scale_y_continuous(
     name = expression(Learned ~ skill ~ (sigma)),
-    limits = c(0.1, 1.0),
-    breaks = seq(0.2, 1.0, 0.2)
+    limits = c(0.35, 0.90),
+    breaks = seq(0.4, 0.9, 0.1)
   ) +
   labs(
-    title = "Elia Wind \u2014 Learned Skill per Forecaster Over 17,544 Rounds",
-    subtitle = "The mechanism identifies Naive as the strongest and ARIMA as the weakest"
+    title = "Elia Wind \u2014 Learned Skill per Forecaster (17,544 rounds, \u03B3=16, \u03C1=0.5)",
+    subtitle = "Naive ranks highest (wind is autocorrelated) \u2014 ARIMA lowest (linear model, poor quantile calibration)"
   ) +
   theme_thesis() +
-  theme(
-    legend.position = "right",
-    legend.key.width = unit(1.2, "cm")
-  )
+  theme(plot.title = element_text(size = rel(1.05)))
 
 ggsave(file.path(OUT, "real_data_validation.png"), p2,
-       width = 11, height = 6.5, dpi = 250, bg = "white")
+       width = 12, height = 6.5, dpi = 250, bg = "white")
 
 
 # ═══════════════════════════════════════════════════════════════════
