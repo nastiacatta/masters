@@ -9,9 +9,10 @@ const METHOD_NAMES = /\b(WSWM|EWMA|CRPS|sybilproofness|budget balance|sybilproof
 const NUMERIC_PATTERNS = /([−\-]?\d+\.?\d*%|[−\-]?\d+\.\d{4,}|\d+\s*[×x]\s*10[⁻\-]?\d+)/g;
 
 export function formatBulletText(text: string): React.ReactNode {
-  // Full-line emphasis for arrow and warning lines
-  if (text.startsWith('[!]') || text.startsWith('Warning:')) {
-    return <span style={EMPHASIS.warning}>{text}</span>;
+  // Full-line emphasis for arrow and warning lines — don't apply inline spans
+  // so that the parent <li> bulletStyle colour (coral) is not overridden
+  if (text.trimStart().startsWith('[!]') || text.startsWith('Warning:')) {
+    return text;
   }
 
   // Build a combined regex for inline matches

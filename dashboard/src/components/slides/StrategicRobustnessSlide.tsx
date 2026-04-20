@@ -1,8 +1,6 @@
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
-const BASE = import.meta.env.BASE_URL;
-
 /**
  * Slide 13: Strategic Robustness — properly centred layout.
  * Title centred, subtitle centred, attack table centred, shield centred below.
@@ -165,16 +163,11 @@ export default function StrategicRobustnessSlide() {
           </p>
         </div>
 
-        {/* Behaviour analysis evidence */}
+        {/* Behaviour analysis evidence — text summary */}
         <div style={{ marginTop: 20, textAlign: 'center' }}>
-          <p style={{ fontSize: '0.9rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 8 }}>
-            18 behaviour presets tested across 9 families
+          <p style={{ fontSize: '1rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, margin: 0, lineHeight: 1.6 }}>
+            Tested 18 behaviour presets across 9 families — all contained by the skill gate.
           </p>
-          <img
-            src={`${BASE}presentation-plots/behaviour_wealth.png`}
-            alt="Behaviour analysis: wealth evolution under different agent strategies"
-            style={{ maxWidth: 400, maxHeight: 120, objectFit: 'contain', borderRadius: 8, opacity: 0.9 }}
-          />
         </div>
       </div>
     </SlideShell>

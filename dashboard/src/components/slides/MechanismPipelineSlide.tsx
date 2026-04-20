@@ -155,7 +155,7 @@ function FeedbackArrow() {
           stroke={PALETTE.teal}
           strokeWidth="2.5"
           strokeDasharray="8 5"
-          markerStart="url(#feedback-arrow)"
+          markerEnd="url(#feedback-arrow)"
         />
         <text
           x="560" y="52"

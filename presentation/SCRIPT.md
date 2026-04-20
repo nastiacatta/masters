@@ -2,13 +2,13 @@
 
 ---
 
-## SLIDE 1 — Title
+## [SLIDE 1] Title
 
 Good morning. My name is Anastasia Cattaneo. This thesis asks a specific question: if a forecasting market learns who is reliable and gives those participants more influence, do the aggregate predictions improve — without breaking the economic guarantees that make the market trustworthy?
 
 ---
 
-## SLIDE 2 — Why Forecast Aggregation?
+## [SLIDE 2] Why Forecast Aggregation?
 
 In energy, logistics, finance, and public policy, better predictions lead to better decisions. The information needed for strong forecasts is often scattered across many sources — different companies, models, or individuals — each holding private data that is costly to share.
 
@@ -20,7 +20,7 @@ The open question: how do you get people to participate, and how do you decide w
 
 ---
 
-## SLIDE 3 — Prediction Markets
+## [SLIDE 3] Prediction Markets
 
 Prediction markets offer a clean solution. Instead of asking people to hand over raw data, you ask them to submit a probabilistic forecast and reward them based on how accurate it turns out to be. The market aggregates individual predictions into a collective view, and participants are compensated for the value of their contribution.
 
@@ -32,7 +32,7 @@ Real forecasting markets are strategically adversarial in ways that classical fo
 
 ---
 
-## SLIDE 4 — Where This Work Fits
+## [SLIDE 4] Where This Work Fits
 
 My work directly extends the self-financed wagering mechanism literature. Lambert and colleagues introduced the weighted-score wagering mechanism, where participants submit a forecast and a wager, and the pool is redistributed based on relative performance. They proved this satisfies seven properties including budget balance, truthfulness, and sybilproofness. Raja and colleagues extended this to include a client who offers a reward for forecast improvement. But both mechanisms are history-free — each round is independent, with no memory of past performance.
 
@@ -42,7 +42,7 @@ The positioning matrix shows where each approach sits. Existing work occupies th
 
 ---
 
-## SLIDE 5 — My Contribution
+## [SLIDE 5] My Contribution
 
 My contribution is to extend self-financed wagering with an online skill-learning layer. The effective wager — the single object that determines both how much weight your forecast gets and how much money you have at risk — is your deposit multiplied by a learned skill factor. Strong past performance means nearly all of your deposit counts. Poor performance means most is refunded and only a fraction enters the market.
 
@@ -53,7 +53,7 @@ The skill signal is absolute: it represents your reliability independently of wh
 
 ---
 
-## SLIDE 6 — Mechanism: Round-by-Round
+## [SLIDE 6] Mechanism: Round-by-Round
 
 Each round has five steps.
 
@@ -71,7 +71,7 @@ The critical design choice: the same effective wager controls both influence and
 
 ---
 
-## SLIDE 7 — The Skill Signal
+## [SLIDE 7] The Skill Signal
 
 The skill signal is the core innovation. Each forecaster has a loss state that tracks performance over time using an exponentially weighted moving average. When a forecaster participates, their loss state blends the previous value with the current round's loss. The learning rate controls how quickly old performance is forgotten.
 
@@ -83,7 +83,7 @@ The critical difference from Vitali and Pinson: their weights are relative — t
 
 ---
 
-## SLIDE 8 — Architecture
+## [SLIDE 8] Architecture
 
 The implementation separates three layers cleanly. The environment layer defines the data-generating process — how outcomes and forecaster signals are produced. This includes both synthetic DGPs for controlled testing and real data from the Elia Belgian grid operator. The agent layer generates per-round actions: participation decisions, reports, and deposits. It can produce honest forecasters or adversarial ones — sybils, arbitrageurs, colluders — without touching the core. The platform layer applies the mechanism: scoring, aggregation, settlement, and skill updates. It is deterministic and consumes standardised inputs without knowing why they were chosen.
 
@@ -94,7 +94,7 @@ This separation makes clean experimentation possible. The same mechanism can be 
 
 ---
 
-## SLIDE 9 — Correctness
+## [SLIDE 9] Correctness
 
 Before any forecasting claim, the mechanism must be correct.
 
@@ -108,7 +108,7 @@ The noise-skill correlation is minus zero point nine eight — the mechanism rel
 
 ---
 
-## SLIDE 10 — Deposit Design
+## [SLIDE 10] Deposit Design
 
 The DGP experiments reveal that deposit design matters. If deposits correlate with forecast quality — which is what the bankroll-confidence rule achieves by using wealth and forecast width — the mechanism performs better. This is intuitive: more information entering the system means better aggregation.
 
@@ -118,7 +118,7 @@ In practice, we cannot force forecasters to use any particular deposit rule. The
 
 ---
 
-## SLIDE 11 — Real Data Validation
+## [SLIDE 11] Real Data Validation
 
 This is the key validation. Everything before this was controlled simulation — synthetic DGPs where we know the ground truth. Now we test on real data.
 
@@ -130,7 +130,7 @@ On the electricity dataset, the improvement is smaller. The forecasters are more
 
 ---
 
-## SLIDE 12 — Skill Recovery
+## [SLIDE 12] Skill Recovery
 
 The skill recovery experiment validates that the mechanism correctly identifies who is good. This is evidence the skill signal works as intended.
 
@@ -140,7 +140,7 @@ The staleness decay parameter is critical. When a forecaster is absent, their sk
 
 ---
 
-## SLIDE 13 — Strategic Robustness
+## [SLIDE 13] Strategic Robustness
 
 For strategic robustness, the main attack types from the literature.
 
@@ -156,7 +156,7 @@ The overall picture: the mechanism resists the standard attacks. But sophisticat
 
 ---
 
-## SLIDE 14 — Closing
+## [SLIDE 14] Closing
 
 To close. I designed a self-financed wagering mechanism that couples weighted-score settlement with online skill learning. The skill signal is absolute, computed before each round, and handles intermittent participation.
 
