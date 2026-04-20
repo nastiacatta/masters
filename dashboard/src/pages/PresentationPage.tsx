@@ -62,9 +62,9 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Why Forecast Aggregation?',
     bullets: [
-      '🎯 Combining forecasts averages out individual errors',
-      '📊 Scored by strictly proper rules — only truth maximises reward',
-      '🔒 Information is distributed and costly to share',
+      '▸ Combining forecasts averages out individual errors',
+      '▸ Scored by strictly proper rules — only truth maximises reward',
+      '▸ Information is distributed and costly to share',
       '',
       '→ How do we incentivise participation and weight forecasters?',
     ],
@@ -76,13 +76,13 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Prediction Markets',
     bullets: [
-      '💡 Share predictions instead of raw data',
-      '💰 Reward forecasters based on accuracy',
+      '▸ Share predictions instead of raw data',
+      '▸ Reward forecasters based on accuracy',
       '',
-      '🏛 Real platforms: Numerai, Polymarket, Kalshi',
+      '▹ Real platforms: Numerai, Polymarket, Kalshi',
       '',
-      '⚠ Wash trading ~60% of Polymarket volume [1]',
-      '⚠ Prices shaped by small elite, not broad crowd [2]',
+      '▲ Wash trading ~60% of Polymarket volume [1]',
+      '▲ Prices shaped by small elite, not broad crowd [2]',
       '',
       '→ Need mechanisms with formal guarantees',
     ],
@@ -95,13 +95,13 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Where This Work Fits',
     bullets: [
-      '📘 Lambert/Raja: self-financed and truthful',
+      '▸ Lambert/Raja: self-financed and truthful',
       '  but static — no learning across rounds',
       '',
-      '📗 Online aggregation: learns adaptive weights',
+      '▸ Online aggregation: learns adaptive weights',
       '  but no payments or strategic guarantees',
       '',
-      '📙 Vitali-Pinson: handles intermittent participation',
+      '▸ Vitali-Pinson: handles intermittent participation',
       '  but relative weights, different settlement',
       '',
       '→ This thesis: adaptive AND self-financed',
@@ -132,12 +132,12 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'The Skill Signal',
     bullets: [
-      '📈 Present: EWMA blends past loss with current round',
-      '📉 Absent: staleness decay reverts skill toward prior',
+      '▸ Present: EWMA blends past loss with current round',
+      '▸ Absent: staleness decay reverts skill toward prior',
       '',
-      '🔵 Absolute — independent of other participants',
-      '⏱ Pre-round — uses only past information',
-      '🔄 Handles intermittent participation',
+      '● Absolute — independent of other participants',
+      '● Pre-round — uses only past information',
+      '● Handles intermittent participation',
     ],
     rightComponent: SkillSignalSlide,
     slideNumber: 7,
@@ -147,11 +147,11 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Architecture',
     bullets: [
-      '🔑 Effective wager mᵢ = bᵢ · g(σᵢ) is the key object',
-      '⚖ Same mᵢ controls weight AND financial exposure',
+      '▸ Effective wager: deposit scaled by learned skill',
+      '▸ Same object controls weight AND financial exposure',
       '',
-      '👁 Outcome yₜ observed between aggregation and settlement',
-      '🔄 Updated W′ᵢ, σ′ᵢ feed back to next round',
+      '▸ Outcome observed between aggregation and settlement',
+      '▸ Updated wealth and skill feed back to next round',
       '',
       '→ You cannot have influence without risk',
     ],
@@ -178,9 +178,9 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Real Data Validation',
     bullets: [
-      '🌬 Elia wind: 17,544 hourly observations, 7 forecasters',
-      '✅ Mechanism: −34% CRPS vs equal weights (γ=16, ρ=0.5)',
-      '⚡ Electricity: −4% (forecasters more similar in quality)',
+      '▸ Elia wind: 17,544 hourly observations, 7 forecasters',
+      '▸ Mechanism: −34% CRPS vs equal weights (tuned parameters)',
+      '▸ Electricity: −4% (forecasters more similar in quality)',
       '',
       '→ Gains conditional on forecaster heterogeneity',
     ],
@@ -192,10 +192,10 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Skill Recovery',
     bullets: [
-      '🧪 6 synthetic forecasters, T = 20,000 rounds, 20 seeds',
-      '🏆 Spearman rank correlation = 1.0000 (perfect)',
+      '▸ 6 synthetic forecasters, T = 20,000 rounds, 20 seeds',
+      '▸ Spearman rank correlation = 1.0000 (perfect)',
       '',
-      '🛡 Staleness decay prevents gaming by absence',
+      '▸ Staleness decay prevents gaming by absence',
     ],
     rightComponent: SkillRecoverySlide,
     slideNumber: 12,
@@ -205,8 +205,8 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Strategic Robustness',
     bullets: [
-      '🧪 18 behaviour presets tested across 9 families',
-      '🛡 Sybil, arbitrage, reputation gaming all contained',
+      '▸ 18 behaviour presets tested across 9 families',
+      '▸ Sybil, arbitrage, reputation gaming all contained',
       '',
       '→ Mechanism resists standard attacks; adaptive adversaries remain open',
     ],
@@ -368,9 +368,17 @@ function HighlightBar({ text }: { text: string }) {
 function bulletStyle(item: string): React.CSSProperties {
   if (item === '') return { height: '0.6rem' };
   if (item.startsWith('→')) return { color: C.teal, fontWeight: 700 };
-  // Warning icon bullets
-  if (item.startsWith('⚠')) return { color: C.coral, fontWeight: 600 };
+  // Warning triangles — coral
+  if (item.startsWith('▲')) return { color: C.coral, fontWeight: 600 };
+  // Filled circle — teal property badges
+  if (item.startsWith('●')) return { color: C.teal, fontWeight: 700 };
+  // Teal arrow bullets
+  if (item.startsWith('▸')) return { color: C.charcoal };
+  // Slate secondary bullets
+  if (item.startsWith('▹')) return { color: C.slate };
+  // Legacy warning styles
   if (item.startsWith('• Warning:')) return { color: C.coral, fontWeight: 600 };
+  if (item.startsWith('⚠')) return { color: C.coral, fontWeight: 600 };
   if (item.startsWith('  [!]')) return { color: C.coral, fontWeight: 600, paddingLeft: '1.5rem' };
   if (item.startsWith('[!]')) return { color: C.coral, fontWeight: 600 };
   if (item.startsWith('    ')) return { paddingLeft: '2.5rem', fontSize: '1.5rem', color: C.slate };
