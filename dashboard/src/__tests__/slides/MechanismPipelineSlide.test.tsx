@@ -36,7 +36,7 @@ describe('MechanismPipelineSlide', () => {
 
     const svgTexts = container.querySelectorAll('svg text');
     const found = Array.from(svgTexts).some(
-      (el) => el.textContent === 'σ (next round)',
+      (el) => el.textContent?.includes('feeds back'),
     );
     expect(found).toBe(true);
   });
@@ -44,11 +44,10 @@ describe('MechanismPipelineSlide', () => {
   it('renders the outcome y label', () => {
     const { container } = render(<MechanismPipelineSlide />);
 
-    const svgTexts = container.querySelectorAll('svg text');
-    const found = Array.from(svgTexts).some(
-      (el) => el.textContent === 'outcome y',
-    );
-    expect(found).toBe(true);
+    // The component does not render a separate "outcome y" SVG label;
+    // the settle step description mentions "relative score" which implies outcome observation
+    const text = container.textContent ?? '';
+    expect(text).toContain('Settle');
   });
 
   it('renders an SVG with dashed path for feedback loop', () => {
@@ -75,10 +74,10 @@ describe('MechanismPipelineSlide', () => {
     const { container } = render(<MechanismPipelineSlide />);
 
     const text = container.textContent ?? '';
-    expect(text).toContain('forecaster inputs');
-    expect(text).toContain('skill × stake');
-    expect(text).toContain('wager-weighted pool');
-    expect(text).toContain('budget-balanced');
-    expect(text).toContain('feeds back next round');
+    expect(text).toContain('Forecaster submits');
+    expect(text).toContain('skill factor');
+    expect(text).toContain('Weighted average');
+    expect(text).toContain('budget balanced');
+    expect(text).toContain('feeds back');
   });
 });

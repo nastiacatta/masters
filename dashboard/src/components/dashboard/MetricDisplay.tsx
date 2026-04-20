@@ -13,7 +13,7 @@ export type MetricVariant = 'default' | 'verdict-good' | 'verdict-neutral' | 've
 export interface MetricDisplayProps {
   /** KPI label displayed above the value. */
   label: string;
-  /** Formatted value string (e.g. "−21%", "0.83"). */
+  /** Formatted value string (e.g. "−34%", "0.83"). */
   value: string;
   /** Visual variant; defaults to "default". */
   variant?: MetricVariant;

@@ -1,32 +1,55 @@
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 8: Architecture — Three-layer SVG diagram:
- * Environment (DGPs) → Agents (policies) → Platform (core mechanism)
+ * Slide 8: Architecture — Five-step mechanism pipeline (left-to-right).
  *
- * Layout (viewBox 900x600, proper vertical gaps):
- * - Environment layer: y=10, height=130, sub-boxes bottom = 116
- * - Gap: arrows from y=155 (116+15+marker) to y=195 (200-5)
- * - Agents layer: y=200, height=130, sub-boxes bottom = 306
- * - Gap: arrows from y=345 (306+15+marker) to y=385 (400-15)
- * - Platform layer: y=400, height=140
- * - All arrows have 15px gap from box edges
- * - refX=12 for arrowhead markers
+ * Shows one round of the mechanism:
+ * Submit → Eff. Wager → Aggregate → Settle → Skill Update
+ *
+ * Layout: viewBox 0 0 900 600, max-width 860px
+ * Pipeline boxes centred around y=180, x positions [40, 200, 360, 520, 680]
+ *
+ * Annotations:
+ * - Feedback loop (dashed coral) curves below pipeline from Skill Update → Submit
+ * - "yₜ observed" marker between Aggregate and Settle
+ * - Budget balance "Σ Πᵢ = Σ mᵢ" near Settle
+ * - "Round t" header above pipeline
+ * - Refund annotation on Eff. Wager
+ * - Dual connection from Eff. Wager to Aggregate and Settle
  */
+
+interface PipelineStep {
+  id: string;
+  label: string;
+  formula: string;
+  color: string;
+  x: number;
+}
+
+const BOX_WIDTH = 140;
+const BOX_HEIGHT = 100;
+const BOX_RX = 12;
+const BOX_CENTER_Y = 180;
+const BOX_TOP = BOX_CENTER_Y - BOX_HEIGHT / 2;
+
+const PIPELINE_STEPS: PipelineStep[] = [
+  { id: 'submit', label: 'Submit', formula: 'rᵢ, bᵢ', color: PALETTE.imperial, x: 40 },
+  { id: 'wager', label: 'Eff. Wager', formula: 'mᵢ = bᵢ·g(σᵢ)', color: PALETTE.teal, x: 200 },
+  { id: 'aggregate', label: 'Aggregate', formula: 'r̂ = Σ wᵢrᵢ', color: PALETTE.teal, x: 360 },
+  { id: 'settle', label: 'Settle', formula: 'Πᵢ = mᵢ(1+sᵢ−s̄)', color: PALETTE.teal, x: 520 },
+  { id: 'update', label: 'Skill Update', formula: 'EWMA(loss)', color: PALETTE.purple, x: 680 },
+];
+
 export default function ArchitectureDiagramSlide() {
-  const envY = 10;
-  const envH = 130;
-  const agentY = 200;
-  const agentH = 130;
-  const platY = 400;
-  const platH = 140;
+  // Feedback loop path coordinates
+  const feedbackStartX = PIPELINE_STEPS[4].x + BOX_WIDTH; // right side of Skill Update
+  const feedbackEndX = PIPELINE_STEPS[0].x;                // left side of Submit
+  const feedbackY = BOX_CENTER_Y;
+  const feedbackBottomY = 420;
 
-  const subBoxH = 56;
-  const envSubY = 60;
-  const agentSubY = 250;
-  const platSubY = 450;
-
-  const GAP = 15;
+  // Dual connection from Eff. Wager
+  const wagerBox = PIPELINE_STEPS[1];
+  const settleBox = PIPELINE_STEPS[3];
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -36,76 +59,198 @@ export default function ArchitectureDiagramSlide() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="arch-down" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto-start-reverse">
-            <polygon points="0 0, 12 4, 0 8" fill={PALETTE.slate} />
+          <marker id="pipe-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.slate} />
           </marker>
-          <marker id="arch-down-v" markerWidth="12" markerHeight="8" refX="6" refY="8" orient="0">
-            <polygon points="0 0, 12 0, 6 8" fill={PALETTE.slate} />
+          <marker id="feedback-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.coral} />
+          </marker>
+          <marker id="dual-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill={PALETTE.teal} />
           </marker>
         </defs>
 
-        {/* Environment layer */}
-        <rect x={30} y={envY} width={840} height={envH} rx={12} fill={PALETTE.lightBg} stroke={PALETTE.border} strokeWidth={1.5} />
-        <text x={450} y={envY + 30} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fontWeight={700} fill={PALETTE.navy}>
-          Environment (DGPs)
+        {/* ─── "Round t" header label ─── */}
+        <text
+          x={450}
+          y={70}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="22"
+          fontWeight={700}
+          fill={PALETTE.navy}
+        >
+          Round t
         </text>
-        {['Synthetic', 'Elia Wind', 'Elia Electricity'].map((dgp, i) => (
-          <g key={dgp}>
-            <rect x={100 + i * 250} y={envSubY} width={190} height={subBoxH} rx={12} fill={PALETTE.white} stroke={PALETTE.border} strokeWidth={1.5} />
-            <text x={195 + i * 250} y={envSubY + 33} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="15" fontWeight={600} fill={PALETTE.navy}>
-              {dgp}
+
+        {/* ─── Pipeline step boxes ─── */}
+        {PIPELINE_STEPS.map((step) => (
+          <g key={step.id}>
+            {/* Box */}
+            <rect
+              x={step.x}
+              y={BOX_TOP}
+              width={BOX_WIDTH}
+              height={BOX_HEIGHT}
+              rx={BOX_RX}
+              fill={step.color + '12'}
+              stroke={step.color}
+              strokeWidth={2}
+            />
+            {/* Label */}
+            <text
+              x={step.x + BOX_WIDTH / 2}
+              y={BOX_CENTER_Y - 10}
+              textAnchor="middle"
+              fontFamily={TYPOGRAPHY.fontFamily}
+              fontSize="16"
+              fontWeight={700}
+              fill={step.color}
+            >
+              {step.label}
+            </text>
+            {/* Formula */}
+            <text
+              x={step.x + BOX_WIDTH / 2}
+              y={BOX_CENTER_Y + 18}
+              textAnchor="middle"
+              fontFamily={TYPOGRAPHY.fontFamily}
+              fontSize="13"
+              fontWeight={500}
+              fill={PALETTE.charcoal}
+            >
+              {step.formula}
             </text>
           </g>
         ))}
 
-        {/* Arrow: Environment → Agents (15px below env bottom, 15px above agent top) */}
-        <line x1={450} y1={envY + envH + GAP} x2={450} y2={agentY - GAP} stroke={PALETTE.slate} strokeWidth={3} markerEnd="url(#arch-down-v)" />
-
-        {/* Agents layer */}
-        <rect x={30} y={agentY} width={840} height={agentH} rx={12} fill="rgba(27, 42, 74, 0.03)" stroke={PALETTE.border} strokeWidth={1.5} />
-        <text x={450} y={agentY + 30} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fontWeight={700} fill={PALETTE.navy}>
-          Agents (policies)
-        </text>
-        {['Honest', 'Noisy', 'Adversarial'].map((agent, i) => (
-          <g key={agent}>
-            <rect x={100 + i * 250} y={agentSubY} width={190} height={subBoxH} rx={12} fill={PALETTE.white} stroke={i === 2 ? PALETTE.coral : PALETTE.navy} strokeWidth={i === 2 ? 2.5 : 1.5} />
-            <text x={195 + i * 250} y={agentSubY + 33} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="15" fontWeight={600} fill={i === 2 ? PALETTE.coral : PALETTE.navy}>
-              {agent}
-            </text>
-          </g>
-        ))}
-
-        {/* Arrows: Agents → Platform (from sub-box bottom + GAP to platform top - GAP) */}
-        {[195, 450, 700].map((xPos, i) => {
-          const labels = ['participate', 'report', 'deposit'];
-          const arrowY1 = agentSubY + subBoxH + GAP;
-          const arrowY2 = platY - GAP;
-          const midY = (arrowY1 + arrowY2) / 2;
+        {/* ─── Forward arrows between steps ─── */}
+        {PIPELINE_STEPS.slice(0, -1).map((step, i) => {
+          const x1 = step.x + BOX_WIDTH;
+          const x2 = PIPELINE_STEPS[i + 1].x;
           return (
-            <g key={i}>
-              <line x1={xPos} y1={arrowY1} x2={xPos} y2={arrowY2} stroke={PALETTE.slate} strokeWidth={2.5} markerEnd="url(#arch-down-v)" />
-              {/* Label offset to the right with small background for readability */}
-              <rect x={xPos + 8} y={midY - 10} width={75} height={16} rx={3} fill={PALETTE.offWhite} opacity={0.9} />
-              <text x={xPos + 12} y={midY + 2} fontFamily={TYPOGRAPHY.fontFamily} fontSize="11" fontWeight={600} fill={PALETTE.slate}>
-                {labels[i]}
-              </text>
-            </g>
+            <line
+              key={`arrow-${step.id}`}
+              x1={x1 + 4}
+              y1={BOX_CENTER_Y}
+              x2={x2 - 4}
+              y2={BOX_CENTER_Y}
+              stroke={PALETTE.slate}
+              strokeWidth={2}
+              markerEnd="url(#pipe-arrow)"
+            />
           );
         })}
 
-        {/* Platform layer */}
-        <rect x={30} y={platY} width={840} height={platH} rx={12} fill="rgba(46, 139, 139, 0.04)" stroke={PALETTE.border} strokeWidth={1.5} />
-        <text x={450} y={platY + 30} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fontWeight={700} fill={PALETTE.teal}>
-          Platform (core mechanism)
+        {/* ─── Feedback loop: dashed curved path from Skill Update → Submit ─── */}
+        <path
+          d={`M ${feedbackStartX} ${feedbackY}
+              C ${feedbackStartX + 60} ${feedbackBottomY},
+                ${feedbackEndX - 60} ${feedbackBottomY},
+                ${feedbackEndX} ${feedbackY}`}
+          fill="none"
+          stroke={PALETTE.coral}
+          strokeWidth={2}
+          strokeDasharray="8 4"
+          markerEnd="url(#feedback-arrow)"
+        />
+        {/* Feedback loop label */}
+        <text
+          x={450}
+          y={feedbackBottomY + 30}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="13"
+          fontWeight={600}
+          fill={PALETTE.coral}
+        >
+          {"W\u2032\u1D62, \u03C3\u2032\u1D62 \u2192 next round"}
         </text>
-        {['Scoring', 'Aggregation', 'Settlement', 'Skill Update'].map((mod, i) => (
-          <g key={mod}>
-            <rect x={60 + i * 205} y={platSubY} width={180} height={subBoxH} rx={12} fill={PALETTE.white} stroke={PALETTE.teal} strokeWidth={1.5} />
-            <text x={150 + i * 205} y={platSubY + 33} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="15" fontWeight={600} fill={PALETTE.teal}>
-              {mod}
-            </text>
-          </g>
-        ))}
+
+        {/* ─── "yₜ observed" marker between Aggregate and Settle ─── */}
+        <g>
+          {/* Diamond marker */}
+          <polygon
+            points={`${460 + 20},${BOX_TOP - 30} ${460 + 28},${BOX_TOP - 22} ${460 + 20},${BOX_TOP - 14} ${460 + 12},${BOX_TOP - 22}`}
+            fill={PALETTE.coral + '30'}
+            stroke={PALETTE.coral}
+            strokeWidth={1.5}
+          />
+          {/* Label */}
+          <text
+            x={460 + 20}
+            y={BOX_TOP - 42}
+            textAnchor="middle"
+            fontFamily={TYPOGRAPHY.fontFamily}
+            fontSize="12"
+            fontWeight={600}
+            fill={PALETTE.coral}
+          >
+            yₜ observed
+          </text>
+          {/* Dashed line down to pipeline */}
+          <line
+            x1={460 + 20}
+            y1={BOX_TOP - 14}
+            x2={460 + 20}
+            y2={BOX_TOP}
+            stroke={PALETTE.coral}
+            strokeWidth={1}
+            strokeDasharray="3 2"
+          />
+        </g>
+
+        {/* ─── Budget balance annotation near Settle ─── */}
+        <text
+          x={settleBox.x + BOX_WIDTH / 2}
+          y={BOX_TOP + BOX_HEIGHT + 28}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="12"
+          fontWeight={600}
+          fill={PALETTE.teal}
+        >
+          Σ Πᵢ = Σ mᵢ
+        </text>
+
+        {/* ─── Refund annotation on Eff. Wager ─── */}
+        <text
+          x={wagerBox.x + BOX_WIDTH / 2}
+          y={BOX_TOP + BOX_HEIGHT + 28}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="11"
+          fontWeight={500}
+          fill={PALETTE.slate}
+        >
+          (bᵢ − mᵢ) refunded
+        </text>
+
+        {/* ─── Dual connection from Eff. Wager to Settle (exposure) ─── */}
+        {/* Curved path from bottom of Eff. Wager to bottom of Settle */}
+        <path
+          d={`M ${wagerBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT}
+              C ${wagerBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT + 60},
+                ${settleBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT + 60},
+                ${settleBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT}`}
+          fill="none"
+          stroke={PALETTE.teal}
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
+          markerEnd="url(#dual-arrow)"
+        />
+        {/* Dual connection labels */}
+        <text
+          x={(wagerBox.x + BOX_WIDTH / 2 + settleBox.x + BOX_WIDTH / 2) / 2}
+          y={BOX_TOP + BOX_HEIGHT + 68}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="10"
+          fontWeight={500}
+          fill={PALETTE.teal}
+        >
+          mᵢ → exposure
+        </text>
       </svg>
     </div>
   );

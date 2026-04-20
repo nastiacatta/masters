@@ -192,7 +192,7 @@ function seFinite(values: Array<number | undefined | null>): number | null {
 }
 
 const EXPERIMENT_CARDS = [
-  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 5 models', key: '21% CRPS improvement' },
+  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 7 models', key: '34% CRPS improvement (tuned)' },
   { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-min prices, volatile spikes', key: 'Generalisation test' },
   { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill gate', key: 'Ranking correct, modest separation' },
   { title: 'Method Race', tab: 'Accuracy', color: '#6366f1', desc: '6 agents, 200 rounds, 4 methods', key: 'Skill × stake wins after ~50 rounds' },
@@ -283,7 +283,7 @@ function DepositSensitivityPanel() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800">How deposit policy affects accuracy (Elia Wind)</h3>
         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-          Fixed deposits give the mechanism the most room to work (~21% CRPS improvement over equal weighting).
+          Fixed deposits give the mechanism the most room to work (~34% CRPS improvement over equal weighting with tuned parameters).
           Exponential deposits reduce the advantage to ~15%, and bankroll-fraction deposits to ~5%.
           The deposit policy determines how much of the skill signal reaches the aggregate weights.
         </p>
@@ -1388,7 +1388,7 @@ export default function ResultsPage() {
                   <h3 className="text-sm font-semibold text-teal-900">Elia Imbalance Prices: {realDataElec.config.T.toLocaleString()} points</h3>
                 </div>
                 <p className="text-xs text-teal-700 leading-relaxed">
-                  Same 5 models on Belgian electricity imbalance prices (15-min, 2024). Prices are volatile with spikes, making this a harder forecasting task.
+                  Same 7 models on Belgian electricity imbalance prices (15-min, 2024). Prices are volatile with spikes, making this a harder forecasting task.
                 </p>
               </div>
               <DeltaBarChart

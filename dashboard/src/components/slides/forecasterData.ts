@@ -11,40 +11,56 @@ export const FORECASTERS: ForecasterData[] = [
     name: 'Naive (last value)',
     type: 'Baseline',
     description:
-      'Uses the most recent observed value as the forecast. Zero computational cost.',
-    strengths: 'Performs well when the series is a random walk.',
+      'Uses the most recent observed value as the forecast.',
+    strengths: 'Performs well when the series is a random walk or highly autocorrelated.',
     weaknesses: 'Cannot capture trends, seasonality, or any temporal structure.',
   },
   {
-    name: 'Moving Average (20)',
+    name: 'EWMA (5)',
     type: 'Statistical',
     description:
-      'Averages the last 20 observations. Smooths short-term noise.',
-    strengths: 'Window size of 20 balances responsiveness with stability.',
-    weaknesses: 'Lags behind sudden level shifts and ignores trend.',
+      'Exponentially weighted moving average with span=5.',
+    strengths: 'Responsive to recent changes while smoothing noise.',
+    weaknesses: 'Lags behind sudden level shifts.',
   },
   {
-    name: 'ARIMA(2,1,1)',
+    name: 'ARIMA(2, 1, 1)',
     type: 'Statistical',
     description:
-      'Autoregressive integrated moving average with parameters p=2, d=1, q=1. Captures linear temporal dependencies after differencing.',
-    strengths: 'Classical statistical time-series model with well-understood theory.',
+      'Autoregressive integrated moving average. Captures linear temporal dependencies.',
+    strengths: 'Classical model with well-understood theory.',
     weaknesses: 'Assumes linearity; cannot model complex non-linear dynamics.',
   },
   {
     name: 'XGBoost',
     type: 'Machine Learning',
     description:
-      'Gradient-boosted decision tree ensemble. Captures non-linear patterns and feature interactions.',
-    strengths: 'Trained on lagged features of the target series.',
-    weaknesses: 'Requires careful feature engineering; prone to overfitting on small datasets.',
+      'Gradient-boosted decision tree ensemble with lag features.',
+    strengths: 'Captures non-linear patterns and feature interactions.',
+    weaknesses: 'Prone to overfitting on small datasets.',
   },
   {
     name: 'Neural Net (MLP)',
     type: 'Machine Learning',
     description:
-      'Multi-layer perceptron with one or more hidden layers. Learns non-linear mappings from lagged inputs to forecasts.',
+      'Multi-layer perceptron with lag inputs.',
     strengths: 'Most flexible model in the panel.',
-    weaknesses: 'Data-hungry; requires more training data to generalise well.',
+    weaknesses: 'Data-hungry; requires more training data to generalise.',
+  },
+  {
+    name: 'Theta',
+    type: 'Statistical',
+    description:
+      'Theta method (Assimakopoulos & Nikolopoulos 2000). Decomposes into trend components.',
+    strengths: 'Strong performance on M3 competition data.',
+    weaknesses: 'Limited theoretical justification; struggles with complex seasonality.',
+  },
+  {
+    name: 'Ensemble (Naive+EWMA)',
+    type: 'Ensemble',
+    description:
+      'Simple average of Naive and EWMA(5) forecasts.',
+    strengths: 'Diversification benefit from combining two fast-adapting models.',
+    weaknesses: 'Limited diversity; both components are reactive baselines.',
   },
 ];
