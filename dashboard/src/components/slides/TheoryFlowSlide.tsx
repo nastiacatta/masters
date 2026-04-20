@@ -42,7 +42,7 @@ export default function TheoryFlowSlide() {
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
         viewBox="0 0 980 520"
-        style={{ width: '100%', maxWidth: 980, height: 'auto' }}
+        style={{ width: '100%', height: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
