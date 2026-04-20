@@ -62,7 +62,7 @@ export default function ContributionsChartSlide() {
           <img
             src={`${BASE}presentation-plots/master_comparison.png`}
             alt="CRPS comparison across methods on real data"
-            style={{ maxWidth: '100%', maxHeight: '65%', objectFit: 'contain', borderRadius: 10 }}
+            style={{ maxWidth: '100%', maxHeight: '85%', objectFit: 'contain', borderRadius: 10 }}
           />
         </div>
 
