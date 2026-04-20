@@ -1,5 +1,3 @@
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
-
 const BASE = import.meta.env.BASE_URL;
 
 /**
