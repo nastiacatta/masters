@@ -6,16 +6,16 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
  * Shows one round of the mechanism:
  * Submit → Eff. Wager → Aggregate → Settle → Skill Update
  *
- * Layout: viewBox 0 0 900 600, max-width 860px
- * Pipeline boxes centred around y=180, x positions [40, 200, 360, 520, 680]
+ * Layout: viewBox 0 0 900 550, pipeline centred around y=160
  *
- * Annotations:
- * - Feedback loop (dashed coral) curves below pipeline from Skill Update → Submit
- * - "yₜ observed" marker between Aggregate and Settle
- * - Budget balance "Σ Πᵢ = Σ mᵢ" near Settle
- * - "Round t" header above pipeline
- * - Refund annotation on Eff. Wager
- * - Dual connection from Eff. Wager to Aggregate and Settle
+ * Fixes applied:
+ * - Removed dual connection curve (cluttering; forward arrows show flow)
+ * - Removed "mᵢ → exposure" label
+ * - Moved refund annotation ABOVE the Eff. Wager box
+ * - Feedback loop goes lower (y_bottom=480) for clearance
+ * - "yₜ observed" diamond and text larger (fontSize 14)
+ * - viewBox expanded to 900×550, BOX_CENTER_Y=160
+ * - No maxWidth constraint — SVG fills available space
  */
 
 interface PipelineStep {
@@ -29,7 +29,7 @@ interface PipelineStep {
 const BOX_WIDTH = 140;
 const BOX_HEIGHT = 100;
 const BOX_RX = 12;
-const BOX_CENTER_Y = 180;
+const BOX_CENTER_Y = 160;
 const BOX_TOP = BOX_CENTER_Y - BOX_HEIGHT / 2;
 
 const PIPELINE_STEPS: PipelineStep[] = [
@@ -41,21 +41,20 @@ const PIPELINE_STEPS: PipelineStep[] = [
 ];
 
 export default function ArchitectureDiagramSlide() {
-  // Feedback loop path coordinates
-  const feedbackStartX = PIPELINE_STEPS[4].x + BOX_WIDTH; // right side of Skill Update
-  const feedbackEndX = PIPELINE_STEPS[0].x;                // left side of Submit
-  const feedbackY = BOX_CENTER_Y;
-  const feedbackBottomY = 420;
-
-  // Dual connection from Eff. Wager
   const wagerBox = PIPELINE_STEPS[1];
   const settleBox = PIPELINE_STEPS[3];
+
+  // Feedback loop path coordinates
+  const feedbackStartX = PIPELINE_STEPS[4].x + BOX_WIDTH;
+  const feedbackEndX = PIPELINE_STEPS[0].x;
+  const feedbackY = BOX_CENTER_Y;
+  const feedbackBottomY = 480;
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg
-        viewBox="0 0 900 600"
-        style={{ width: '100%', maxWidth: 860, height: 'auto' }}
+        viewBox="0 0 900 550"
+        style={{ width: '100%', height: 'auto' }}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
@@ -65,15 +64,12 @@ export default function ArchitectureDiagramSlide() {
           <marker id="feedback-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.coral} />
           </marker>
-          <marker id="dual-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill={PALETTE.teal} />
-          </marker>
         </defs>
 
         {/* ─── "Round t" header label ─── */}
         <text
           x={450}
-          y={70}
+          y={50}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="22"
@@ -86,7 +82,6 @@ export default function ArchitectureDiagramSlide() {
         {/* ─── Pipeline step boxes ─── */}
         {PIPELINE_STEPS.map((step) => (
           <g key={step.id}>
-            {/* Box */}
             <rect
               x={step.x}
               y={BOX_TOP}
@@ -97,7 +92,6 @@ export default function ArchitectureDiagramSlide() {
               stroke={step.color}
               strokeWidth={2}
             />
-            {/* Label */}
             <text
               x={step.x + BOX_WIDTH / 2}
               y={BOX_CENTER_Y - 10}
@@ -109,7 +103,6 @@ export default function ArchitectureDiagramSlide() {
             >
               {step.label}
             </text>
-            {/* Formula */}
             <text
               x={step.x + BOX_WIDTH / 2}
               y={BOX_CENTER_Y + 18}
@@ -169,20 +162,20 @@ export default function ArchitectureDiagramSlide() {
 
         {/* ─── "yₜ observed" marker between Aggregate and Settle ─── */}
         <g>
-          {/* Diamond marker */}
+          {/* Diamond marker — slightly larger */}
           <polygon
-            points={`${460 + 20},${BOX_TOP - 30} ${460 + 28},${BOX_TOP - 22} ${460 + 20},${BOX_TOP - 14} ${460 + 12},${BOX_TOP - 22}`}
+            points={`${480},${BOX_TOP - 34} ${490},${BOX_TOP - 24} ${480},${BOX_TOP - 14} ${470},${BOX_TOP - 24}`}
             fill={PALETTE.coral + '30'}
             stroke={PALETTE.coral}
             strokeWidth={1.5}
           />
-          {/* Label */}
+          {/* Label — fontSize 14 */}
           <text
-            x={460 + 20}
-            y={BOX_TOP - 42}
+            x={480}
+            y={BOX_TOP - 46}
             textAnchor="middle"
             fontFamily={TYPOGRAPHY.fontFamily}
-            fontSize="12"
+            fontSize="14"
             fontWeight={600}
             fill={PALETTE.coral}
           >
@@ -190,9 +183,9 @@ export default function ArchitectureDiagramSlide() {
           </text>
           {/* Dashed line down to pipeline */}
           <line
-            x1={460 + 20}
+            x1={480}
             y1={BOX_TOP - 14}
-            x2={460 + 20}
+            x2={480}
             y2={BOX_TOP}
             stroke={PALETTE.coral}
             strokeWidth={1}
@@ -200,7 +193,7 @@ export default function ArchitectureDiagramSlide() {
           />
         </g>
 
-        {/* ─── Budget balance annotation near Settle ─── */}
+        {/* ─── Budget balance annotation below Settle ─── */}
         <text
           x={settleBox.x + BOX_WIDTH / 2}
           y={BOX_TOP + BOX_HEIGHT + 28}
@@ -213,10 +206,10 @@ export default function ArchitectureDiagramSlide() {
           Σ Πᵢ = Σ mᵢ
         </text>
 
-        {/* ─── Refund annotation on Eff. Wager ─── */}
+        {/* ─── Refund annotation ABOVE Eff. Wager box ─── */}
         <text
           x={wagerBox.x + BOX_WIDTH / 2}
-          y={BOX_TOP + BOX_HEIGHT + 28}
+          y={BOX_TOP - 18}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="11"
@@ -224,32 +217,6 @@ export default function ArchitectureDiagramSlide() {
           fill={PALETTE.slate}
         >
           (bᵢ − mᵢ) refunded
-        </text>
-
-        {/* ─── Dual connection from Eff. Wager to Settle (exposure) ─── */}
-        {/* Curved path from bottom of Eff. Wager to bottom of Settle */}
-        <path
-          d={`M ${wagerBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT}
-              C ${wagerBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT + 60},
-                ${settleBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT + 60},
-                ${settleBox.x + BOX_WIDTH / 2} ${BOX_TOP + BOX_HEIGHT}`}
-          fill="none"
-          stroke={PALETTE.teal}
-          strokeWidth={1.5}
-          strokeDasharray="4 3"
-          markerEnd="url(#dual-arrow)"
-        />
-        {/* Dual connection labels */}
-        <text
-          x={(wagerBox.x + BOX_WIDTH / 2 + settleBox.x + BOX_WIDTH / 2) / 2}
-          y={BOX_TOP + BOX_HEIGHT + 68}
-          textAnchor="middle"
-          fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="10"
-          fontWeight={500}
-          fill={PALETTE.teal}
-        >
-          mᵢ → exposure
         </text>
       </svg>
     </div>

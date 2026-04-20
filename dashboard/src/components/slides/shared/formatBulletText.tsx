@@ -18,10 +18,29 @@ export function formatBulletText(text: string): React.ReactNode {
   // Strip [!] markers — visual styling handled by bulletStyle in PresentationPage
   text = text.replace(/\[!\]\s*/g, '');
 
-  // Full-line emphasis for arrow and warning lines — don't apply inline spans
-  // so that the parent <li> bulletStyle colour (coral) is not overridden
+  // Full-line emphasis for arrow and warning lines — wrap numerics in coral
   if (text.trimStart().startsWith('Warning:') || text.startsWith('Warning:')) {
-    return text;
+    // Wrap any numeric patterns in explicit coral bold spans
+    const numericRe = /([−\-~]?\d+\.?\d*%)/g;
+    const warningParts: React.ReactNode[] = [];
+    let wLastIndex = 0;
+    let wMatch: RegExpExecArray | null;
+    while ((wMatch = numericRe.exec(text)) !== null) {
+      if (wMatch.index > wLastIndex) {
+        warningParts.push(text.slice(wLastIndex, wMatch.index));
+      }
+      warningParts.push(
+        <span key={`wn-${wMatch.index}`} style={{ color: '#E85D4A', fontWeight: 800 }}>
+          {wMatch[0]}
+        </span>,
+      );
+      wLastIndex = numericRe.lastIndex;
+    }
+    if (warningParts.length === 0) return text;
+    if (wLastIndex < text.length) {
+      warningParts.push(text.slice(wLastIndex));
+    }
+    return <>{warningParts}</>;
   }
 
   // Build a combined regex for inline matches
