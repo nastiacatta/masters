@@ -77,8 +77,8 @@ export const CARD_STYLE: React.CSSProperties = {
  */
 export const SECTIONS = {
   PROBLEM: { label: 'PROBLEM', colour: '#003E74', slides: [1, 2, 3, 4] },
-  SOLUTION: { label: 'SOLUTION', colour: '#2E8B8B', slides: [5, 6, 7, 8] },
-  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED', slides: [9, 10, 11] },
+  SOLUTION: { label: 'SOLUTION', colour: '#2E8B8B', slides: [5, 6, 7, 8, 9] },
+  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED', slides: [10, 11] },
   CLOSING: { label: '', colour: 'transparent', slides: [12] },
 } as const;
 
