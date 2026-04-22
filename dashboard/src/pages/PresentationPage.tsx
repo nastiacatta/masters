@@ -11,6 +11,11 @@ import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
 import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
 import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
+import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide';
+import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
+import ConclusionSlide from '@/components/slides/ConclusionSlide';
+import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
+import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 
 /**
  * Full-screen presentation mode for thesis defence.
@@ -19,7 +24,7 @@ import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-const TOTAL_SLIDES = 11;
+const TOTAL_SLIDES = 14;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -46,32 +51,35 @@ export interface SlideData {
 }
 
 const SLIDES: SlideData[] = [
+  /* 1 — Title */
   {
     id: 'title',
     type: 'title',
-    title: 'Adaptive Skill and Stake\nin Forecast Markets',
+    title: 'Adaptive Skill and Stake\nin Prediction Markets',
     subtitle: 'Coupling Self-Financed Wagering with Online Skill Learning',
     dark: true,
     slideNumber: 1,
   },
+  /* 2 — What Is a Prediction Market? */
   {
-    id: 'why-matters',
+    id: 'what-is-pm',
     type: 'split',
-    title: 'Why This Problem Matters',
+    title: 'What Is a Prediction Market?',
     bullets: [
-      '▸ Decisions depend on good forecasts',
-      '▸ Information is dispersed across actors',
-      '▸ Raw data are often costly to share',
+      '▸ Participants stake money on their forecasts',
+      '▸ Wagers reveal private information',
+      '▸ The market aggregates forecasts into a single prediction',
       '',
-      '→ Forecasts can be shared more easily than data',
+      '→ Prediction markets turn dispersed knowledge into actionable forecasts',
     ],
     rightComponent: TheoryFlowSlide,
     slideNumber: 2,
   },
+  /* 3 — Why Combine Forecasts? */
   {
-    id: 'not-enough',
+    id: 'why-combine',
     type: 'split',
-    title: 'Why Simple Aggregation Is Not Enough',
+    title: 'Why Combine Forecasts?',
     bullets: [
       '▸ Combining forecasts often improves robustness',
       '▸ Different forecasters make different errors',
@@ -80,64 +88,55 @@ const SLIDES: SlideData[] = [
       '▸ Forecasters are not equally skilled',
       '▸ Skill changes over time',
       '',
-      '→ A market should learn who is reliable',
+      '→ A prediction market should learn who has value',
     ],
     rightComponent: MarketFlowSlide,
     slideNumber: 3,
   },
-  {
-    id: 'thesis-question',
-    type: 'section',
-    title: 'Thesis Question',
-    subtitle:
-      'Can the market learn reliability?\nCan it use reliability to improve the aggregate forecast?\nCan it preserve the core market discipline?',
-    dark: true,
-    slideNumber: 4,
-  },
+  /* 4 — Where This Work Fits */
   {
     id: 'literature',
     type: 'split',
-    title: 'Where This Work Sits',
+    title: 'Where This Work Fits',
     bullets: [
-      '▸ Lambert: self-financed wagering — seven properties, uniqueness',
-      '▸ Raja: forecasting market with client and payoff allocation',
-      '▸ Vitali: online learning, intermittent participation, relative weights',
+      '▸ Lambert et al.: self-financed wagering — seven properties, uniqueness',
+      '▸ Raja et al.: prediction market with client and payoff allocation',
+      '▸ Vitali & Pinson: online learning, intermittent participation, relative weights',
       '',
       '→ Gap: adaptive + self-financed + absolute skill',
     ],
-    ref: '[1] Lambert et al., 2008  [2] Raja et al., 2024  [3] Vitali & Pinson, 2025',
+    ref: 'Lambert et al., 2008 · Raja et al., 2024 · Vitali & Pinson, 2025',
     rightComponent: PositioningMatrixSlide,
-    slideNumber: 5,
+    slideNumber: 4,
   },
+  /* 5 — My Contribution */
   {
     id: 'contribution',
     type: 'section',
     title: 'My Contribution',
     subtitle:
-      'Self-financed forecasting market\nwith online skill-learning layer\n\nInfluence depends on deposit and learned reliability\nSkill is absolute and pre-round',
+      'Self-financed prediction market\nwith online skill-learning layer\n\nInfluence depends on deposit and learned importance\nSkill is absolute and pre-round',
     dark: true,
     component: ContributionSlide,
-    slideNumber: 6,
+    slideNumber: 5,
   },
+  /* 6 — Mechanism: Round-by-Round */
   {
     id: 'mechanism',
-    type: 'split',
-    title: 'System and Mechanism',
+    type: 'content',
+    title: 'Mechanism: Round-by-Round',
     bullets: [
-      '▸ Environment: synthetic DGPs + real Elia wind and electricity',
-      '▸ Agents: 7 forecasters — Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble',
-      '▸ Behaviour: honest, noisy, strategic, adversarial presets',
-      '',
       '▸ Core pipeline: submit → skill gate → aggregate → settle → update',
       '▸ Same effective wager controls weight and exposure',
     ],
     component: MechanismPipelineSlide,
-    slideNumber: 7,
+    slideNumber: 6,
   },
+  /* 7 — The Skill Signal */
   {
     id: 'skill-layer',
     type: 'split',
-    title: 'Why the Skill Layer Matters',
+    title: 'The Skill Signal',
     bullets: [
       '▸ EWMA of realised forecasting loss',
       '▸ Recent performance weighted more heavily',
@@ -147,12 +146,54 @@ const SLIDES: SlideData[] = [
       '● Absolute, not relative',
     ],
     rightComponent: SkillSignalSlide,
+    slideNumber: 7,
+  },
+  /* 8 — Models, Data, and Synthetic Setup (NEW) */
+  {
+    id: 'models-data',
+    type: 'content',
+    title: 'Models, Data, and Synthetic Setup',
+    component: ModelsDataOverviewSlide,
     slideNumber: 8,
   },
+  /* 9 — Synthetic Validation: Convergence (NEW) */
   {
-    id: 'main-result',
+    id: 'synthetic-results',
     type: 'content',
-    title: 'Main Empirical Result',
+    title: 'Synthetic Validation: Convergence',
+    component: SyntheticResultsSlide,
+    slideNumber: 9,
+  },
+  /* 10 — Mechanism Guarantees */
+  {
+    id: 'guarantees',
+    type: 'split',
+    title: 'Mechanism Guarantees',
+    bullets: [
+      '▸ Budget balance: gap < 10⁻¹³',
+      '▸ Sybil ratio = 1.000000 for identical reports',
+      '▸ Skill recovery: Spearman ρ = 1.0000',
+      '▸ Noise-skill correlation: r = −0.98',
+      '',
+      '→ Mechanism satisfies formal guarantees to machine precision',
+    ],
+    rightComponent: SkillRecoverySlide,
+    component: CorrectnessSlide,
+    slideNumber: 10,
+  },
+  /* 11 — Deposit Design */
+  {
+    id: 'deposit-design',
+    type: 'content',
+    title: 'Deposit Design',
+    component: DepositAblationSlide,
+    slideNumber: 11,
+  },
+  /* 12 — Real Data: Elia Wind + Electricity */
+  {
+    id: 'real-data',
+    type: 'content',
+    title: 'Real Data: Elia Wind + Electricity',
     bullets: [
       '▸ Elia wind: 34% CRPS improvement over equal weights',
       '▸ Naive ranks highest — wind is autocorrelated',
@@ -162,31 +203,24 @@ const SLIDES: SlideData[] = [
       '→ Conditional improvement — gains depend on heterogeneity',
     ],
     component: ContributionsChartSlide,
-    slideNumber: 9,
+    slideNumber: 12,
   },
+  /* 13 — Strategic Robustness */
   {
-    id: 'credibility',
-    type: 'split',
-    title: 'Why the Mechanism Is Credible',
-    bullets: [
-      '▸ Budget balance: gap < 10⁻¹³',
-      '▸ Sybil ratio = 1.000000 for identical reports',
-      '▸ Skill recovery: Spearman ρ = 1.0000',
-      '▸ Noise-skill correlation: r = −0.98',
-      '',
-      '→ Mechanism is correct and behaves as intended',
-    ],
-    rightComponent: SkillRecoverySlide,
-    component: CorrectnessSlide,
-    slideNumber: 10,
+    id: 'strategic-robustness',
+    type: 'content',
+    title: 'Strategic Robustness',
+    component: StrategicRobustnessSlide,
+    slideNumber: 13,
   },
+  /* 14 — Conclusion + Future Work (NEW) */
   {
     id: 'conclusion',
     type: 'closing',
-    title: 'Conclusion',
-    subtitle: 'Conditional improvement, not universal dominance\nBest single can still win\nTail calibration: under-dispersion ~5 pp\nTruthfulness holds under risk neutrality\nRicher adversaries remain open\n\nAnastasia Cattaneo · Imperial College London · 2026',
+    title: 'Conclusion + Future Work',
     dark: true,
-    slideNumber: 11,
+    component: ConclusionSlide,
+    slideNumber: 14,
   },
 ];
 
@@ -601,6 +635,10 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
 
 /** Closing slide */
 function ClosingSlideView({ slide }: { slide: SlideData }) {
+  if (slide.component) {
+    const Comp = slide.component;
+    return <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+  }
   return (
     <div
       style={{

@@ -10,7 +10,7 @@ const BASE = import.meta.env.BASE_URL;
  */
 export default function ContributionsChartSlide() {
   return (
-    <SlideShell title="Main Empirical Result" slideNumber={9}>
+    <SlideShell title="Main Empirical Result" slideNumber={12}>
       {/* Graph — full space */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
