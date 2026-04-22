@@ -19,7 +19,10 @@ import sys
 from pathlib import Path
 
 
-SPECIAL_CHARS_RE = re.compile(r"([%&#_{}])")
+# Do NOT escape braces globally: it breaks LaTeX math like \{...\} and also
+# interferes with injected commands (\textbf{...}). We assume literal braces
+# are rare in the source text; if needed, users can write \{ \} explicitly.
+SPECIAL_CHARS_RE = re.compile(r"([%&#_])")
 
 
 def escape_outside_math(s: str) -> str:
@@ -166,7 +169,6 @@ def table_to_latex(rows: list[list[str]]) -> str:
             c.replace(r"\texttt\{", r"\texttt{")
             .replace(r"\textbf\{", r"\textbf{")
             .replace(r"\emph\{", r"\emph{")
-            .replace(r"\}", r"}")
         )
         return c
 
@@ -229,7 +231,6 @@ def md_to_tex(md: str, *, title: str) -> str:
             s.replace(r"\texttt\{", r"\texttt{")
             .replace(r"\textbf\{", r"\textbf{")
             .replace(r"\emph\{", r"\emph{")
-            .replace(r"\}", r"}")
         )
 
     def close_lists():

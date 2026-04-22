@@ -37,7 +37,7 @@ being claimed on each slide, \emph{why} it is true, and \emph{where} in the repo
 the claim is implemented or validated.
 
 Conventions used throughout:
-- $i \in \{1, \dots, n}$ indexes forecasters, $t \in \{1, \dots, T}$ indexes rounds.
+- $i \in \{1, \dots, n\}$ indexes forecasters, $t \in \{1, \dots, T\}$ indexes rounds.
 - $y_t \in [0,1]$ is the normalised outcome at round $t$.
 - $q_i^{(k)}(t)$ is forecaster $i$'s quantile at level $\tau_k$.
 - $b_i(t)$ is the deposit at round $t$ and $m_i(t)$ is the effective wager.
@@ -143,12 +143,12 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 For independent unbiased forecasts $F_1, \dots, F_n$ of a quantity with variance $\sigma_j^2$, the \emph{inverse-variance-weighted} combination has variance
 
 $$
-\text\{Var}\!\left(\sum\_j w\_j F\_j\right) = \frac\{1}\{\sum\_j 1/\sigma\_j^2} \le \min\_j \sigma\_j^2.
+\text{Var}\!\left(\sum\_j w\_j F\_j\right) = \frac{1}{\sum\_j 1/\sigma\_j^2} \le \min\_j \sigma\_j^2.
 $$
 
 So the combined forecast is (weakly) at least as accurate as the best component. The Bates--Granger (1969) result generalises this to correlated forecasts with a closed-form optimal weighting. In practice the optimal weights are unknown, which is exactly why we \emph{learn} them online.
 
-\subsection{Why equal weights is the natural na\"\{\i}ve baseline}
+\subsection{Why equal weights is the natural na\"{\i}ve baseline}
 
 
 Equal weighting is what you get if:
@@ -160,7 +160,7 @@ Equal weighting is what you get if:
 
 Equal weights is also provably near-optimal in the "flat maximum" region (Claeskens et al., 2016; cited in \texttt{theory/extra/ForecastCombinations.md}). When forecasters are similar in quality, equal weights is \textbf{difficult to improve on}. This is why on slide 13 the electricity gain (8 \%) is modest: the forecasters are more homogeneous in that dataset.
 
-\subsection{Why strategic behaviour breaks na\"\{\i}ve averaging}
+\subsection{Why strategic behaviour breaks na\"{\i}ve averaging}
 
 
 Consider an attacker who submits a deliberately biased forecast $r_i = y^{\text{anti}}$. Simple averaging with $n$ participants dilutes the attack only by a factor $1/n$. Two defences we need:
@@ -194,7 +194,7 @@ These three layers correspond to the three literatures on Slide 4.
 Formal setup: each of $n$ participants submits a forecast $r_i \in \mathcal R$ and wager $b_i \ge 0$; there is an outcome $\omega$. The mechanism has scoring rule $s$ and allocates payoffs
 
 $$
-\pi\_i = b\_i \left( 1 + s(r\_i, \omega) - \bar s \right), \qquad \bar s = \frac\{\sum\_j b\_j s(r\_j, \omega)}\{\sum\_j b\_j}.
+\pi\_i = b\_i \left( 1 + s(r\_i, \omega) - \bar s \right), \qquad \bar s = \frac{\sum\_j b\_j s(r\_j, \omega)}{\sum\_j b\_j}.
 $$
 
 They prove this is the \textbf{unique} mechanism satisfying seven axioms simultaneously:
@@ -218,7 +218,7 @@ Adds a \textbf{client} (buyer) who posts a task, an explicit \textbf{forecast ag
 Repeated setting. Tracks per-quantile weights $W_{\tau} \in \Delta^{n-1}$ (the probability simplex) updated by \textbf{online gradient descent} on the pinball loss:
 
 $$
-W\_\{\tau}(t+1) = \Pi\_\{\Delta}\!\left( W\_\{\tau}(t) - \eta \nabla\_\{W\_\tau} L\_\tau(t) \right).
+W\_{\tau}(t+1) = \Pi\_{\Delta}\!\left( W\_{\tau}(t) - \eta \nabla\_{W\_\tau} L\_\tau(t) \right).
 $$
 
 Handles intermittent participation. But: weights are \emph{relative} (they live on $\Delta^{n-1}$), and the settlement is \textbf{Shapley-based}, not Lambert self-financed --- meaning the mechanism is not budget-balanced in the Lambert sense.
@@ -286,7 +286,7 @@ The table is a React component: \texttt{dashboard/src/components/slides/Mechanis
 Let $W_i$ be wealth. A \textbf{wealthy but weak} forecaster can set $b_i = W_i$ and drive the aggregate toward their own report:
 
 $$
-w\_i = \frac\{b\_i}\{\sum\_j b\_j} \xrightarrow\{W\_i \gg W\_\{-i}} 1.
+w\_i = \frac{b\_i}{\sum\_j b\_j} \xrightarrow{W\_i \gg W\_{-i}} 1.
 $$
 
 There is nothing in the Lambert mechanism that prevents this --- Lambert's truthfulness argument concerns \emph{what} to report given a wager, not \emph{how much} to stake. So a separate mechanism layer is needed.
@@ -297,7 +297,7 @@ There is nothing in the Lambert mechanism that prevents this --- Lambert's truth
 Define the \textbf{skill gate}
 
 $$
-g(\sigma\_i) = \lambda + (1 - \lambda)\, \sigma\_i^\{\eta}, \qquad \sigma\_i \in [0,1],\quad \lambda \in [0,1],\quad \eta > 0.
+g(\sigma\_i) = \lambda + (1 - \lambda)\, \sigma\_i^{\eta}, \qquad \sigma\_i \in [0,1],\quad \lambda \in [0,1],\quad \eta > 0.
 $$
 
 Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 91--97.
@@ -305,7 +305,7 @@ Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 91--97.
 Then the \textbf{effective wager} is
 
 $$
-m\_i(t) = b\_i(t)\, g(\sigma\_i(t)) = b\_i(t)\,\bigl( \lambda + (1-\lambda)\,\sigma\_i(t)^\{\eta} \bigr).
+m\_i(t) = b\_i(t)\, g(\sigma\_i(t)) = b\_i(t)\,\bigl( \lambda + (1-\lambda)\,\sigma\_i(t)^{\eta} \bigr).
 $$
 
 Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 100--109 (\texttt{effective\\_wager\\_bankroll}).
@@ -317,7 +317,7 @@ Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 100--109 (\texttt{eff
 \end{enumerate}
 
 $$
-\hat q^\{(k)}(t) = \frac\{\sum\_i m\_i(t)\, q\_i^\{(k)}(t)}\{\sum\_i m\_i(t)}.
+\hat q^{(k)}(t) = \frac{\sum\_i m\_i(t)\, q\_i^{(k)}(t)}{\sum\_i m\_i(t)}.
 $$
 
 Code: \texttt{onlinev2/src/onlinev2/core/aggregation.py} lines 38--65 (\texttt{aggregate\\_forecast}).
@@ -327,7 +327,7 @@ Code: \texttt{onlinev2/src/onlinev2/core/aggregation.py} lines 38--65 (\texttt{a
 \end{enumerate}
 
 $$
-\pi\_i^\{\text\{skill}}(t) = m\_i(t)\,\bigl(1 + s(r\_i(t), y\_t) - \bar s(t)\bigr),\quad \bar s(t) = \frac\{\sum\_j m\_j(t)\, s(r\_j(t), y\_t)}\{\sum\_j m\_j(t)}.
+\pi\_i^{\text{skill}}(t) = m\_i(t)\,\bigl(1 + s(r\_i(t), y\_t) - \bar s(t)\bigr),\quad \bar s(t) = \frac{\sum\_j m\_j(t)\, s(r\_j(t), y\_t)}{\sum\_j m\_j(t)}.
 $$
 
 Code: \texttt{onlinev2/src/onlinev2/core/settlement.py} lines 11--36 (\texttt{skill\\_payoff}) and lines 67--125 (\texttt{settle\\_round}).
@@ -431,7 +431,7 @@ If the aggregation used weight $w_i^A$ and the settlement used a different $w_i^
 Let $\ell_i(t)$ be forecaster $i$'s round-$t$ loss, normalised to $[0,1]$. In quantile mode we use $\ell_i(t) = \widehat{\text{CRPS}}_i(t)/2$; in point mode, $\ell_i(t) = |y_t - r_i(t)|$ with $y, r \in [0,1]$.
 
 $$
-L\_i(t) = (1 - \rho\_\{\text\{eff}})\,L\_i(t-1) + \rho\_\{\text\{eff}}\,\ell\_i(t),
+L\_i(t) = (1 - \rho\_{\text{eff}})\,L\_i(t-1) + \rho\_{\text{eff}}\,\ell\_i(t),
 $$
 
 with default $\rho \in (0, 1]$. Code: \texttt{skill.update\\_ewma\\_loss} (skill.py:32--81).
@@ -439,7 +439,7 @@ with default $\rho \in (0, 1]$. Code: \texttt{skill.update\\_ewma\\_loss} (skill
 \textbf{Exposure weighting (optional).} If \texttt{use\\_exposure\\_weighting=True}, the effective learning rate for participant $i$ is
 
 $$
-\rho\_\{\text\{eff},i} = \rho \cdot \min\!\left(1, \frac\{m\_i(t)}\{m\_\{\text\{ref}}}\right),
+\rho\_{\text{eff},i} = \rho \cdot \min\!\left(1, \frac{m\_i(t)}{m\_{\text{ref}}}\right),
 $$
 
 so that participants with near-zero exposure do not fully update their EWMA on round $t$ (they are "cheap" observers). This is off by default in the runners used in Slide 13 and Slide 14.
@@ -456,7 +456,7 @@ so $L_i$ drifts toward a baseline $L_0$ when there is no new evidence. Code: \te
 
 
 $$
-\sigma\_i(t) = \sigma\_\{\min} + (1 - \sigma\_\{\min})\,e^\{-\gamma\, L\_i(t)}.
+\sigma\_i(t) = \sigma\_{\min} + (1 - \sigma\_{\min})\,e^{-\gamma\, L\_i(t)}.
 $$
 
 Code: \texttt{skill.loss\\_to\\_skill} (skill.py:84--89). Three properties:
@@ -487,7 +487,7 @@ Their $w_{\tau} \in \Delta^{n-1}$ implies $\sum_i w_{\tau,i} = 1$ per quantile. 
 Given a reference loss $L_{\text{ref}}$ you want to map to a reference skill $\sigma_{\text{ref}}$:
 
 $$
-\gamma = -\frac\{1}\{L\_\{\text\{ref}}} \log\!\left( \frac\{\sigma\_\{\text\{ref}} - \sigma\_\{\min}}\{1 - \sigma\_\{\min}} \right).
+\gamma = -\frac{1}{L\_{\text{ref}}} \log\!\left( \frac{\sigma\_{\text{ref}} - \sigma\_{\min}}{1 - \sigma\_{\min}} \right).
 $$
 
 Code: \texttt{skill.calibrate\\_gamma}. For the Elia experiments we used $\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$ (tuned by grid search; reported at \texttt{real\\_data/runner.py:357}).
@@ -595,12 +595,12 @@ Claim: $\left|\sum_i \pi_i(t) - \sum_i b_i(t)\right| \le \varepsilon_{\text{mach
 Proof sketch (matches Lambert 2008 Thm. 1):
 
 $$
-\sum\_i \pi\_i^\{\text\{skill}} = \sum\_i m\_i(1 + s\_i - \bar s) = M + M \cdot \frac\{\sum\_i m\_i s\_i}\{M} - \bar s \cdot M = M + M \bar s - \bar s M = M,
+\sum\_i \pi\_i^{\text{skill}} = \sum\_i m\_i(1 + s\_i - \bar s) = M + M \cdot \frac{\sum\_i m\_i s\_i}{M} - \bar s \cdot M = M + M \bar s - \bar s M = M,
 $$
 
 where $M = \sum_i m_i$. Refund is returned before payoff, so $\sum_i (\text{refund}_i + \pi_i^{\text{skill}}) = \sum_i b_i$.
 
-\textbf{Empirical check.} Across 1\{,}000 synthetic rounds we observe max $|\text{gap}| \approx 10^{-13}$, i.e. \textbf{machine precision} on double-precision arithmetic. The slide therefore summarises this as "machine precision" rather than the raw number. Test file: \texttt{onlinev2/tests/test\\_settlement\\_budget.py}.
+\textbf{Empirical check.} Across 1{,}000 synthetic rounds we observe max $|\text{gap}| \approx 10^{-13}$, i.e. \textbf{machine precision} on double-precision arithmetic. The slide therefore summarises this as "machine precision" rather than the raw number. Test file: \texttt{onlinev2/tests/test\\_settlement\\_budget.py}.
 
 \subsection{Mean profit is zero across all participants}
 
@@ -626,7 +626,7 @@ So total profit is preserved exactly: \textbf{sybil ratio = 1.000000}. Test: \te
 When a client posts utility $U > 0$ with cutoff $s_c$, there is an extra term
 
 $$
-\pi\_i^\{\text\{util}} = \mathbb 1[U > 0] \cdot \frac\{\tilde s\_i m\_i}\{\sum\_j \tilde s\_j m\_j} \cdot U,\qquad \tilde s\_i = s\_i \cdot \mathbb 1[s\_i > s\_c].
+\pi\_i^{\text{util}} = \mathbb 1[U > 0] \cdot \frac{\tilde s\_i m\_i}{\sum\_j \tilde s\_j m\_j} \cdot U,\qquad \tilde s\_i = s\_i \cdot \mathbb 1[s\_i > s\_c].
 $$
 
 This adds $U$ to total payouts, so \textbf{with $U > 0$ cashflows are no longer strictly zero-sum} (they are zero-sum plus a fixed external input of $U$). All slide-11 claims use $U = 0$ (pure Lambert). Code: \texttt{settlement.utility\\_payoff} (settlement.py:39--64).
@@ -647,7 +647,7 @@ This adds $U$ to total payouts, so \textbf{with $U > 0$ cashflows are no longer 
 \subsection{The 4 deposit policies we compare}
 
 
-Code: \texttt{onlinev2/src/onlinev2/behaviour/\ldots\\{\}} and \texttt{simulation.py} \texttt{deposit\\_mode}.
+Code: \texttt{onlinev2/src/onlinev2/behaviour/\ldots{}} and \texttt{simulation.py} \texttt{deposit\\_mode}.
 
 \begin{enumerate}
 \item \textbf{Fixed.} $b_i(t) = b_0$ constant.
@@ -657,13 +657,13 @@ Code: \texttt{onlinev2/src/onlinev2/behaviour/\ldots\\{\}} and \texttt{simulatio
 \end{enumerate}
 
 $$
-b\_i(t) = \min\!\bigl(W\_i(t),\, b\_\{\max},\, f\, W\_i(t)\, c\_i(t)\bigr),
+b\_i(t) = \min\!\bigl(W\_i(t),\, b\_{\max},\, f\, W\_i(t)\, c\_i(t)\bigr),
 $$
 
 with confidence derived from quantile width in probit space:
 
 $$
-c\_i(t) = \text\{clip}\!\bigl(e^\{-\beta\_c\,\Delta z\_i(t)},\, c\_\{\min},\, c\_\{\max}\bigr),\quad \Delta z\_i = \Phi^\{-1}(q\_i^\{(0.9)}) - \Phi^\{-1}(q\_i^\{(0.1)}).
+c\_i(t) = \text{clip}\!\bigl(e^{-\beta\_c\,\Delta z\_i(t)},\, c\_{\min},\, c\_{\max}\bigr),\quad \Delta z\_i = \Phi^{-1}(q\_i^{(0.9)}) - \Phi^{-1}(q\_i^{(0.1)}).
 $$
 
 Code: \texttt{staking.confidence\\_from\\_quantiles} (staking.py:17--58), \texttt{staking.choose\\_deposits} (staking.py:61--88).
@@ -711,7 +711,7 @@ Driver: \texttt{scripts/run\\_real\\_data\\_with\\_skill.py} $\rightarrow$ \text
 
 \begin{itemize}
 \item $n = 7$ forecasters from \S Slide 9, strictly causal.
-\item $T = $ 17\{,}544 hourly observations (wind) / full native (electricity).
+\item $T = $ 17{,}544 hourly observations (wind) / full native (electricity).
 \item Warm-up 200 rounds.
 \item $\tau = (0.1, 0.25, 0.5, 0.75, 0.9)$, CRPS-hat.
 \item Mechanism tuned: $\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$, $\eta = 2$, \texttt{deposit\\_mode="fixed"}, $b_0 = 1$, \texttt{omega\\_max=0.0}. Seed 42.
@@ -733,7 +733,7 @@ Elia electricity (imbalance) & ~0.048 & ~0.044 & -0.004 & \textbf{-8 \%} \\
 \end{tabular}
 \end{center}
 
-DM statistic is highly significant on wind ($p < 0.001$) and less but still significant on electricity. JSON output: \texttt{dashboard/public/data/real\\_data/\\{elia\\_wind,elia\\_electricity\}/data/comparison.json}.
+DM statistic is highly significant on wind ($p < 0.001$) and less but still significant on electricity. JSON output: \texttt{dashboard/public/data/real\\_data/{elia\\_wind,elia\\_electricity}/data/comparison.json}.
 
 \subsection{Why the gap between the two datasets}
 
@@ -786,7 +786,7 @@ So the aggregate is slightly \textbf{under-dispersed} (tail events happen more o
 
 Isolate the effect of the \textbf{learning layer} by running \textbf{three prediction-market designs on exactly the same cached forecasts}. If the forecasts are the same and only the aggregation+settlement differ, the CRPS difference is pure mechanism effect.
 
-Driver: \texttt{scripts/run\\_baseline\\_comparison.py}. Writes \texttt{dashboard/public/data/real\\_data/\\{elia\\_wind,elia\\_electricity\}/data/baselines.json} and \texttt{presentation/plots/data/baseline\\_comparison\\_\\{wind,electricity\}.csv}. Plot: \texttt{presentation/R/plot\\_baseline\\_comparison.R} $\rightarrow$ \texttt{dashboard/public/presentation-plots/baseline\\_comparison.png}.
+Driver: \texttt{scripts/run\\_baseline\\_comparison.py}. Writes \texttt{dashboard/public/data/real\\_data/{elia\\_wind,elia\\_electricity}/data/baselines.json} and \texttt{presentation/plots/data/baseline\\_comparison\\_{wind,electricity}.csv}. Plot: \texttt{presentation/R/plot\\_baseline\\_comparison.R} $\rightarrow$ \texttt{dashboard/public/presentation-plots/baseline\\_comparison.png}.
 
 \subsection{The three methods --- implementation-level detail}
 
@@ -808,7 +808,7 @@ Driver: \texttt{scripts/run\\_baseline\\_comparison.py}. Writes \texttt{dashboar
 \end{itemize}
 
 $$
-\partial\_i L^\{(\tau\_k)}\_t = \begin\{cases} -\tau\_k\, q\_i^\{(k)}(t) \& \text\{if } y\_t \ge \hat q^\{(k)}(t), \\ (1 - \tau\_k)\, q\_i^\{(k)}(t) \& \text\{otherwise}. \end\{cases}
+\partial\_i L^{(\tau\_k)}\_t = \begin{cases} -\tau\_k\, q\_i^{(k)}(t) \& \text{if } y\_t \ge \hat q^{(k)}(t), \\ (1 - \tau\_k)\, q\_i^{(k)}(t) \& \text{otherwise}. \end{cases}
 $$
 
 \begin{itemize}
@@ -932,7 +932,7 @@ Suggested live path (same as \texttt{SCRIPT.md}):
 \item \textbf{Behaviour page} (optional) --- preset families, comparison table.
 \end{enumerate}
 
-All dashboard pages read \textbf{the same JSON} the slides are built from (\texttt{dashboard/public/data/\ldots\\{\}}), so anything on the slides can be reproduced live.
+All dashboard pages read \textbf{the same JSON} the slides are built from (\texttt{dashboard/public/data/\ldots{}}), so anything on the slides can be reproduced live.
 
 \bigskip\hrule\bigskip
 
@@ -1011,8 +1011,8 @@ $\pi_i^{\text{util}} = \mathbb 1[U>0]\,\frac{\tilde s_i m_i}{\sum_j \tilde s_j m
 \begin{itemize}
 \item \textbf{Dashboard} --- \texttt{dashboard/}
 \item \texttt{src/pages/PresentationPage.tsx} --- slide ordering.
-\item \texttt{src/components/slides/\ldots\\{\}} --- per-slide components.
-\item \texttt{public/data/real\\_data/\ldots\\{\}/comparison.json}, \texttt{.../baselines.json}.
+\item \texttt{src/components/slides/\ldots{}} --- per-slide components.
+\item \texttt{public/data/real\\_data/\ldots{}/comparison.json}, \texttt{.../baselines.json}.
 \item \texttt{public/presentation-plots/*.png} --- all the regenerated R plots.
 \end{itemize}
 
