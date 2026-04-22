@@ -36,13 +36,13 @@ interface DatasetConfig {
 /* ── Forecaster metadata ───────────────────────────────────────── */
 
 export const FORECASTER_META = [
-  { key: 'sigma_0', name: 'Naive',    colour: '#2E8B8B' },
-  { key: 'sigma_1', name: 'EWMA',     colour: '#E85D4A' },
-  { key: 'sigma_2', name: 'ARIMA',    colour: '#7C3AED' },
-  { key: 'sigma_3', name: 'XGBoost',  colour: '#003E74' },
-  { key: 'sigma_4', name: 'MLP',      colour: '#10b981' },
-  { key: 'sigma_5', name: 'Theta',    colour: '#f59e0b' },
-  { key: 'sigma_6', name: 'Ensemble', colour: '#64748B' },
+  { key: 'sigma_0', name: 'Naive',    colour: '#1B2A4A' },
+  { key: 'sigma_1', name: 'EWMA',     colour: '#2E8B8B' },
+  { key: 'sigma_2', name: 'ARIMA',    colour: '#E85D4A' },
+  { key: 'sigma_3', name: 'XGBoost',  colour: '#7C3AED' },
+  { key: 'sigma_4', name: 'MLP',      colour: '#E67E22' },
+  { key: 'sigma_5', name: 'Theta',    colour: '#64748B' },
+  { key: 'sigma_6', name: 'Ensemble', colour: '#003E74' },
 ] as const;
 
 const BASE = import.meta.env.BASE_URL;
