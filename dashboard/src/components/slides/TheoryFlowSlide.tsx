@@ -25,9 +25,9 @@ export default function TheoryFlowSlide() {
   const pBoxH = 95;
   const iconSize = 18;
 
-  const aggX = 440;
-  const aggW = 200;
-  const aggH = 120;
+  const aggX = 400;
+  const aggW = 260;
+  const aggH = 130;
   const aggCenterY = 260;
 
   const outX = 810;
@@ -201,10 +201,10 @@ export default function TheoryFlowSlide() {
           y={aggCenterY + 30}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="15"
           fill={PALETTE.slate}
         >
-          Wager-weighted aggregation
+          Weighted aggregation
         </text>
 
         {/* ── Arrow from aggregation to output ── */}

@@ -30,8 +30,8 @@ df_curve <- data.frame(L = L_seq, sigma = sigma_seq)
 # 3. Define three example forecaster dots
 # ---------------------------------------------------------------------------
 forecaster_dots <- data.frame(
-  label  = c("Skilled\n(low loss)", "Moderate", "Unskilled\n(high loss)"),
-  L      = c(0.02, 0.12, 0.35),
+  label  = c("Skilled", "Moderate", "Unskilled"),
+  L      = c(0.02, 0.15, 0.38),
   stringsAsFactors = FALSE
 )
 forecaster_dots$sigma <- skill_map(forecaster_dots$L, sigma_min, gamma)
@@ -74,7 +74,7 @@ p <- ggplot() +
              fill = "white", colour = PALETTE$charcoal,
              label.padding = unit(0.4, "lines"),
              label.r = unit(0.3, "lines"),
-             nudge_y = c(0.07, 0.08, 0.07)) +
+             nudge_y = c(0.10, 0.10, 0.10)) +
   # Scales
   scale_x_continuous(
     limits = c(-0.01, max(L_seq) + 0.01),
