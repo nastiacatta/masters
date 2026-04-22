@@ -15,14 +15,14 @@
 | 11 | Mechanism Guarantees | VALIDATION | ~1 min |
 | 12 | Deposit Design | VALIDATION | ~1 min |
 | 13 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
-| 14 | Benchmark Comparison: Prior Work and This Thesis | VALIDATION | ~1.5 min |
+| 14 | Benchmark Comparison: Prior Work and This Project | VALIDATION | ~1.5 min |
 | 15 | Strategic Robustness | VALIDATION | ~1 min |
 | 16 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
 **Total: ~22 min**
 
 > ⚠️ Slides 7 and 13 are flagged at 2 minutes — keep narration tight and avoid tangents.
-> Slide 14 is the "why we improve" figure — land the three trade-offs (Raja / Vitali / Thesis) and move on.
+> Slide 14 is the "why we improve" figure — land the three trade-offs (Raja / Vitali / This project) and move on.
 
 ---
 
@@ -34,9 +34,9 @@
 
 Recently, on the way to the airport, I checked Google Maps, Apple Maps, and Citymapper. They all predicted the same journey time, but they did not give the same answer. And from experience, I knew I trusted Citymapper a little more.
 
-That small decision captures the core question behind this thesis: when multiple predictors disagree, how do we learn whose information should count more — and how do we do it in a way that stays robust when incentives are strategic and money is at stake?
+That small decision captures the core question behind this project: when multiple predictors disagree, how do we learn whose information should count more — and how do we do it in a way that stays robust when incentives are strategic and money is at stake?
 
-Good morning. My name is Anastasia Cattaneo. Before I begin, I would like to thank my supervisors Pierre Pinson and Michael Vitali — their guidance, and their own published work on prediction markets, shaped every part of this thesis.
+Good morning. My name is Anastasia Cattaneo. Before I begin, I would like to thank my supervisors Pierre Pinson and Michael Vitali — their guidance, and their own published work on prediction markets, shaped every part of this project.
 
 ---
 
@@ -64,7 +64,7 @@ But there is a catch. When forecasts come from strategic participants — people
 
 What we really want is a market that learns how much to trust each contribution. Not all forecasters are equally valuable, and their value can change over time. Some adapt quickly when conditions shift. Some become stale. Some perform well only under specific circumstances.
 
-The goal of this thesis is to design a mechanism that learns the importance of each forecaster's contribution from their track record, uses that to weight the aggregate forecast, and does all of this while maintaining the economic discipline — budget balance, truthfulness, resistance to manipulation — that makes the market trustworthy.
+The goal of this project is to design a mechanism that learns the importance of each forecaster's contribution from their track record, uses that to weight the aggregate forecast, and does all of this while maintaining the economic discipline — budget balance, truthfulness, resistance to manipulation — that makes the market trustworthy.
 
 ---
 
@@ -76,7 +76,7 @@ Lambert et al. introduced the weighted-score wagering mechanism. Participants su
 
 On the other side, Vitali & Pinson designed a repeated market that handles missing submissions and learns time-varying weights through online gradient descent. Their weights are relative — they live on a probability simplex. If one person's weight rises, everyone else's mechanically falls. And their settlement is not self-financed in the Lambert sense.
 
-The positioning matrix shows where each approach sits. Lambert and Raja give strong economic structure without adaptation. Vitali gives adaptation without self-financing. This thesis occupies the fourth corner — adaptive and self-financed, with an absolute skill signal.
+The positioning matrix shows where each approach sits. Lambert and Raja give strong economic structure without adaptation. Vitali gives adaptation without self-financing. This project occupies the fourth corner — adaptive and self-financed, with an absolute skill signal.
 
 ---
 
@@ -84,13 +84,13 @@ The positioning matrix shows where each approach sits. Lambert and Raja give str
 
 Before moving to my contribution, let me show exactly where the gap is.
 
-This table compares three approaches across five dimensions. All three mechanisms are self-financed — participants fund the market through their own wagers. But Lambert et al. and Raja et al. both use static, per-round weights. There is no memory of past performance — each round starts fresh. My thesis introduces adaptive weight learning that carries information across rounds.
+This table compares three approaches across five dimensions. All three mechanisms are self-financed — participants fund the market through their own wagers. But Lambert et al. and Raja et al. both use static, per-round weights. There is no memory of past performance — each round starts fresh. My project introduces adaptive weight learning that carries information across rounds.
 
-On skill learning: Lambert and Raja have none. The mechanism has no concept of forecaster quality beyond the current wager. My thesis adds an EWMA skill signal — an exponentially weighted moving average of realised forecasting loss that tracks each participant's value over time.
+On skill learning: Lambert and Raja have none. The mechanism has no concept of forecaster quality beyond the current wager. My project adds an EWMA skill signal — an exponentially weighted moving average of realised forecasting loss that tracks each participant's value over time.
 
-Deposit design is similar. Lambert and Raja do not specify how deposits should be chosen. My thesis introduces a skill gate that scales the effective wager by learned skill, plus a deposit policy framework that lets participants scale stakes by wealth and confidence.
+Deposit design is similar. Lambert and Raja do not specify how deposits should be chosen. My project introduces a skill gate that scales the effective wager by learned skill, plus a deposit policy framework that lets participants scale stakes by wealth and confidence.
 
-Finally, key properties. Lambert et al. proved seven formal properties including uniqueness. Raja et al. added client reward allocation. My thesis preserves the seven properties and adds skill learning and deposit design on top.
+Finally, key properties. Lambert et al. proved seven formal properties including uniqueness. Raja et al. added client reward allocation. My project preserves the seven properties and adds skill learning and deposit design on top.
 
 The positioning matrix from the previous slide showed the gap. This table shows exactly what fills it.
 
@@ -210,7 +210,7 @@ On the Elia electricity dataset, the improvement is smaller — **8 %** over equ
 
 ---
 
-## [SLIDE 14] Benchmark Comparison: Prior Work and This Thesis (~1.5 min)
+## [SLIDE 14] Benchmark Comparison: Prior Work and This Project (~1.5 min)
 
 That 44 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
 
@@ -220,9 +220,9 @@ Raja's history-free design shows modest gains — about 2 % improvement on both 
 
 Vitali and Pinson's online gradient descent on the simplex achieves the lowest CRPS in this benchmark — 65 % on wind and 20 % on electricity. The trade-off is that the settlement is Shapley-based rather than Lambert self-financed wagering, and the learned weights are relative on a probability simplex: increasing one weight mechanically decreases the others.
 
-The thesis mechanism sits between them on CRPS — 44 % on wind and 8 % on electricity — while retaining Lambert's economic properties and reporting an absolute per-forecaster skill signal. The rolling CRPS panel shows that the relative ordering is stable over the full two-year series, rather than driven by a short segment.
+This project's mechanism sits between them on CRPS — 44 % on wind and 8 % on electricity — while retaining Lambert's economic properties and reporting an absolute per-forecaster skill signal. The rolling CRPS panel shows that the relative ordering is stable over the full two-year series, rather than driven by a short segment.
 
-The takeaway is the point of the thesis: adaptation, self-financing, and an absolute skill signal can coexist in a single mechanism, and the empirical cost of keeping all three can be quantified in this benchmark.
+The takeaway is the point of the project: adaptation, self-financing, and an absolute skill signal can coexist in a single mechanism, and the empirical cost of keeping all three can be quantified in this benchmark.
 
 ---
 
@@ -246,14 +246,14 @@ The overall picture: the mechanism resists the standard attacks. Sophisticated a
 
 ## [SLIDE 16] Conclusion + Future Work (~1.5 min)
 
-To summarise. This thesis develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
+To summarise. This project develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 
-As the previous slide showed, the thesis mechanism jointly provides adaptation across rounds, self-financing, and an absolute skill signal. In this benchmark, Raja lacks adaptation and Vitali is not self-financed; the thesis mechanism sits between them on CRPS while retaining Lambert's property set.
+As the previous slide showed, the mechanism jointly provides adaptation across rounds, self-financing, and an absolute skill signal. In this benchmark, Raja lacks adaptation and Vitali is not self-financed; this project's mechanism sits between them on CRPS while retaining Lambert's property set.
 
 The mechanism also satisfies its formal guarantees to machine precision: budget balance and mean profit are zero to numerical tolerance, sybil invariance holds exactly for identical reports, and synthetic validation recovers the true skill ranking with Spearman ρ = 1.0.
 
 Future work has a clear priority: close the CRPS gap to Vitali **without** giving up self-financing. That likely means richer score functions or richer aggregation primitives, not abandoning the Lambert framework. Beyond that: improve tail calibration, which is currently under-dispersed by about five percentage points, and test against adaptive strategic adversaries rather than only fixed behaviour presets.
 
-This thesis asked whether a prediction market can learn how much each contribution should matter, while keeping a disciplined reward mechanism. The answer is yes — the gains are real on real energy data, the mechanism satisfies its formal guarantees, and it occupies a position in the design space that no prior work has reached.
+This project asked whether a prediction market can learn how much each contribution should matter, while keeping a disciplined reward mechanism. The answer is yes — the gains are real on real energy data, the mechanism satisfies its formal guarantees, and it occupies a position in the design space that no prior work has reached.
 
 Thank you. I am happy to take questions.
