@@ -278,8 +278,9 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
-          fill={PALETTE.slate}
+          fontSize="18"
+          fontWeight={600}
+          fill={PALETTE.navy}
         >
           Forecasts + wagers
         </text>
@@ -288,8 +289,9 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
-          fill={PALETTE.slate}
+          fontSize="18"
+          fontWeight={600}
+          fill={PALETTE.navy}
         >
           Weighted combination
         </text>
@@ -298,8 +300,9 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
-          fill={PALETTE.slate}
+          fontSize="18"
+          fontWeight={600}
+          fill={PALETTE.navy}
         >
           Better forecast
         </text>
