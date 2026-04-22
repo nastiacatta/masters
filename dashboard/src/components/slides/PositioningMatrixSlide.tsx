@@ -17,9 +17,9 @@ interface MatrixNode {
 }
 
 const NODES: MatrixNode[] = [
-  { id: 'lambert', label: 'Lambert et al.', citation: 'Self-financed, static weights', detail: '7 properties, uniqueness theorem', x: 22, y: 25 },
-  { id: 'raja', label: 'Raja et al.', citation: 'Self-financed + client reward', detail: 'Payoff allocation, deposit-based', x: 22, y: 65 },
-  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, not self-financed', detail: 'Online regression, Shapley payoff', x: 72, y: 65 },
+  { id: 'lambert', label: 'Lambert et al.', citation: 'Self-financed, static weights', detail: '7 properties, uniqueness theorem', x: 25, y: 22 },
+  { id: 'raja', label: 'Raja et al.', citation: 'Self-financed + client reward', detail: 'Payoff allocation, deposit-based', x: 25, y: 42 },
+  { id: 'vitali', label: 'Vitali & Pinson', citation: 'Adaptive, not self-financed', detail: 'Online regression, Shapley payoff', x: 75, y: 75 },
   { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 75, y: 22, isThesis: true },
 ];
 
