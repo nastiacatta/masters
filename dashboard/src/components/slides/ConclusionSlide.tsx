@@ -73,7 +73,7 @@ export default function ConclusionSlide() {
     <SlideShell
       title="Conclusion + Future Work"
       dark
-      slideNumber={16}
+      slideNumber={15}
     >
       {/* ── CRPS Comparison Cards ── */}
       <div style={{ display: 'flex', gap: 20, marginBottom: 28 }}>

@@ -12,17 +12,16 @@
 | 8 | The Skill Signal | SOLUTION | ~1.5 min |
 | 9 | Models, Data, and Synthetic Setup | SOLUTION | ~1.5 min |
 | 10 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
-| 11 | Mechanism Guarantees | VALIDATION | ~1 min |
-| 12 | Deposit Design | VALIDATION | ~1 min |
-| 13 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
-| 14 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
-| 15 | Strategic Robustness | VALIDATION | ~1 min |
-| 16 | Conclusion + Future Work | CLOSING | ~1.5 min |
+| 11 | Deposit Design | VALIDATION | ~1 min |
+| 12 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
+| 13 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
+| 14 | Strategic Robustness | VALIDATION | ~1 min |
+| 15 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
-**Total: ~22 min**
+**Total: ~21 min**
 
-> ⚠️ Slides 7 and 13 are flagged at 2 minutes — keep narration tight and avoid tangents.
-> Slide 14 is the "why we improve" figure with compact takeaway cards below.
+> ⚠️ Slides 7 and 12 are flagged at 2 minutes — keep narration tight and avoid tangents.
+> Slide 13 is the "why we improve" figure with compact takeaway cards below.
 
 ---
 
@@ -164,7 +163,7 @@ Why validate on synthetic data first? Because synthetic experiments use a known 
 
 ---
 
-# Script Part III — VALIDATION (Slides 10–15, ~8 min)
+# Script Part III — VALIDATION (Slides 10–14, ~7 min)
 
 ---
 
@@ -182,21 +181,7 @@ The reward distribution follows the skill ranking: the least noisy forecaster ac
 
 ---
 
-## [SLIDE 11] Mechanism Guarantees (~1 min)
-
-Before interpreting any forecasting result, the mechanism must satisfy its formal guarantees.
-
-Budget balance: across one thousand synthetic rounds, the maximum gap between total payouts and total wagers is approximately 10⁻¹³ — that is machine precision. The mechanism is self-financed to numerical tolerance.
-
-Mean profit across all participants is effectively zero. The mechanism purely redistributes stakes — it does not subsidise or tax.
-
-Sybil invariance: splitting one identity into clones with identical reports and the same total deposit preserves total profit exactly. The sybil ratio is 1.000000 — identity splitting with identical reports provides no advantage, confirming the theoretical sybilproofness property from Lambert et al.
-
-These are not approximate claims. The mechanism satisfies formal guarantees to machine precision.
-
----
-
-## [SLIDE 12] Deposit Design (~1 min)
+## [SLIDE 11] Deposit Design (~1 min)
 
 Why does deposit design matter? Because the deposit determines how much information enters the market. If deposits are uninformative — random or fixed — the mechanism has less signal to work with.
 
@@ -206,7 +191,7 @@ In practice, we cannot force forecasters to use any particular deposit rule. The
 
 ---
 
-## [SLIDE 13] Real Data: Elia Wind + Electricity (~2 min)
+## [SLIDE 12] Real Data: Elia Wind + Electricity (~2 min)
 
 This is the first real-data validation. Everything before this was controlled simulation.
 
@@ -218,7 +203,7 @@ On the Elia electricity dataset, the improvement is smaller — **8 %** over equ
 
 ---
 
-## [SLIDE 14] Benchmark Comparison: Prior Work and This Project (~1 min)
+## [SLIDE 13] Benchmark Comparison: Prior Work and This Project (~1 min)
 
 That 44 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
 
@@ -234,7 +219,7 @@ The takeaway is the point of the project: adaptation, self-financing, and an abs
 
 ---
 
-## [SLIDE 15] Strategic Robustness (~1 min)
+## [SLIDE 14] Strategic Robustness (~1 min)
 
 The mechanism must resist manipulation. Three main attack types from the literature.
 
@@ -248,11 +233,11 @@ The overall picture: the mechanism resists the standard attacks. Sophisticated a
 
 ---
 
-# Script Part IV — CLOSING (Slide 16, ~1.5 min)
+# Script Part IV — CLOSING (Slide 15, ~1.5 min)
 
 ---
 
-## [SLIDE 16] Conclusion + Future Work (~1.5 min)
+## [SLIDE 15] Conclusion + Future Work (~1.5 min)
 
 To summarise. This project develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 
@@ -339,3 +324,13 @@ Key points:
 Key points:
 - Each round is O(N). EWMA update, skill gate, Lambert settlement — all linear.
 - Full 17,544-round Elia experiment runs in under 30 seconds on a laptop.
+
+## Q8: "What about the mechanism guarantees?"
+
+Key points:
+- Budget balance: maximum gap between total payouts and total wagers is ~10⁻¹³ (machine precision). Self-financed to numerical tolerance.
+- Mean profit across all participants is effectively zero — pure redistribution.
+- Sybil invariance: splitting one identity into clones with identical reports and the same total deposit preserves total profit exactly (sybil ratio = 1.000000).
+- Noise-skill correlation r = −0.98 — skilled forecasters are reliably rewarded.
+- These are not approximate claims — formal guarantees hold to machine precision.
+- Full guarantees table is in Appendix tab C.
