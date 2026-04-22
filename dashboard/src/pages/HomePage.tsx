@@ -17,7 +17,7 @@ function Indicator({ color }: { color: string }) {
 }
 
 const FINDINGS = [
-  { color: '#10b981', title: '34% CRPS improvement on real wind data', detail: 'The online skill layer improves forecast aggregation by 34% on Elia offshore wind with tuned parameters (DM test, p < 0.001). Confirmed on two real-world datasets.' },
+  { color: '#10b981', title: '44% CRPS improvement on real wind data', detail: 'The online skill layer improves forecast aggregation by 44% on Elia offshore wind with tuned parameters (DM test, p < 0.001). Confirmed on two real-world datasets.' },
   { color: '#6366f1', title: 'Deposit policy is the key lever', detail: 'The mechanism\'s value depends on deposit quality. With informative deposits (correlated with skill), blended weighting achieves near-oracle accuracy. With random deposits, equal weighting is hard to beat.' },
   { color: '#f59e0b', title: 'Mathematically sound', detail: 'Budget-balanced to machine precision (gap < 10\u207B\u00B9\u2074). Sybil-proof: splitting identity provides zero advantage. Arbitrage-free across all parameter settings.' },
   { color: '#64748b', title: 'Equal weighting is a strong baseline', detail: 'Uniform weights are surprisingly competitive, especially under non-stationarity or small panels. The mechanism helps most when forecasters have heterogeneous skill and enough rounds for learning to converge.' },
@@ -34,7 +34,7 @@ export default function HomePage() {
             Skill × Stake
           </h1>
           <p className="text-lg text-slate-600 mt-3 max-w-4xl leading-relaxed">
-            This thesis investigates whether an online skill estimation layer, combined with stake-based deposits,
+            This project investigates whether an online skill estimation layer, combined with stake-based deposits,
             can improve probabilistic forecast aggregation under non-stationarity and strategic behaviour.
           </p>
         </header>
@@ -50,7 +50,7 @@ export default function HomePage() {
           <p className="text-sm text-slate-600 leading-relaxed max-w-4xl mt-2">
             <strong>Answer:</strong> Yes, but only when the panel has enough forecasters (N &ge; 6), enough rounds
             for learning to converge (~50), and heterogeneous skill levels. Under these conditions, the mechanism
-            achieves a 34% improvement in forecast quality on real wind data.
+            achieves a 44% improvement in forecast quality on real wind data.
           </p>
         </div>
 
@@ -134,15 +134,15 @@ export default function HomePage() {
 
         {/* ── Connecting statement ── */}
         <p className="text-sm text-slate-500 leading-relaxed -mt-8">
-          Building on this mechanism, the thesis makes the following contribution.
+          Building on this mechanism, the project makes the following contribution.
         </p>
 
-        {/* ── Thesis contribution ── */}
+        {/* ── Project contribution ── */}
         <section>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Thesis contribution</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Project contribution</h2>
           <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-6 space-y-4">
             <p className="text-sm text-indigo-900 leading-relaxed">
-              This thesis extends the Lambert (2008) self-financed wagering mechanism with an <span className="font-semibold">online skill layer</span>: 
+              This project extends the Lambert (2008) self-financed wagering mechanism with an <span className="font-semibold">online skill layer</span>: 
               each round, the mechanism observes forecaster accuracy via CRPS scoring, updates an EWMA loss estimate, 
               and maps it to a skill weight &sigma;<sub>i</sub> that gates the effective wager.
             </p>
@@ -157,7 +157,7 @@ export default function HomePage() {
               </div>
               <div className="rounded-lg bg-white border border-indigo-100 p-4">
                 <div className="text-xs font-semibold text-indigo-800 mb-1">Key finding</div>
-                <div className="text-[11px] text-indigo-700 leading-relaxed">34% CRPS improvement on real wind data with tuned parameters; deposit policy is the key lever determining mechanism value</div>
+                <div className="text-[11px] text-indigo-700 leading-relaxed">44% CRPS improvement on real wind data with tuned parameters; deposit policy is the key lever determining mechanism value</div>
               </div>
             </div>
           </div>

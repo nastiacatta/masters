@@ -9,9 +9,9 @@ export interface ExperimentMeta {
   rounds?: number;
   config?: Record<string, unknown>;
   dataFiles?: Record<string, string>;
-  /** For thesis walkthrough: experiment family (core, behaviour, dgp, robustness, ablations) */
+  /** For project walkthrough: experiment family (core, behaviour, dgp, robustness, ablations) */
   family?: string;
-  /** For thesis ordering / story */
+  /** For project ordering / story */
   thesisTags?: string[];
   storyOrder?: number;
   scenarioGroup?: string;

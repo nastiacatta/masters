@@ -21,7 +21,7 @@ const NODES: MatrixNode[] = [
   { id: 'online', label: 'Online Aggregation', citation: 'OGD, Hedge — adaptive, no payments', detail: 'Regret bounds, non-strategic', x: 78, y: 78 },
 
   { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, relative weights', detail: 'Online regression, Shapley payoff', x: 72, y: 55 },
-  { id: 'thesis', label: 'THIS THESIS', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 78, y: 20, isThesis: true },
+  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 78, y: 20, isThesis: true },
 ];
 
 export default function PositioningMatrixSlide() {
@@ -118,7 +118,7 @@ export default function PositioningMatrixSlide() {
           Self-financed →
         </text>
 
-        {/* Dashed connection lines from existing work to thesis — start/end at card edges */}
+        {/* Dashed connection lines from existing work to project — start/end at card edges */}
         {NODES.filter(n => !n.isThesis).map((node) => {
           const thesis = NODES.find(n => n.isThesis)!;
           const { cx: thesisCx, cy: thesisCy } = getCardCenter(thesis);

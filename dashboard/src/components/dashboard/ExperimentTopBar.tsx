@@ -1,7 +1,7 @@
 import { useStore } from '@/lib/store';
 import type { ExperimentMeta } from '@/lib/types';
 
-/** Thesis question groups (README: aggregation, intermittency, sybil, arbitrage, adaptation). */
+/** Project question groups (README: aggregation, intermittency, sybil, arbitrage, adaptation). */
 const THESIS_GROUP_ORDER = [
   'aggregation',
   'intermittency',
