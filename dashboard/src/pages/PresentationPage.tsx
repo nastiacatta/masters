@@ -99,19 +99,10 @@ const SLIDES: SlideData[] = [
   /* 4 — Where This Work Fits */
   {
     id: 'literature',
-    type: 'split',
+    type: 'content',
     title: 'Where This Work Fits',
-    bullets: [
-      '▸ Self-financed wager-based settlement (Lambert et al., 2008)',
-      '▸ Prediction-market architecture for forecast improvement (Raja et al., 2024)',
-      '▸ Repeated adaptation with intermittent participation (Vitali & Pinson, 2025)',
-      '',
-      '● Combining the three: memory across rounds + disciplined settlement + intermittency',
-      '',
-      '→ Gap: adaptive + self-financed + absolute skill',
-    ],
+    component: PositioningMatrixSlide,
     ref: 'Lambert et al., 2008 · Raja et al., 2024 · Vitali & Pinson, 2025',
-    rightComponent: PositioningMatrixSlide,
     slideNumber: 4,
   },
   /* 5 — My Contribution */

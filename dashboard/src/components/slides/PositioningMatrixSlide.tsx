@@ -17,10 +17,10 @@ interface MatrixNode {
 }
 
 const NODES: MatrixNode[] = [
-  { id: 'lambert', label: 'Lambert et al.', citation: 'Self-financed, static weights', detail: '7 properties, uniqueness theorem', x: 25, y: 28 },
-  { id: 'raja', label: 'Raja et al.', citation: 'Self-financed + client reward', detail: 'Payoff allocation, deposit-based', x: 25, y: 48 },
-  { id: 'vitali', label: 'Vitali & Pinson', citation: 'Adaptive, not self-financed', detail: 'Online regression, Shapley payoff', x: 75, y: 75 },
-  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'Skill learning + Lambert properties', x: 75, y: 28, isThesis: true },
+  { id: 'lambert', label: 'Lambert et al. (2008)', citation: 'Self-financed wager-based settlement', detail: '7 formal properties, uniqueness theorem', x: 25, y: 28 },
+  { id: 'raja', label: 'Raja et al. (2024)', citation: 'Prediction-market architecture', detail: 'Client reward, payoff allocation', x: 25, y: 50 },
+  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Repeated adaptation, intermittent', detail: 'Online regression, Shapley payoff', x: 75, y: 75 },
+  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'Skill learning + Lambert properties', x: 75, y: 25, isThesis: true },
 ];
 
 export default function PositioningMatrixSlide() {
@@ -30,8 +30,8 @@ export default function PositioningMatrixSlide() {
   const chartH = 620;
   const midX = chartX + chartW / 2;
   const midY = chartY + chartH / 2;
-  const cardW = 280;
-  const cardH = 110;
+  const cardW = 320;
+  const cardH = 120;
 
   // Helper: get card center position
   function getCardCenter(node: MatrixNode) {
