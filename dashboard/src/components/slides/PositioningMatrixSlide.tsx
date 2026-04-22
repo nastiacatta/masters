@@ -2,8 +2,8 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 4: Where This Work Fits — 2x2 positioning matrix.
- * Bigger viewBox (1200x750), larger cards (260x90).
- * Connection lines start/end at card EDGES (not centers) to avoid overlap.
+ * 4 nodes: Lambert, Raja, Vitali & Pinson, THIS PROJECT.
+ * "Online Aggregation" removed — too generic.
  */
 
 interface MatrixNode {
@@ -17,11 +17,10 @@ interface MatrixNode {
 }
 
 const NODES: MatrixNode[] = [
-  { id: 'lambert', label: 'Lambert et al. / Raja et al.', citation: 'Self-financed, static', detail: '7 properties, uniqueness theorem', x: 22, y: 22 },
-  { id: 'online', label: 'Online Aggregation', citation: 'OGD, Hedge — adaptive, no payments', detail: 'Regret bounds, non-strategic', x: 78, y: 78 },
-
-  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, relative weights', detail: 'Online regression, Shapley payoff', x: 72, y: 55 },
-  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 78, y: 20, isThesis: true },
+  { id: 'lambert', label: 'Lambert et al.', citation: 'Self-financed, static weights', detail: '7 properties, uniqueness theorem', x: 22, y: 25 },
+  { id: 'raja', label: 'Raja et al.', citation: 'Self-financed + client reward', detail: 'Payoff allocation, deposit-based', x: 22, y: 65 },
+  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Adaptive, not self-financed', detail: 'Online regression, Shapley payoff', x: 72, y: 65 },
+  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 75, y: 22, isThesis: true },
 ];
 
 export default function PositioningMatrixSlide() {
@@ -50,13 +49,11 @@ export default function PositioningMatrixSlide() {
     const halfW = cardW / 2;
     const halfH = cardH / 2;
 
-    // Calculate intersection with card rectangle
     if (dx === 0 && dy === 0) return { x: cx, y: cy };
 
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
-    // Check which edge the line intersects
     const scaleX = halfW / (absDx || 1);
     const scaleY = halfH / (absDy || 1);
     const scale = Math.min(scaleX, scaleY);
@@ -98,20 +95,20 @@ export default function PositioningMatrixSlide() {
         <line x1={chartX} y1={midY} x2={chartX + chartW} y2={midY} stroke={PALETTE.border} strokeWidth={2} strokeDasharray="8 6" />
 
         {/* X-axis label */}
-        <text x={chartX + 20} y={chartY + chartH + 40} fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate}>
+        <text x={chartX + 20} y={chartY + chartH + 40} fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}>
           Static (no learning)
         </text>
-        <text x={chartX + chartW - 20} y={chartY + chartH + 40} textAnchor="end" fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate}>
+        <text x={chartX + chartW - 20} y={chartY + chartH + 40} textAnchor="end" fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}>
           Adaptive (learns over time)
         </text>
-        <text x={chartX + chartW / 2} y={chartY + chartH + 40} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate} fontWeight={600}>
+        <text x={chartX + chartW / 2} y={chartY + chartH + 40} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate} fontWeight={600}>
           Adaptiveness →
         </text>
 
         {/* Y-axis label */}
         <text
           x={chartX - 40} y={chartY + chartH / 2}
-          fontFamily={TYPOGRAPHY.fontFamily} fontSize="16" fill={PALETTE.slate} fontWeight={600}
+          fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate} fontWeight={600}
           transform={`rotate(-90, ${chartX - 40}, ${chartY + chartH / 2})`}
           textAnchor="middle"
         >
@@ -124,26 +121,8 @@ export default function PositioningMatrixSlide() {
           const { cx: thesisCx, cy: thesisCy } = getCardCenter(thesis);
           const { cx: nodeCx, cy: nodeCy } = getCardCenter(node);
 
-          // Get edge points
           const startPt = getEdgePoint(node, thesisCx, thesisCy);
           const endPt = getEdgePoint(thesis, nodeCx, nodeCy);
-
-          // For the Online Aggregation node (bottom-right), curve the line to avoid passing through Vitali
-          if (node.id === 'online') {
-            const midX = Math.min(startPt.x, endPt.x) - 60;
-            const midY = (startPt.y + endPt.y) / 2;
-            return (
-              <path
-                key={`line-${node.id}`}
-                d={`M ${startPt.x} ${startPt.y} Q ${midX} ${midY} ${endPt.x} ${endPt.y}`}
-                fill="none"
-                stroke={PALETTE.border}
-                strokeWidth={1.5}
-                strokeDasharray="6 4"
-                opacity={0.6}
-              />
-            );
-          }
 
           return (
             <line
@@ -191,7 +170,7 @@ export default function PositioningMatrixSlide() {
                 y={cy - 16}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize={node.isThesis ? '20' : '18'}
+                fontSize="20"
                 fontWeight={700}
                 fill={node.isThesis ? PALETTE.teal : PALETTE.navy}
               >
@@ -202,7 +181,7 @@ export default function PositioningMatrixSlide() {
                 y={cy + 8}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="15"
+                fontSize="16"
                 fill={PALETTE.slate}
               >
                 {node.citation}
@@ -212,7 +191,7 @@ export default function PositioningMatrixSlide() {
                 y={cy + 30}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="13"
+                fontSize="15"
                 fontStyle="italic"
                 fill={node.isThesis ? PALETTE.teal : PALETTE.purple}
               >
