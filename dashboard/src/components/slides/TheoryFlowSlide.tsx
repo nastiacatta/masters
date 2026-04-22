@@ -14,16 +14,15 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
  */
 export default function TheoryFlowSlide() {
   const participants = [
-    { label: 'Forecaster A', y: 55 },
-    { label: 'Forecaster B', y: 175 },
-    { label: 'Forecaster C', y: 295 },
-    { label: 'Forecaster D', y: 415 },
+    { label: 'Forecaster A', y: 60 },
+    { label: 'Forecaster B', y: 200 },
+    { label: 'Forecaster C', y: 340 },
   ];
 
   // Layout constants
   const pBoxX = 30;
   const pBoxW = 220;
-  const pBoxH = 80;
+  const pBoxH = 95;
   const iconSize = 18;
 
   const aggX = 440;
@@ -115,7 +114,7 @@ export default function TheoryFlowSlide() {
                 x={pBoxX + 42}
                 y={p.y + 28}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="20"
+                fontSize="18"
                 fontWeight={600}
                 fill={PALETTE.navy}
               >
@@ -147,7 +146,7 @@ export default function TheoryFlowSlide() {
                 x={pBoxX + 34}
                 y={p.y + 58}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="18"
+                fontSize="15"
                 fill={PALETTE.slate}
               >
                 + forecast
