@@ -16,6 +16,53 @@
 > - $W_i(t)$ is the wealth (bankroll).
 > - Code references use `file:line` notation; theory references use paper short names.
 
+## How to read this document (recommended)
+
+If you want the clearest “learning path”, use this order:
+
+1. **Slides 2–3**: definition of the market and why combination is non-trivial with strategic agents.
+2. **Slide 7**: the full round pipeline (this is the backbone).
+3. **Slide 8**: how $\sigma$ is computed and why it is bounded.
+4. **Appendix C**: how the *actual code* produces the plots (runner → JSON → R plots/dashboard).
+5. **Appendix D**: truthfulness conditions and what breaks them.
+6. **Slides 13–14**: real-data results and the apples-to-apples benchmark comparison.
+
+## Glossary (quick reference)
+
+- **Report**: the probabilistic forecast object submitted by a forecaster. In this repo it is a *quantile vector* $q_i(t) \in \mathbb{R}^K$.
+- **Deposit** $b_i(t)$: amount the agent chooses to put on the table for round $t$ (can be policy-driven in experiments).
+- **Effective wager** $m_i(t)$: the *at-risk* part of the deposit that both (i) weights aggregation and (ii) funds settlement.
+- **Skill signal** $\sigma_i(t)$: bounded pre-round estimate of forecaster value; computed from past realised losses only.
+- **Score** $s_i(t)$: bounded number in $[0,1]$ derived from a proper scoring rule (here: CRPS-hat), used inside Lambert settlement.
+- **CRPS-hat**: finite-grid surrogate for CRPS computed from quantiles; this is what the code uses and what “CRPS” refers to in the plots.
+- **Uniform baseline**: equal weights across forecasters in aggregation (not a mechanism with settlement; just a forecast combination rule).
+- **Raja (history-free)**: Lambert/Raja-style weighted-score settlement with per-round confidence weights and no memory.
+- **Vitali OGD**: per-quantile online gradient descent on the simplex (pure online aggregation baseline in our benchmark).
+
+## Parameter cheat-sheet (what each knob does)
+
+These are the parameters you will be asked about most often in Q&A.
+
+### Mechanism (skill gate + skill learning)
+
+- **$\lambda \in [0,1]$ (skill gate floor)**: minimum fraction of a deposit that becomes effective wager even when skill is low.
+  - $\lambda = 0$ means low-skill accounts can be shut down entirely (not used here).
+  - $\lambda > 0$ means *everyone always participates a little*.
+- **$\eta > 0$ (skill gate curvature)**: shapes how strongly skill differences translate to wager differences.
+  - $\eta = 1$ linear; $\eta > 1$ amplifies high-skill forecasters.
+- **$\rho \in (0,1]$ (EWMA learning rate)**: how fast $L_i(t)$ reacts to new loss.
+  - large $\rho$ = fast adaptation but noisy; small $\rho$ = stable but slow.
+- **$\gamma > 0$ (loss→skill sensitivity)**: controls how steeply $\sigma$ drops with $L$.
+  - large $\gamma$ = aggressive separation; small $\gamma$ = gentle separation.
+- **$\sigma_{\min} \in (0,1)$ (skill floor)**: lower bound on the skill signal (keeps market access non-zero).
+- **$\kappa \in [0,1]$ (staleness/missingness decay)**: how fast absent forecasters revert toward baseline skill.
+- **`omega_max` (dominance cap)**: caps maximum share of total wager in aggregation (OFF in headline results with `omega_max=0.0`).
+
+### Evaluation
+
+- **`taus`**: the quantile grid. Default is `(0.1, 0.25, 0.5, 0.75, 0.9)`. Not equidistant → call it CRPS-hat.
+- **`warmup`**: number of rounds ignored for scoring to avoid “cold start” bias.
+
 ---
 
 ## Table of Contents
@@ -853,6 +900,17 @@ At a high level, a single round is:
 
 This is exactly the pipeline you narrate on Slide 7.
 
+### C1b. Minimal “data model” (shapes you should remember)
+
+Keep these shapes in mind while reading the code; it removes 80% of confusion.
+
+- $n$ forecasters, $K$ quantiles
+- `q_t`: shape `(n, K)` (quantile reports for round $t$)
+- `y_t`: scalar (normalised outcome for round $t$)
+- `taus`: shape `(K,)`
+- `sigma_t`, `b_t`, `m_t`, `alpha_t`: shape `(n,)`
+- `r_hat_t`: shape `(K,)` (market aggregated quantiles)
+
 ### C2. Simulation runner (synthetic + “mechanism on fixed forecasts”)
 
 `onlinev2/src/onlinev2/simulation.py` is the harness that loops the core round logic.
@@ -865,6 +923,16 @@ Key inputs you should know how to interpret:
   - `"fixed"` with `fixed_deposit=1.0` means the real-data results isolate the *weight-learning* mechanism; they do not exercise wealth-based deposit dynamics.
 - **`omega_max=0.0`**: dominance cap is off in all headline runs/plots.
 - **`store_history=True`**: stores `sigma_hist`, `wager_hist`, `r_hat_hist` so plots can be generated.
+
+### C2b. What the simulation returns (fields used by plots)
+
+When `store_history=True`, the simulation exposes the time series later used by `real_data/runner.py` and the R plots:
+
+- `sigma_hist`: `(n, T)` skill trajectories
+- `wager_hist`: `(n, T)` effective wager per agent per round (also the aggregation weights)
+- `r_hat_hist`: length `T` list of aggregated reports, each `(K,)`
+- `score_hist` (when present): `(n, T)` per-round scores used by settlement
+- `L_hist` (when present): EWMA loss state per agent
 
 ### C3. Real-data pipeline (Elia)
 
@@ -881,6 +949,15 @@ Real-data runs are produced by:
 **Reproducibility note.** The stochastic forecasters are seeded:
 - XGBoost uses `random_state=0`,
 - MLP uses `torch.manual_seed(0)`.
+
+### C3b. Where the exact slide numbers come from (files)
+
+- Slide 13 real-data numbers and skill trajectories:
+  - `dashboard/public/data/real_data/elia_wind/data/comparison.json`
+  - `dashboard/public/data/real_data/elia_electricity/data/comparison.json`
+- Slide 14 benchmark comparison plot:
+  - `dashboard/public/data/real_data/elia_wind/data/baselines.json`
+  - `dashboard/public/data/real_data/elia_electricity/data/baselines.json`
 
 ### C4. Baseline benchmark (Raja vs Vitali vs this project)
 
@@ -899,6 +976,21 @@ The head-to-head baseline is `scripts/run_baseline_comparison.py`:
 
 This is the cleanest “apples-to-apples” comparison because forecasts are held fixed.
 
+### C5. Reproduction commands (copy/paste)
+
+From repo root:
+
+```bash
+# Benchmark comparison (Raja vs Vitali vs this project) on both datasets
+onlinev2/.venv/bin/python scripts/run_baseline_comparison.py --dataset both --force-cache
+
+# Real-data mechanism comparison JSONs used by Slide 13
+onlinev2/.venv/bin/python scripts/run_real_data_with_skill.py --tuned
+
+# Regenerate all R plots used in slides (writes PNGs to dashboard/public/presentation-plots)
+Rscript scripts/plot_all_slides.R
+```
+
 ---
 
 <a id="appendix-d"></a>
@@ -915,6 +1007,16 @@ Fix a round $t$. Suppose:
 3. Agents are **risk-neutral** and maximise expected profit.
 
 Then the Lambert weighted-score settlement makes truthful reporting a best response.
+
+### D1b. What exactly is the agent maximising?
+
+In Lambert settlement (with $U=0$), the round-$t$ profit for agent $i$ is:
+
+$$
+\mathrm{profit}_i(t) = \pi_i^{\text{skill}}(t) - m_i(t).
+$$
+
+If $m_i(t)$ is fixed when the report is chosen, then the only report-dependent term is $s_i(t)$ (inside $\pi_i^{\text{skill}}$). The $\bar s(t)$ term is an affine adjustment that does not change the properness argument: maximising expected profit is equivalent to maximising expected score.
 
 ### D2. Why Lambert truthfulness still holds with the skill gate
 
@@ -933,6 +1035,15 @@ Truthfulness hinges on “wager independent of current report.” In this repo, 
 If deposits are computed from the **current-round** quantile report (quantile width proxy), then the wager becomes report-dependent, and strict truthfulness is no longer guaranteed by Lambert’s theorem.
 
 This is why the code contains explicit warnings that confidence must be lagged or exogenous for theorem-preserving claims.
+
+### D3b. Common confusion: “but the agent chooses the deposit”
+
+Lambert truthfulness is a statement about the **best report**, not the **best deposit**.
+
+- Agents may still strategically choose $b_i(t)$ to trade off expected return vs risk.
+- **Given** a deposit (and hence a fixed effective wager), strict properness makes truthful reporting optimal (risk-neutral).
+
+Deposit design is a separate behavioural layer (Slide 12), and this repo studies it explicitly.
 
 ### D4. Risk aversion
 
