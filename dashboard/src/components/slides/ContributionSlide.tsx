@@ -131,17 +131,6 @@ export default function ContributionSlide() {
         ))}
       </div>
 
-      {/* Footer note */}
-      <p
-        style={{
-          marginTop: 48,
-          fontSize: '1.1rem',
-          color: PALETTE.purple,
-          fontWeight: 600,
-        }}
-      >
-        Preserves budget balance and sybilproofness
-      </p>
     </div>
   );
 }
