@@ -18,6 +18,76 @@ function badgeColour(type: string): { bg: string; text: string } {
   }
 }
 
+/** Small 24×24 SVG icon per model type, coloured with the badge colour */
+function ModelTypeIcon({ type, colour }: { type: string; colour: string }) {
+  const size = 24;
+  switch (type) {
+    case 'Baseline':
+      // Horizontal line — simple persistence
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          <line x1="3" y1="12" x2="21" y2="12" stroke={colour} strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'Statistical':
+      // Sine wave
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          <path
+            d="M2 12 C5 6, 8 6, 10 12 S15 18, 18 12 S21 6, 22 12"
+            stroke={colour}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+      );
+    case 'Machine Learning':
+      // Neural network nodes
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          {/* connections */}
+          <line x1="5" y1="7" x2="12" y2="5" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          <line x1="5" y1="7" x2="12" y2="12" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          <line x1="5" y1="17" x2="12" y2="12" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          <line x1="5" y1="17" x2="12" y2="19" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          <line x1="12" y1="5" x2="19" y2="12" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          <line x1="12" y1="12" x2="19" y2="12" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          <line x1="12" y1="19" x2="19" y2="12" stroke={colour} strokeWidth="1.3" opacity={0.5} />
+          {/* nodes */}
+          <circle cx="5" cy="7" r="2.5" fill={colour} />
+          <circle cx="5" cy="17" r="2.5" fill={colour} />
+          <circle cx="12" cy="5" r="2.5" fill={colour} />
+          <circle cx="12" cy="12" r="2.5" fill={colour} />
+          <circle cx="12" cy="19" r="2.5" fill={colour} />
+          <circle cx="19" cy="12" r="2.5" fill={colour} />
+        </svg>
+      );
+    case 'Ensemble':
+      // Overlapping circles
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="9" cy="12" r="6" stroke={colour} strokeWidth="2" fill={colour} fillOpacity={0.12} />
+          <circle cx="15" cy="12" r="6" stroke={colour} strokeWidth="2" fill={colour} fillOpacity={0.12} />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+/** Background tint for Elia dataset cards */
+function datasetBgTint(label: string): string {
+  switch (label) {
+    case 'Wind':
+      return 'rgba(46, 139, 139, 0.05)';   // teal 5%
+    case 'Electricity':
+      return 'rgba(232, 93, 74, 0.05)';     // coral 5%
+    default:
+      return '#FFFFFF';
+  }
+}
+
 const ELIA_DATASETS = [
   {
     label: 'Wind',
@@ -35,9 +105,9 @@ const ELIA_DATASETS = [
  * Slide 9 — Models, Data, and Synthetic Setup.
  *
  * Three sections:
- *  1. Compact 7-model grid (name + type badge + one-line description)
- *  2. Two Elia dataset cards
- *  3. One-line motivation for synthetic-then-real validation
+ *  1. Compact 7-model grid (name + type icon + type badge + one-line description)
+ *  2. Two Elia dataset cards with subtle colour tints
+ *  3. Motivation bar with teal checkmark icon
  */
 export default function ModelsDataOverviewSlide() {
   return (
@@ -82,6 +152,7 @@ export default function ModelsDataOverviewSlide() {
                     flexWrap: 'wrap',
                   }}
                 >
+                  <ModelTypeIcon type={f.type} colour={badge.text} />
                   <span
                     style={{
                       fontSize: '1.1rem',
@@ -119,7 +190,7 @@ export default function ModelsDataOverviewSlide() {
           })}
         </div>
 
-        {/* ── Middle: Elia dataset cards ── */}
+        {/* ── Middle: Elia dataset cards with colour tints ── */}
         <div style={{ display: 'flex', gap: 16 }}>
           {ELIA_DATASETS.map((ds) => (
             <div
@@ -129,6 +200,7 @@ export default function ModelsDataOverviewSlide() {
                 flex: 1,
                 padding: '16px 20px',
                 borderLeft: `4px solid ${ds.colour}`,
+                background: datasetBgTint(ds.label),
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
@@ -157,18 +229,26 @@ export default function ModelsDataOverviewSlide() {
           ))}
         </div>
 
-        {/* ── Bottom: motivation line ── */}
+        {/* ── Bottom: motivation bar with teal checkmark icon ── */}
         <div
           style={{
-            background: 'rgba(46, 139, 139, 0.07)',
-            borderLeft: `4px solid ${PALETTE.teal}`,
-            padding: '12px 20px',
-            borderRadius: '0 10px 10px 0',
+            background: 'rgba(46, 139, 139, 0.08)',
+            borderLeft: `5px solid ${PALETTE.teal}`,
+            padding: '16px 24px',
+            borderRadius: '0 12px 12px 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
           }}
         >
+          {/* Teal checkmark icon */}
+          <svg width={28} height={28} viewBox="0 0 28 28" fill="none" style={{ flexShrink: 0 }}>
+            <circle cx="14" cy="14" r="13" fill={PALETTE.teal} fillOpacity={0.15} stroke={PALETTE.teal} strokeWidth="1.5" />
+            <path d="M8 14.5 L12 18.5 L20 10" stroke={PALETTE.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          </svg>
           <span
             style={{
-              fontSize: '1.1rem',
+              fontSize: '1.15rem',
               fontWeight: 600,
               color: PALETTE.navy,
               lineHeight: 1.5,
