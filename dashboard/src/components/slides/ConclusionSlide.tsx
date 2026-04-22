@@ -63,7 +63,7 @@ function DarkCard({
 }
 
 /**
- * Slide 15 — Conclusion + Future Work
+ * Slide 16 — Conclusion + Future Work
  *
  * Dark background layout with three CRPS comparison cards,
  * a key-takeaway highlight, and a future-work section.

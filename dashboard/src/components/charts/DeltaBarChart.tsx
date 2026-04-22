@@ -195,7 +195,7 @@ export default function DeltaBarChart({
               value: metricLabel,
               position: 'insideBottom',
               offset: -2,
-              fontSize: 10,
+              fontSize: 13,
               fill: '#94a3b8',
             }}
           />
@@ -213,7 +213,7 @@ export default function DeltaBarChart({
             label={{
               value: baselineLabel,
               position: 'top',
-              fontSize: 9,
+              fontSize: 12,
               fill: '#94a3b8',
             }}
           />

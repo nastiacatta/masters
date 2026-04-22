@@ -35,7 +35,7 @@ FORECASTER_COLOURS <- c(
 # ---------------------------------------------------------------------------
 # Shared ggplot2 theme
 # ---------------------------------------------------------------------------
-theme_thesis <- function(base_size = 16) {
+theme_thesis <- function(base_size = 18) {
   # Try Avenir Next first; fall back to sans if unavailable
   font_family <- tryCatch(
     {

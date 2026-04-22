@@ -2,7 +2,7 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 14: Strategic Robustness — properly centred layout.
+ * Slide 15: Strategic Robustness — properly centred layout.
  * Title centred, subtitle centred, attack table centred, shield centred below.
  */
 

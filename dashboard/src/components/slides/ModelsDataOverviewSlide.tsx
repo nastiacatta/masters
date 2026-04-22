@@ -32,7 +32,7 @@ const ELIA_DATASETS = [
 ];
 
 /**
- * Slide 8 — Models, Data, and Synthetic Setup.
+ * Slide 9 — Models, Data, and Synthetic Setup.
  *
  * Three sections:
  *  1. Compact 7-model grid (name + type badge + one-line description)
@@ -41,7 +41,7 @@ const ELIA_DATASETS = [
  */
 export default function ModelsDataOverviewSlide() {
   return (
-    <SlideShell title="Models, Data, and Synthetic Setup" slideNumber={8}>
+    <SlideShell title="Models, Data, and Synthetic Setup" slideNumber={9}>
       <div
         style={{
           flex: 1,

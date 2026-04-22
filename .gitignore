@@ -22,6 +22,10 @@ dashboard/dist/
 
 # Generated experiment artefacts
 onlinev2/outputs/
+onlinev2/outputs_cache/
+
+# R session history (local only)
+presentation/.Rhistory
 dashboard/public/data/core
 dashboard/public/data/behaviour
 
