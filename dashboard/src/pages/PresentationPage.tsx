@@ -205,7 +205,7 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Real Data: Elia Wind + Electricity',
     bullets: [
-      '▸ Elia wind: 44% CRPS reduction vs equal weights',
+      '▸ Elia wind: 44% CRPS reduction relative to equal weights',
       '▸ Naive ranks highest — wind is strongly autocorrelated',
       '▸ ML models (ARIMA, XGBoost, MLP) lag — over-spread quantiles',
       '▸ Electricity: ~8% reduction (forecasters more similar)',

@@ -41,7 +41,7 @@ export default function BaselineComparisonSlide() {
         >
           <img
             src={`${BASE}presentation-plots/baseline_comparison.png`}
-            alt="Mean CRPS on Elia wind and electricity for equal weights, Raja, Vitali, and our mechanism"
+            alt="Mean CRPS on Elia wind and electricity for equal weights, Raja, Vitali, and the thesis mechanism"
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
@@ -66,7 +66,7 @@ export default function BaselineComparisonSlide() {
               Raja et&nbsp;al. (history-free)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
-              Self-financed but history-free. Small gains vs equal weights (−2.5% wind, −2.3% electricity).
+              Self-financed but history-free. Small gains relative to equal weights (−2.5% wind, −2.3% electricity).
             </div>
           </div>
           <div
@@ -98,7 +98,7 @@ export default function BaselineComparisonSlide() {
               Ours (skill + self-financed)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
-              −44% wind, −8% electricity vs equal weights. Retains Lambert&apos;s properties and reports absolute skill.
+              −44% wind, −8% electricity relative to equal weights. Retains Lambert&apos;s properties and reports absolute skill.
             </div>
           </div>
         </div>

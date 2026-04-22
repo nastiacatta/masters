@@ -223,7 +223,7 @@ export default function ConclusionSlide() {
         }}
       >
         All methods evaluated on the same 7-forecaster panel, same warm-up,
-        same quantile grid. Percentages are mean-CRPS change vs equal weights.
+        same quantile grid. Percentages are mean-CRPS change relative to equal weights.
       </p>
     </SlideShell>
   );
