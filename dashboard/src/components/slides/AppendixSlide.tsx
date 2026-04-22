@@ -14,13 +14,13 @@ const QA_ITEMS: QAItem[] = [
     question:
       "Why not just use Vitali & Pinson's approach? It has lower CRPS.",
     answer:
-      "Vitali's OGD achieves lower CRPS (−65 % wind) but uses Shapley settlement (not self-financed) and relative weights on a simplex. Our mechanism preserves Lambert's 7 formal properties including budget balance and sybilproofness, and uses absolute skill signals. The trade-off is quantified: we pay ~21 pp in CRPS for self-financing + absolute skill.",
+      "Vitali & Pinson's OGD achieves lower CRPS (−65 % wind) but uses Shapley settlement (not self-financed) and relative weights on a simplex. This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness, and uses absolute skill signals. The trade-off is quantified: roughly 21 percentage points of CRPS on wind relative to OGD, in exchange for self-financing and absolute skill.",
   },
   {
     question:
       'Why does the best single forecaster (Naive) still beat the aggregate?',
     answer:
-      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate substantially (−44 % vs equal weights) but the ceiling is set by the best individual. This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
+      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate substantially (−44 % relative to equal weights) but the ceiling is set by the best individual. This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
   },
   {
     question:
@@ -199,8 +199,13 @@ function TabButton({
 /**
  * Appendix slide — backup material for Q&A.
  * No slide number, no section bar. Uses SlideShell without slideNumber.
+ * Props are passed by PresentationPage for consistency with other slides; content is static.
  */
-export default function AppendixSlide() {
+export default function AppendixSlide(_props: {
+  slide?: unknown;
+  palette?: unknown;
+  fontFamily?: string;
+}) {
   const [tab, setTab] = useState<AppendixTab>('qa');
 
   return (

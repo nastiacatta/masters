@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PasswordGate from '@/components/slides/PasswordGate';
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT } from '@/components/slides/shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT } from '@/components/slides/shared/presentationConstants';
 import { formatBulletText } from '@/components/slides/shared/formatBulletText';
 import TheoryFlowSlide from '@/components/slides/TheoryFlowSlide';
 import MarketFlowSlide from '@/components/slides/MarketFlowSlide';
@@ -27,7 +27,7 @@ import TitleSlide from '@/components/slides/TitleSlide';
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-const TOTAL_SLIDES = 16;
+const TOTAL_SLIDES = MAIN_DECK_SLIDE_COUNT;
 const BASE = import.meta.env.BASE_URL;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
@@ -138,10 +138,6 @@ const SLIDES: SlideData[] = [
     id: 'mechanism',
     type: 'content',
     title: 'Mechanism: Round-by-Round',
-    bullets: [
-      '▸ Core pipeline: submit → skill gate → aggregate → settle → update',
-      '▸ Same effective wager controls weight and exposure',
-    ],
     component: MechanismPipelineSlide,
     slideNumber: 7,
   },
@@ -182,15 +178,6 @@ const SLIDES: SlideData[] = [
     id: 'guarantees',
     type: 'content',
     title: 'Mechanism Guarantees',
-    bullets: [
-      '▸ The mechanism satisfies formal guarantees to machine precision',
-      '▸ Budget balance: gap < 10⁻¹³ — self-financed to numerical tolerance',
-      '▸ Mean profit ≈ 0 — pure redistribution, no subsidy or tax',
-      '▸ Sybil invariance: identical reports yield identical total profit',
-      '▸ Noise-skill correlation: r = −0.98 — higher noise maps to lower skill',
-      '',
-      '→ These are not approximate claims — verified to machine precision',
-    ],
     component: CorrectnessSlide,
     slideNumber: 11,
   },
@@ -207,18 +194,10 @@ const SLIDES: SlideData[] = [
     id: 'real-data',
     type: 'content',
     title: 'Real Data: Elia Wind + Electricity',
-    bullets: [
-      '▸ Elia wind: 44% CRPS reduction relative to equal weights',
-      '▸ Naive ranks highest — wind is strongly autocorrelated',
-      '▸ ML models (ARIMA, XGBoost, MLP) lag — over-spread quantiles',
-      '▸ Electricity: ~8% reduction (forecasters more similar)',
-      '',
-      '→ Conditional improvement — gains scale with forecaster heterogeneity',
-    ],
     component: ContributionsChartSlide,
     slideNumber: 13,
   },
-  /* 14 — Head-to-Head vs Raja & Vitali */
+  /* 14 — Benchmark comparison vs prior work */
   {
     id: 'baseline-comparison',
     type: 'content',
@@ -535,7 +514,20 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
 function ContentSlideView({ slide }: { slide: SlideData }) {
   if (slide.component) {
     const Comp = slide.component;
-    return <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+    const inner = <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
+    /* Appendix is interactive (scroll, tabs); stop click-to-advance from swallowing it */
+    if (slide.id === 'appendix') {
+      return (
+        <div
+          style={{ width: '100%', height: '100%', position: 'relative' }}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {inner}
+        </div>
+      );
+    }
+    return inner;
   }
   return (
     <div

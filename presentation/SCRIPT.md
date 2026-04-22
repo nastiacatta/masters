@@ -258,6 +258,22 @@ This project asked whether a prediction market can learn how much each contribut
 
 Thank you. I am happy to take questions.
 
+---
+
+# Demo (live dashboard) — ~1–2 min
+
+If we have a moment after questions — or you prefer to see it now — I will switch out of presentation mode to the **interactive dashboard** in the same browser app.
+
+**What it is.** The dashboard reads the same JSON outputs the slides are built from: Elia wind and electricity comparisons, the Raja / Vitali / project baseline benchmark, diagnostics for budget balance and sybil checks, and the behaviour-lab presets behind the robustness slide.
+
+**Suggested live path (you can ask me to jump anywhere).**
+
+1. **Home** — short orientation: what the mechanism does and where to click next.
+2. **Results** — pick Elia wind or electricity; scroll mean CRPS by method, optional skill trajectories, and any figure you want zoomed.
+3. **Diagnostics / robustness** — the numerical checks that match the “mechanism guarantees” slide (machine-precision budget gap, sybil invariance for identical clones, and related plots).
+4. **Behaviour** (optional, if time) — the preset families and comparison table that support the strategic-robustness narrative.
+
+**How to use it with me.** Ask for a specific dataset, method, or figure name from the slides; I will navigate there and read the headline number off the chart so we stay aligned with what you already saw.
 
 ---
 
@@ -272,7 +288,7 @@ Thank you. I am happy to take questions.
 Key points:
 - Vitali achieves −65 % CRPS on wind — the best in this benchmark.
 - Trade-off: Shapley settlement (not self-financed), relative weights on a simplex.
-- Our mechanism preserves Lambert's 7 formal properties including budget balance and sybilproofness.
+- This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness.
 - The cost is ~21 pp in CRPS — quantified, not hand-waved.
 
 ## Q2: "Why does Naive still beat the aggregate?"

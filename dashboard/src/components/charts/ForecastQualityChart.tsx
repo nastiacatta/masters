@@ -61,18 +61,18 @@ export default function ForecastQualityChart({ data }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis
             dataKey="t"
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 14 }}
             stroke="#94a3b8"
             domain={[zoom.state.left, zoom.state.right]}
-            label={{ value: 'Round', position: 'insideBottom', offset: -2, fontSize: 12 }}
+            label={{ value: 'Round', position: 'insideBottom', offset: -2, fontSize: 14 }}
           />
-          <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" label={{ value: 'CRPS', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }} />
+          <YAxis tick={{ fontSize: 14 }} stroke="#94a3b8" label={{ value: 'CRPS', angle: -90, position: 'insideLeft', fontSize: 13, fill: '#64748b' }} />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
+            contentStyle={{ fontSize: 13, borderRadius: 8, border: '1px solid #e2e8f0' }}
             formatter={(value: unknown, name: unknown) => [typeof value === 'number' ? value.toFixed(5) : String(value ?? ''), metricLabel(String(name ?? ''))]}
           />
           <Legend
-            wrapperStyle={{ fontSize: 11, cursor: 'pointer' }}
+            wrapperStyle={{ fontSize: 13, cursor: 'pointer' }}
             formatter={(v: string) => metricLabel(v)}
             onClick={(e) => {
               if (e?.dataKey) toggleSeries(String(e.dataKey));

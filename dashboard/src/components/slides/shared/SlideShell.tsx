@@ -1,4 +1,4 @@
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT } from './presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT } from './presentationConstants';
 
 export interface SlideShellProps {
   title: string;
@@ -70,7 +70,7 @@ function SlideNumber({ slideNumber, totalSlides, dark }: { slideNumber?: number;
         zIndex: 10,
       }}
     >
-      {slideNumber} / {totalSlides || 16}
+      {slideNumber} / {totalSlides ?? MAIN_DECK_SLIDE_COUNT}
     </div>
   );
 }

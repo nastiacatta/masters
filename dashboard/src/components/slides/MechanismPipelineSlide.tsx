@@ -1,6 +1,6 @@
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT } from './shared/presentationConstants';
 
 /**
  * Slide 7: Mechanism Round-by-Round — horizontal pipeline with
@@ -195,7 +195,9 @@ export default function MechanismPipelineSlide() {
       {/* Section bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>7 / 16</div>
+      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>
+        {`7 / ${MAIN_DECK_SLIDE_COUNT}`}
+      </div>
 
       {/* Title */}
       <div style={{ flexShrink: 0, marginBottom: 20 }}>
@@ -205,7 +207,7 @@ export default function MechanismPipelineSlide() {
         <h2 style={{ fontSize: '3.2rem', fontWeight: 700, color: PALETTE.navy, lineHeight: 1.15, margin: 0 }}>
           Mechanism: Round-by-Round
         </h2>
-        <div style={{ width: 60, height: 4, background: PALETTE.teal, borderRadius: 2, marginTop: 14 }} />
+        <div style={{ width: 64, height: 3, background: PALETTE.teal, borderRadius: 2, marginTop: 12, opacity: 0.9 }} />
       </div>
 
       {/* Steps */}

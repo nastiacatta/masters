@@ -36,10 +36,13 @@ export const TYPOGRAPHY = {
   body: { fontSize: '1.8rem', lineHeight: 2.2, marginBottom: '16px' },
   bodySplit: { fontSize: '1.7rem', lineHeight: 2.0, marginBottom: '14px' },
   bodyContent: { fontSize: '1.9rem', lineHeight: 2.2, marginBottom: '16px' },
-  chartTitle: { fontSize: '22px', fontWeight: 700 },
-  chartAxis: { fontSize: '16px' },
-  chartDataLabel: { fontSize: '17px', fontWeight: 600 },
+  chartTitle: { fontSize: '24px', fontWeight: 700 },
+  chartAxis: { fontSize: '18px' },
+  chartDataLabel: { fontSize: '19px', fontWeight: 600 },
 } as const;
+
+/** Numbered slides in the main deck (excludes appendix backup slide). */
+export const MAIN_DECK_SLIDE_COUNT = 16 as const;
 
 /**
  * Emphasis style mappings for inline text highlighting within bullet items.

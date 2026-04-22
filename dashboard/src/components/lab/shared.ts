@@ -11,7 +11,7 @@ export const CHART_MARGIN = { top: 8, right: 24, bottom: 4, left: 4 };
 /** Use when chart has X/Y axis labels so they are not clipped */
 export const CHART_MARGIN_LABELED = { top: 16, right: 24, bottom: 28, left: 52 };
 
-export const AXIS_TICK = { fontSize: 11, fill: '#64748b' };
+export const AXIS_TICK = { fontSize: 13, fill: '#64748b' };
 export const AXIS_STROKE = '#94a3b8';
 
 export const GRID_PROPS = { strokeDasharray: '3 3', stroke: '#e2e8f0', strokeOpacity: 0.4 } as const;
@@ -20,7 +20,7 @@ export const TOOLTIP_STYLE: CSSProperties = {
   borderRadius: 10,
   border: '1px solid #cbd5e1',
   boxShadow: '0 4px 16px -2px rgb(0 0 0 / 0.12)',
-  fontSize: 12,
+  fontSize: 13,
   padding: '10px 14px',
   background: 'rgba(255,255,255,0.98)',
   backdropFilter: 'blur(8px)',

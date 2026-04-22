@@ -245,7 +245,7 @@ export default function ContributionsChartSlide() {
                   offset: -12,
                   style: { fontSize: TYPOGRAPHY.chartAxis.fontSize, fontFamily: TYPOGRAPHY.fontFamily },
                 }}
-                tick={{ fontSize: 12, fontFamily: TYPOGRAPHY.fontFamily }}
+                tick={{ fontSize: 16, fontFamily: TYPOGRAPHY.fontFamily }}
                 stroke={PALETTE.slate}
               />
               <YAxis
@@ -257,7 +257,7 @@ export default function ContributionsChartSlide() {
                   offset: 4,
                   style: { fontSize: TYPOGRAPHY.chartAxis.fontSize, fontFamily: TYPOGRAPHY.fontFamily },
                 }}
-                tick={{ fontSize: 12, fontFamily: TYPOGRAPHY.fontFamily }}
+                tick={{ fontSize: 16, fontFamily: TYPOGRAPHY.fontFamily }}
                 stroke={PALETTE.slate}
               />
               <Tooltip
