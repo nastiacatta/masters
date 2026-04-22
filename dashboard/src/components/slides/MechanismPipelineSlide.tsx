@@ -195,7 +195,7 @@ export default function MechanismPipelineSlide() {
       {/* Section bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>7 / 15</div>
+      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>7 / 16</div>
 
       {/* Title */}
       <div style={{ flexShrink: 0, marginBottom: 20 }}>

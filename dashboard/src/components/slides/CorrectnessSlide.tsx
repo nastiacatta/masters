@@ -16,13 +16,13 @@ const GUARANTEES: GuaranteeRow[] = [
   {
     property: 'Budget gap',
     meaning: 'Self-financed — no external subsidy needed',
-    status: '< 10^-13',
+    status: 'Machine precision',
     pass: true,
   },
   {
     property: 'Mean profit',
     meaning: 'Zero-sum — no money created or destroyed',
-    status: '< 10^-13',
+    status: 'Machine precision',
     pass: true,
   },
   {
