@@ -117,17 +117,20 @@ export default function ModelsDataOverviewSlide() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 22,
+          justifyContent: 'space-between',
+          gap: 0,
           fontFamily: TYPOGRAPHY.fontFamily,
           minHeight: 0,
         }}
       >
-        {/* ── Top: 7-model grid ── */}
+        {/* ── Top: 7-model grid — flex:1 so it grows ── */}
         <div
           style={{
+            flex: 1,
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 12,
+            gap: 14,
+            alignContent: 'stretch',
           }}
         >
           {FORECASTERS.map((f) => {
@@ -137,11 +140,12 @@ export default function ModelsDataOverviewSlide() {
                 key={f.name}
                 style={{
                   ...CARD_STYLE,
-                  padding: '16px 18px',
+                  padding: '20px 22px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 8,
+                  gap: 10,
                   borderLeft: `4px solid ${badge.text}`,
+                  justifyContent: 'center',
                 }}
               >
                 <div
@@ -155,7 +159,7 @@ export default function ModelsDataOverviewSlide() {
                   <ModelTypeIcon type={f.type} colour={badge.text} />
                   <span
                     style={{
-                      fontSize: '1.1rem',
+                      fontSize: '1.2rem',
                       fontWeight: 700,
                       color: PALETTE.navy,
                     }}
@@ -178,9 +182,9 @@ export default function ModelsDataOverviewSlide() {
                 </div>
                 <span
                   style={{
-                    fontSize: '1.05rem',
+                    fontSize: '1.1rem',
                     color: PALETTE.charcoal,
-                    lineHeight: 1.35,
+                    lineHeight: 1.4,
                   }}
                 >
                   {f.description}
@@ -191,14 +195,14 @@ export default function ModelsDataOverviewSlide() {
         </div>
 
         {/* ── Middle: Elia dataset cards with colour tints ── */}
-        <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ display: 'flex', gap: 18, marginTop: 18 }}>
           {ELIA_DATASETS.map((ds) => (
             <div
               key={ds.label}
               style={{
                 ...CARD_STYLE,
                 flex: 1,
-                padding: '16px 20px',
+                padding: '20px 24px',
                 borderLeft: `4px solid ${ds.colour}`,
                 background: datasetBgTint(ds.label),
                 display: 'flex',
@@ -208,7 +212,7 @@ export default function ModelsDataOverviewSlide() {
             >
               <span
                 style={{
-                  fontSize: '1.1rem',
+                  fontSize: '1.2rem',
                   fontWeight: 700,
                   color: ds.colour,
                   whiteSpace: 'nowrap',
@@ -218,7 +222,7 @@ export default function ModelsDataOverviewSlide() {
               </span>
               <span
                 style={{
-                  fontSize: '1rem',
+                  fontSize: '1.1rem',
                   color: PALETTE.charcoal,
                   lineHeight: 1.4,
                 }}
@@ -234,7 +238,7 @@ export default function ModelsDataOverviewSlide() {
           style={{
             background: 'rgba(46, 139, 139, 0.08)',
             borderLeft: `5px solid ${PALETTE.teal}`,
-            padding: '16px 24px',
+            padding: '18px 28px',
             borderRadius: '0 12px 12px 0',
             display: 'flex',
             alignItems: 'center',
@@ -248,7 +252,7 @@ export default function ModelsDataOverviewSlide() {
           </svg>
           <span
             style={{
-              fontSize: '1.15rem',
+              fontSize: '1.2rem',
               fontWeight: 600,
               color: PALETTE.navy,
               lineHeight: 1.5,
