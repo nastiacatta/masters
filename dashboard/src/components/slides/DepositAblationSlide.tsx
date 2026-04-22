@@ -9,7 +9,7 @@ export default function DepositAblationSlide() {
       {/* Header badge */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <div style={{ background: PALETTE.purple, color: PALETTE.white, fontSize: '1rem', fontWeight: 700, padding: '8px 18px', borderRadius: 16, fontFamily: TYPOGRAPHY.fontFamily }}>
-          Bankroll+Conf: −34% vs Fixed
+          Bankroll+Conf: −34% relative to Fixed
         </div>
       </div>
 

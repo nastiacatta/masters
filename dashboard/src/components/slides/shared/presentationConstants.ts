@@ -74,7 +74,7 @@ export const CARD_STYLE: React.CSSProperties = {
 
 /**
  * Section definitions for the presentation flow.
- * 16-slide narrative: slide 5 = Mechanism Comparison, slide 14 = Head-to-Head vs baselines.
+ * 16-slide narrative: slide 5 = Mechanism Comparison, slide 14 = benchmark comparison slide.
  */
 export const SECTIONS = {
   PROBLEM:    { label: 'PROBLEM',    colour: '#003E74',    slides: [1, 2, 3, 4, 5, 6] },

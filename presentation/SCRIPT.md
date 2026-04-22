@@ -56,9 +56,9 @@ The key insight is that useful predictive information is often scattered across 
 
 ## [SLIDE 3] Why Combine Forecasts? (~1.5 min)
 
-So why not just pick the single best forecaster and use their prediction?
+So why not just select a single forecaster and use their prediction?
 
-The core motivation is that different forecasters make different errors. One model might be strong in calm conditions but weak during storms. Another might capture long-term trends but miss short-term spikes. Combining multiple forecasts averages out these individual errors and typically produces a more robust prediction than any single source alone.
+The core motivation is that different forecasters make different errors. One model might perform well in calm conditions but degrade during storms. Another might capture long-term trends but miss short-term spikes. Combining multiple forecasts averages out these idiosyncratic errors and typically produces a more robust prediction than relying on a single source.
 
 But there is a catch. When forecasts come from strategic participants — people or firms with their own incentives — simple averaging is not enough. Participants might exaggerate confidence to gain more influence, or submit deliberately noisy forecasts to game the system.
 
@@ -76,7 +76,7 @@ Lambert et al. introduced the weighted-score wagering mechanism. Participants su
 
 On the other side, Vitali & Pinson designed a repeated market that handles missing submissions and learns time-varying weights through online gradient descent. Their weights are relative — they live on a probability simplex. If one person's weight rises, everyone else's mechanically falls. And their settlement is not self-financed in the Lambert sense.
 
-The positioning matrix shows where each approach sits. Lambert and Raja give strong economic structure without adaptation. Vitali gives adaptation without self-financing. My thesis occupies the fourth corner — adaptive and self-financed, with an absolute skill signal.
+The positioning matrix shows where each approach sits. Lambert and Raja provide a disciplined economic structure without adaptation. Vitali provides adaptation without self-financing. This thesis occupies the fourth corner — adaptive and self-financed, with an absolute skill signal.
 
 ---
 
@@ -204,9 +204,9 @@ This is the first real-data validation. Everything before this was controlled si
 
 On Elia wind power — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, tuned parameters — the mechanism achieves a **44 % CRPS reduction** over equal weights. The skill-weighted aggregate is substantially more accurate than simply averaging all seven forecasters with equal influence.
 
-The skill trajectories on the right tell the story. The mechanism correctly identifies Naive persistence as the strongest forecaster — wind power is highly autocorrelated, so the most recent observation is a strong predictor. The Ensemble and EWMA follow. ARIMA, XGBoost, MLP, and Theta all land at roughly the same low skill — their quantile forecasts are over-spread relative to the realised distribution, so the CRPS penalises them similarly.
+The skill trajectories on the right summarise the learned ranking. Naive persistence receives the highest learned skill — wind power is highly autocorrelated, so the most recent observation is informative. The Ensemble and EWMA follow. ARIMA, XGBoost, MLP, and Theta all land at roughly the same low skill — their quantile forecasts are over-spread relative to the realised distribution, so the CRPS penalises them similarly.
 
-On the Elia electricity dataset, the improvement is smaller — **8 %** over equal weights. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms a clear empirical pattern: gains are conditional on forecaster diversity. When everyone is roughly equally good, equal weights are hard to beat.
+On the Elia electricity dataset, the improvement is smaller — **8 %** over equal weights. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms a clear empirical pattern: gains are conditional on forecaster diversity. When forecasters are broadly similar in quality, equal weights can be difficult to improve on.
 
 ---
 
