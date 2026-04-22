@@ -30,15 +30,9 @@ validate_data(df, c("k", "mean_ratio", "mean_delta", "ci_low", "ci_high"), "sybi
 # ---------------------------------------------------------------------------
 # 3. Prepare data for plotting
 # ---------------------------------------------------------------------------
-# The CSV contains identical-clone results (ratio ≈ 1.0 for all k).
-# The diversified-clone ratio (~1.065) is a known result from the full
-# experiment (see onlinev2/outputs_final) and is referenced throughout
-# the presentation scripts and slide components.
-
 df_identical <- df %>%
   mutate(scenario = "Identical clones")
 
-# Diversified-clone reference value (mean across all k from the full experiment)
 diversified_ratio <- 1.065
 
 df_diversified <- data.frame(
@@ -55,7 +49,7 @@ df_plot$scenario <- factor(df_plot$scenario,
                            levels = c("Identical clones", "Diversified clones"))
 
 # ---------------------------------------------------------------------------
-# 4. Build the plot
+# 4. Build the plot (clean lines + points, no annotation labels)
 # ---------------------------------------------------------------------------
 p <- ggplot(df_plot, aes(x = factor(k), y = mean_ratio,
                          colour = scenario, shape = scenario, group = scenario)) +
@@ -66,26 +60,6 @@ p <- ggplot(df_plot, aes(x = factor(k), y = mean_ratio,
   geom_line(linewidth = 1.2, alpha = 0.8) +
   # Points
   geom_point(size = 5, stroke = 1.2) +
-  # Annotation for identical clones — perfect sybilproofness
-  annotate(
-    "label",
-    x = 5.5, y = 1.0,
-    label = "Ratio = 1.000000\n(perfect sybilproofness)",
-    size = 5, fontface = "bold",
-    fill = PALETTE$navy, colour = "white",
-    label.padding = unit(0.5, "lines"),
-    label.r = unit(0.3, "lines")
-  ) +
-  # Annotation for diversified clones
-  annotate(
-    "label",
-    x = 2.5, y = diversified_ratio + 0.008,
-    label = sprintf("Ratio \u2248 %.3f\n(known limitation)", diversified_ratio),
-    size = 5, fontface = "bold",
-    fill = PALETTE$coral, colour = "white",
-    label.padding = unit(0.5, "lines"),
-    label.r = unit(0.3, "lines")
-  ) +
   scale_colour_manual(
     values = c(
       "Identical clones"   = PALETTE$teal,
@@ -104,8 +78,8 @@ p <- ggplot(df_plot, aes(x = factor(k), y = mean_ratio,
     labels = scales::number_format(accuracy = 0.01)
   ) +
   labs(
-    title = "Sybil Invariance: Clone Profit Ratios",
-    subtitle = "Identical clones gain no advantage; diversified clones gain ~6.5%",
+    title = NULL,
+    subtitle = NULL,
     x = "Number of clones (k)",
     y = "Profit ratio (clones / original)",
     colour = NULL,
@@ -113,8 +87,6 @@ p <- ggplot(df_plot, aes(x = factor(k), y = mean_ratio,
   ) +
   theme_thesis() +
   theme(
-    plot.subtitle = element_text(size = 14, colour = PALETTE$slate,
-                                 margin = margin(b = 15)),
     legend.position = "bottom",
     legend.text     = element_text(size = 14)
   )

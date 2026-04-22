@@ -49,11 +49,9 @@ if (has_electricity) validate_rows(elec_json$rows, "electricity_rows")
 # ---------------------------------------------------------------------------
 # 3. Build CRPS comparison data
 # ---------------------------------------------------------------------------
-# Methods to display (in presentation order)
 display_methods <- c("uniform", "mechanism", "skill", "inverse_variance",
                      "trimmed_mean", "median", "best_single", "oracle")
 
-# Readable labels
 method_labels <- c(
   uniform          = "Equal\nWeights",
   mechanism        = "Mechanism",
@@ -65,7 +63,6 @@ method_labels <- c(
   oracle           = "Oracle"
 )
 
-# Colours for methods
 method_colours <- c(
   uniform          = PALETTE$slate,
   mechanism        = PALETTE$teal,
@@ -96,44 +93,26 @@ if (has_electricity) {
   crps_df <- bind_rows(crps_df, elec_crps)
 }
 
-# Compute improvement percentages for annotation
-wind_uniform <- wind_crps$mean_crps[wind_crps$method == "uniform"]
-wind_mech    <- wind_crps$mean_crps[wind_crps$method == "mechanism"]
-wind_best    <- wind_crps$mean_crps[wind_crps$method == "best_single"]
-wind_improv  <- round((wind_mech - wind_uniform) / wind_uniform * 100, 0)
-
-if (has_electricity) {
-  elec_uniform <- elec_crps$mean_crps[elec_crps$method == "uniform"]
-  elec_mech    <- elec_crps$mean_crps[elec_crps$method == "mechanism"]
-  elec_improv  <- round((elec_mech - elec_uniform) / elec_uniform * 100, 0)
-}
-
 # ---------------------------------------------------------------------------
-# 4. Panel A: CRPS comparison bar chart
+# 4. Panel A: CRPS comparison bar chart (clean, no value labels on bars)
 # ---------------------------------------------------------------------------
-make_crps_panel <- function(df, title_text, improv_pct) {
-  # Ensure method ordering
+make_crps_panel <- function(df, facet_label) {
   df$method <- factor(df$method, levels = display_methods)
 
   p <- ggplot(df, aes(x = method, y = mean_crps, fill = method)) +
     geom_col(width = 0.7, show.legend = FALSE) +
-    geom_text(
-      aes(label = sprintf("%.4f", mean_crps)),
-      vjust = -0.5, size = 3.8, fontface = "bold",
-      colour = PALETTE$charcoal
-    ) +
     scale_fill_manual(values = method_colours) +
     scale_x_discrete(labels = method_labels[display_methods]) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
     labs(
-      title    = title_text,
-      subtitle = sprintf("Mechanism: %d%% CRPS change relative to equal weights", improv_pct),
+      title    = NULL,
+      subtitle = facet_label,
       x = NULL,
       y = "Mean CRPS (lower is better)"
     ) +
     theme_thesis(base_size = 14) +
     theme(
-      plot.subtitle  = element_text(size = 13, colour = PALETTE$teal,
+      plot.subtitle  = element_text(size = 14, colour = PALETTE$navy,
                                     face = "bold", margin = margin(b = 10)),
       axis.text.x    = element_text(size = 11, lineheight = 0.9),
       axis.title.y   = element_text(size = 13)
@@ -141,16 +120,15 @@ make_crps_panel <- function(df, title_text, improv_pct) {
   p
 }
 
-p_wind_crps <- make_crps_panel(wind_crps, "Elia Wind", wind_improv)
+p_wind_crps <- make_crps_panel(wind_crps, "Elia Wind")
 
 if (has_electricity) {
-  p_elec_crps <- make_crps_panel(elec_crps, "Elia Electricity", elec_improv)
+  p_elec_crps <- make_crps_panel(elec_crps, "Elia Electricity")
 }
 
 # ---------------------------------------------------------------------------
 # 5. Panel B: Learned skill trajectories (sigma over time)
 # ---------------------------------------------------------------------------
-# Short forecaster labels for the legend
 forecaster_short <- c(
   "Naive", "EWMA", "ARIMA", "XGBoost", "MLP", "Theta", "Ensemble"
 )
@@ -159,7 +137,6 @@ make_skill_panel <- function(json, dataset_label) {
   skill_raw <- json$skill_history
   n_fc <- json$config$n_forecasters
 
-  # Extract sigma columns and pivot to long format
   sigma_cols <- paste0("sigma_", 0:(n_fc - 1))
   available  <- intersect(sigma_cols, names(skill_raw))
 
@@ -180,10 +157,6 @@ make_skill_panel <- function(json, dataset_label) {
       forecaster = forecaster_short[idx + 1]
     )
 
-  # Smooth each forecaster's skill signal with a causal rolling mean so the
-  # trajectory is legible on a presentation slide.  Window is ~2% of total
-  # rounds, which knocks out hour-to-hour noise while preserving regime
-  # shifts over days/weeks.
   skill_long <- skill_long %>%
     group_by(forecaster) %>%
     arrange(t, .by_group = TRUE) %>%
@@ -202,14 +175,15 @@ make_skill_panel <- function(json, dataset_label) {
     scale_colour_manual(values = FORECASTER_COLOURS, name = "Forecaster") +
     scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
     labs(
-      title = paste0("Learned Skill Trajectories — ", dataset_label),
-      subtitle = "Causal rolling mean (window = 5% of T) — higher σ means more influence in the market",
+      title = NULL,
+      subtitle = paste0("Learned Skill — ", dataset_label),
       x     = "Round (t)",
       y     = expression(bold("Skill signal") ~ (sigma))
     ) +
     theme_thesis(base_size = 14) +
     theme(
-      plot.subtitle   = element_text(size = 11, colour = PALETTE$slate),
+      plot.subtitle   = element_text(size = 14, colour = PALETTE$navy,
+                                     face = "bold", margin = margin(b = 10)),
       legend.position = "bottom",
       legend.text     = element_text(size = 11),
       legend.title    = element_text(size = 12, face = "bold")
@@ -226,35 +200,13 @@ if (has_electricity) {
 }
 
 # ---------------------------------------------------------------------------
-# 6. Compose final plot with patchwork
+# 6. Compose final plot (no patchwork title/subtitle)
 # ---------------------------------------------------------------------------
 if (has_electricity) {
-  # 2×2 layout: top row = CRPS bars, bottom row = skill trajectories
   p_final <- (p_wind_crps | p_elec_crps) /
-             (p_wind_skill | p_elec_skill) +
-    plot_annotation(
-      title    = "Real-Data Validation: Elia Wind & Electricity",
-      subtitle = "CRPS comparison across aggregation methods and learned skill evolution",
-      theme = theme_thesis(base_size = 16) &
-        theme(
-          plot.title    = element_text(size = 20, face = "bold", colour = PALETTE$navy),
-          plot.subtitle = element_text(size = 15, colour = PALETTE$slate,
-                                       margin = margin(b = 10))
-        )
-    )
+             (p_wind_skill | p_elec_skill)
 } else {
-  # Single dataset: stack vertically
-  p_final <- p_wind_crps / p_wind_skill +
-    plot_annotation(
-      title    = "Real-Data Validation: Elia Wind",
-      subtitle = "CRPS comparison across aggregation methods and learned skill evolution",
-      theme = theme_thesis(base_size = 16) &
-        theme(
-          plot.title    = element_text(size = 20, face = "bold", colour = PALETTE$navy),
-          plot.subtitle = element_text(size = 15, colour = PALETTE$slate,
-                                       margin = margin(b = 10))
-        )
-    )
+  p_final <- p_wind_crps / p_wind_skill
 }
 
 # ---------------------------------------------------------------------------

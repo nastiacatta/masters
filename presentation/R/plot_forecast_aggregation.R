@@ -56,7 +56,6 @@ df_long <- df %>%
                                      "Equal Weights"))
   )
 
-# Method colours
 method_colours <- c(
   "Equal Weights"          = PALETTE$slate,
   "Deposit-Weighted"       = PALETTE$coral,
@@ -66,22 +65,20 @@ method_colours <- c(
 )
 
 # ---------------------------------------------------------------------------
-# 4. Build the plot — cumulative CRPS over rounds
+# 4. Build the plot — clean lines only, no extra annotations
 # ---------------------------------------------------------------------------
 p <- ggplot(df_long, aes(x = t, y = cum_crps, colour = method_label)) +
   geom_line(linewidth = 1.0, alpha = 0.85, na.rm = TRUE) +
   scale_colour_manual(values = method_colours, name = "Weighting Method") +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.001)) +
   labs(
-    title = "Forecast Aggregation: Cumulative CRPS Over Time",
-    subtitle = "Lower cumulative CRPS indicates better aggregate forecast quality",
+    title = NULL,
+    subtitle = NULL,
     x = "Round",
     y = "Cumulative Mean CRPS"
   ) +
   theme_thesis() +
   theme(
-    plot.subtitle = element_text(size = 14, colour = PALETTE$slate,
-                                 margin = margin(b = 15)),
     legend.position = "right",
     legend.key.width = unit(1.5, "cm")
   )

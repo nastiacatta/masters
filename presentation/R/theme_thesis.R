@@ -51,12 +51,15 @@ theme_thesis <- function(base_size = 16) {
   theme_minimal(base_size = base_size) +
     theme(
       text             = element_text(family = font_family, colour = PALETTE$charcoal),
-      plot.title       = element_text(size = 18, face = "bold", colour = PALETTE$navy,
-                                      margin = margin(b = 10)),
+      plot.title       = element_blank(),
+      plot.subtitle    = element_blank(),
+      plot.margin      = margin(20, 20, 20, 20),
       axis.title       = element_text(size = 16, face = "bold"),
-      axis.text        = element_text(size = 14),
+      axis.text        = element_text(size = 15),
       legend.text      = element_text(size = 14),
       legend.title     = element_text(size = 14, face = "bold"),
+      legend.key.size  = unit(1.2, "lines"),
+      panel.grid.major = element_line(colour = "#E8ECF0", linewidth = 0.3),
       panel.grid.minor = element_blank(),
       plot.background  = element_rect(fill = "white", colour = NA),
       panel.background = element_rect(fill = "white", colour = NA)

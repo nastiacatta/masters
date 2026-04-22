@@ -36,17 +36,8 @@ validate_data(df_seeds, c("seed", "corr_loss", "corr_sigma"),
               "quantiles_crps_seeds")
 
 # ---------------------------------------------------------------------------
-# 3. Compute Spearman rho annotation
+# 3. Build the plot (clean scatter + line, no annotations)
 # ---------------------------------------------------------------------------
-# Use the per-seed correlations (already Spearman rank correlations).
-# All seeds show rho = 1.0, so the mean is 1.0.
-mean_rho <- mean(df_seeds$corr_sigma)
-rho_label <- sprintf("Spearman \u03C1 = %.1f", mean_rho)
-
-# ---------------------------------------------------------------------------
-# 4. Build the plot
-# ---------------------------------------------------------------------------
-# Assign readable labels to each forecaster
 df_summary <- df_summary %>%
   mutate(forecaster_label = paste0("F", forecaster))
 
@@ -64,19 +55,6 @@ p <- ggplot(df_summary, aes(x = tau_true, y = mean_sigma_tail)) +
     vjust = -1.3, size = 4.5, fontface = "bold",
     colour = PALETTE$charcoal
   ) +
-  # Spearman rho annotation — top-left corner
-  annotate(
-    "label",
-    x = min(df_summary$tau_true) + 0.02,
-    y = max(df_summary$mean_sigma_tail) - 0.005,
-    label = rho_label,
-    size = 6, fontface = "bold",
-    fill = PALETTE$navy, colour = "white",
-    label.padding = unit(0.5, "lines"),
-    label.r = unit(0.3, "lines")
-  ) +
-  # Diagonal reference line (perfect identity would be tau_true = sigma)
-  # Not directly comparable scales, but a subtle guide helps
   scale_fill_manual(
     values = c(
       "0" = PALETTE$teal,
@@ -96,19 +74,15 @@ p <- ggplot(df_summary, aes(x = tau_true, y = mean_sigma_tail)) +
     labels = scales::number_format(accuracy = 0.01)
   ) +
   labs(
-    title = "Skill Recovery: True Noise vs Learned Skill",
-    subtitle = "Quantiles-CRPS scoring \u2014 higher noise \u2192 lower learned skill (correct ranking)",
+    title = NULL,
+    subtitle = NULL,
     x = expression(bold("True noise level") ~ (tau[true])),
     y = expression(bold("Learned skill") ~ (bar(sigma)[tail]))
   ) +
-  theme_thesis() +
-  theme(
-    plot.subtitle = element_text(size = 14, colour = PALETTE$slate,
-                                 margin = margin(b = 15))
-  )
+  theme_thesis()
 
 # ---------------------------------------------------------------------------
-# 5. Save to both output directories
+# 4. Save to both output directories
 # ---------------------------------------------------------------------------
 save_dual(p, "quantiles_crps_recovery.png")
 
