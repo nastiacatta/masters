@@ -20,7 +20,7 @@ const NODES: MatrixNode[] = [
   { id: 'lambert', label: 'Lambert et al.', citation: 'Self-financed, static weights', detail: '7 properties, uniqueness theorem', x: 25, y: 28 },
   { id: 'raja', label: 'Raja et al.', citation: 'Self-financed + client reward', detail: 'Payoff allocation, deposit-based', x: 25, y: 48 },
   { id: 'vitali', label: 'Vitali & Pinson', citation: 'Adaptive, not self-financed', detail: 'Online regression, Shapley payoff', x: 75, y: 75 },
-  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'EWMA skill + self-financed settlement', x: 75, y: 28, isThesis: true },
+  { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'Skill learning + Lambert properties', x: 75, y: 28, isThesis: true },
 ];
 
 export default function PositioningMatrixSlide() {
@@ -191,7 +191,7 @@ export default function PositioningMatrixSlide() {
                 y={cy + 30}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="18"
+                fontSize="15"
                 fontStyle="italic"
                 fill={node.isThesis ? PALETTE.teal : PALETTE.purple}
               >
