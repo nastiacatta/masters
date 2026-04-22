@@ -50,7 +50,7 @@ export interface AggregatedRow {
   seedCount: number;
 }
 
-/** Thesis claim from thesis_results.json */
+/** Project claim from thesis_results.json */
 export interface ThesisClaim {
   id: string;
   title: string;

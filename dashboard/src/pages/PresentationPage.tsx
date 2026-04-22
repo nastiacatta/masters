@@ -19,7 +19,7 @@ import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSli
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 
 /**
- * Full-screen presentation mode for thesis defence.
+ * Full-screen presentation mode for project defence.
  * Academic styling with section indicators, slide numbers, and new palette.
  */
 
@@ -219,7 +219,7 @@ const SLIDES: SlideData[] = [
   {
     id: 'baseline-comparison',
     type: 'content',
-    title: 'Benchmark Comparison: Prior Work and This Thesis',
+    title: 'Benchmark Comparison: Prior Work and This Project',
     component: BaselineComparisonSlide,
     slideNumber: 14,
   },

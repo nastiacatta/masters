@@ -68,7 +68,7 @@ export default function Diagnostics() {
     <div className="p-6 max-w-7xl">
       <PageHeader
         title="Diagnostics"
-        description="Detailed diagnostic panels supporting the thesis claims: forecast quality, calibration, intermittency, and robustness to strategic behaviour."
+        description="Detailed diagnostic panels supporting the project claims: forecast quality, calibration, intermittency, and robustness to strategic behaviour."
       />
       {error && <ErrorState message="Some data failed to load; showing available data." error={error} />}
       <ExperimentContext

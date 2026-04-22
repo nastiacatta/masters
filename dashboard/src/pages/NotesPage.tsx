@@ -81,7 +81,7 @@ const EXPERIMENTS = [
     title: 'Real data: Elia offshore wind, mechanism +21.1% (1h-ahead)',
     status: 'confirmed' as const,
     finding: '5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on Elia Belgian offshore wind power (17,544 hourly points, 2024–2025). The mechanism beats equal weighting by 21.1% and skill-only by 8.5%. This is the strongest result: the skill × stake combination adds genuine value when forecasters have heterogeneous, time-varying quality.',
-    implication: 'On real data with real models, the thesis claim holds strongly. The mechanism correctly identifies and upweights better forecasters as their relative quality shifts over time.',
+    implication: 'On real data with real models, the project claim holds strongly. The mechanism correctly identifies and upweights better forecasters as their relative quality shifts over time.',
     data: [
       { label: 'Mechanism (skill × stake)', delta: '-0.019612', pct: '+21.1%', sig: true },
       { label: 'Skill-only', delta: '-0.011749', pct: '+12.6%', sig: true },
@@ -117,7 +117,7 @@ const EXPERIMENTS = [
     title: 'Regime shift: mechanism adapts across seasons',
     status: 'confirmed' as const,
     finding: 'The mechanism improves in every season: winter +17.3%, spring +14.3%, summer +11.8%, autumn +14.6%. The biggest gains are in winter when wind is most variable and model quality differences are largest.',
-    implication: 'The online skill layer adapts to seasonal regime shifts without any explicit season detection. This directly answers the non-stationarity part of the thesis question.',
+    implication: 'The online skill layer adapts to seasonal regime shifts without any explicit season detection. This directly answers the non-stationarity part of the project question.',
     data: [
       { label: 'Winter (Dec–Feb)', delta: '-0.018', pct: '+17.3%', sig: true },
       { label: 'Spring (Mar–May)', delta: '-0.015', pct: '+14.3%', sig: true },

@@ -1,5 +1,5 @@
 /**
- * Thesis walkthrough: step IDs, labels, and flow.
+ * Project walkthrough: step IDs, labels, and flow.
  * Flow: Inputs → DGP → Behaviour → Core → Results → Next state
  *
  * Behaviour (participation, reporting, deposits) sits between signal generation
@@ -37,7 +37,7 @@ export const EXPLORER_STAGE_LABELS: Record<ExplorerStageId, string> = {
   results: 'Results',
 };
 
-/** Core sub-components (from thesis / Raja-style mechanism) */
+/** Core sub-components (from project / Raja-style mechanism) */
 export const CORE_SUBTABS = [
   'task_setup',
   'submission',
@@ -80,9 +80,9 @@ export const BEHAVIOUR_SUBTAB_LABELS: Record<BehaviourSubtabId, string> = {
   identity: 'Identity / sybils',
 };
 
-/** Thesis research question (one sentence). */
+/** Project research question (one sentence). */
 export const THESIS_RESEARCH_QUESTION =
   'Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation?';
 
-/** Short thesis title. */
+/** Short project title. */
 export const THESIS_TITLE = 'Adaptive skill and stake in forecast markets';

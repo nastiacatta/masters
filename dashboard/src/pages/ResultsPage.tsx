@@ -192,7 +192,7 @@ function seFinite(values: Array<number | undefined | null>): number | null {
 }
 
 const EXPERIMENT_CARDS = [
-  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 7 models', key: '34% CRPS improvement (tuned)' },
+  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 7 models', key: '44% CRPS improvement (tuned)' },
   { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-min prices, volatile spikes', key: 'Generalisation test' },
   { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill gate', key: 'Ranking correct, modest separation' },
   { title: 'Method Race', tab: 'Accuracy', color: '#6366f1', desc: '6 agents, 200 rounds, 4 methods', key: 'Skill × stake wins after ~50 rounds' },
@@ -283,7 +283,7 @@ function DepositSensitivityPanel() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800">How deposit policy affects accuracy (Elia Wind)</h3>
         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-          Fixed deposits give the mechanism the most room to work (~34% CRPS improvement over equal weighting with tuned parameters).
+          Fixed deposits give the mechanism the most room to work (~44% CRPS improvement over equal weighting with tuned parameters).
           Exponential deposits reduce the advantage to ~15%, and bankroll-fraction deposits to ~5%.
           The deposit policy determines how much of the skill signal reaches the aggregate weights.
         </p>
@@ -1979,7 +1979,7 @@ export default function ResultsPage() {
 
                 <p className="text-[11px] text-slate-500 leading-relaxed">
                   The chart shows mean CRPS (accuracy, lower = better) and Gini (concentration, lower = fairer)
-                  for each rule. The thesis uses wealth_fraction as the default. It balances accuracy improvement
+                  for each rule. The project uses wealth_fraction as the default. It balances accuracy improvement
                   against concentration risk. Fixed deposits are used for the skill recognition experiment above
                   to isolate the pure skill signal without wealth confounds.
                 </p>
@@ -1994,7 +1994,7 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
                 <h3 className="text-sm font-semibold text-indigo-900 mb-1">Scientific Analysis</h3>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  Automated validation of thesis claims, cross-experiment consistency, sensitivity analysis,
+                  Automated validation of project claims, cross-experiment consistency, sensitivity analysis,
                   failure mode documentation, and analysis gap tracking. This section provides the interpretive
                   layer that ensures results are presented with scientific rigour.
                 </p>
@@ -2002,7 +2002,7 @@ export default function ResultsPage() {
 
               {/* ── Claim Evidence Cards ── */}
               <section>
-                <h3 className="text-sm font-semibold text-slate-800 mb-3">Thesis Claims</h3>
+                <h3 className="text-sm font-semibold text-slate-800 mb-3">Project Claims</h3>
                 {claimValidation.loading ? (
                   <p className="text-xs text-slate-400">Loading claim validation…</p>
                 ) : claimValidation.error ? (

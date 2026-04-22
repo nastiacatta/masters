@@ -1,7 +1,7 @@
 /**
  * Full behaviour taxonomy: 46 items across 9 families with coverage status.
  *
- * Sourced from the thesis taxonomy and BEHAVIOUR_COVERAGE.md audit.
+ * Sourced from the project taxonomy and BEHAVIOUR_COVERAGE.md audit.
  */
 
 import type { TaxonomyItem } from './hiddenAttributes';

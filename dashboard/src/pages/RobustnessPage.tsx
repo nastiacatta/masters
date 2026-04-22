@@ -91,7 +91,7 @@ export default function RobustnessPage() {
         </p>
         <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
           In-browser simulation (point-score, baseline DGP, seed 42, N = 6, T = 200).
-          For thesis-grade evidence, see the pre-run Python experiment outputs.
+          For project-grade evidence, see the pre-run Python experiment outputs.
         </div>
       </div>
 
