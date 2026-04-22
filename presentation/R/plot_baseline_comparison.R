@@ -86,11 +86,14 @@ panel_A <- ggplot(bars_df, aes(x = method, y = pct_vs_uniform, fill = method)) +
     x = NULL,
     y = "% change in CRPS"
   ) +
-  theme_thesis(base_size = 16) +
+  theme_thesis(base_size = 14) +
   theme(
-    axis.text.x   = element_text(size = 12, lineheight = 0.9),
-    strip.text    = element_text(size = 15, face = "bold", colour = PALETTE$navy),
-    panel.spacing = unit(1.6, "lines")
+    axis.text.x   = element_text(size = 10, lineheight = 0.85),
+    axis.text.y   = element_text(size = 10),
+    axis.title.y  = element_text(size = 11),
+    strip.text    = element_text(size = 13, face = "bold", colour = PALETTE$navy),
+    panel.spacing = unit(1.2, "lines"),
+    plot.margin   = margin(8, 12, 4, 12)
   )
 
 # --- Panel B: rolling CRPS on wind (clean lines only) ----------------------
@@ -111,6 +114,6 @@ panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
     legend.text     = element_text(lineheight = 0.9)
   )
 
-combo <- panel_A / panel_B + plot_layout(heights = c(0.7, 1.5))
+combo <- panel_A / panel_B + plot_layout(heights = c(0.45, 1.8))
 
 save_dual(combo, "baseline_comparison.png", width = 16, height = 11, dpi = 300)
