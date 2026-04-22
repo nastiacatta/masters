@@ -80,11 +80,12 @@ function AccentBar({ dark }: { dark?: boolean }) {
   return (
     <div
       style={{
-        width: 60,
-        height: 4,
+        width: 64,
+        height: 3,
         background: dark ? PALETTE.border : PALETTE.teal,
         borderRadius: 2,
-        marginTop: 14,
+        marginTop: 12,
+        opacity: dark ? 0.6 : 0.9,
       }}
     />
   );
@@ -188,12 +189,22 @@ export default function SlideShell({ title, subtitle, dark, refText, highlight, 
             color: dark ? PALETTE.white : PALETTE.navy,
             lineHeight: TYPOGRAPHY.heading.lineHeight,
             margin: 0,
+            letterSpacing: '-0.01em',
           }}
         >
           {title}
         </h2>
         {subtitle && (
-          <p style={{ fontSize: '1.3rem', color: dark ? PALETTE.darkText : PALETTE.slate, marginTop: 8, lineHeight: 1.5 }}>
+          <p
+            style={{
+              fontSize: '1.25rem',
+              color: dark ? PALETTE.darkText : PALETTE.slate,
+              marginTop: 10,
+              lineHeight: 1.5,
+              maxWidth: 960,
+              fontWeight: 400,
+            }}
+          >
             {subtitle}
           </p>
         )}

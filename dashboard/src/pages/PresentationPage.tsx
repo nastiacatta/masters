@@ -315,11 +315,12 @@ function AccentBar() {
   return (
     <div
       style={{
-        width: 60,
-        height: 4,
+        width: 64,
+        height: 3,
         background: C.teal,
         borderRadius: 2,
-        marginTop: 14,
+        marginTop: 12,
+        opacity: 0.9,
       }}
     />
   );
@@ -446,12 +447,13 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
           lineHeight: 1.2,
           whiteSpace: 'pre-line',
           marginBottom: 24,
+          letterSpacing: '-0.01em',
         }}
       >
         {slide.title}
       </h1>
       {slide.subtitle && (
-        <p style={{ fontSize: '1.6rem', color: C.darkText, lineHeight: 1.6, maxWidth: 700 }}>
+        <p style={{ fontSize: '1.45rem', color: C.darkText, lineHeight: 1.6, maxWidth: 720, fontWeight: 400 }}>
           {slide.subtitle}
         </p>
       )}
@@ -495,6 +497,7 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
           color: C.white,
           lineHeight: 1.2,
           marginBottom: 24,
+          letterSpacing: '-0.01em',
         }}
       >
         {slide.title}
@@ -502,11 +505,12 @@ function SectionSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            fontSize: '1.5rem',
+            fontSize: '1.4rem',
             color: C.darkText,
             lineHeight: 1.7,
             whiteSpace: 'pre-line',
-            maxWidth: 800,
+            maxWidth: 820,
+            fontWeight: 400,
           }}
         >
           {slide.subtitle}
@@ -548,6 +552,7 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
             color: C.navy,
             lineHeight: TYPOGRAPHY.heading.lineHeight,
             margin: 0,
+            letterSpacing: '-0.01em',
           }}
         >
           {slide.title}
@@ -613,13 +618,14 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
             color: C.navy,
             lineHeight: TYPOGRAPHY.heading.lineHeight,
             margin: 0,
+            letterSpacing: '-0.01em',
           }}
         >
           {slide.title}
         </h2>
         <AccentBar />
       </div>
-      <div style={{ flex: 1, display: 'flex', gap: 36, minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', gap: 40, minHeight: 0 }}>
         {/* Left: bullets */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {slide.bullets && (
@@ -678,6 +684,7 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
         position: 'relative',
       }}
     >
+      <SectionBar slideNumber={slide.slideNumber} />
       <SlideNumberBadge slideNumber={slide.slideNumber} dark />
       <h1
         style={{
@@ -685,6 +692,7 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
           fontWeight: 700,
           color: C.white,
           marginBottom: 32,
+          letterSpacing: '-0.01em',
         }}
       >
         {slide.title}
@@ -692,10 +700,11 @@ function ClosingSlideView({ slide }: { slide: SlideData }) {
       {slide.subtitle && (
         <p
           style={{
-            fontSize: '1.5rem',
+            fontSize: '1.4rem',
             color: C.darkText,
             lineHeight: 1.8,
             whiteSpace: 'pre-line',
+            fontWeight: 400,
           }}
         >
           {slide.subtitle}

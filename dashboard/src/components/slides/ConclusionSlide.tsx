@@ -20,7 +20,7 @@ const comparisons = [
     note: 'Lowest CRPS in this benchmark — not self-financed; relative weights',
   },
   {
-    label: 'Ours',
+    label: 'This thesis',
     tag: 'Skill + Lambert',
     tagColour: PALETTE.teal,
     wind: '−44 %',
@@ -89,7 +89,7 @@ export default function ConclusionSlide() {
             >
               <span
                 style={{
-                  fontSize: '1.15rem',
+                  fontSize: '1.2rem',
                   fontWeight: 700,
                   color: PALETTE.white,
                   fontFamily: TYPOGRAPHY.fontFamily,
@@ -99,12 +99,13 @@ export default function ConclusionSlide() {
               </span>
               <span
                 style={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.78rem',
                   fontWeight: 700,
                   color: PALETTE.white,
                   background: c.tagColour,
                   borderRadius: 20,
                   padding: '3px 12px',
+                  letterSpacing: '0.02em',
                 }}
               >
                 {c.tag}
@@ -115,11 +116,12 @@ export default function ConclusionSlide() {
             <div
               style={{
                 display: 'flex',
-                gap: 16,
-                marginTop: 8,
-                fontSize: '1rem',
+                gap: 18,
+                marginTop: 10,
+                fontSize: '1.02rem',
                 color: PALETTE.darkText,
                 fontFamily: TYPOGRAPHY.fontFamily,
+                fontVariantNumeric: 'tabular-nums',
               }}
             >
               <span>
@@ -133,10 +135,10 @@ export default function ConclusionSlide() {
             {/* Note */}
             <p
               style={{
-                marginTop: 6,
-                fontSize: '0.88rem',
+                marginTop: 8,
+                fontSize: '0.92rem',
                 color: PALETTE.darkText,
-                lineHeight: 1.45,
+                lineHeight: 1.5,
                 fontFamily: TYPOGRAPHY.fontFamily,
               }}
             >
@@ -159,10 +161,10 @@ export default function ConclusionSlide() {
         <p
           style={{
             margin: 0,
-            fontSize: '1.2rem',
+            fontSize: '1.25rem',
             fontWeight: 700,
             color: PALETTE.white,
-            lineHeight: 1.45,
+            lineHeight: 1.5,
             fontFamily: TYPOGRAPHY.fontFamily,
           }}
         >
@@ -197,11 +199,11 @@ export default function ConclusionSlide() {
             <li
               key={item}
               style={{
-                fontSize: '1.05rem',
+                fontSize: '1.08rem',
                 color: PALETTE.darkText,
                 lineHeight: 1.6,
                 fontFamily: TYPOGRAPHY.fontFamily,
-                marginBottom: 4,
+                marginBottom: 6,
               }}
             >
               {item}
