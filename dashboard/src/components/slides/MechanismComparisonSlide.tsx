@@ -19,7 +19,7 @@ const COMPARISON_DATA: ComparisonRow[] = [
     feature: 'Financing',
     lambert: 'Self-financed',
     raja: 'Self-financed + client reward',
-    vitali: 'Market-based (Shapley)',
+    vitali: 'Shapley payoffs (not self-financed)',
     thesis: 'Self-financed',
   },
   {

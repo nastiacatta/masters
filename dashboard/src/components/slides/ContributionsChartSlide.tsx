@@ -54,7 +54,7 @@ const DATASETS: DatasetConfig[] = [
     rounds: '17,544 rounds',
     url: `${BASE}data/real_data/elia_wind/data/comparison.json`,
     colour: PALETTE.teal,
-    improvement: '~34% CRPS improvement over equal weights',
+    improvement: '44% CRPS improvement over equal weights',
   },
   {
     key: 'electricity',
@@ -62,7 +62,7 @@ const DATASETS: DatasetConfig[] = [
     rounds: '10,000 rounds',
     url: `${BASE}data/real_data/elia_electricity/data/comparison.json`,
     colour: PALETTE.coral,
-    improvement: '~4% CRPS improvement (forecasters more similar)',
+    improvement: '8% CRPS improvement (forecasters more similar)',
   },
 ];
 
@@ -296,7 +296,7 @@ export default function ContributionsChartSlide() {
           }}
         >
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Wind: ~34% CRPS improvement — Naive ranks highest
+            Wind: 44% CRPS improvement — Naive ranks highest
           </span>
         </div>
         <div
@@ -307,7 +307,7 @@ export default function ContributionsChartSlide() {
           }}
         >
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.coral, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Electricity: ~4% gain (forecasters more similar)
+            Electricity: 8% gain (forecasters more similar)
           </span>
         </div>
       </div>
