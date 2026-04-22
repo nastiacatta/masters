@@ -8,7 +8,6 @@ import PositioningMatrixSlide from '@/components/slides/PositioningMatrixSlide';
 import ContributionSlide from '@/components/slides/ContributionSlide';
 import MechanismPipelineSlide from '@/components/slides/MechanismPipelineSlide';
 import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
-import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
 import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide';
 import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
@@ -176,54 +175,46 @@ const SLIDES: SlideData[] = [
     component: SyntheticResultsSlide,
     slideNumber: 10,
   },
-  /* 11 — Mechanism Guarantees */
-  {
-    id: 'guarantees',
-    type: 'content',
-    title: 'Mechanism Guarantees',
-    component: CorrectnessSlide,
-    slideNumber: 11,
-  },
-  /* 12 — Deposit Design */
+  /* 11 — Deposit Design */
   {
     id: 'deposit-design',
     type: 'content',
     title: 'Deposit Design',
     component: DepositAblationSlide,
-    slideNumber: 12,
+    slideNumber: 11,
   },
-  /* 13 — Real Data: Elia Wind + Electricity */
+  /* 12 — Real Data: Elia Wind + Electricity */
   {
     id: 'real-data',
     type: 'content',
     title: 'Real Data: Elia Wind + Electricity',
     component: ContributionsChartSlide,
-    slideNumber: 13,
+    slideNumber: 12,
   },
-  /* 14 — Benchmark comparison vs prior work */
+  /* 13 — Benchmark comparison vs prior work */
   {
     id: 'baseline-comparison',
     type: 'content',
     title: 'Benchmark: CRPS Comparison',
     component: BaselineComparisonSlide,
-    slideNumber: 14,
+    slideNumber: 13,
   },
-  /* 15 — Strategic Robustness */
+  /* 14 — Strategic Robustness */
   {
     id: 'strategic-robustness',
     type: 'content',
     title: 'Strategic Robustness',
     component: StrategicRobustnessSlide,
-    slideNumber: 15,
+    slideNumber: 14,
   },
-  /* 16 — Conclusion + Future Work */
+  /* 15 — Conclusion + Future Work */
   {
     id: 'conclusion',
     type: 'closing',
     title: 'Conclusion + Future Work',
     dark: true,
     component: ConclusionSlide,
-    slideNumber: 16,
+    slideNumber: 15,
   },
   /* Appendix — hidden backup slide, no slide number */
   {

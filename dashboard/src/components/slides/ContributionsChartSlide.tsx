@@ -142,7 +142,7 @@ export default function ContributionsChartSlide() {
   };
 
   return (
-    <SlideShell title="Real Data: Elia Wind + Electricity" slideNumber={13}>
+    <SlideShell title="Real Data: Elia Wind + Electricity" slideNumber={12}>
       {/* Top row: dataset toggle + dataset label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
         {/* Dataset toggle */}
