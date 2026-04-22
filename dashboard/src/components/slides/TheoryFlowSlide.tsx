@@ -150,7 +150,7 @@ export default function TheoryFlowSlide() {
                 fontSize="13"
                 fill={PALETTE.slate}
               >
-                + wager
+                + forecast
               </text>
 
               {/* Arrow from participant to aggregation */}
