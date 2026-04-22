@@ -32,67 +32,75 @@
 
 ## [SLIDE 1] Title + Anecdote (~1 min)
 
-Recently, on the way to the airport, I checked Google Maps, Apple Maps, and Citymapper. They all predicted the same journey time, but they did not give the same answer. And from experience, I knew I trusted Citymapper a little more.
+Good morning. My name is Anastasia Cattaneo. Before I begin, I would like to thank my supervisors, Pierre Pinson and Michael Vitali, for their guidance throughout this project.
 
-That small decision captures the core question behind this project: when multiple predictors disagree, how do we learn whose information should count more — and how do we do it in a way that stays robust when incentives are strategic and money is at stake?
+Recently, on the way to the airport, I checked Google Maps, Apple Maps, and Citymapper to estimate my travel time. They were all forecasting the same journey, but they did not give the same answer. And from experience, I knew I trusted Citymapper a little more.
 
-Good morning. My name is Anastasia Cattaneo. Before I begin, I would like to thank my supervisors Pierre Pinson and Michael Vitali — their guidance, and their own published work on prediction markets, shaped every part of this project.
+That small decision captures the central question in this project: when several forecasts target the same future outcome, how should we combine them, and how should we decide which contributions should matter more?
 
 ---
 
 ## [SLIDE 2] What Is a Prediction Market? (~1.5 min)
 
-Before diving in, let me define the central concept.
+Before going further, let me define the central concept.
 
-A prediction market is a mechanism where participants submit probabilistic forecasts — not just a single number, but a full distribution expressing what they expect and how uncertain they are. Each participant backs their forecast with a wager: a financial stake that says "I am putting money behind this prediction." The market then aggregates these individual forecasts into a single collective prediction, weighting each contribution by how much was staked.
+A prediction market is a market in which participants trade on uncertain future outcomes. In general, the payoff of the contract depends on what happens in the future. That is the broad definition.
 
-After the outcome is observed, the market settles. Participants who predicted well earn a return; those who predicted poorly lose part of their stake. The wager creates a direct incentive to be accurate — you only risk money when you believe your forecast is genuinely informative.
+In this thesis, I study a more specific form of prediction market. Participants submit forecasts for a continuous outcome, and they also submit a **wager**, meaning the amount placed at risk in that round. The market then combines these submitted forecasts into a single aggregate forecast. Once the outcome is observed, the market settles and allocates rewards according to forecast performance.
 
-This idea has practical applications across many domains. In energy, grid operators need accurate wind and solar forecasts to balance supply and demand. In supply chain management, firms need demand forecasts to plan inventory and staffing. In finance, traders aggregate views on asset prices and economic indicators.
+So the structure I work with has four elements: submitted forecasts, submitted wagers, an aggregation rule, and a settlement rule.
 
-The key insight is that useful predictive information is often scattered across many sources — different companies, models, or analysts — each holding private data that is costly to share directly. A prediction market lets you extract that information through forecasts and wagers, without requiring anyone to hand over raw data.
+This is useful when predictive information is distributed across different actors while the underlying data remain private or costly to share. In that setting, the market can use forecasts directly, without requiring anyone to reveal raw data. That motivation is common to the prediction-market literature this project builds on.
+
+> *Footer cite: Wolfers and Zitzewitz (2004) — definition and broad framing; Raja et al. (2024) — market architecture.*
 
 ---
 
 ## [SLIDE 3] Why Combine Forecasts? (~1.5 min)
 
-So why not just pick the single best forecaster and use their prediction?
+The next question is why we combine forecasts at all, rather than simply select a single forecaster and ignore the others.
 
-The core motivation is that different forecasters make different errors. One model might be strong in calm conditions but weak during storms. Another might capture long-term trends but miss short-term spikes. Combining multiple forecasts averages out these individual errors and typically produces a more robust prediction than any single source alone.
+The reason is that different forecasters capture different parts of the signal and make different errors. One source may respond faster to recent changes. Another may perform well on stable patterns. Another may contribute information that the others do not contain. Combining forecasts is therefore often better than relying on a single source.
 
-But there is a catch. When forecasts come from strategic participants — people or firms with their own incentives — simple averaging is not enough. Participants might exaggerate confidence to gain more influence, or submit deliberately noisy forecasts to game the system.
+In a market setting, however, averaging alone is not enough. The issue is not only statistical. It is also economic. The market has to decide how much weight each contribution should receive, and that decision should reflect more than the current wager alone. Equal weighting does not use the information available about contribution quality.
 
-What we really want is a market that learns how much to trust each contribution. Not all forecasters are equally valuable, and their value can change over time. Some adapt quickly when conditions shift. Some become stale. Some perform well only under specific circumstances.
+This is where the central problem of the thesis appears: how should a prediction market learn the value of each contribution over time, and use that information when forming the aggregate forecast — while preserving a disciplined reward mechanism?
 
-The goal of this project is to design a mechanism that learns the importance of each forecaster's contribution from their track record, uses that to weight the aggregate forecast, and does all of this while maintaining the economic discipline — budget balance, truthfulness, resistance to manipulation — that makes the market trustworthy.
+> *Footer cite: Prediction markets as information aggregation mechanisms — Wolfers and Zitzewitz (2004).*
 
 ---
 
 ## [SLIDE 4] Where This Work Fits (~1.5 min)
 
-My work sits at the intersection of three literatures that have not been fully connected.
+This project builds on three strands of work.
 
-Lambert et al. introduced the weighted-score wagering mechanism. Participants submit a forecast and a wager, the pool is redistributed based on relative performance, and the mechanism satisfies seven formal properties — including budget balance, truthfulness, and sybilproofness. They also proved uniqueness: weighted-score wagering is the only mechanism satisfying all seven. Raja et al. extended this to include a client who posts a task and offers a reward for forecast improvement. But both mechanisms are history-free — each round is independent, with no memory of past performance.
+The first strand develops self-financed wager-based settlement. Participants submit a forecast and a wager, and the wager pool is redistributed after the outcome is observed. That strand gives the settlement logic and the economic discipline of the mechanism.
 
-On the other side, Vitali & Pinson designed a repeated market that handles missing submissions and learns time-varying weights through online gradient descent. Their weights are relative — they live on a probability simplex. If one person's weight rises, everyone else's mechanically falls. And their settlement is not self-financed in the Lambert sense.
+The second strand develops a full prediction-market architecture for forecast improvement, with a client, an aggregation operator, a scoring rule, and a payoff-allocation rule. That strand makes the structure of the market explicit, but each round is treated independently.
 
-The positioning matrix shows where each approach sits. Lambert and Raja give strong economic structure without adaptation. Vitali gives adaptation without self-financing. This project occupies the fourth corner — adaptive and self-financed, with an absolute skill signal.
+The third strand studies repeated prediction markets with intermittent participation and adaptive weighting. That strand introduces online adaptation over time, but the learned weights remain relative and context-dependent.
+
+**Why combine these three.** Each strand addresses a different requirement of the same problem. A repeated prediction market needs memory across rounds, because the value of a contribution is not fully visible in one isolated interaction. A wager-based market needs a disciplined settlement rule, because influence in the aggregate forecast and financial exposure should remain connected. And a realistic repeated setting needs to handle intermittent participation, because contributors may not appear in every round. This project sits at the intersection of these three strands: repeated adaptation, explicit prediction-market structure, and self-financed settlement. That is the design objective.
+
+The positioning matrix shows where each approach sits. Lambert et al. and Raja et al. give disciplined economic structure without adaptation. Vitali and Pinson give adaptation without self-financing. This project occupies the fourth corner — adaptive and self-financed, with an absolute per-forecaster skill signal.
+
+> *Footer cite: Lambert et al. (2008); Raja et al. (2024); Vitali and Pinson (2025).*
 
 ---
 
 ## [SLIDE 5] Mechanism Comparison (~1 min)
 
-Before moving to my contribution, let me show exactly where the gap is.
+Having set out where this project sits, it is useful to compare the three approaches concretely, so the design choices I make later are easy to locate.
 
-This table compares three approaches across five dimensions. All three mechanisms are self-financed — participants fund the market through their own wagers. But Lambert et al. and Raja et al. both use static, per-round weights. There is no memory of past performance — each round starts fresh. My project introduces adaptive weight learning that carries information across rounds.
+This table compares three approaches across five dimensions. All three mechanisms are self-financed — participants fund the market through their own wagers. But Lambert et al. and Raja et al. both use static, per-round weights. There is no memory of past performance — each round starts fresh. This project introduces adaptive weight learning that carries information across rounds.
 
-On skill learning: Lambert and Raja have none. The mechanism has no concept of forecaster quality beyond the current wager. My project adds an EWMA skill signal — an exponentially weighted moving average of realised forecasting loss that tracks each participant's value over time.
+On skill learning: Lambert and Raja have none. The mechanism has no concept of forecaster quality beyond the current wager. This project adds an EWMA skill signal — an exponentially weighted moving average of realised forecasting loss — that tracks each participant's value over time.
 
-Deposit design is similar. Lambert and Raja do not specify how deposits should be chosen. My project introduces a skill gate that scales the effective wager by learned skill, plus a deposit policy framework that lets participants scale stakes by wealth and confidence.
+Deposit design is similar. Lambert and Raja do not specify how deposits should be chosen. This project introduces a skill gate that scales the effective wager by learned skill, plus a deposit policy framework that lets participants scale stakes by wealth and confidence.
 
-Finally, key properties. Lambert et al. proved seven formal properties including uniqueness. Raja et al. added client reward allocation. My project preserves the seven properties and adds skill learning and deposit design on top.
+Finally, key properties. Lambert et al. proved seven formal properties including uniqueness. Raja et al. added client reward allocation. This project preserves those properties and adds skill learning and deposit design on top.
 
-The positioning matrix from the previous slide showed the gap. This table shows exactly what fills it.
+The positioning matrix on the previous slide showed the gap. This table shows concretely what fills it.
 
 ---
 
