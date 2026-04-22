@@ -11,12 +11,12 @@ import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
 import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
 import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
-import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide';
 import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
 import ConclusionSlide from '@/components/slides/ConclusionSlide';
 import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
+import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
 
 /**
  * Full-screen presentation mode for thesis defence.
@@ -68,9 +68,9 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'What Is a Prediction Market?',
     bullets: [
-      '▸ Participants stake money on their forecasts',
-      '▸ Wagers reveal private information',
+      '▸ Participants submit probabilistic forecasts backed by wagers',
       '▸ The market aggregates forecasts into a single prediction',
+      '▸ Payoffs depend on accuracy — wagers create incentive to be informative',
       '',
       '→ Prediction markets turn dispersed knowledge into actionable forecasts',
     ],
@@ -83,14 +83,14 @@ const SLIDES: SlideData[] = [
     type: 'split',
     title: 'Why Combine Forecasts?',
     bullets: [
-      '▸ Combining forecasts often improves robustness',
       '▸ Different forecasters make different errors',
+      '▸ Combining forecasts improves robustness over any single source',
       '',
-      '▲ Participants are strategic',
-      '▸ Forecasters are not equally skilled',
-      '▸ Skill changes over time',
+      '▲ Participants are strategic — simple averaging is not enough',
+      '▸ A market should learn who has value',
+      '▸ Skill changes over time — learned trust must adapt',
       '',
-      '→ A prediction market should learn who has value',
+      '→ We need a mechanism that learns the importance of each contribution',
     ],
     rightComponent: MarketFlowSlide,
     slideNumber: 3,
@@ -111,7 +111,15 @@ const SLIDES: SlideData[] = [
     rightComponent: PositioningMatrixSlide,
     slideNumber: 4,
   },
-  /* 5 — My Contribution */
+  /* 5 — Mechanism Comparison (NEW) */
+  {
+    id: 'mechanism-comparison',
+    type: 'content',
+    title: 'Mechanism Comparison',
+    component: MechanismComparisonSlide,
+    slideNumber: 5,
+  },
+  /* 6 — My Contribution */
   {
     id: 'contribution',
     type: 'section',
@@ -120,9 +128,9 @@ const SLIDES: SlideData[] = [
       'Self-financed prediction market\nwith online skill-learning layer\n\nInfluence depends on deposit and learned importance\nSkill is absolute and pre-round',
     dark: true,
     component: ContributionSlide,
-    slideNumber: 5,
+    slideNumber: 6,
   },
-  /* 6 — Mechanism: Round-by-Round */
+  /* 7 — Mechanism: Round-by-Round */
   {
     id: 'mechanism',
     type: 'content',
@@ -132,66 +140,67 @@ const SLIDES: SlideData[] = [
       '▸ Same effective wager controls weight and exposure',
     ],
     component: MechanismPipelineSlide,
-    slideNumber: 6,
+    slideNumber: 7,
   },
-  /* 7 — The Skill Signal */
+  /* 8 — The Skill Signal */
   {
     id: 'skill-layer',
     type: 'split',
     title: 'The Skill Signal',
     bullets: [
       '▸ EWMA of realised forecasting loss',
-      '▸ Recent performance weighted more heavily',
-      '▸ Absent forecasters decay toward baseline',
+      '▸ Bounded skill in [σ_min, 1] — always positive',
+      '▸ Absolute, not relative — one forecaster improving does not reduce another',
       '',
-      '● Bounded skill in [σ_min, 1] — always positive',
-      '● Absolute, not relative',
+      '● Staleness decay: absent forecasters revert toward baseline',
+      '● Recent performance weighted more heavily',
     ],
     rightComponent: SkillSignalSlide,
-    slideNumber: 7,
+    slideNumber: 8,
   },
-  /* 8 — Models, Data, and Synthetic Setup (NEW) */
+  /* 9 — Models, Data, and Synthetic Setup */
   {
     id: 'models-data',
     type: 'content',
     title: 'Models, Data, and Synthetic Setup',
     component: ModelsDataOverviewSlide,
-    slideNumber: 8,
+    slideNumber: 9,
   },
-  /* 9 — Synthetic Validation: Convergence (NEW) */
+  /* 10 — Synthetic Validation: Convergence */
   {
     id: 'synthetic-results',
     type: 'content',
     title: 'Synthetic Validation: Convergence',
     component: SyntheticResultsSlide,
-    slideNumber: 9,
+    slideNumber: 10,
   },
-  /* 10 — Mechanism Guarantees */
+  /* 11 — Mechanism Guarantees */
   {
     id: 'guarantees',
     type: 'split',
     title: 'Mechanism Guarantees',
     bullets: [
-      '▸ Budget balance: gap < 10⁻¹³',
-      '▸ Sybil ratio = 1.000000 for identical reports',
-      '▸ Skill recovery: Spearman ρ = 1.0000',
-      '▸ Noise-skill correlation: r = −0.98',
+      '▸ The mechanism satisfies formal guarantees to machine precision',
+      '▸ Budget balance: gap < 10⁻¹³ — self-financed to numerical tolerance',
+      '▸ Mean profit ≈ 0 — pure redistribution, no subsidy or tax',
+      '▸ Sybil invariance: identical reports yield identical total profit',
+      '▸ Noise-skill correlation: r = −0.98 — higher noise maps to lower skill',
       '',
-      '→ Mechanism satisfies formal guarantees to machine precision',
+      '→ These are not approximate claims — verified to machine precision',
     ],
     rightComponent: SkillRecoverySlide,
     component: CorrectnessSlide,
-    slideNumber: 10,
+    slideNumber: 11,
   },
-  /* 11 — Deposit Design */
+  /* 12 — Deposit Design */
   {
     id: 'deposit-design',
     type: 'content',
     title: 'Deposit Design',
     component: DepositAblationSlide,
-    slideNumber: 11,
+    slideNumber: 12,
   },
-  /* 12 — Real Data: Elia Wind + Electricity */
+  /* 13 — Real Data: Elia Wind + Electricity */
   {
     id: 'real-data',
     type: 'content',
@@ -205,14 +214,6 @@ const SLIDES: SlideData[] = [
       '→ Conditional improvement — gains scale with forecaster heterogeneity',
     ],
     component: ContributionsChartSlide,
-    slideNumber: 12,
-  },
-  /* 13 — Head-to-Head: Raja vs Vitali vs Ours (NEW) */
-  {
-    id: 'baseline-comparison',
-    type: 'content',
-    title: 'Head-to-Head: Raja vs Vitali vs Ours',
-    component: BaselineComparisonSlide,
     slideNumber: 13,
   },
   /* 14 — Strategic Robustness */

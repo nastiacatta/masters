@@ -74,19 +74,19 @@ export const CARD_STYLE: React.CSSProperties = {
 
 /**
  * Section definitions for the presentation flow.
- * Updated for the new 14-slide narrative arc.
+ * Updated for the new 15-slide narrative arc (slide 5 = Mechanism Comparison).
  */
 export const SECTIONS = {
-  PROBLEM:    { label: 'PROBLEM',    colour: '#003E74',    slides: [1, 2, 3, 4, 5] },
-  SOLUTION:   { label: 'SOLUTION',   colour: '#2E8B8B',    slides: [6, 7, 8] },
-  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED',    slides: [9, 10, 11, 12, 13] },
-  CLOSING:    { label: '',           colour: 'transparent', slides: [14] },
+  PROBLEM:    { label: 'PROBLEM',    colour: '#003E74',    slides: [1, 2, 3, 4, 5, 6] },
+  SOLUTION:   { label: 'SOLUTION',   colour: '#2E8B8B',    slides: [7, 8, 9] },
+  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED',    slides: [10, 11, 12, 13, 14] },
+  CLOSING:    { label: '',           colour: 'transparent', slides: [15] },
 } as const;
 
 /** Get section info for a given slide number */
 export function getSectionForSlide(slideNumber: number): { label: string; colour: string } {
-  if (slideNumber >= 1 && slideNumber <= 5) return SECTIONS.PROBLEM;
-  if (slideNumber >= 6 && slideNumber <= 8) return SECTIONS.SOLUTION;
-  if (slideNumber >= 9 && slideNumber <= 14) return SECTIONS.VALIDATION;
+  if (slideNumber >= 1 && slideNumber <= 6) return SECTIONS.PROBLEM;
+  if (slideNumber >= 7 && slideNumber <= 9) return SECTIONS.SOLUTION;
+  if (slideNumber >= 10 && slideNumber <= 14) return SECTIONS.VALIDATION;
   return SECTIONS.CLOSING;
 }

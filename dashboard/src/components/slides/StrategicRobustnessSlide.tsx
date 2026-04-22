@@ -2,21 +2,21 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 13: Strategic Robustness — properly centred layout.
+ * Slide 14: Strategic Robustness — properly centred layout.
  * Title centred, subtitle centred, attack table centred, shield centred below.
  */
 
 interface AttackRow {
   attack: string;
-  ratio: string;
+  outcome: string;
   pass: boolean;
 }
 
 const ATTACKS: AttackRow[] = [
-  { attack: 'Sybil (identical)', ratio: '1.000000', pass: true },
-  { attack: 'Sybil (diversified)', ratio: '1.065', pass: false },
-  { attack: 'Arbitrage', ratio: '0 profit', pass: true },
-  { attack: 'Strategic Deposit', ratio: '1.000000', pass: true },
+  { attack: 'Sybil (identical)', outcome: 'No advantage', pass: true },
+  { attack: 'Sybil (diversified)', outcome: 'Small advantage (~6%)', pass: false },
+  { attack: 'Arbitrage', outcome: 'No sustained profit', pass: true },
+  { attack: 'Strategic Deposit', outcome: 'No advantage', pass: true },
 ];
 
 /** SVG checkmark */
@@ -64,7 +64,7 @@ function ShieldIcon() {
 
 export default function StrategicRobustnessSlide() {
   return (
-    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="Chen et al., 2014" slideNumber={13}>
+    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="Chen et al., 2014" slideNumber={14}>
       <div
         style={{
           flex: 1,
@@ -101,7 +101,7 @@ export default function StrategicRobustnessSlide() {
               Attack Type
             </span>
             <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
-              Profit Ratio
+              Outcome
             </span>
           </div>
 
@@ -136,7 +136,7 @@ export default function StrategicRobustnessSlide() {
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {row.ratio}
+                  {row.outcome}
                 </span>
                 {row.pass ? <PassIcon /> : <WarnIcon />}
               </div>

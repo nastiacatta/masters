@@ -70,7 +70,7 @@ function SlideNumber({ slideNumber, totalSlides, dark }: { slideNumber?: number;
         zIndex: 10,
       }}
     >
-      {slideNumber} / {totalSlides || 14}
+      {slideNumber} / {totalSlides || 15}
     </div>
   );
 }

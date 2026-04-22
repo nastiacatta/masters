@@ -6,26 +6,25 @@
 | 2 | What Is a Prediction Market? | PROBLEM | ~1.5 min |
 | 3 | Why Combine Forecasts? | PROBLEM | ~1.5 min |
 | 4 | Where This Work Fits | PROBLEM | ~1.5 min |
-| 5 | My Contribution | PROBLEM | ~1 min |
-| 6 | Mechanism: Round-by-Round | SOLUTION | ~2 min ⚠️ |
-| 7 | The Skill Signal | SOLUTION | ~1.5 min |
-| 8 | Models, Data, and Synthetic Setup | SOLUTION | ~1.5 min |
-| 9 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
-| 10 | Mechanism Guarantees | VALIDATION | ~1 min |
-| 11 | Deposit Design | VALIDATION | ~1 min |
-| 12 | Real Data: Elia Wind + Electricity | VALIDATION | ~1.5 min |
-| 13 | Head-to-Head: Raja vs Vitali vs Ours | VALIDATION | ~1.5 min ★ |
+| 5 | Mechanism Comparison | PROBLEM | ~1 min |
+| 6 | My Contribution | PROBLEM | ~1 min |
+| 7 | Mechanism: Round-by-Round | SOLUTION | ~2 min ⚠️ |
+| 8 | The Skill Signal | SOLUTION | ~1.5 min |
+| 9 | Models, Data, and Synthetic Setup | SOLUTION | ~1.5 min |
+| 10 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
+| 11 | Mechanism Guarantees | VALIDATION | ~1 min |
+| 12 | Deposit Design | VALIDATION | ~1 min |
+| 13 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
 | 14 | Strategic Robustness | VALIDATION | ~1 min |
 | 15 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
-**Total: ~20 min**
+**Total: ~20.5 min**
 
-> ⚠️ Slide 6 is flagged at 2 minutes — keep narration tight.
-> ★ Slide 13 is the new head-to-head against Raja et al. and Vitali & Pinson — this is the "why we are improving" slide.
+> ⚠️ Slides 7 and 13 are flagged at 2 minutes — keep narration tight and avoid tangents.
 
 ---
 
-# Script Part I — PROBLEM (Slides 1–5, ~6.5 min)
+# Script Part I — PROBLEM (Slides 1–6, ~7.5 min)
 
 ---
 
@@ -79,7 +78,23 @@ The positioning matrix shows where each approach sits. Lambert and Raja give str
 
 ---
 
-## [SLIDE 5] My Contribution (~1 min)
+## [SLIDE 5] Mechanism Comparison (~1 min)
+
+Before moving to my contribution, let me show exactly where the gap is.
+
+This table compares three approaches across five dimensions. All three mechanisms are self-financed — participants fund the market through their own wagers. But Lambert et al. and Raja et al. both use static, per-round weights. There is no memory of past performance — each round starts fresh. My thesis introduces adaptive weight learning that carries information across rounds.
+
+On skill learning: Lambert and Raja have none. The mechanism has no concept of forecaster quality beyond the current wager. My thesis adds an EWMA skill signal — an exponentially weighted moving average of realised forecasting loss that tracks each participant's value over time.
+
+Deposit design is similar. Lambert and Raja do not specify how deposits should be chosen. My thesis introduces a skill gate that scales the effective wager by learned skill, plus a deposit policy framework that lets participants scale stakes by wealth and confidence.
+
+Finally, key properties. Lambert et al. proved seven formal properties including uniqueness. Raja et al. added client reward allocation. My thesis preserves the seven properties and adds skill learning and deposit design on top.
+
+The positioning matrix from the previous slide showed the gap. This table shows exactly what fills it.
+
+---
+
+## [SLIDE 6] My Contribution (~1 min)
 
 Why is deposit alone not enough to determine influence? Because a wealthy but unskilled forecaster could dominate the market simply by staking large amounts, drowning out more accurate but less wealthy participants. The market needs a way to separate willingness to pay from demonstrated ability.
 
@@ -89,11 +104,11 @@ The skill signal is absolute: it represents the importance of one participant's 
 
 ---
 
-# Script Part II — SOLUTION (Slides 6–8, ~5 min)
+# Script Part II — SOLUTION (Slides 7–9, ~5 min)
 
 ---
 
-## [SLIDE 6] Mechanism: Round-by-Round (~2 min)
+## [SLIDE 7] Mechanism: Round-by-Round (~2 min)
 
 > ⚠️ This slide is at the 2-minute limit — keep each step concise.
 
@@ -115,7 +130,7 @@ The critical design choice: the same effective wager controls both influence and
 
 ---
 
-## [SLIDE 7] The Skill Signal (~1.5 min)
+## [SLIDE 8] The Skill Signal (~1.5 min)
 
 Why does the skill signal need to be bounded? Because the raw loss accumulator — an exponentially weighted moving average of realised forecasting loss — can in principle grow without bound. A string of bad predictions pushes the accumulated loss toward positive infinity; a string of good ones toward negative infinity. If we used the raw accumulator directly, a single bad streak could permanently exclude a forecaster, and a single good streak could give them unbounded influence.
 
@@ -127,7 +142,7 @@ The critical difference from Vitali & Pinson: their weights are relative — on 
 
 ---
 
-## [SLIDE 8] Models, Data, and Synthetic Setup (~1.5 min)
+## [SLIDE 9] Models, Data, and Synthetic Setup (~1.5 min)
 
 Before showing results, let me introduce the experimental setup.
 
@@ -139,11 +154,11 @@ Why validate on synthetic data first? Because synthetic experiments use a known 
 
 ---
 
-# Script Part III — VALIDATION (Slides 9–14, ~8 min)
+# Script Part III — VALIDATION (Slides 10–14, ~6.5 min)
 
 ---
 
-## [SLIDE 9] Synthetic Validation: Convergence (~1.5 min)
+## [SLIDE 10] Synthetic Validation: Convergence (~1.5 min)
 
 The synthetic experiment answers a fundamental question: does the mechanism actually learn who is good?
 
@@ -157,7 +172,7 @@ The reward distribution follows the skill ranking: the least noisy forecaster ac
 
 ---
 
-## [SLIDE 10] Mechanism Guarantees (~1 min)
+## [SLIDE 11] Mechanism Guarantees (~1 min)
 
 Before interpreting any forecasting result, the mechanism must satisfy its formal guarantees.
 
@@ -171,7 +186,7 @@ These are not approximate claims. The mechanism satisfies formal guarantees to m
 
 ---
 
-## [SLIDE 11] Deposit Design (~1 min)
+## [SLIDE 12] Deposit Design (~1 min)
 
 Why does deposit design matter? Because the deposit determines how much information enters the market. If deposits are uninformative — random or fixed — the mechanism has less signal to work with.
 
@@ -181,7 +196,7 @@ In practice, we cannot force forecasters to use any particular deposit rule. The
 
 ---
 
-## [SLIDE 12] Real Data: Elia Wind + Electricity (~1.5 min)
+## [SLIDE 13] Real Data: Elia Wind + Electricity (~2 min)
 
 This is the first real-data validation. Everything before this was controlled simulation.
 
@@ -190,20 +205,6 @@ On Elia wind power — seventeen thousand five hundred and forty-four hourly obs
 The skill trajectories on the right tell the story. The mechanism correctly identifies Naive persistence as the strongest forecaster — wind power is highly autocorrelated, so the most recent observation is a strong predictor. The Ensemble and EWMA follow. ARIMA, XGBoost, MLP, and Theta all land at roughly the same low skill — their quantile forecasts are over-spread relative to the realised distribution, so the CRPS penalises them similarly.
 
 On the Elia electricity dataset, the improvement is smaller — **8 %** over equal weights. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms a clear empirical pattern: gains are conditional on forecaster diversity. When everyone is roughly equally good, equal weights are hard to beat.
-
----
-
-## [SLIDE 13] Head-to-Head: Raja vs Vitali vs Ours (~1.5 min)
-
-This is the key comparison. "Why are we improving?" Only makes sense against the right baselines. So I re-implemented the two closest prior designs and ran all three methods on **exactly the same forecasts, same warm-up, same quantile grid**.
-
-Three methods. **Raja et al.** — history-free self-financed wagering with Lambert settlement. **Vitali & Pinson** — per-quantile online gradient descent on the probability simplex with pinball loss. **Ours** — the skill-gated mechanism you just saw.
-
-The bar chart on the left shows mean-CRPS change versus equal weights. Raja barely moves — about minus two and a half percent on both datasets. That is the price of having no memory across rounds: you cannot learn who is skilled if you discard the data. Vitali is the strongest pure CRPS optimiser — minus 65 on wind and minus 20 on electricity. Ours sits in the middle at minus 44 and minus 8.
-
-Now look at the rolling-CRPS curve on the right. Vitali's OGD tracks the best forecaster very aggressively, which is why it wins on raw CRPS. But it pays a well-defined price: its weights are **relative**, on a simplex, and its settlement is not self-financed in the Lambert sense.
-
-So the honest comparison is this. **Raja** is self-financed but static. **Vitali** is adaptive but abandons self-financing and absolute skill. **Ours** is the only design that is adaptive **and** self-financed **and** reports absolute skill — we trade a controlled amount of raw CRPS for Lambert's full property set. That is precisely why we are improving over Raja: we add memory without breaking his economic discipline. And that is why we differ from Vitali: we keep the discipline he gives up.
 
 ---
 
