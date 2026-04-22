@@ -1,0 +1,66 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+% Render Markdown inside LaTeX (much more robust than ad-hoc conversion).
+% Overleaf supports this package in standard TeXLive.
+\usepackage[
+  fencedCode,
+  citations,
+  definitionLists,
+  footnotes,
+  hashEnumerators,
+  html,
+  smartEllipses,
+  hybrid,
+]{markdown}
+
+% Basic styling for fenced code blocks
+\usepackage{listings}
+\lstdefinestyle{mdcode}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  rulecolor=\color{black!15},
+  backgroundcolor=\color{black!2},
+}
+
+% Tell markdown package to use listings for code blocks
+\markdownSetup{
+  renderers = {
+    fencedCodeBlock = {
+      \begin{lstlisting}[style=mdcode]
+      #1
+      \end{lstlisting}
+    },
+  },
+}
+
+\title{SCRIPT --- Advanced Study Version}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\bigskip
+
+% IMPORTANT (Overleaf):
+% Upload BOTH files to your project:
+% - OVERLEAF_MAIN.tex   (set as main file)
+% - SCRIPT_ADVANCED.md  (the content)
+%
+% Then compile (pdfLaTeX is fine).
+\markdownInput{SCRIPT_ADVANCED.md}
+
+\end{document}
+
