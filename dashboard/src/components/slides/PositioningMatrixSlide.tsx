@@ -1,3 +1,4 @@
+import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
@@ -65,7 +66,8 @@ export default function PositioningMatrixSlide() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+    <SlideShell title="Where This Work Fits" slideNumber={4} highlight="Combining the three: memory across rounds + disciplined settlement + intermittency → Gap: adaptive + self-financed + absolute skill" refText="Lambert et al., 2008 · Raja et al., 2024 · Vitali & Pinson, 2025">
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
       <svg
         viewBox="0 0 1200 750"
         style={{ width: '100%', height: '100%' }}
@@ -202,5 +204,6 @@ export default function PositioningMatrixSlide() {
         })}
       </svg>
     </div>
+    </SlideShell>
   );
 }
