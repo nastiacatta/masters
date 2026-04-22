@@ -13,7 +13,6 @@ import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide
 import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
 import ConclusionSlide from '@/components/slides/ConclusionSlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
-import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 import AppendixSlide from '@/components/slides/AppendixSlide';
 import TitleSlide from '@/components/slides/TitleSlide';
@@ -115,15 +114,7 @@ const SLIDES: SlideData[] = [
     rightComponent: PositioningMatrixSlide,
     slideNumber: 4,
   },
-  /* 5 — Mechanism Comparison (NEW) */
-  {
-    id: 'mechanism-comparison',
-    type: 'content',
-    title: 'Mechanism Comparison',
-    component: MechanismComparisonSlide,
-    slideNumber: 5,
-  },
-  /* 6 — My Contribution */
+  /* 5 — My Contribution */
   {
     id: 'contribution',
     type: 'section',
@@ -132,17 +123,17 @@ const SLIDES: SlideData[] = [
       'Self-financed prediction market\nwith online skill-learning layer\n\nInfluence depends on deposit and learned importance\nSkill is absolute and pre-round',
     dark: true,
     component: ContributionSlide,
-    slideNumber: 6,
+    slideNumber: 5,
   },
-  /* 7 — Mechanism: Round-by-Round */
+  /* 6 — Mechanism: Round-by-Round */
   {
     id: 'mechanism',
     type: 'content',
     title: 'Mechanism: Round-by-Round',
     component: MechanismPipelineSlide,
-    slideNumber: 7,
+    slideNumber: 6,
   },
-  /* 8 — The Skill Signal */
+  /* 7 — The Skill Signal */
   {
     id: 'skill-layer',
     type: 'split',
@@ -156,56 +147,56 @@ const SLIDES: SlideData[] = [
       '● Recent performance weighted more heavily',
     ],
     rightComponent: SkillSignalSlide,
-    slideNumber: 8,
+    slideNumber: 7,
   },
-  /* 9 — Models, Data, and Synthetic Setup */
+  /* 8 — Models, Data, and Synthetic Setup */
   {
     id: 'models-data',
     type: 'content',
     title: 'Models, Data, and Synthetic Setup',
     component: ModelsDataOverviewSlide,
-    slideNumber: 9,
+    slideNumber: 8,
   },
-  /* 10 — Synthetic Validation: Convergence */
+  /* 9 — Synthetic Validation: Convergence */
   {
     id: 'synthetic-results',
     type: 'content',
     title: 'Synthetic Validation: Convergence',
     component: SyntheticResultsSlide,
-    slideNumber: 10,
+    slideNumber: 9,
   },
-  /* 11 — Real Data: Elia Wind + Electricity */
+  /* 10 — Real Data: Elia Wind + Electricity */
   {
     id: 'real-data',
     type: 'content',
     title: 'Real Data: Elia Wind + Electricity',
     component: ContributionsChartSlide,
-    slideNumber: 11,
+    slideNumber: 10,
   },
-  /* 12 — Benchmark comparison vs prior work */
+  /* 11 — Benchmark comparison vs prior work */
   {
     id: 'baseline-comparison',
     type: 'content',
     title: 'Benchmark: CRPS Comparison',
     component: BaselineComparisonSlide,
-    slideNumber: 12,
+    slideNumber: 11,
   },
-  /* 13 — Strategic Robustness */
+  /* 12 — Strategic Robustness */
   {
     id: 'strategic-robustness',
     type: 'content',
     title: 'Strategic Robustness',
     component: StrategicRobustnessSlide,
-    slideNumber: 13,
+    slideNumber: 12,
   },
-  /* 14 — Conclusion + Future Work */
+  /* 13 — Conclusion + Future Work */
   {
     id: 'conclusion',
     type: 'closing',
     title: 'Conclusion + Future Work',
     dark: true,
     component: ConclusionSlide,
-    slideNumber: 14,
+    slideNumber: 13,
   },
   /* Appendix — hidden backup slide, no slide number */
   {

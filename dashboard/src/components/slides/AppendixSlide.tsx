@@ -79,7 +79,64 @@ const EXTRA_FIGURES = [
 
 /* ─── Tab type ────────────────────────────────────────────────── */
 
-type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit';
+type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism';
+
+/* ─── Mechanism Comparison data (moved from main deck) ─────── */
+
+interface ComparisonRow {
+  feature: string;
+  lambert: string;
+  raja: string;
+  vitali: string;
+  thesis: string;
+}
+
+const COMPARISON_DATA: ComparisonRow[] = [
+  {
+    feature: 'Financing',
+    lambert: 'Self-financed',
+    raja: 'Self-financed + client reward',
+    vitali: 'Shapley payoffs (not self-financed)',
+    thesis: 'Self-financed',
+  },
+  {
+    feature: 'Weight Adaptation',
+    lambert: 'Static (per-round)',
+    raja: 'Static (per-round)',
+    vitali: 'Online gradient descent',
+    thesis: 'Online EWMA',
+  },
+  {
+    feature: 'Skill/Weight Type',
+    lambert: 'Equal or deposit-based',
+    raja: 'Equal or deposit-based',
+    vitali: 'Relative (simplex)',
+    thesis: 'Absolute (per-forecaster)',
+  },
+  {
+    feature: 'Intermittency',
+    lambert: 'Not handled',
+    raja: 'Not handled',
+    vitali: 'Handled (online)',
+    thesis: 'Staleness decay',
+  },
+  {
+    feature: 'Key Properties',
+    lambert: '7 formal properties, uniqueness',
+    raja: 'Client reward, payoff allocation',
+    vitali: 'Regret bounds, missing data',
+    thesis: '7 properties + skill learning',
+  },
+];
+
+const COMPARISON_HEADERS = ['Lambert et al.', 'Raja et al.', 'Vitali & Pinson', 'This Project'] as const;
+
+const COMPARISON_HEADER_TINTS = [
+  'rgba(0, 62, 116, 0.08)',
+  'rgba(100, 116, 139, 0.08)',
+  'rgba(124, 58, 237, 0.08)',
+  'rgba(46, 139, 139, 0.10)',
+] as const;
 
 /* ─── Mechanism Guarantees data ───────────────────────────────── */
 
@@ -290,6 +347,11 @@ export default function AppendixSlide(_props: {
           active={tab === 'deposit'}
           onClick={() => setTab('deposit')}
         />
+        <TabButton
+          label="E. Mechanism Comparison"
+          active={tab === 'mechanism'}
+          onClick={() => setTab('mechanism')}
+        />
       </div>
 
       {/* Tab content */}
@@ -442,6 +504,104 @@ export default function AppendixSlide(_props: {
             <p style={{ fontSize: '1rem', color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
               Practical deposit rules capture most of the available gain — but we cannot control what forecasters stake
             </p>
+          </div>
+        )}
+
+        {tab === 'mechanism' && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 20,
+            }}
+          >
+            <div
+              style={{
+                ...CARD_STYLE,
+                width: '100%',
+                padding: '36px 44px',
+              }}
+            >
+              {/* Header row */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '180px 1fr 1fr 1fr 1fr',
+                  gap: 16,
+                  paddingBottom: 14,
+                  borderBottom: `2px solid ${PALETTE.border}`,
+                  marginBottom: 10,
+                }}
+              >
+                <span />
+                {COMPARISON_HEADERS.map((header, idx) => (
+                  <span
+                    key={header}
+                    style={{
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      color: PALETTE.navy,
+                      fontFamily: TYPOGRAPHY.fontFamily,
+                      textAlign: 'center',
+                      padding: '6px 8px',
+                      borderRadius: 6,
+                      background: COMPARISON_HEADER_TINTS[idx],
+                    }}
+                  >
+                    {header}
+                  </span>
+                ))}
+              </div>
+
+              {/* Data rows */}
+              {COMPARISON_DATA.map((row, i) => (
+                <div
+                  key={row.feature}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '180px 1fr 1fr 1fr 1fr',
+                    gap: 16,
+                    alignItems: 'center',
+                    padding: '16px 0',
+                    borderBottom:
+                      i < COMPARISON_DATA.length - 1
+                        ? `1px solid ${PALETTE.border}`
+                        : 'none',
+                    background: i % 2 === 1 ? 'rgba(0,0,0,0.02)' : 'transparent',
+                    borderRadius: 4,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '1.35rem',
+                      fontWeight: 600,
+                      color: PALETTE.navy,
+                      fontFamily: TYPOGRAPHY.fontFamily,
+                      borderLeft: `4px solid ${PALETTE.navy}`,
+                      paddingLeft: 12,
+                    }}
+                  >
+                    {row.feature}
+                  </span>
+                  {[row.lambert, row.raja, row.vitali, row.thesis].map((cell, ci) => (
+                    <div key={ci} style={{ textAlign: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '1.12rem',
+                          color: PALETTE.charcoal,
+                          fontFamily: TYPOGRAPHY.fontFamily,
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        {cell}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
