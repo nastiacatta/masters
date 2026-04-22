@@ -51,7 +51,7 @@ export default function TheoryFlowSlide() {
       }}
     >
       <svg
-        viewBox="0 0 1040 540"
+        viewBox="0 0 1040 560"
         style={{ width: '100%', height: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
@@ -218,19 +218,6 @@ export default function TheoryFlowSlide() {
           markerEnd="url(#pm-arrow-teal)"
         />
 
-        {/* Annotation above output arrow */}
-        <text
-          x={(outArrowStartX + outArrowEndX) / 2}
-          y={aggCenterY - 14}
-          textAnchor="middle"
-          fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
-          fontStyle="italic"
-          fill={PALETTE.teal}
-        >
-          improved accuracy
-        </text>
-
         {/* ── Output box — collective prediction ── */}
         <rect
           x={outX}
@@ -291,17 +278,17 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="15"
           fill={PALETTE.slate}
         >
-          Participants submit forecasts + wagers
+          Forecasts + wagers
         </text>
         <text
           x={aggX + aggW / 2}
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="15"
           fill={PALETTE.slate}
         >
           Weighted combination
@@ -311,7 +298,7 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="15"
           fill={PALETTE.slate}
         >
           Better forecast
