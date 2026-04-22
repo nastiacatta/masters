@@ -31,7 +31,9 @@
 
 ## [SLIDE 1] Title + Anecdote (~1 min)
 
-Last winter I was checking the weather forecast before a weekend trip. Three different apps gave me three different answers — one said rain, one said clear skies, one hedged with "partly cloudy." I ended up averaging them in my head and packing both sunglasses and an umbrella. That little moment stuck with me, because it is exactly the problem this thesis tries to solve — just at a much larger scale and with real money on the line.
+Recently, on the way to the airport, I checked Google Maps, Apple Maps, and Citymapper. They all predicted the same journey time, but they did not give the same answer. And from experience, I knew I trusted Citymapper a little more.
+
+That small decision captures the core question behind this thesis: when multiple predictors disagree, how do we learn whose information should count more — and how do we do it in a way that stays robust when incentives are strategic and money is at stake?
 
 Good morning. My name is Anastasia Cattaneo. Before I begin, I would like to thank my supervisors Pierre Pinson and Michael Vitali — their guidance, and their own published work on prediction markets, shaped every part of this thesis.
 
