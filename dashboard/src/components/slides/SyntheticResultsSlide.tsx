@@ -4,14 +4,14 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 const BASE = import.meta.env.BASE_URL;
 
 /**
- * Slide 9 — Synthetic Validation: Convergence.
+ * Slide 10 — Synthetic Validation: Convergence.
  *
  * Shows the R-generated skill convergence plot with a Spearman ρ badge
  * and a brief reward-distribution summary.
  */
 export default function SyntheticResultsSlide() {
   return (
-    <SlideShell title="Synthetic Validation: Convergence" slideNumber={9}>
+    <SlideShell title="Synthetic Validation: Convergence" slideNumber={10}>
       <div
         style={{
           flex: 1,

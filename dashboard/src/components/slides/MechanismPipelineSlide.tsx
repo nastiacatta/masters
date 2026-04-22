@@ -3,7 +3,7 @@ import 'katex/dist/katex.min.css';
 import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT } from './shared/presentationConstants';
 
 /**
- * Slide 6: Mechanism Round-by-Round — horizontal pipeline with
+ * Slide 7: Mechanism Round-by-Round — horizontal pipeline with
  * plain-English labels ABOVE each formula box. Arrows have 15px gaps.
  * Feedback arrow is BELOW the boxes with proper clearance.
  */
@@ -174,7 +174,7 @@ function FeedbackArrow() {
 }
 
 export default function MechanismPipelineSlide() {
-  const section = getSectionForSlide(6);
+  const section = getSectionForSlide(7);
 
   return (
     <div
@@ -195,7 +195,7 @@ export default function MechanismPipelineSlide() {
       {/* Section bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>6 / 14</div>
+      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>7 / 15</div>
 
       {/* Title */}
       <div style={{ flexShrink: 0, marginBottom: 20 }}>

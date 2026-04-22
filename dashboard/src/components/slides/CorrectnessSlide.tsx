@@ -2,7 +2,7 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 9: Mechanism Guarantees — table with pass indicators (SVG checkmarks, no emojis).
+ * Slide 11: Mechanism Guarantees — table with pass indicators (SVG checkmarks, no emojis).
  */
 
 interface GuaranteeRow {
@@ -59,7 +59,7 @@ function CheckIcon({ pass }: { pass: boolean }) {
 
 export default function CorrectnessSlide() {
   return (
-    <SlideShell title="Mechanism Guarantees" slideNumber={10}>
+    <SlideShell title="Mechanism Guarantees" slideNumber={11}>
       <div
         style={{
           flex: 1,

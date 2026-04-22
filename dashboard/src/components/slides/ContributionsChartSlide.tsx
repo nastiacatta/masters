@@ -24,6 +24,15 @@ interface SkillHistoryRow {
   sigma_6: number;
 }
 
+interface DatasetConfig {
+  key: 'wind' | 'electricity';
+  label: string;
+  rounds: string;
+  url: string;
+  colour: string;
+  improvement: string;
+}
+
 /* ── Forecaster metadata ───────────────────────────────────────── */
 
 export const FORECASTER_META = [
@@ -36,85 +45,152 @@ export const FORECASTER_META = [
   { key: 'sigma_6', name: 'Ensemble', colour: '#64748B' },
 ] as const;
 
+const BASE = import.meta.env.BASE_URL;
+
+const DATASETS: DatasetConfig[] = [
+  {
+    key: 'wind',
+    label: 'Elia Wind',
+    rounds: '17,544 rounds',
+    url: `${BASE}data/real_data/elia_wind/data/comparison.json`,
+    colour: PALETTE.teal,
+    improvement: '~34% CRPS improvement over equal weights',
+  },
+  {
+    key: 'electricity',
+    label: 'Elia Electricity',
+    rounds: '10,000 rounds',
+    url: `${BASE}data/real_data/elia_electricity/data/comparison.json`,
+    colour: PALETTE.coral,
+    improvement: '~4% CRPS improvement (forecasters more similar)',
+  },
+];
+
 /* ── Pure opacity helpers (exported for testing) ───────────────── */
 
-/**
- * Returns the stroke opacity for line at index `lineIdx`
- * given the currently-selected forecaster index (null = show all).
- */
 export function getLineOpacity(selected: number | null, lineIdx: number): number {
   if (selected === null) return 0.6;
   return lineIdx === selected ? 1.0 : 0.15;
 }
 
-/**
- * Returns the stroke width for line at index `lineIdx`
- * given the currently-selected forecaster index.
- */
 export function getLineStrokeWidth(selected: number | null, lineIdx: number): number {
   if (selected === null) return 2;
   return lineIdx === selected ? 3 : 1.5;
 }
 
+/* ── Helper to extract skill_history rows ──────────────────────── */
+
+function extractSkillHistory(json: Record<string, unknown>): SkillHistoryRow[] | null {
+  const history = json?.skill_history;
+  if (!Array.isArray(history)) return null;
+  return history.map((r: Record<string, number>) => ({
+    t: r.t,
+    sigma_0: r.sigma_0,
+    sigma_1: r.sigma_1,
+    sigma_2: r.sigma_2,
+    sigma_3: r.sigma_3,
+    sigma_4: r.sigma_4,
+    sigma_5: r.sigma_5,
+    sigma_6: r.sigma_6,
+  }));
+}
+
 /* ── Component ─────────────────────────────────────────────────── */
 
 export default function ContributionsChartSlide() {
-  const [skillData, setSkillData] = useState<SkillHistoryRow[] | null>(null);
-  const [fetchError, setFetchError] = useState(false);
+  const [dataByDataset, setDataByDataset] = useState<Record<string, SkillHistoryRow[]>>({});
+  const [fetchErrors, setFetchErrors] = useState<Record<string, boolean>>({});
+  const [activeDataset, setActiveDataset] = useState<'wind' | 'electricity'>('wind');
   const [selected, setSelected] = useState<number | null>(null);
 
-  /* Fetch skill_history from comparison.json at mount */
+  /* Fetch both datasets at mount */
   useEffect(() => {
-    const url = `${import.meta.env.BASE_URL}data/real_data/elia_wind/data/comparison.json`;
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((json) => {
-        const history = json?.skill_history;
-        if (!Array.isArray(history)) {
-          setFetchError(true);
-          return;
-        }
-        /* Pick only the columns we need */
-        const rows: SkillHistoryRow[] = history.map((r: Record<string, number>) => ({
-          t: r.t,
-          sigma_0: r.sigma_0,
-          sigma_1: r.sigma_1,
-          sigma_2: r.sigma_2,
-          sigma_3: r.sigma_3,
-          sigma_4: r.sigma_4,
-          sigma_5: r.sigma_5,
-          sigma_6: r.sigma_6,
-        }));
-        setSkillData(rows);
-      })
-      .catch(() => setFetchError(true));
+    for (const ds of DATASETS) {
+      fetch(ds.url)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((json) => {
+          const rows = extractSkillHistory(json);
+          if (rows) {
+            setDataByDataset((prev) => ({ ...prev, [ds.key]: rows }));
+          } else {
+            setFetchErrors((prev) => ({ ...prev, [ds.key]: true }));
+          }
+        })
+        .catch(() => {
+          setFetchErrors((prev) => ({ ...prev, [ds.key]: true }));
+        });
+    }
   }, []);
 
-  /* Pill click handler */
-  const handlePillClick = (idx: number) => {
+  const activeConfig = DATASETS.find((d) => d.key === activeDataset)!;
+  const skillData = dataByDataset[activeDataset] ?? null;
+  const hasError = fetchErrors[activeDataset] ?? false;
+
+  /* Click handlers with stopPropagation to prevent slide advance */
+  const handlePillClick = (e: React.MouseEvent, idx: number) => {
+    e.stopPropagation();
     setSelected((prev) => (prev === idx ? null : idx));
+  };
+
+  const handleDatasetToggle = (e: React.MouseEvent, key: 'wind' | 'electricity') => {
+    e.stopPropagation();
+    setActiveDataset(key);
+    setSelected(null); // reset forecaster selection on dataset switch
   };
 
   return (
     <SlideShell title="Real Data: Elia Wind + Electricity" slideNumber={13}>
-      {/* Pill selector */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 8,
-          marginBottom: 12,
-        }}
-      >
+      {/* Top row: dataset toggle + dataset label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        {/* Dataset toggle */}
+        {DATASETS.map((ds) => {
+          const isActive = activeDataset === ds.key;
+          return (
+            <button
+              key={ds.key}
+              onClick={(e) => handleDatasetToggle(e, ds.key)}
+              style={{
+                padding: '5px 18px',
+                borderRadius: 8,
+                border: `2px solid ${ds.colour}`,
+                background: isActive ? ds.colour : 'transparent',
+                color: isActive ? '#fff' : ds.colour,
+                fontWeight: isActive ? 700 : 500,
+                fontSize: '0.95rem',
+                fontFamily: TYPOGRAPHY.fontFamily,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {ds.label}
+            </button>
+          );
+        })}
+
+        {/* Active dataset info badge */}
+        <span
+          style={{
+            fontSize: '0.85rem',
+            color: PALETTE.slate,
+            fontFamily: TYPOGRAPHY.fontFamily,
+            marginLeft: 8,
+          }}
+        >
+          {activeConfig.rounds} — {activeConfig.improvement}
+        </span>
+      </div>
+
+      {/* Forecaster pill selector */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
         {FORECASTER_META.map((meta, idx) => {
           const isSelected = selected === idx;
           return (
             <button
               key={meta.key}
-              onClick={() => handlePillClick(idx)}
+              onClick={(e) => handlePillClick(e, idx)}
               style={{
                 padding: '4px 14px',
                 borderRadius: 999,
@@ -137,40 +213,29 @@ export default function ContributionsChartSlide() {
 
       {/* Chart area */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        {fetchError ? (
+        {hasError ? (
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: PALETTE.slate,
-              fontSize: TYPOGRAPHY.body.fontSize,
-              fontFamily: TYPOGRAPHY.fontFamily,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: '100%', color: PALETTE.slate,
+              fontSize: TYPOGRAPHY.body.fontSize, fontFamily: TYPOGRAPHY.fontFamily,
             }}
           >
-            Data unavailable
+            Data unavailable for {activeConfig.label}
           </div>
         ) : !skillData ? (
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: PALETTE.slate,
-              fontSize: TYPOGRAPHY.body.fontSize,
-              fontFamily: TYPOGRAPHY.fontFamily,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: '100%', color: PALETTE.slate,
+              fontSize: TYPOGRAPHY.body.fontSize, fontFamily: TYPOGRAPHY.fontFamily,
             }}
           >
-            Loading…
+            Loading {activeConfig.label}…
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={skillData}
-              margin={{ top: 8, right: 24, bottom: 28, left: 24 }}
-            >
+            <LineChart data={skillData} margin={{ top: 8, right: 24, bottom: 28, left: 24 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
               <XAxis
                 dataKey="t"
@@ -225,43 +290,23 @@ export default function ContributionsChartSlide() {
       <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
         <div
           style={{
-            flex: 1,
-            background: 'rgba(46, 139, 139, 0.06)',
-            border: `1.5px solid ${PALETTE.teal}`,
-            borderRadius: 10,
-            padding: '10px 16px',
-            textAlign: 'center',
+            flex: 1, background: 'rgba(46, 139, 139, 0.06)',
+            border: `1.5px solid ${PALETTE.teal}`, borderRadius: 10,
+            padding: '10px 16px', textAlign: 'center',
           }}
         >
-          <span
-            style={{
-              fontSize: '1.05rem',
-              fontWeight: 700,
-              color: PALETTE.teal,
-              fontFamily: TYPOGRAPHY.fontFamily,
-            }}
-          >
-            Mechanism learns who is skilled — improves aggregate by ~1/3
+          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>
+            Wind: ~34% CRPS improvement — Naive ranks highest
           </span>
         </div>
         <div
           style={{
-            flex: 1,
-            background: 'rgba(232, 93, 74, 0.06)',
-            border: `1.5px solid ${PALETTE.coral}`,
-            borderRadius: 10,
-            padding: '10px 16px',
-            textAlign: 'center',
+            flex: 1, background: 'rgba(232, 93, 74, 0.06)',
+            border: `1.5px solid ${PALETTE.coral}`, borderRadius: 10,
+            padding: '10px 16px', textAlign: 'center',
           }}
         >
-          <span
-            style={{
-              fontSize: '1.05rem',
-              fontWeight: 700,
-              color: PALETTE.coral,
-              fontFamily: TYPOGRAPHY.fontFamily,
-            }}
-          >
+          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.coral, fontFamily: TYPOGRAPHY.fontFamily }}>
             Electricity: ~4% gain (forecasters more similar)
           </span>
         </div>
