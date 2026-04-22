@@ -16,6 +16,7 @@ import ConclusionSlide from '@/components/slides/ConclusionSlide';
 import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
+import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 
 /**
  * Full-screen presentation mode for thesis defence.
@@ -24,7 +25,7 @@ import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSli
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-const TOTAL_SLIDES = 15;
+const TOTAL_SLIDES = 16;
 const BASE = import.meta.env.BASE_URL;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
@@ -214,22 +215,30 @@ const SLIDES: SlideData[] = [
     component: ContributionsChartSlide,
     slideNumber: 13,
   },
-  /* 14 — Strategic Robustness */
+  /* 14 — Head-to-Head vs Raja & Vitali */
+  {
+    id: 'baseline-comparison',
+    type: 'content',
+    title: 'Head-to-Head: Raja vs Vitali vs Ours',
+    component: BaselineComparisonSlide,
+    slideNumber: 14,
+  },
+  /* 15 — Strategic Robustness */
   {
     id: 'strategic-robustness',
     type: 'content',
     title: 'Strategic Robustness',
     component: StrategicRobustnessSlide,
-    slideNumber: 14,
+    slideNumber: 15,
   },
-  /* 15 — Conclusion + Future Work */
+  /* 16 — Conclusion + Future Work */
   {
     id: 'conclusion',
     type: 'closing',
     title: 'Conclusion + Future Work',
     dark: true,
     component: ConclusionSlide,
-    slideNumber: 15,
+    slideNumber: 16,
   },
 ];
 

@@ -17,7 +17,7 @@ export default function BaselineComparisonSlide() {
   return (
     <SlideShell
       title="Head-to-Head: Raja vs Vitali vs Ours"
-      slideNumber={13}
+      slideNumber={14}
     >
       <div
         style={{
