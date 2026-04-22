@@ -18,7 +18,7 @@ export default function DepositAblationSlide() {
         <img
           src={`${BASE}presentation-plots/deposit_policy_comparison.png`}
           alt="Deposit policy comparison showing Oracle, Bankroll+Confidence, Fixed, and Random"
-          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
+          style={{ flex: 1, maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
         />
       </div>
 

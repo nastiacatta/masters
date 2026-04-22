@@ -80,7 +80,7 @@ function StepBox({ step }: { step: StepConfig }) {
       {/* Plain-English description ABOVE */}
       <div
         style={{
-          fontSize: '0.85rem',
+          fontSize: '0.95rem',
           color: PALETTE.slate,
           fontStyle: 'italic',
           fontFamily: FONT_FAMILY,
@@ -92,7 +92,7 @@ function StepBox({ step }: { step: StepConfig }) {
       </div>
       <div
         style={{
-          fontSize: '1.5rem',
+          fontSize: '1.6rem',
           fontWeight: 700,
           color: PALETTE.navy,
           marginBottom: 8,

@@ -30,8 +30,8 @@ export default function PositioningMatrixSlide() {
   const chartH = 620;
   const midX = chartX + chartW / 2;
   const midY = chartY + chartH / 2;
-  const cardW = 260;
-  const cardH = 90;
+  const cardW = 280;
+  const cardH = 100;
 
   // Helper: get card center position
   function getCardCenter(node: MatrixNode) {
@@ -95,20 +95,20 @@ export default function PositioningMatrixSlide() {
         <line x1={chartX} y1={midY} x2={chartX + chartW} y2={midY} stroke={PALETTE.border} strokeWidth={2} strokeDasharray="8 6" />
 
         {/* X-axis label */}
-        <text x={chartX + 20} y={chartY + chartH + 40} fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}>
+        <text x={chartX + 20} y={chartY + chartH + 40} fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate}>
           Static (no learning)
         </text>
-        <text x={chartX + chartW - 20} y={chartY + chartH + 40} textAnchor="end" fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}>
+        <text x={chartX + chartW - 20} y={chartY + chartH + 40} textAnchor="end" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate}>
           Adaptive (learns over time)
         </text>
-        <text x={chartX + chartW / 2} y={chartY + chartH + 40} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate} fontWeight={600}>
+        <text x={chartX + chartW / 2} y={chartY + chartH + 40} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate} fontWeight={600}>
           Adaptiveness →
         </text>
 
         {/* Y-axis label */}
         <text
           x={chartX - 40} y={chartY + chartH / 2}
-          fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate} fontWeight={600}
+          fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate} fontWeight={600}
           transform={`rotate(-90, ${chartX - 40}, ${chartY + chartH / 2})`}
           textAnchor="middle"
         >
@@ -167,10 +167,10 @@ export default function PositioningMatrixSlide() {
               />
               <text
                 x={cx}
-                y={cy - 16}
+                y={cy - 20}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="20"
+                fontSize="22"
                 fontWeight={700}
                 fill={node.isThesis ? PALETTE.teal : PALETTE.navy}
               >
@@ -178,10 +178,10 @@ export default function PositioningMatrixSlide() {
               </text>
               <text
                 x={cx}
-                y={cy + 8}
+                y={cy + 6}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="16"
+                fontSize="18"
                 fill={PALETTE.slate}
               >
                 {node.citation}
@@ -191,7 +191,7 @@ export default function PositioningMatrixSlide() {
                 y={cy + 30}
                 textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="15"
+                fontSize="18"
                 fontStyle="italic"
                 fill={node.isThesis ? PALETTE.teal : PALETTE.purple}
               >

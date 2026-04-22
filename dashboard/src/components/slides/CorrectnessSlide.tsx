@@ -83,7 +83,6 @@ export default function CorrectnessSlide() {
           style={{
             ...CARD_STYLE,
             width: '100%',
-            maxWidth: 880,
             padding: '38px 48px',
           }}
         >

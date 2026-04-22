@@ -159,7 +159,7 @@ export default function ContributionsChartSlide() {
                 background: isActive ? ds.colour : 'transparent',
                 color: isActive ? '#fff' : ds.colour,
                 fontWeight: isActive ? 700 : 500,
-                fontSize: '1.02rem',
+                fontSize: '1.05rem',
                 fontFamily: TYPOGRAPHY.fontFamily,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',

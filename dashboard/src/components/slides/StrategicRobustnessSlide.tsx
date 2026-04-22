@@ -87,7 +87,6 @@ export default function StrategicRobustnessSlide() {
             padding: '28px 44px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
             width: '100%',
-            maxWidth: 800,
           }}
         >
           {/* Header */}
@@ -121,7 +120,7 @@ export default function StrategicRobustnessSlide() {
             >
               <span
                 style={{
-                  fontSize: '1.3rem',
+                  fontSize: '1.4rem',
                   fontWeight: 600,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
