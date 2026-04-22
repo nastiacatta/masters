@@ -17,7 +17,6 @@ import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
-import BaselineComparisonSlide2 from '@/components/slides/BaselineComparisonSlide2';
 import AppendixSlide from '@/components/slides/AppendixSlide';
 import TitleSlide from '@/components/slides/TitleSlide';
 
@@ -205,30 +204,22 @@ const SLIDES: SlideData[] = [
     component: BaselineComparisonSlide,
     slideNumber: 14,
   },
-  /* 15 — Benchmark Key Takeaways */
-  {
-    id: 'baseline-takeaways',
-    type: 'content',
-    title: 'Benchmark: Key Takeaways',
-    component: BaselineComparisonSlide2,
-    slideNumber: 15,
-  },
-  /* 16 — Strategic Robustness */
+  /* 15 — Strategic Robustness */
   {
     id: 'strategic-robustness',
     type: 'content',
     title: 'Strategic Robustness',
     component: StrategicRobustnessSlide,
-    slideNumber: 16,
+    slideNumber: 15,
   },
-  /* 17 — Conclusion + Future Work */
+  /* 16 — Conclusion + Future Work */
   {
     id: 'conclusion',
     type: 'closing',
     title: 'Conclusion + Future Work',
     dark: true,
     component: ConclusionSlide,
-    slideNumber: 17,
+    slideNumber: 16,
   },
   /* Appendix — hidden backup slide, no slide number */
   {

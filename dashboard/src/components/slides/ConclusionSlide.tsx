@@ -63,7 +63,7 @@ function DarkCard({
 }
 
 /**
- * Slide 17 — Conclusion + Future Work
+ * Slide 16 — Conclusion + Future Work
  *
  * Dark background layout with three CRPS comparison cards,
  * a key-takeaway highlight, and a future-work section.
@@ -73,7 +73,7 @@ export default function ConclusionSlide() {
     <SlideShell
       title="Conclusion + Future Work"
       dark
-      slideNumber={17}
+      slideNumber={16}
     >
       {/* ── CRPS Comparison Cards ── */}
       <div style={{ display: 'flex', gap: 20, marginBottom: 28 }}>

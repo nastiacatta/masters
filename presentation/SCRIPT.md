@@ -16,14 +16,13 @@
 | 12 | Deposit Design | VALIDATION | ~1 min |
 | 13 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
 | 14 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
-| 15 | Benchmark: Key Takeaways | VALIDATION | ~0.5 min |
-| 16 | Strategic Robustness | VALIDATION | ~1 min |
-| 17 | Conclusion + Future Work | CLOSING | ~1.5 min |
+| 15 | Strategic Robustness | VALIDATION | ~1 min |
+| 16 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
-**Total: ~22.5 min**
+**Total: ~22 min**
 
 > ⚠️ Slides 7 and 13 are flagged at 2 minutes — keep narration tight and avoid tangents.
-> Slide 14 is the "why we improve" figure — land the comparison and move to slide 15 for the three trade-offs.
+> Slide 14 is the "why we improve" figure with compact takeaway cards below.
 
 ---
 
@@ -157,7 +156,7 @@ Why validate on synthetic data first? Because synthetic experiments use a known 
 
 ---
 
-# Script Part III — VALIDATION (Slides 10–16, ~8.5 min)
+# Script Part III — VALIDATION (Slides 10–15, ~8 min)
 
 ---
 
@@ -227,15 +226,7 @@ The takeaway is the point of the project: adaptation, self-financing, and an abs
 
 ---
 
-## [SLIDE 15] Benchmark: Key Takeaways (~0.5 min)
-
-Three takeaway cards summarise the trade-offs:
-
-Raja et al. is self-financed but history-free — small gains relative to equal weights. Vitali & Pinson achieves the lowest CRPS in this benchmark but is not self-financed and uses relative weights on a simplex. This project sits between them on CRPS while retaining Lambert's economic properties and reporting an absolute per-forecaster skill signal.
-
----
-
-## [SLIDE 16] Strategic Robustness (~1 min)
+## [SLIDE 15] Strategic Robustness (~1 min)
 
 The mechanism must resist manipulation. Three main attack types from the literature.
 
@@ -249,11 +240,11 @@ The overall picture: the mechanism resists the standard attacks. Sophisticated a
 
 ---
 
-# Script Part IV — CLOSING (Slide 17, ~1.5 min)
+# Script Part IV — CLOSING (Slide 16, ~1.5 min)
 
 ---
 
-## [SLIDE 17] Conclusion + Future Work (~1.5 min)
+## [SLIDE 16] Conclusion + Future Work (~1.5 min)
 
 To summarise. This project develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 
