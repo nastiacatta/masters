@@ -62,6 +62,55 @@ def inline_md_emphasis_to_tex(line: str) -> str:
     return line
 
 
+def strip_md_links(line: str) -> str:
+    """
+    Convert Markdown links [text](url) -> text (drop URL).
+    Keeps the visible anchor text, removes the destination.
+    """
+    return re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)
+
+
+def normalize_unicode_to_latex(line: str) -> str:
+    """
+    Replace common Unicode punctuation/symbols with pdflatex-safe equivalents.
+    This runs on text *before* escaping, and should be safe inside math too
+    (it mainly targets punctuation).
+    """
+    replacements = {
+        "—": "---",
+        "–": "--",
+        "−": "-",  # minus sign
+        "→": r"$\rightarrow$",
+        "←": r"$\leftarrow$",
+        "≤": r"$\le$",
+        "≥": r"$\ge$",
+        "≈": r"$\approx$",
+        "≃": r"$\simeq$",
+        "×": r"$\times$",
+        "ρ": r"$\rho$",
+        "γ": r"$\gamma$",
+        "λ": r"$\lambda$",
+        "η": r"$\eta$",
+        "σ": r"$\sigma$",
+        "π": r"$\pi$",
+        "Δ": r"$\Delta$",
+        "τ": r"$\tau$",
+        "§": r"\S{}",
+        "…": r"\ldots{}",
+        "“": "``",
+        "”": "''",
+        "’": "'",
+        "•": r"\textbullet{}",
+        "°": r"$^\circ$",
+        "≠": r"$\ne$",
+        "≪": r"$\ll$",
+        "ï": r"\"{\i}",  # in naïve
+    }
+    for k, v in replacements.items():
+        line = line.replace(k, v)
+    return line
+
+
 def is_table_header_sep(line: str) -> bool:
     # e.g. |----|-----| or | --- | --- |
     stripped = line.strip()
@@ -107,11 +156,17 @@ def table_to_latex(rows: list[list[str]]) -> str:
     out.append(r"\begin{center}")
     out.append(r"\begin{tabular}{" + colspec + r"}")
     out.append(r"\toprule")
-    out.append(" & ".join(escape_outside_math(inline_md_emphasis_to_tex(c)) for c in header) + r" \\")
+    def cell(c: str) -> str:
+        c = strip_md_links(c)
+        c = normalize_unicode_to_latex(c)
+        c = inline_code_to_texttt(inline_md_emphasis_to_tex(c))
+        return escape_outside_math(c)
+
+    out.append(" & ".join(cell(c) for c in header) + r" \\")
     out.append(r"\midrule")
     for r in body:
         r = (r + [""] * ncol)[:ncol]
-        out.append(" & ".join(escape_outside_math(inline_md_emphasis_to_tex(c)) for c in r) + r" \\")
+        out.append(" & ".join(cell(c) for c in r) + r" \\")
     out.append(r"\bottomrule")
     out.append(r"\end{tabular}")
     out.append(r"\end{center}")
@@ -127,6 +182,7 @@ def md_to_tex(md: str, *, title: str) -> str:
         [
             r"\documentclass[11pt]{article}",
             r"\usepackage[margin=1in]{geometry}",
+            r"\usepackage[utf8]{inputenc}",
             r"\usepackage[T1]{fontenc}",
             r"\usepackage{lmodern}",
             r"\usepackage{microtype}",
@@ -145,7 +201,7 @@ def md_to_tex(md: str, *, title: str) -> str:
             r"  xleftmargin=0.2cm,",
             r"  xrightmargin=0.2cm,",
             r"}",
-            r"\title{" + escape_tex(title) + r"}",
+            r"\title{" + escape_tex(normalize_unicode_to_latex(title)) + r"}",
             r"\author{}",
             r"\date{}",
             r"\begin{document}",
@@ -244,6 +300,8 @@ def md_to_tex(md: str, *, title: str) -> str:
                     i += 1
                 continue
 
+            raw = strip_md_links(raw)
+            raw = normalize_unicode_to_latex(raw)
             text = inline_code_to_texttt(inline_md_emphasis_to_tex(raw))
             text = escape_outside_math(text)
             text = unescape_inserted_cmds(text)
@@ -268,6 +326,8 @@ def md_to_tex(md: str, *, title: str) -> str:
                 out.append(r"\begin{quote}")
                 in_quote = True
             content = line.lstrip()[1:].lstrip()
+            content = strip_md_links(content)
+            content = normalize_unicode_to_latex(content)
             content = inline_code_to_texttt(inline_md_emphasis_to_tex(content))
             content = escape_outside_math(content)
             content = unescape_inserted_cmds(content)
@@ -289,6 +349,8 @@ def md_to_tex(md: str, *, title: str) -> str:
                 out.append(r"\begin{" + env + r"}")
                 list_stack.append(env)
             item_text = (bullet or numbered).group(1).strip()
+            item_text = strip_md_links(item_text)
+            item_text = normalize_unicode_to_latex(item_text)
             item_text = inline_code_to_texttt(inline_md_emphasis_to_tex(item_text))
             item_text = escape_outside_math(item_text)
             item_text = unescape_inserted_cmds(item_text)
@@ -305,7 +367,9 @@ def md_to_tex(md: str, *, title: str) -> str:
             continue
 
         # Normal paragraph line
-        text = inline_code_to_texttt(inline_md_emphasis_to_tex(line.rstrip()))
+        raw = strip_md_links(line.rstrip())
+        raw = normalize_unicode_to_latex(raw)
+        text = inline_code_to_texttt(inline_md_emphasis_to_tex(raw))
         text = escape_outside_math(text)
         text = unescape_inserted_cmds(text)
         out.append(text)
