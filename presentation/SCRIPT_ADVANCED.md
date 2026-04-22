@@ -39,7 +39,9 @@
 17. [Demo (live dashboard)](#demo)
 18. [Appendix A — All formulas in one place](#appendix-a)
 19. [Appendix B — Code map](#appendix-b)
-20. [Appendix C — Extended Q&A (from `theory/extra/`)](#appendix-c)
+20. [Appendix C — How the code runs end-to-end](#appendix-c)
+21. [Appendix D — Truthfulness (proof sketch) + what can break it](#appendix-d)
+22. [Appendix E — Extended Q&A (from `theory/extra/`)](#appendix-e)
 
 ---
 
@@ -811,13 +813,141 @@ $\pi_i^{\text{util}} = \mathbb 1[U>0]\,\frac{\tilde s_i m_i}{\sum_j \tilde s_j m
 ---
 
 <a id="appendix-c"></a>
-## Appendix C — Extended Q&A (from `theory/extra/`)
+## Appendix C — How the code runs end-to-end
 
-### C1. "Why is the skill signal bounded but the accumulator unbounded?"
+This appendix is the “wiring diagram” between the clean theory objects ($q_i$, $b_i$, $m_i$, $\sigma_i$, scores, payoffs) and the concrete code that produces the plots and numbers.
+
+### C1. One round in the *core* mechanism (pure functions)
+
+The canonical core is `onlinev2/src/onlinev2/core/` (no I/O, no plotting).
+
+At a high level, a single round is:
+
+1. **Inputs for round $t$**
+   - Outcome $y_t$ (already normalised to $[0,1]$ in real-data runs).
+   - Quantile report matrix $Q_t \in \mathbb{R}^{n \times K}$ where row $i$ is $(q_i^{(1)}(t),\dots,q_i^{(K)}(t))$.
+   - Participation indicator $\alpha_t \in \{0,1\}^n$ (0=present, 1=missing).
+   - Deposits $b_t \in \mathbb{R}_+^n$ (policy-defined).
+   - Current skill vector $\sigma_t \in [\sigma_{\min},1]^n$ (carried from past rounds).
+
+2. **Effective wager**
+   - `core/staking.py`: `effective_wager_bankroll` implements $m_t = b_t \cdot g(\sigma_t)$.
+
+3. **Aggregation**
+   - `core/aggregation.py`: `aggregate_forecast(Q_t, m_t)` computes $\hat q^{(k)}(t) = \sum_i (m_i/\sum_j m_j)\,q_i^{(k)}(t)$.
+
+4. **Scoring**
+   - `core/scoring.py`: `crps_hat_from_quantiles(y_t, Q_t, taus)` computes per-agent CRPS-hat losses.
+   - `core/scoring.py`: `score_crps_hat(...)` maps losses into $s_i(t) \in [0,1]$ by $s=1-\widehat{CRPS}/2$.
+
+5. **Settlement**
+   - `core/settlement.py`: `settle_round(b, sigma, lam, scores, ...)` computes:
+     - refund $b_i-m_i$,
+     - Lambert skill payoff $\pi_i^{skill}=m_i(1+s_i-\bar s)$,
+     - profit = payoff − $m_i$,
+     - wealth update happens in `core/staking.py:update_wealth`.
+
+6. **Skill update**
+   - `core/skill.py`: `update_ewma_loss` updates $L_i(t)$.
+   - `core/skill.py`: `loss_to_skill` maps $L_i(t)$ → $\sigma_i(t+1)$.
+
+This is exactly the pipeline you narrate on Slide 7.
+
+### C2. Simulation runner (synthetic + “mechanism on fixed forecasts”)
+
+`onlinev2/src/onlinev2/simulation.py` is the harness that loops the core round logic.
+
+Key inputs you should know how to interpret:
+
+- **`scoring_mode="quantiles_crps"`**: uses CRPS-hat (finite quantile score).
+- **`taus`**: quantile grid; default in many scripts is `(0.1, 0.25, 0.5, 0.75, 0.9)` (not equidistant).
+- **`deposit_mode`**:
+  - `"fixed"` with `fixed_deposit=1.0` means the real-data results isolate the *weight-learning* mechanism; they do not exercise wealth-based deposit dynamics.
+- **`omega_max=0.0`**: dominance cap is off in all headline runs/plots.
+- **`store_history=True`**: stores `sigma_hist`, `wager_hist`, `r_hat_hist` so plots can be generated.
+
+### C3. Real-data pipeline (Elia)
+
+Real-data runs are produced by:
+
+- `onlinev2/src/onlinev2/real_data/forecasters.py`: defines the 7 forecasters (strictly causal).
+- `onlinev2/src/onlinev2/real_data/runner.py`: `run_real_data_comparison`:
+  1. normalises series to $[0,1]$,
+  2. rolls forward and produces $Q_t$ for each $t$,
+  3. calls `run_simulation` on the precomputed `q_reports_pre` and `y_pre`,
+  4. computes CRPS series for several comparison rules (uniform, mechanism, best-single, etc.),
+  5. writes `dashboard/public/data/real_data/<dataset>/data/comparison.json`.
+
+**Reproducibility note.** The stochastic forecasters are seeded:
+- XGBoost uses `random_state=0`,
+- MLP uses `torch.manual_seed(0)`.
+
+### C4. Baseline benchmark (Raja vs Vitali vs this project)
+
+The head-to-head baseline is `scripts/run_baseline_comparison.py`:
+
+1. Load raw series and normalise it.
+2. Run all forecasters causally once; cache forecasts to `onlinev2/outputs_cache/<dataset>_forecasts.npz`.
+3. Run 4 methods on the same cached forecasts:
+   - uniform,
+   - Raja history-free (confidence weights),
+   - Vitali OGD on simplex (per-quantile weights),
+   - this project’s mechanism (`run_simulation`).
+4. Output:
+   - `dashboard/public/data/real_data/<dataset>/data/baselines.json` (for dashboard + slide),
+   - `presentation/plots/data/*.csv` (for R figure generation).
+
+This is the cleanest “apples-to-apples” comparison because forecasts are held fixed.
+
+---
+
+<a id="appendix-d"></a>
+## Appendix D — Truthfulness (proof sketch) + what can break it
+
+This is the most important theory point to be able to explain precisely.
+
+### D1. Statement (risk-neutral truthfulness, one round)
+
+Fix a round $t$. Suppose:
+
+1. The agent’s effective wager $m_i(t)$ is fixed with respect to their current report $r_i(t)$.
+2. The score $s(r,\omega)$ is **strictly proper** for the report space being elicited (here: quantiles/CRPS-hat).
+3. Agents are **risk-neutral** and maximise expected profit.
+
+Then the Lambert weighted-score settlement makes truthful reporting a best response.
+
+### D2. Why Lambert truthfulness still holds with the skill gate
+
+The skill gate changes $m_i$ from $b_i$ to $m_i=b_i g(\sigma_i)$.
+
+But as long as $\sigma_i(t)$ is computed **only from past information** (i.e. from realised outcomes up to $t-1$), it is fixed at the start of round $t$, so $m_i(t)$ is fixed when the agent chooses $r_i(t)$.
+
+Therefore the classical Lambert argument applies unchanged *conditional on $m_i(t)$*.
+
+### D3. What can break truthfulness in implementation
+
+Truthfulness hinges on “wager independent of current report.” In this repo, the main thing to watch is:
+
+- `core/staking.py:confidence_from_quantiles(...)`
+
+If deposits are computed from the **current-round** quantile report (quantile width proxy), then the wager becomes report-dependent, and strict truthfulness is no longer guaranteed by Lambert’s theorem.
+
+This is why the code contains explicit warnings that confidence must be lagged or exogenous for theorem-preserving claims.
+
+### D4. Risk aversion
+
+Lambert truthfulness is under risk neutrality. With risk-averse agents, they may hedge/shade reports to reduce variance of payoff even under proper scoring. This is a known limitation of all Lambert-family mechanisms and should be stated explicitly if asked.
+
+---
+
+<a id="appendix-e"></a>
+## Appendix E — Extended Q&A (from `theory/extra/`)
+
+### E1. "Why is the skill signal bounded but the accumulator unbounded?"
 
 Because what the *mechanism* uses is $\sigma$, and exposure has to be controllable. The **accumulator** $L$ is unbounded because it is a sufficient statistic — compressing it prematurely would lose information. The **public signal** $\sigma$ is bounded because it governs how much money is at stake, and we need to guarantee $m_i \in [\lambda b_i, b_i]$.
 
-### C2. "How does this compare to pure online convex optimisation (Cesa-Bianchi–Lugosi)?"
+### E2. "How does this compare to pure online convex optimisation (Cesa-Bianchi–Lugosi)?"
 
 Classical online aggregation gives regret bounds like $O(\sqrt T \log n)$ for bounded losses. It does not have:
 
@@ -827,15 +957,15 @@ Classical online aggregation gives regret bounds like $O(\sqrt T \log n)$ for bo
 
 Our mechanism gives up the explicit regret bound but keeps the economic properties. Vitali & Pinson's OGD is the closest to classical online aggregation and achieves the lowest CRPS on Slide 14 exactly because it is optimising CRPS directly.
 
-### C3. "Why use the finite-grid CRPS-hat and not exact CRPS?"
+### E3. "Why use the finite-grid CRPS-hat and not exact CRPS?"
 
 Exact CRPS requires a closed-form predictive distribution. Our forecasters only emit quantile grids. The finite-grid surrogate $\widehat{\text{CRPS}} = (2/K)\sum_k L^{(\tau_k)}$ is the average pinball loss across reported quantiles; it is a proper scoring rule on the quantile grid and is standard in probabilistic forecasting (see Gneiting & Raftery 2007 and `theory/extra/Online_Learning_with_Continuous_Ranked_Probability_Score.md`). The main caveat is that the standard trapezoidal argument for the CRPS-CRPS-hat gap assumes an equidistant probability grid; our default grid is $(0.1, 0.25, 0.5, 0.75, 0.9)$, which is not equidistant. A 9-level equidistant grid is also available (`TAUS_FINE` in `scoring.py`).
 
-### C4. "Why not use exact Shapley payouts instead of Lambert?"
+### E4. "Why not use exact Shapley payouts instead of Lambert?"
 
 Shapley values for $n$ forecasters require $2^n$ marginal contributions. With $n = 7$ that is $128$ per round; feasible, but not scalable. More importantly, Shapley-based settlement in Vitali & Pinson is *not* self-financed — it requires an external payer — which breaks the market interpretation. See `theory/extra/Game-theoretic_Payoff_Allocation_in_Multiagent_Machine_Learning_Systems.md`.
 
-### C5. "Could the same mechanism work for classification or for non-monetary reputation?"
+### E5. "Could the same mechanism work for classification or for non-monetary reputation?"
 
 Yes in principle. The only structural ingredients are:
 
@@ -845,11 +975,11 @@ Yes in principle. The only structural ingredients are:
 
 The theorems from Lambert 2008 extend as long as $s$ is strictly proper and bounded and the wager is budget-balanced.
 
-### C6. "What breaks if $y \notin [0,1]$?"
+### E6. "What breaks if $y \notin [0,1]$?"
 
 The score $s = 1 - |y - r|$ is only in $[0,1]$ when $y, r \in [0,1]$. For CRPS-hat we divide by 2 to normalise; that normalisation only works when the outcome is in $[0,1]$ too (otherwise max pinball can be larger). We enforce this by normalising the outcome series before the run (`real_data/runner.normalize_series`).
 
-### C7. "How do you tune $\gamma, \rho, \lambda, \eta$?"
+### E7. "How do you tune $\gamma, \rho, \lambda, \eta$?"
 
 - $\lambda$: "fraction of wager that enters regardless of skill". Interpretation: minimum participation floor. We use $\lambda = 0.05$.
 - $\eta$: shape of the gate. $\eta = 2$ convexifies the gate, so high-skill forecasters get disproportionately more weight. $\eta = 1$ is linear.
@@ -858,15 +988,15 @@ The score $s = 1 - |y - r|$ is only in $[0,1]$ when $y, r \in [0,1]$. For CRPS-h
 
 All via grid search on a validation split. See `scripts/run_sensitivity_experiments.py`.
 
-### C8. "What happens when all participants are absent or all wagers are zero?"
+### E8. "What happens when all participants are absent or all wagers are zero?"
 
 `aggregate_forecast` returns either a user-specified `fallback` or zero, and `settlement.skill_payoff` returns zeros. No division by zero; no payouts; the round is effectively skipped.
 
-### C9. "Why not compare against equal weights only on a smaller panel?"
+### E9. "Why not compare against equal weights only on a smaller panel?"
 
 We do — the "best_single" line in `comparison.json` tracks the single best forecaster (lowest recent CRPS) and wins over equal weights on wind because Naive persistence is so strong there. The mechanism sits between Naive-only and equal weights: it captures the heterogeneity without committing to Naive.
 
-### C10. "What are the biggest code-level caveats I should be honest about in Q&A?"
+### E10. "What are the biggest code-level caveats I should be honest about in Q&A?"
 
 From the audit:
 
