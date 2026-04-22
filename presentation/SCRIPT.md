@@ -257,3 +257,61 @@ Future work has a clear priority: close the CRPS gap to Vitali **without** givin
 This project asked whether a prediction market can learn how much each contribution should matter, while keeping a disciplined reward mechanism. The answer is yes — the gains are real on real energy data, the mechanism satisfies its formal guarantees, and it occupies a position in the design space that no prior work has reached.
 
 Thank you. I am happy to take questions.
+
+
+---
+
+# [APPENDIX] — Backup Material for Q&A
+
+> These notes are not part of the main presentation. Use only if the corresponding question arises during Q&A.
+
+---
+
+## Q1: "Why not just use Vitali & Pinson's approach?"
+
+Key points:
+- Vitali achieves −65 % CRPS on wind — the best in this benchmark.
+- Trade-off: Shapley settlement (not self-financed), relative weights on a simplex.
+- Our mechanism preserves Lambert's 7 formal properties including budget balance and sybilproofness.
+- The cost is ~21 pp in CRPS — quantified, not hand-waved.
+
+## Q2: "Why does Naive still beat the aggregate?"
+
+Key points:
+- Wind power is highly autocorrelated → Naive persistence is exceptionally strong.
+- The mechanism improves the aggregate by −44 % vs equal weights, but the ceiling is the best individual.
+- Known limitation of linear opinion pools. Future work: nonlinear combination methods.
+
+## Q3: "How sensitive are the results to hyperparameters?"
+
+Key points:
+- Parameter sweep shows robustness across a wide range.
+- γ (skill learning rate) has the strongest effect.
+- Tuned values: γ = 16, ρ = 0.5, λ = 0.05 — selected via grid search on a validation split.
+- Refer to the parameter sweep figure in the appendix slides.
+
+## Q4: "What happens with fewer forecasters?"
+
+Key points:
+- Mechanism needs heterogeneity. With N < 4, not enough diversity.
+- Sweet spot: N ≥ 6 with genuinely different model families.
+
+## Q5: "Is truthfulness guaranteed?"
+
+Key points:
+- Truthfulness holds under risk neutrality (Lambert et al.'s original assumption).
+- Under risk aversion, forecasters may shade reports.
+- Shared limitation with all Lambert-family mechanisms.
+
+## Q6: "How does the mechanism handle regime changes?"
+
+Key points:
+- EWMA naturally adapts — recent performance weighted more heavily.
+- Staleness decay: absent forecasters revert toward baseline.
+- Seasonal analysis on Elia wind shows improvement in all four seasons.
+
+## Q7: "What is the computational cost?"
+
+Key points:
+- Each round is O(N). EWMA update, skill gate, Lambert settlement — all linear.
+- Full 17,544-round Elia experiment runs in under 30 seconds on a laptop.

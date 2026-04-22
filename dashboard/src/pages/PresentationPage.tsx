@@ -17,6 +17,7 @@ import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
+import AppendixSlide from '@/components/slides/AppendixSlide';
 
 /**
  * Full-screen presentation mode for project defence.
@@ -239,6 +240,14 @@ const SLIDES: SlideData[] = [
     dark: true,
     component: ConclusionSlide,
     slideNumber: 16,
+  },
+  /* Appendix — hidden backup slide, no slide number */
+  {
+    id: 'appendix',
+    type: 'content',
+    title: 'Appendix',
+    component: AppendixSlide,
+    slideNumber: undefined,
   },
 ];
 

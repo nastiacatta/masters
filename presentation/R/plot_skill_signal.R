@@ -39,7 +39,7 @@ forecaster_dots$sigma <- skill_map(forecaster_dots$L, sigma_min, gamma)
 dot_colours <- c(PALETTE$teal, PALETTE$coral, PALETTE$slate)
 
 # ---------------------------------------------------------------------------
-# 4. Build the plot
+# 4. Build the plot (curve + dots only, no formula/parameter annotations)
 # ---------------------------------------------------------------------------
 p <- ggplot() +
   # Shaded region showing the bounded range [σ_min, 1]
@@ -75,19 +75,6 @@ p <- ggplot() +
              label.padding = unit(0.4, "lines"),
              label.r = unit(0.3, "lines"),
              nudge_y = c(0.07, 0.08, 0.07)) +
-  # Formula annotation
-  annotate("label",
-           x = 0.30, y = 0.85,
-           label = "\u03C3 = \u03C3_min + (1 \u2212 \u03C3_min) \u00B7 exp(\u2212\u03B3 \u00B7 L)",
-           size = 5.5, fontface = "bold",
-           fill = PALETTE$navy, colour = "white",
-           label.padding = unit(0.6, "lines"),
-           label.r = unit(0.3, "lines")) +
-  # Parameter annotation
-  annotate("text",
-           x = 0.30, y = 0.78,
-           label = sprintf("\u03B3 = %.0f,  \u03C3_min = %.2f", gamma, sigma_min),
-           size = 4.5, colour = PALETTE$slate, fontface = "italic") +
   # Scales
   scale_x_continuous(
     limits = c(-0.01, max(L_seq) + 0.01),
@@ -100,16 +87,12 @@ p <- ggplot() +
     labels = scales::number_format(accuracy = 0.1)
   ) +
   labs(
-    title = "The Skill Signal: Mapping Loss to Bounded Skill",
-    subtitle = "Exponential decay compresses unbounded loss into [\u03C3_min, 1] \u2014 ensures all forecasters retain a voice",
+    title = NULL,
+    subtitle = NULL,
     x = expression(bold("Mean Loss") ~ (L)),
     y = expression(bold("Skill Parameter") ~ (sigma))
   ) +
-  theme_thesis() +
-  theme(
-    plot.subtitle = element_text(size = 14, colour = PALETTE$slate,
-                                 margin = margin(b = 15))
-  )
+  theme_thesis()
 
 # ---------------------------------------------------------------------------
 # 5. Save to both output directories

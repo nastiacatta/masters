@@ -33,20 +33,11 @@ validate_data(df, c("deposit_policy", "mean_crps_all", "se_all",
 # ---------------------------------------------------------------------------
 # 3. Prepare data for plotting
 # ---------------------------------------------------------------------------
-# Readable labels for each deposit policy
 policy_labels <- c(
   "iid_exp"          = "IID Exponential",
   "fixed_unit"       = "Fixed Unit",
   "oracle_precision" = "Oracle Precision",
   "bankroll_conf"    = "Bankroll-Confidence"
-)
-
-# Assign colours per policy
-policy_colours <- c(
-  "IID Exponential"     = PALETTE$slate,
-  "Fixed Unit"          = PALETTE$coral,
-  "Oracle Precision"    = PALETTE$purple,
-  "Bankroll-Confidence" = PALETTE$teal
 )
 
 df <- df %>%
@@ -57,9 +48,8 @@ df <- df %>%
   )
 
 # ---------------------------------------------------------------------------
-# 4. Build the plot — grouped bar chart with error bars
+# 4. Build the plot — bars + error bars only, no value labels
 # ---------------------------------------------------------------------------
-# Reshape to long format for facet-free grouped bars
 df_long <- df %>%
   select(policy_label, mean_crps_all, se_all, mean_crps_warmstart, se_ws) %>%
   pivot_longer(
@@ -86,15 +76,6 @@ p <- ggplot(df_long, aes(x = policy_label, y = mean_crps, fill = period_label)) 
     linewidth = 0.5,
     colour = PALETTE$charcoal
   ) +
-  # Value labels on top of each bar
-  geom_text(
-    aes(label = sprintf("%.4f", mean_crps)),
-    position = position_dodge(width = 0.7),
-    vjust = -0.8,
-    size = 4,
-    fontface = "bold",
-    colour = PALETTE$charcoal
-  ) +
   scale_fill_manual(
     values = c("All Rounds" = PALETTE$navy, "Warm-Start Only" = PALETTE$teal),
     name = "Evaluation Period"
@@ -104,15 +85,13 @@ p <- ggplot(df_long, aes(x = policy_label, y = mean_crps, fill = period_label)) 
     labels = scales::number_format(accuracy = 0.001)
   ) +
   labs(
-    title = "Deposit Policy Comparison",
-    subtitle = "Mean CRPS by deposit rule \u2014 lower is better",
+    title = NULL,
+    subtitle = NULL,
     x = NULL,
     y = "Mean CRPS"
   ) +
   theme_thesis() +
   theme(
-    plot.subtitle = element_text(size = 14, colour = PALETTE$slate,
-                                 margin = margin(b = 15)),
     axis.text.x = element_text(size = 14, face = "bold"),
     legend.position = "top"
   )
