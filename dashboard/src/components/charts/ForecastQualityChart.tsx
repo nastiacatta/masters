@@ -36,7 +36,7 @@ export default function ForecastQualityChart({ data }: Props) {
       help={{
         term: 'Aggregate Forecast Quality',
         definition: 'Continuous Ranked Probability Score (CRPS) measures how close each method\'s probabilistic forecast is to the realised outcome.',
-        interpretation: 'Lower CRPS means better accuracy. The mechanism line (Skill × stake) should track below baselines if the thesis claim holds.',
+        interpretation: 'Lower CRPS means better accuracy. The mechanism line (Skill × stake) should track below baselines if the project claim holds.',
         axes: { x: 'Round', y: 'CRPS (lower is better)' },
       }}
     >

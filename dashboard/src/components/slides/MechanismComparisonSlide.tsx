@@ -3,7 +3,7 @@ import { PALETTE, TYPOGRAPHY, CARD_STYLE } from './shared/presentationConstants'
 
 /**
  * Slide 5: Mechanism Comparison — neutral feature comparison between
- * Lambert et al., Raja et al., Vitali & Pinson, and this thesis.
+ * Lambert et al., Raja et al., Vitali & Pinson, and this project.
  */
 
 interface ComparisonRow {

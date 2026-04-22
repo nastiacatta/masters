@@ -61,7 +61,7 @@ export default function ExperimentTopBar({ experimentsFilter }: ExperimentTopBar
   return (
     <div className="flex flex-wrap items-center gap-3 py-3 px-4 bg-slate-50 border-b border-slate-200">
       <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 shrink-0">
-        Experiment (by thesis question):
+        Experiment (by research question):
       </label>
       <select
         value={selectedExperiment?.name ?? ''}
