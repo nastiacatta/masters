@@ -65,6 +65,109 @@ These are the parameters you will be asked about most often in Q&A.
 
 ---
 
+## Big picture: what the system is doing (plain language, but correct)
+
+This project combines three ideas into one mechanism:
+
+1. **Probabilistic forecasting**: each participant submits not one number, but a distribution (here: a set of quantiles). This is needed because the decision-maker cares about uncertainty, not just a point forecast.
+2. **A self-financed wagering mechanism** (Lambert-family): participants put money behind their report, and after the outcome the pool is redistributed according to a proper score. This gives incentives for honest information revelation *without external subsidy*.
+3. **Online learning / reputation**: in repeated interaction, the mechanism learns which participants tend to be useful and uses that to decide how much their future stake should count.
+
+The key design principle is:
+
+> **Influence and exposure must be coupled.**  
+> If you influence the market forecast more, you must also put more money at risk.
+
+That coupling is implemented with the **effective wager** \(m_i(t)\), which is used both:
+
+- as the **weight** in aggregation (how much your forecast moves the market forecast), and
+- as the **wager** in settlement (how much money you win/lose from performance).
+
+### The end-to-end “story” in one paragraph
+
+Each round, forecasters submit quantiles and a deposit. The mechanism converts the deposit into an effective wager using a pre-round skill signal learned from past losses. Those effective wagers weight the aggregation into a market forecast. After the outcome arrives, the self-financed settlement redistributes the effective wager pool based on a proper score, and the realised loss updates the skill signal for the next round. Over time, the market learns whose information tends to help and therefore how much their stake should matter.
+
+---
+
+## Theory primer (the minimum theory you need to genuinely understand the mechanism)
+
+This section is intentionally not code-specific. It explains the theory objects and why they fit together.
+
+### 1) Proper scoring rules (why truthful reporting is rational)
+
+A **scoring rule** assigns a numerical reward \(S(r, y)\) to a report \(r\) once the outcome \(y\) is observed.
+
+- \(S\) is **proper** if the agent maximises expected score by reporting their true belief.
+- \(S\) is **strictly proper** if truthful reporting is the unique maximiser (under mild conditions).
+
+This matters because **a market cannot “read your mind”**. A proper scoring rule is the standard tool that makes “tell the truth” a best response (under risk neutrality).
+
+### 2) Quantiles + pinball loss (why we use quantile forecasts)
+
+If you ask for a full distribution, a practical representation is a set of quantiles \(q(\tau)\) at levels \(\tau \in (0,1)\).
+
+The canonical loss for eliciting a \(\tau\)-quantile is the **pinball loss**:
+
+\[
+L^{(\tau)}(y,q) = (y-q)\,(\tau - \mathbb{1}[y<q]).
+\]
+
+Minimising expected pinball loss yields the true \(\tau\)-quantile. This is why quantile reporting is a coherent “probabilistic forecast” interface.
+
+### 3) CRPS and CRPS-hat (how we score full distributions)
+
+The **CRPS** is a strictly proper scoring rule for distributions. Because our reports are only a **finite quantile grid**, we use a finite surrogate (CRPS-hat) that averages pinball loss across the grid:
+
+\[
+\widehat{\mathrm{CRPS}}(y,q_{1:K}) = \frac{2}{K}\sum_{k=1}^K L^{(\tau_k)}(y,q^{(k)}).
+\]
+
+Key intuition:
+
+- Over-dispersed forecasts are penalised for being too wide.
+- Under-dispersed forecasts are penalised in the tails (bad calibration).
+- So “best forecaster” here means “best probabilistic forecaster”, not “best point predictor”.
+
+### 4) Aggregation theory: what “weighted quantile averaging” really is
+
+Given multiple quantile vectors, we aggregate pointwise by quantile level:
+
+\[
+\hat q^{(k)}(t) = \sum_i w_i(t)\, q_i^{(k)}(t),\qquad w_i(t)=\frac{m_i(t)}{\sum_j m_j(t)}.
+\]
+
+This is a **linear pooling rule on quantiles**. It is simple and stable, but not universally optimal; it is chosen because it matches the market interpretation: stake-weighted influence.
+
+### 5) Lambert self-financed settlement (why the mechanism is budget-balanced)
+
+Lambert weighted-score settlement redistributes the wager pool by relative score:
+
+\[
+\pi_i^{\mathrm{skill}} = m_i \bigl(1 + s_i - \bar s\bigr),\qquad
+\bar s = \frac{\sum_j m_j s_j}{\sum_j m_j}.
+\]
+
+Two consequences:
+
+- **Budget balance**: \(\sum_i \pi_i^{\mathrm{skill}}=\sum_i m_i\) exactly (no external subsidy).
+- **Incentives**: if \(m_i\) is fixed w.r.t. your report, maximising expected profit is equivalent to maximising expected score; strict properness gives truthful reporting (risk-neutral).
+
+### 6) Why online learning is needed (and why EWMA is the right baseline)
+
+In repeated markets, performance changes over time. EWMA is exponential forgetting:
+
+\[
+L_i(t) = (1-\rho) L_i(t-1) + \rho\, \ell_i(t).
+\]
+
+\(\rho\) sets an effective memory length of roughly \(1/\rho\). We map loss to bounded skill to control exposure and prevent “reputation cliffs”.
+
+### 7) Absolute vs relative learning signals (why \(\sigma\) is not a simplex weight)
+
+Simplex weights are **relative** (one up implies another down). Our \(\sigma_i(t)\) is **absolute**: it represents forecaster \(i\)’s value independent of others. That makes it interpretable as a reputation-like signal and fits naturally with scaling *your own* deposit.
+
+---
+
 ## Table of Contents
 
 1. [Slide 1 — Title + Anecdote](#slide-1)
