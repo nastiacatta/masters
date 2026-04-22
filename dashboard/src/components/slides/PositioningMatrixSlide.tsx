@@ -31,7 +31,7 @@ export default function PositioningMatrixSlide() {
   const midX = chartX + chartW / 2;
   const midY = chartY + chartH / 2;
   const cardW = 280;
-  const cardH = 100;
+  const cardH = 110;
 
   // Helper: get card center position
   function getCardCenter(node: MatrixNode) {
@@ -147,8 +147,8 @@ export default function PositioningMatrixSlide() {
             <g key={node.id}>
               {node.isThesis && (
                 <rect
-                  x={cx - cardW / 2 - 5} y={cy - cardH / 2 - 5}
-                  width={cardW + 10} height={cardH + 10}
+                  x={cx - cardW / 2 - 8} y={cy - cardH / 2 - 8}
+                  width={cardW + 16} height={cardH + 16}
                   rx={18}
                   fill="none"
                   stroke={PALETTE.teal}
