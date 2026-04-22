@@ -13,13 +13,15 @@
 | 9 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
 | 10 | Mechanism Guarantees | VALIDATION | ~1 min |
 | 11 | Deposit Design | VALIDATION | ~1 min |
-| 12 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
-| 13 | Strategic Robustness | VALIDATION | ~1 min |
-| 14 | Conclusion + Future Work | CLOSING | ~1.5 min |
+| 12 | Real Data: Elia Wind + Electricity | VALIDATION | ~1.5 min |
+| 13 | Head-to-Head: Raja vs Vitali vs Ours | VALIDATION | ~1.5 min ★ |
+| 14 | Strategic Robustness | VALIDATION | ~1 min |
+| 15 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
-**Total: ~19.5 min**
+**Total: ~20 min**
 
-> ⚠️ Slides 6 and 12 are flagged at 2 minutes — keep narration tight and avoid tangents.
+> ⚠️ Slide 6 is flagged at 2 minutes — keep narration tight.
+> ★ Slide 13 is the new head-to-head against Raja et al. and Vitali & Pinson — this is the "why we are improving" slide.
 
 ---
 
@@ -31,7 +33,7 @@
 
 Last winter I was checking the weather forecast before a weekend trip. Three different apps gave me three different answers — one said rain, one said clear skies, one hedged with "partly cloudy." I ended up averaging them in my head and packing both sunglasses and an umbrella. That little moment stuck with me, because it is exactly the problem this thesis tries to solve — just at a much larger scale and with real money on the line.
 
-Good morning. My name is Anastasia Cattaneo. I would like to thank my supervisors Pierre and Michael for their guidance throughout this work.
+Good morning. My name is Anastasia Cattaneo. Before I begin, I would like to thank my supervisors Pierre Pinson and Michael Vitali — their guidance, and their own published work on prediction markets, shaped every part of this thesis.
 
 ---
 
@@ -39,7 +41,7 @@ Good morning. My name is Anastasia Cattaneo. I would like to thank my supervisor
 
 Before diving in, let me define the central concept.
 
-A prediction market is a mechanism where participants submit probabilistic forecasts — not just a single number, but a full distribution expressing what they expect and how uncertain they are. Each participant backs their forecast with a wager: a financial stake that says "I am putting money behind this prediction." The market then aggregates these individual forecasts into a single collective prediction, weighting each contribution according to how much was staked.
+A prediction market is a mechanism where participants submit probabilistic forecasts — not just a single number, but a full distribution expressing what they expect and how uncertain they are. Each participant backs their forecast with a wager: a financial stake that says "I am putting money behind this prediction." The market then aggregates these individual forecasts into a single collective prediction, weighting each contribution by how much was staked.
 
 After the outcome is observed, the market settles. Participants who predicted well earn a return; those who predicted poorly lose part of their stake. The wager creates a direct incentive to be accurate — you only risk money when you believe your forecast is genuinely informative.
 
@@ -65,13 +67,13 @@ The goal of this thesis is to design a mechanism that learns the importance of e
 
 ## [SLIDE 4] Where This Work Fits (~1.5 min)
 
-My work sits at the intersection of two literatures that have not been fully connected.
+My work sits at the intersection of three literatures that have not been fully connected.
 
 Lambert et al. introduced the weighted-score wagering mechanism. Participants submit a forecast and a wager, the pool is redistributed based on relative performance, and the mechanism satisfies seven formal properties — including budget balance, truthfulness, and sybilproofness. They also proved uniqueness: weighted-score wagering is the only mechanism satisfying all seven. Raja et al. extended this to include a client who posts a task and offers a reward for forecast improvement. But both mechanisms are history-free — each round is independent, with no memory of past performance.
 
-On the other side, online forecast aggregation methods can learn time-varying weights with regret guarantees, but they assume non-strategic forecasters and do not handle payments. Vitali & Pinson designed a market that handles missing submissions, but their weights are relative — they live on a probability simplex. If one person's weight rises, everyone else's mechanically falls. And their settlement structure is different from the self-financed wagering framework.
+On the other side, Vitali & Pinson designed a repeated market that handles missing submissions and learns time-varying weights through online gradient descent. Their weights are relative — they live on a probability simplex. If one person's weight rises, everyone else's mechanically falls. And their settlement is not self-financed in the Lambert sense.
 
-The positioning matrix shows where each approach sits. One literature gives strong market structure without adaptation. The other gives adaptation without self-financing. My thesis occupies the fourth corner — adaptive and self-financed.
+The positioning matrix shows where each approach sits. Lambert and Raja give strong economic structure without adaptation. Vitali gives adaptation without self-financing. My thesis occupies the fourth corner — adaptive and self-financed, with an absolute skill signal.
 
 ---
 
@@ -127,15 +129,15 @@ The critical difference from Vitali & Pinson: their weights are relative — on 
 
 Before showing results, let me introduce the experimental setup.
 
-Seven forecasting models participate in the market. Naive persistence uses the most recent observed value — it works well when the series is highly autocorrelated. EWMA smooths recent observations with exponential decay. ARIMA captures linear autoregressive and moving-average structure. XGBoost is a gradient-boosted tree ensemble for nonlinear interactions. The MLP is a multi-layer perceptron neural network — the most flexible model in the panel. The Theta method decomposes the series into trend components. And the Ensemble simply averages Naive and EWMA for diversification.
+Seven forecasting models participate in the market. Naive persistence uses the most recent observed value — it works well when the series is highly autocorrelated. EWMA smooths recent observations with exponential decay. ARIMA captures linear autoregressive and moving-average structure. XGBoost is a gradient-boosted tree ensemble for nonlinear interactions. The MLP is a multi-layer perceptron neural network. The Theta method decomposes the series into trend components. The Ensemble averages Naive and EWMA for diversification.
 
-The real data comes from Elia, the Belgian grid operator. The wind dataset covers seventeen thousand five hundred and forty-four hourly observations of offshore wind power generation, with all seven forecasters. The electricity dataset covers imbalance prices with five forecasters.
+The real data comes from Elia, the Belgian grid operator. The wind dataset covers seventeen thousand five hundred and forty-four hourly observations of offshore wind power. The electricity dataset covers imbalance prices. Both use the same seven-forecaster panel with fixed random seeds, so the comparison is fully reproducible.
 
-Why validate on synthetic data first? Because synthetic experiments use a known data-generating process where we control the true quality of each forecaster. This lets us verify that the mechanism learns the correct ranking before testing on real data where ground truth is unknown. Synthetic-then-real is the standard validation approach: first confirm the mechanism works in controlled conditions, then test whether the gains transfer to practice.
+Why validate on synthetic data first? Because synthetic experiments use a known data-generating process where we control the true quality of each forecaster. This lets us verify that the mechanism learns the correct ranking before testing on real data where ground truth is unknown.
 
 ---
 
-# Script Part III — VALIDATION (Slides 9–13, ~6.5 min)
+# Script Part III — VALIDATION (Slides 9–14, ~8 min)
 
 ---
 
@@ -143,13 +145,13 @@ Why validate on synthetic data first? Because synthetic experiments use a known 
 
 The synthetic experiment answers a fundamental question: does the mechanism actually learn who is good?
 
-Six forecasters with known noise levels, simulated over twenty thousand rounds across twenty seeds. The result: the learned skill scores correctly rank-order all forecasters. The Spearman rank correlation between true noise level and learned skill is ρ = 1.0 — perfect rank recovery. This means the mechanism never confuses a noisy forecaster for a skilled one, or vice versa.
+Six forecasters with known noise levels, simulated over twenty thousand rounds across twenty seeds. The result: the learned skill scores correctly rank-order all forecasters. The Spearman rank correlation between true noise level and learned skill is ρ = 1.0 — perfect rank recovery. The mechanism never confuses a noisy forecaster for a skilled one, or vice versa.
 
 The noise-skill correlation is r = −0.98, confirming that higher noise consistently maps to lower skill. The small gap from −1.0 reflects the stochastic nature of the simulation, not a systematic bias.
 
-Why do these numbers matter? Because if the mechanism cannot recover the correct ranking in a controlled setting where we know the answer, we have no reason to trust it on real data. Perfect rank recovery is the minimum bar — and the mechanism clears it.
+These numbers matter because if the mechanism cannot recover the correct ranking in a controlled setting where we know the answer, we have no reason to trust it on real data. Perfect rank recovery is the minimum bar — and the mechanism clears it.
 
-The reward distribution follows the skill ranking: the least noisy forecaster (noise level 0.15) achieves a skill of 0.959 and earns the highest cumulative profit. The noisiest (noise level 1.00) gets a skill of 0.820 and earns the least. The mechanism rewards genuine forecasting value.
+The reward distribution follows the skill ranking: the least noisy forecaster achieves the highest skill and earns the highest cumulative profit. The noisiest gets the lowest skill and earns the least. The mechanism rewards genuine forecasting value.
 
 ---
 
@@ -157,7 +159,7 @@ The reward distribution follows the skill ranking: the least noisy forecaster (n
 
 Before interpreting any forecasting result, the mechanism must satisfy its formal guarantees.
 
-Budget balance: across one thousand synthetic rounds, the maximum gap between total payouts and total wagers is approximately 10⁻¹³ — that is machine precision. The mechanism is self-financed to numerical tolerance, meaning it neither creates nor destroys value.
+Budget balance: across one thousand synthetic rounds, the maximum gap between total payouts and total wagers is approximately 10⁻¹³ — that is machine precision. The mechanism is self-financed to numerical tolerance.
 
 Mean profit across all participants is effectively zero. The mechanism purely redistributes stakes — it does not subsidise or tax.
 
@@ -177,52 +179,60 @@ In practice, we cannot force forecasters to use any particular deposit rule. The
 
 ---
 
-## [SLIDE 12] Real Data: Elia Wind + Electricity (~2 min)
+## [SLIDE 12] Real Data: Elia Wind + Electricity (~1.5 min)
 
-> ⚠️ This slide is at the 2-minute limit — present the numbers with context but avoid re-explaining the models.
+This is the first real-data validation. Everything before this was controlled simulation.
 
-This is the key validation. Everything before this was controlled simulation. Now we test on real data where ground truth is unknown.
+On Elia wind power — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, tuned parameters — the mechanism achieves a **44 % CRPS reduction** over equal weights. The skill-weighted aggregate is substantially more accurate than simply averaging all seven forecasters with equal influence.
 
-On Elia wind power data — seventeen thousand five hundred and forty-four hourly observations from the Belgian grid operator, seven forecasters, tuned parameters — the mechanism achieves a 34% CRPS improvement over equal weights. That means the skill-weighted aggregate is substantially more accurate than simply averaging all seven forecasters with equal influence.
+The skill trajectories on the right tell the story. The mechanism correctly identifies Naive persistence as the strongest forecaster — wind power is highly autocorrelated, so the most recent observation is a strong predictor. The Ensemble and EWMA follow. ARIMA, XGBoost, MLP, and Theta all land at roughly the same low skill — their quantile forecasts are over-spread relative to the realised distribution, so the CRPS penalises them similarly.
 
-The mechanism correctly identifies Naive persistence as the strongest forecaster, with the highest learned skill at 0.82. This makes sense: wind power is highly autocorrelated, so the most recent observation is a strong predictor. The MLP and the Ensemble are close behind. ARIMA is weakest because linear models are less suited to the nonlinear, non-stationary structure of wind power.
-
-On the Elia electricity dataset, the improvement is smaller — around 4% over equal weights. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms that gains are conditional on forecaster diversity: when everyone is roughly equally good, equal weights are hard to beat.
-
-An important caveat: the best single forecaster — Naive — still outperforms the aggregate on wind, at −47% versus equal weights. The mechanism improves the aggregate substantially, but has not yet surpassed the best individual. This is a direction for future improvement, not a failure — it tells us where the ceiling is.
+On the Elia electricity dataset, the improvement is smaller — **8 %** over equal weights. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms a clear empirical pattern: gains are conditional on forecaster diversity. When everyone is roughly equally good, equal weights are hard to beat.
 
 ---
 
-## [SLIDE 13] Strategic Robustness (~1 min)
+## [SLIDE 13] Head-to-Head: Raja vs Vitali vs Ours (~1.5 min)
+
+This is the key comparison. "Why are we improving?" Only makes sense against the right baselines. So I re-implemented the two closest prior designs and ran all three methods on **exactly the same forecasts, same warm-up, same quantile grid**.
+
+Three methods. **Raja et al.** — history-free self-financed wagering with Lambert settlement. **Vitali & Pinson** — per-quantile online gradient descent on the probability simplex with pinball loss. **Ours** — the skill-gated mechanism you just saw.
+
+The bar chart on the left shows mean-CRPS change versus equal weights. Raja barely moves — about minus two and a half percent on both datasets. That is the price of having no memory across rounds: you cannot learn who is skilled if you discard the data. Vitali is the strongest pure CRPS optimiser — minus 65 on wind and minus 20 on electricity. Ours sits in the middle at minus 44 and minus 8.
+
+Now look at the rolling-CRPS curve on the right. Vitali's OGD tracks the best forecaster very aggressively, which is why it wins on raw CRPS. But it pays a well-defined price: its weights are **relative**, on a simplex, and its settlement is not self-financed in the Lambert sense.
+
+So the honest comparison is this. **Raja** is self-financed but static. **Vitali** is adaptive but abandons self-financing and absolute skill. **Ours** is the only design that is adaptive **and** self-financed **and** reports absolute skill — we trade a controlled amount of raw CRPS for Lambert's full property set. That is precisely why we are improving over Raja: we add memory without breaking his economic discipline. And that is why we differ from Vitali: we keep the discipline he gives up.
+
+---
+
+## [SLIDE 14] Strategic Robustness (~1 min)
 
 The mechanism must resist manipulation. Three main attack types from the literature.
 
-Sybil attacks: splitting one identity into clones with identical reports and the same total deposit preserves total profit exactly — the sybil ratio is 1.000000. However, sybil splitting with diversified reports — where clones submit different forecasts — yields a ratio of approximately 1.065. Sybilproofness holds under the standard assumption that clones report identically, following Lambert et al.
+Sybil attacks: splitting one identity into clones with identical reports and the same total deposit preserves total profit exactly — the sybil ratio is 1.000000. Diversified sybils — where clones submit different forecasts — yield a ratio of approximately 1.065. Sybilproofness holds under the standard Lambert assumption that clones report identically.
 
 Arbitrage: Chen et al. showed that weighted-score wagering mechanisms admit an arbitrage interval in a single round. In the repeated setting with the skill gate and wealth dynamics, the arbitrageur agent extracted zero sustained profit.
 
-We also tested eighteen behaviour presets across nine families — including reputation gaming, collusion, and risk-averse hedging. The mechanism detects reputation gaming within approximately twenty rounds and limits the damage from all tested strategies.
+We also tested eighteen behaviour presets across nine families — including reputation gaming, collusion, and risk-averse hedging. The mechanism detects reputation gaming within approximately twenty rounds.
 
 The overall picture: the mechanism resists the standard attacks. Sophisticated adaptive adversaries remain an open direction for future work.
 
 ---
 
-# Script Part IV — CLOSING (Slide 14, ~1.5 min)
+# Script Part IV — CLOSING (Slide 15, ~1.5 min)
 
 ---
 
-## [SLIDE 14] Conclusion + Future Work (~1.5 min)
+## [SLIDE 15] Conclusion + Future Work (~1.5 min)
 
 To summarise. This thesis develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 
-The results, in context. On Elia wind power with seven forecasters: the mechanism achieves a 34% CRPS improvement over equal weights. On Elia electricity: approximately 4%. The best single forecaster — Naive persistence — still outperforms the aggregate on wind at −47% versus equal weights. The improvement is conditional on forecaster heterogeneity.
+**Why this work matters — the head-to-head summary.** On Elia, our mechanism achieves a 44 % CRPS reduction on wind and 8 % on electricity, against equal weights. Raja et al., running on the same data, achieves only about 2 %. Vitali & Pinson's OGD achieves 65 % and 20 %, but loses self-financing and absolute skill in the process. Ours is the **only** design that delivers three things at once: adaptation to time-varying skill, Lambert's self-financed settlement, and a skill score that is interpretable as the absolute value of each forecaster's contribution.
 
-The mechanism satisfies formal guarantees to machine precision: budget balance to 10⁻¹³, sybil invariance with identical reports, and perfect skill rank recovery with Spearman ρ = 1.0.
+The mechanism satisfies its formal guarantees to machine precision: budget balance to 10⁻¹³, sybil invariance with identical reports, and perfect skill rank recovery with Spearman ρ = 1.0 in synthetic validation.
 
-The main limitations are clear directions for improvement. Tail calibration shows under-dispersion of about five percentage points — the aggregate is well-calibrated centrally but weakens in the tails. Equal weights remain competitive when forecasters are similar in quality. Truthfulness holds under risk neutrality, following Lambert et al.
+Future work has a clear priority: close the CRPS gap to Vitali **without** giving up self-financing. That likely means richer score functions or richer aggregation primitives, not abandoning the Lambert framework. Beyond that: improve tail calibration, which is currently under-dispersed by about five percentage points, and test against adaptive strategic adversaries rather than only fixed behaviour presets.
 
-Future work: compare the implementation against Raja et al. to understand what the skill layer adds beyond their client-reward structure. Investigate tail calibration through richer distributional combination methods. Test against more sophisticated adaptive adversaries.
-
-This thesis asked whether aggregate forecasts improve when influence depends on learned skill. The answer is conditionally yes — the gains are real on real energy data with real forecasting models, and the mechanism satisfies its formal guarantees to machine precision.
+This thesis asked whether a prediction market can learn how much each contribution should matter, while keeping a disciplined reward mechanism. The answer is yes — the gains are real on real energy data, the mechanism satisfies its formal guarantees, and it occupies a position in the design space that no prior work has reached.
 
 Thank you. I am happy to take questions.

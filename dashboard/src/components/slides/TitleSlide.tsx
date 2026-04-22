@@ -145,7 +145,7 @@ export default function TitleSlide() {
           maxWidth: 800,
         }}
       >
-        Adaptive Skill and Stake{'\n'}in Forecast Markets
+        Adaptive Skill and Stake{'\n'}in Prediction Markets
       </h1>
 
       {/* Subtitle */}
@@ -182,7 +182,7 @@ export default function TitleSlide() {
           lineHeight: 1.6,
         }}
       >
-        Supervised by Pierre Pinson and Michael Sherris
+        Supervised by Pierre Pinson and Michael Vitali
       </p>
     </div>
   );

@@ -1,0 +1,5 @@
+series,method,mean_crps,delta_vs_uniform,pct_vs_uniform
+elia_wind,uniform,0.106219,0.0,0.0
+elia_wind,raja_history_free,0.103596,-0.002622,-2.47
+elia_wind,vitali_ogd_per_quantile,0.036618,-0.069601,-65.53
+elia_wind,mechanism,0.059341,-0.046878,-44.13

@@ -59,7 +59,7 @@ p <- ggplot() +
              colour = PALETTE$slate, linewidth = 0.4, alpha = 0.5) +
   annotate("text",
            x = max(L_seq) * 0.85, y = 0.97,
-           label = "\u03C3 = 1 (no skill)",
+           label = "\u03C3 = 1 (perfect forecaster)",
            size = 4.5, colour = PALETTE$slate, fontface = "italic") +
   # Main curve
   geom_line(data = df_curve, aes(x = L, y = sigma),

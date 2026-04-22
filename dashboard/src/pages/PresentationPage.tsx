@@ -11,6 +11,7 @@ import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
 import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
 import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
+import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide';
 import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
 import ConclusionSlide from '@/components/slides/ConclusionSlide';
@@ -24,7 +25,7 @@ import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSli
 
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
-const TOTAL_SLIDES = 14;
+const TOTAL_SLIDES = 15;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -195,32 +196,40 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Real Data: Elia Wind + Electricity',
     bullets: [
-      '▸ Elia wind: 34% CRPS improvement over equal weights',
-      '▸ Naive ranks highest — wind is autocorrelated',
-      '▸ ARIMA ranks lowest — linear model, poor quantile calibration',
-      '▸ Electricity: ~4% (forecasters more similar)',
+      '▸ Elia wind: 44% CRPS reduction vs equal weights',
+      '▸ Naive ranks highest — wind is strongly autocorrelated',
+      '▸ ML models (ARIMA, XGBoost, MLP) lag — over-spread quantiles',
+      '▸ Electricity: ~8% reduction (forecasters more similar)',
       '',
-      '→ Conditional improvement — gains depend on heterogeneity',
+      '→ Conditional improvement — gains scale with forecaster heterogeneity',
     ],
     component: ContributionsChartSlide,
     slideNumber: 12,
   },
-  /* 13 — Strategic Robustness */
+  /* 13 — Head-to-Head: Raja vs Vitali vs Ours (NEW) */
+  {
+    id: 'baseline-comparison',
+    type: 'content',
+    title: 'Head-to-Head: Raja vs Vitali vs Ours',
+    component: BaselineComparisonSlide,
+    slideNumber: 13,
+  },
+  /* 14 — Strategic Robustness */
   {
     id: 'strategic-robustness',
     type: 'content',
     title: 'Strategic Robustness',
     component: StrategicRobustnessSlide,
-    slideNumber: 13,
+    slideNumber: 14,
   },
-  /* 14 — Conclusion + Future Work (NEW) */
+  /* 15 — Conclusion + Future Work */
   {
     id: 'conclusion',
     type: 'closing',
     title: 'Conclusion + Future Work',
     dark: true,
     component: ConclusionSlide,
-    slideNumber: 14,
+    slideNumber: 15,
   },
 ];
 

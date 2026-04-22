@@ -180,20 +180,36 @@ make_skill_panel <- function(json, dataset_label) {
       forecaster = forecaster_short[idx + 1]
     )
 
-  # Map to FORECASTER_COLOURS
+  # Smooth each forecaster's skill signal with a causal rolling mean so the
+  # trajectory is legible on a presentation slide.  Window is ~2% of total
+  # rounds, which knocks out hour-to-hour noise while preserving regime
+  # shifts over days/weeks.
+  skill_long <- skill_long %>%
+    group_by(forecaster) %>%
+    arrange(t, .by_group = TRUE) %>%
+    mutate(
+      sigma_smooth = {
+        w <- max(5, floor(n() * 0.05))
+        stats::filter(sigma, rep(1 / w, w), sides = 1) %>% as.numeric()
+      }
+    ) %>%
+    ungroup()
+
   skill_long$forecaster <- factor(skill_long$forecaster, levels = forecaster_short)
 
-  p <- ggplot(skill_long, aes(x = t, y = sigma, colour = forecaster)) +
-    geom_line(linewidth = 0.9, alpha = 0.85) +
+  p <- ggplot(skill_long, aes(x = t, y = sigma_smooth, colour = forecaster)) +
+    geom_line(linewidth = 1.3, alpha = 0.95, na.rm = TRUE) +
     scale_colour_manual(values = FORECASTER_COLOURS, name = "Forecaster") +
     scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
     labs(
       title = paste0("Learned Skill Trajectories — ", dataset_label),
+      subtitle = "Causal rolling mean (window = 5% of T) — higher σ means more influence in the market",
       x     = "Round (t)",
       y     = expression(bold("Skill signal") ~ (sigma))
     ) +
     theme_thesis(base_size = 14) +
     theme(
+      plot.subtitle   = element_text(size = 11, colour = PALETTE$slate),
       legend.position = "bottom",
       legend.text     = element_text(size = 11),
       legend.title    = element_text(size = 12, face = "bold")

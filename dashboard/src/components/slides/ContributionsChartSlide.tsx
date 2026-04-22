@@ -15,7 +15,7 @@ export default function ContributionsChartSlide() {
       <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
           src={`${BASE}presentation-plots/real_data_validation.png`}
-          alt="Learned skill per forecaster over 17,544 rounds — Naive highest, ARIMA lowest"
+          alt="Learned skill per forecaster over Elia wind + electricity — Naive highest, ML models lowest"
           style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
         />
       </div>
@@ -24,12 +24,12 @@ export default function ContributionsChartSlide() {
       <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
         <div style={{ flex: 1, background: 'rgba(46, 139, 139, 0.06)', border: `1.5px solid ${PALETTE.teal}`, borderRadius: 10, padding: '10px 16px', textAlign: 'center' }}>
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Mechanism learns who is skilled — improves aggregate by ~1/3
+            Wind: −44% CRPS — skill learning separates the Naive family from ML models
           </span>
         </div>
         <div style={{ flex: 1, background: 'rgba(232, 93, 74, 0.06)', border: `1.5px solid ${PALETTE.coral}`, borderRadius: 10, padding: '10px 16px', textAlign: 'center' }}>
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.coral, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Electricity: ~4% gain (forecasters more similar)
+            Electricity: −8% CRPS — smaller gap because forecasters are closer in quality
           </span>
         </div>
       </div>
