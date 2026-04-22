@@ -153,9 +153,6 @@
       };
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id@3.1.0/lib/index.umd.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/marked-highlight@2.1.4/lib/index.umd.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
     <script defer id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body>
@@ -169,6 +166,7 @@
       </div>
       <div id="content">
         <div class="toc" id="toc"></div>
+        <div id="errors" style="display:none; margin-top:12px; padding:10px 12px; border:1px solid rgba(255,120,120,.35); background:rgba(255,60,60,.08); border-radius:12px; color:#ffd6d6; font:12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"></div>
         <div class="hint">Tip: use browser search (⌘F) and zoom (⌘+).</div>
         <hr/>
         <div id="doc"></div>
@@ -184,45 +182,53 @@
           container.textContent = '';
           return;
         }
-        const items = headings
-          .filter(h => h.id)
-          .map(h => {
-            const level = h.tagName === 'H1' ? 1 : (h.tagName === 'H2' ? 2 : 3);
-            const indent = level === 1 ? 0 : (level === 2 ? 12 : 24);
-            return `<div style="margin-left:${indent}px"><a href="#${h.id}">${h.textContent}</a></div>`;
-          })
-          .join('');
+        const items = headings.map(h => {
+          if (!h.id) {
+            h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          }
+          const level = h.tagName === 'H1' ? 1 : (h.tagName === 'H2' ? 2 : 3);
+          const indent = level === 1 ? 0 : (level === 2 ? 12 : 24);
+          return `<div style="margin-left:${indent}px"><a href="#${h.id}">${h.textContent}</a></div>`;
+        }).join('');
         container.innerHTML = `<div style="font-weight:600; margin-bottom:6px;">Contents</div>${items}`;
       }
 
+      function showError(err) {
+        const el = document.getElementById('errors');
+        el.style.display = 'block';
+        el.textContent = String(err && (err.stack || err.message) || err);
+      }
+
       async function render() {
-        // Configure marked with GFM + heading ids + highlighting.
-        marked.use(markedGfmHeadingId.gfmHeadingId());
-        marked.use(markedHighlight.markedHighlight({
-          langPrefix: 'hljs language-',
-          highlight(code, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-              return hljs.highlight(code, { language: lang }).value;
-            }
-            return hljs.highlightAuto(code).value;
+        try {
+          if (!window.marked) {
+            throw new Error('marked failed to load (CDN blocked/offline?).');
           }
-        }));
+          marked.setOptions({
+            gfm: true,
+            breaks: false,
+            mangle: false,
+            headerIds: true,
+          });
 
-        const html = marked.parse(MD_SOURCE);
-        const docEl = document.getElementById('doc');
-        docEl.innerHTML = html;
+          const html = marked.parse(MD_SOURCE);
+          const docEl = document.getElementById('doc');
+          docEl.innerHTML = html;
 
-        buildToc(document.getElementById('toc'));
+          buildToc(document.getElementById('toc'));
 
-        // After Markdown is in the DOM, typeset math.
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          await window.MathJax.typesetPromise();
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            await window.MathJax.typesetPromise();
+          } else {
+            // If MathJax is blocked/offline, still show the content.
+          }
+        } catch (e) {
+          showError(e);
         }
       }
 
       // Wait until scripts are loaded
       window.addEventListener('DOMContentLoaded', () => {
-        // marked + helpers are defer-loaded, so wait a tick.
         setTimeout(() => render(), 0);
       });
     </script>
