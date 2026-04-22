@@ -26,6 +26,7 @@ import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSli
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
 const TOTAL_SLIDES = 15;
+const BASE = import.meta.env.BASE_URL;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -417,7 +418,11 @@ function TitleSlideView({ slide }: { slide: SlideData }) {
         justifyContent: 'center',
         textAlign: 'center',
         padding: '80px',
-        background: darkGradient,
+        backgroundImage: `linear-gradient(180deg, rgba(7, 15, 35, 0.78) 0%, rgba(7, 15, 35, 0.82) 100%), url(${BASE}presentation-plots/title_background.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: darkGradient,
         fontFamily: FONT_FAMILY,
         boxSizing: 'border-box',
         position: 'relative',

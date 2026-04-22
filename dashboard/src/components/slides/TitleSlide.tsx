@@ -1,5 +1,7 @@
 import { PALETTE, TYPOGRAPHY, DARK_GRADIENT } from './shared/presentationConstants';
 
+const BASE = import.meta.env.BASE_URL;
+
 /**
  * Slide 1: Title slide — dark, centred layout.
  *
@@ -22,7 +24,11 @@ export default function TitleSlide() {
         justifyContent: 'center',
         textAlign: 'center',
         padding: '60px 80px',
-        background: DARK_GRADIENT,
+        backgroundImage: `linear-gradient(180deg, rgba(7, 15, 35, 0.78) 0%, rgba(7, 15, 35, 0.82) 100%), url(${BASE}presentation-plots/title_background.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: DARK_GRADIENT,
         fontFamily: TYPOGRAPHY.fontFamily,
         boxSizing: 'border-box',
         position: 'relative',
