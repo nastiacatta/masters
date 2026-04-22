@@ -254,7 +254,7 @@ class XGBoostForecaster(BaseForecaster):
                 return
             self._model = xgb.XGBRegressor(
                 n_estimators=50, max_depth=3, learning_rate=0.1,
-                verbosity=0, n_jobs=1,
+                verbosity=0, n_jobs=1, random_state=0,
             )
             self._model.fit(X, y)
             last_features = history[-self.n_lags:].reshape(1, -1)
@@ -268,7 +268,7 @@ class XGBoostForecaster(BaseForecaster):
                         q_model = xgb.XGBRegressor(
                             n_estimators=50, max_depth=3, learning_rate=0.1,
                             objective='reg:quantileerror', quantile_alpha=float(tau),
-                            verbosity=0, n_jobs=1,
+                            verbosity=0, n_jobs=1, random_state=0,
                         )
                         q_model.fit(X, y)
                         self._quantile_models[float(tau)] = q_model
@@ -349,6 +349,7 @@ class MLPForecaster(BaseForecaster):
             X_t = torch.tensor(X, dtype=torch.float32)
             y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
 
+            torch.manual_seed(0)
             model = nn.Sequential(
                 nn.Linear(self.n_lags, self.hidden),
                 nn.ReLU(),

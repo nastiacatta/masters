@@ -1,39 +1,39 @@
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
-/* ── CRPS comparison data ── */
+/* ── CRPS comparison data (head-to-head on Elia) ── */
 const comparisons = [
   {
-    label: 'Equal Weights',
-    tag: 'Baseline',
+    label: 'Raja et al.',
+    tag: 'History-free',
     tagColour: PALETTE.slate,
-    wind: '—',
-    elec: '—',
-    note: 'Reference CRPS (no skill weighting)',
+    wind: '−2.5 %',
+    elec: '−2.3 %',
+    note: 'Self-financed but no memory across rounds',
   },
   {
-    label: 'Mechanism',
-    tag: '34 % ↓ wind',
+    label: 'Vitali & Pinson',
+    tag: 'OGD',
+    tagColour: PALETTE.purple,
+    wind: '−65 %',
+    elec: '−20 %',
+    note: 'Best pure CRPS — drops self-financing and absolute skill',
+  },
+  {
+    label: 'Ours',
+    tag: 'Skill + Lambert',
     tagColour: PALETTE.teal,
-    wind: '−34 %',
-    elec: '~−4 %',
-    note: 'Conditional improvement when heterogeneity exists',
-  },
-  {
-    label: 'Best Single (Naïve)',
-    tag: '−47 % wind',
-    tagColour: PALETTE.coral,
-    wind: '−47 %',
-    elec: 'varies',
-    note: 'Still wins on wind due to high autocorrelation — direction for improvement',
+    wind: '−44 %',
+    elec: '−8 %',
+    note: 'Adaptive, self-financed, absolute skill — controlled CRPS trade-off',
   },
 ] as const;
 
 /* ── Future-work bullets ── */
 const futureWork = [
-  'Compare against Raja et al. implementation — investigate what differences exist',
+  'Close the CRPS gap to Vitali & Pinson without giving up self-financing',
   'Improve tail calibration (currently ~5 pp under-dispersion)',
-  'Test with richer strategic adversaries',
+  'Test against strategic adversaries beyond uniform sybils',
 ] as const;
 
 /* ── Card wrapper (dark-mode) ── */
@@ -73,7 +73,7 @@ export default function ConclusionSlide() {
     <SlideShell
       title="Conclusion + Future Work"
       dark
-      slideNumber={14}
+      slideNumber={15}
     >
       {/* ── CRPS Comparison Cards ── */}
       <div style={{ display: 'flex', gap: 20, marginBottom: 28 }}>
@@ -166,8 +166,9 @@ export default function ConclusionSlide() {
             fontFamily: TYPOGRAPHY.fontFamily,
           }}
         >
-          Influence depends on earned value, not deposit alone. Gains are real
-          when forecaster heterogeneity exists.
+          Ours is the only design that is adaptive, self-financed, and
+          reports absolute skill — we trade a controlled amount of CRPS for
+          Lambert&apos;s full property set.
         </p>
       </div>
 
@@ -222,9 +223,8 @@ export default function ConclusionSlide() {
           lineHeight: 1.5,
         }}
       >
-        The mechanism satisfies formal guarantees to machine precision.
-        Best-single dominance highlights a direction for improvement, not a
-        failure of the approach.
+        All methods evaluated on the same 7-forecaster panel, same warm-up,
+        same quantile grid. Percentages are mean-CRPS change vs equal weights.
       </p>
     </SlideShell>
   );

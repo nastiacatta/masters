@@ -87,6 +87,6 @@ export const SECTIONS = {
 export function getSectionForSlide(slideNumber: number): { label: string; colour: string } {
   if (slideNumber >= 1 && slideNumber <= 5) return SECTIONS.PROBLEM;
   if (slideNumber >= 6 && slideNumber <= 8) return SECTIONS.SOLUTION;
-  if (slideNumber >= 9 && slideNumber <= 13) return SECTIONS.VALIDATION;
+  if (slideNumber >= 9 && slideNumber <= 14) return SECTIONS.VALIDATION;
   return SECTIONS.CLOSING;
 }

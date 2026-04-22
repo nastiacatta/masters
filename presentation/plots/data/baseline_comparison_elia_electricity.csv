@@ -1,0 +1,5 @@
+series,method,mean_crps,delta_vs_uniform,pct_vs_uniform
+elia_electricity,uniform,0.019679,0.0,0.0
+elia_electricity,raja_history_free,0.019232,-0.000447,-2.27
+elia_electricity,vitali_ogd_per_quantile,0.01567,-0.004009,-20.37
+elia_electricity,mechanism,0.018171,-0.001508,-7.66

@@ -10,12 +10,21 @@ source("presentation/R/theme_thesis.R")
 # ---------------------------------------------------------------------------
 # 1. Define static node data
 # ---------------------------------------------------------------------------
+# Axis convention:
+#   x = Adaptiveness   (0 = static, 1 = learns over time)
+#   y = Self-Financed  (0 = no, requires subsidy / client reward;
+#                        1 = yes, Lambert-style budget-balance by construction)
 nodes <- data.frame(
-  label = c("Lambert et al.", "Online Aggregation\n(Cesa-Bianchi & Lugosi)",
-            "Vitali & Pinson", "THIS THESIS"),
-  x     = c(0.75, 0.25, 0.30, 0.80),
-  y     = c(0.25, 0.75, 0.70, 0.82),
-  highlight = c(FALSE, FALSE, FALSE, TRUE),
+  label = c(
+    "Lambert et al.\n(single-shot WSWM)",
+    "Raja et al.\n(client-reward PM)",
+    "Online Aggregation\n(Cesa-Bianchi & Lugosi)",
+    "Vitali & Pinson\n(OGD + Shapley)",
+    "THIS THESIS"
+  ),
+  x     = c(0.18, 0.30, 0.72, 0.80, 0.80),
+  y     = c(0.82, 0.70, 0.22, 0.32, 0.82),
+  highlight = c(FALSE, FALSE, FALSE, FALSE, TRUE),
   stringsAsFactors = FALSE
 )
 
@@ -38,14 +47,14 @@ p <- ggplot(nodes, aes(x = x, y = y)) +
   geom_vline(xintercept = 0.5, linetype = "dashed", colour = PALETTE$slate,
              linewidth = 0.5, alpha = 0.6) +
   # Quadrant labels (subtle, in corners)
-  annotate("text", x = 0.25, y = 0.97, label = "Adaptive\nNot Self-Financed",
-           size = 3.5, colour = PALETTE$slate, fontface = "italic", alpha = 0.6) +
-  annotate("text", x = 0.75, y = 0.97, label = "Adaptive\nSelf-Financed",
-           size = 3.5, colour = PALETTE$teal, fontface = "italic", alpha = 0.8) +
+  annotate("text", x = 0.25, y = 0.97, label = "Static\nSelf-Financed",
+           size = 3.8, colour = PALETTE$slate, fontface = "italic", alpha = 0.7) +
+  annotate("text", x = 0.75, y = 0.97, label = "Adaptive\n& Self-Financed",
+           size = 3.8, colour = PALETTE$teal, fontface = "italic", alpha = 0.9) +
   annotate("text", x = 0.25, y = 0.03, label = "Static\nNot Self-Financed",
-           size = 3.5, colour = PALETTE$slate, fontface = "italic", alpha = 0.6) +
-  annotate("text", x = 0.75, y = 0.03, label = "Static\nSelf-Financed",
-           size = 3.5, colour = PALETTE$slate, fontface = "italic", alpha = 0.6) +
+           size = 3.8, colour = PALETTE$slate, fontface = "italic", alpha = 0.5) +
+  annotate("text", x = 0.75, y = 0.03, label = "Adaptive\nNot Self-Financed",
+           size = 3.8, colour = PALETTE$slate, fontface = "italic", alpha = 0.7) +
   # Non-highlighted nodes
   geom_point(
     data = nodes[!nodes$highlight, ],

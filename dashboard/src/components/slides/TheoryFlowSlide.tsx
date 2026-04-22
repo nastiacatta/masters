@@ -205,7 +205,7 @@ export default function TheoryFlowSlide() {
           fontSize="14"
           fill={PALETTE.slate}
         >
-          Skill-weighted aggregation
+          Wager-weighted aggregation
         </text>
 
         {/* ── Arrow from aggregation to output ── */}
