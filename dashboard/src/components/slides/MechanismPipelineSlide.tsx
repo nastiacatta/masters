@@ -28,7 +28,7 @@ const STEPS: StepConfig[] = [
   {
     id: 'wager',
     label: '2. Effective Wager',
-    description: 'Effective wager = deposit × skill factor (KEY equation)',
+    description: 'Effective wager = deposit × skill factor',
     latex: 'm_i = b_i \\cdot g(\\sigma_i)',
     emphasised: true,
   },
