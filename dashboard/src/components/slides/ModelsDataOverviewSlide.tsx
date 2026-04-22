@@ -67,10 +67,11 @@ export default function ModelsDataOverviewSlide() {
                 key={f.name}
                 style={{
                   ...CARD_STYLE,
-                  padding: '14px 16px',
+                  padding: '16px 18px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 6,
+                  gap: 8,
+                  borderLeft: `4px solid ${badge.text}`,
                 }}
               >
                 <div

@@ -68,7 +68,7 @@ export default function TitleSlide() {
       {/* Project title */}
       <h1
         style={{
-          fontSize: '4.2rem',
+          fontSize: '4.8rem',
           fontWeight: TYPOGRAPHY.heading.fontWeight,
           color: PALETTE.white,
           lineHeight: 1.15,

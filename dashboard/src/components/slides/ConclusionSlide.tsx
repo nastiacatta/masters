@@ -34,6 +34,8 @@ const futureWork = [
   'Close the CRPS gap to Vitali & Pinson without giving up self-financing',
   'Improve tail calibration (currently ~5 pp under-dispersion)',
   'Test against strategic adversaries beyond uniform sybils',
+  'Explore nonlinear combination methods to surpass the best single forecaster',
+  'Extend to multi-horizon and multi-variate forecasting tasks',
 ] as const;
 
 /* ── Card wrapper (dark-mode) ── */
@@ -174,7 +176,7 @@ export default function ConclusionSlide() {
       </div>
 
       {/* ── Future Work ── */}
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <h3
           style={{
             fontSize: '1.15rem',
@@ -210,6 +212,22 @@ export default function ConclusionSlide() {
             </li>
           ))}
         </ul>
+
+        {/* Closing statement */}
+        <p
+          style={{
+            marginTop: 'auto',
+            paddingTop: 16,
+            fontSize: '1.3rem',
+            fontWeight: 700,
+            color: PALETTE.teal,
+            fontFamily: TYPOGRAPHY.fontFamily,
+            textAlign: 'center',
+            lineHeight: 1.5,
+          }}
+        >
+          The gains are real on real energy data. The mechanism satisfies its formal guarantees. Thank you.
+        </p>
       </div>
 
     </SlideShell>
