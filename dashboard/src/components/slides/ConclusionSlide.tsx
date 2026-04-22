@@ -20,7 +20,7 @@ const comparisons = [
     note: 'Lowest CRPS in this benchmark — not self-financed; relative weights',
   },
   {
-    label: 'This thesis',
+    label: 'This project',
     tag: 'Skill + Lambert',
     tagColour: PALETTE.teal,
     wind: '−44 %',

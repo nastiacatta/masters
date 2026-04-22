@@ -16,7 +16,7 @@ const BASE = import.meta.env.BASE_URL;
 export default function BaselineComparisonSlide() {
   return (
     <SlideShell
-      title="Benchmark Comparison: Prior Work and This Thesis"
+      title="Benchmark Comparison: Prior Work and This Project"
       slideNumber={14}
     >
       <div
@@ -41,7 +41,7 @@ export default function BaselineComparisonSlide() {
         >
           <img
             src={`${BASE}presentation-plots/baseline_comparison.png`}
-            alt="Mean CRPS on Elia wind and electricity for equal weights, Raja, Vitali, and the thesis mechanism"
+            alt="Mean CRPS on Elia wind and electricity for equal weights, Raja, Vitali, and the project's mechanism"
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
@@ -95,7 +95,7 @@ export default function BaselineComparisonSlide() {
             }}
           >
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: PALETTE.coral, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              This thesis (skill + self-financed)
+              This project (skill + self-financed)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
               −44% wind, −8% electricity relative to equal weights. Retains Lambert&apos;s properties and reports absolute skill.
