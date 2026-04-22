@@ -219,7 +219,7 @@ const SLIDES: SlideData[] = [
   {
     id: 'baseline-comparison',
     type: 'content',
-    title: 'Head-to-Head: Raja vs Vitali vs Ours',
+    title: 'Benchmark Comparison: Prior Work and This Thesis',
     component: BaselineComparisonSlide,
     slideNumber: 14,
   },

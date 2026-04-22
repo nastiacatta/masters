@@ -4,7 +4,7 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 const BASE = import.meta.env.BASE_URL;
 
 /**
- * Head-to-head comparison against the two closest prior designs:
+ * Benchmark comparison against the two closest prior designs:
  *   • Raja et al. — history-free self-financed wagering (Lambert settlement).
  *   • Vitali & Pinson — per-quantile OGD on the probability simplex.
  *
@@ -16,7 +16,7 @@ const BASE = import.meta.env.BASE_URL;
 export default function BaselineComparisonSlide() {
   return (
     <SlideShell
-      title="Head-to-Head: Raja vs Vitali vs Ours"
+      title="Benchmark Comparison: Prior Work and This Thesis"
       slideNumber={14}
     >
       <div
@@ -66,7 +66,7 @@ export default function BaselineComparisonSlide() {
               Raja et&nbsp;al. (history-free)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
-              Self-financed but no memory. Barely beats equal weights (−2.5% wind, −2.3% electricity).
+              Self-financed but history-free. Small gains vs equal weights (−2.5% wind, −2.3% electricity).
             </div>
           </div>
           <div
@@ -82,7 +82,7 @@ export default function BaselineComparisonSlide() {
               Vitali & Pinson (OGD)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
-              Strong pure CRPS optimiser. Gives up self-financing and absolute skill — weights are relative.
+              Lowest CRPS in this benchmark. Not self-financed; weights are relative on a simplex.
             </div>
           </div>
           <div
@@ -98,7 +98,7 @@ export default function BaselineComparisonSlide() {
               Ours (skill + self-financed)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
-              −44% wind, −8% electricity vs equal weights. Keeps Lambert&apos;s seven properties — a controlled CRPS trade for economic discipline.
+              −44% wind, −8% electricity vs equal weights. Retains Lambert&apos;s properties and reports absolute skill.
             </div>
           </div>
         </div>

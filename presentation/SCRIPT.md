@@ -15,14 +15,14 @@
 | 11 | Mechanism Guarantees | VALIDATION | ~1 min |
 | 12 | Deposit Design | VALIDATION | ~1 min |
 | 13 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
-| 14 | Head-to-Head: Raja vs Vitali vs Ours | VALIDATION | ~1.5 min |
+| 14 | Benchmark Comparison: Prior Work and This Thesis | VALIDATION | ~1.5 min |
 | 15 | Strategic Robustness | VALIDATION | ~1 min |
 | 16 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
 **Total: ~22 min**
 
 > ⚠️ Slides 7 and 13 are flagged at 2 minutes — keep narration tight and avoid tangents.
-> Slide 14 is the "why we improve" figure — land the three trade-offs (Raja / Vitali / Ours) and move on.
+> Slide 14 is the "why we improve" figure — land the three trade-offs (Raja / Vitali / Thesis) and move on.
 
 ---
 
@@ -210,19 +210,19 @@ On the Elia electricity dataset, the improvement is smaller — **8 %** over equ
 
 ---
 
-## [SLIDE 14] Head-to-Head: Raja vs Vitali vs Ours (~1.5 min)
+## [SLIDE 14] Benchmark Comparison: Prior Work and This Thesis (~1.5 min)
 
-That 44 % improvement over equal weights is the headline number, but the real question is: how does the mechanism compare against the two closest prior designs on exactly the same data?
+That 44 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
 
-This figure runs all three methods on the same 7-forecaster panel, the same quantile reports, and the same 200-round warm-up, so the comparison is fully controlled.
+This figure evaluates all three methods on the same 7-forecaster panel, the same quantile reports, and the same 200-round warm-up, so the comparison is controlled.
 
-Raja's history-free design is essentially flat — about 2 % improvement on both datasets. Without any memory across rounds, there is nothing separating a skilled contribution from an unskilled one, and the confidence weighting alone is not enough.
+Raja's history-free design shows modest gains — about 2 % improvement on both datasets. Without memory across rounds, the mechanism cannot systematically separate persistent forecasting value from noise, and confidence weighting alone is limited.
 
-Vitali and Pinson's online gradient descent on the simplex is the strongest pure CRPS optimiser — 65 % on wind, 20 % on electricity. But it pays for that result by giving up two things: the settlement is Shapley-based, not Lambert's self-financed formula; and the weights live on a probability simplex, so they are relative rather than absolute. One forecaster rising mechanically pushes everyone else down.
+Vitali and Pinson's online gradient descent on the simplex achieves the lowest CRPS in this benchmark — 65 % on wind and 20 % on electricity. The trade-off is that the settlement is Shapley-based rather than Lambert self-financed wagering, and the learned weights are relative on a probability simplex: increasing one weight mechanically decreases the others.
 
-Our mechanism sits between them. We give up a controlled amount of CRPS — 44 % wind, 8 % electricity — and in exchange we keep Lambert's seven properties and we report an absolute per-forecaster skill score. The rolling CRPS panel shows that gap is consistent across the full two-year series, not an artefact of the averaging window.
+The thesis mechanism sits between them on CRPS — 44 % on wind and 8 % on electricity — while retaining Lambert's economic properties and reporting an absolute per-forecaster skill signal. The rolling CRPS panel shows that the relative ordering is stable over the full two-year series, rather than driven by a short segment.
 
-The takeaway is the point of the thesis: adaptation, self-financing, and absolute skill can coexist in a single mechanism, and the empirical price of keeping all three is bounded.
+The takeaway is the point of the thesis: adaptation, self-financing, and an absolute skill signal can coexist in a single mechanism, and the empirical cost of keeping all three can be quantified in this benchmark.
 
 ---
 
@@ -248,7 +248,7 @@ The overall picture: the mechanism resists the standard attacks. Sophisticated a
 
 To summarise. This thesis develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 
-As the previous slide showed, ours is the only design in the comparison that is adaptive, self-financed, and reports absolute skill — Raja lacks adaptation, Vitali gives up self-financing, and we land in between on pure CRPS while keeping the full property set.
+As the previous slide showed, the thesis mechanism jointly provides adaptation across rounds, self-financing, and an absolute skill signal. In this benchmark, Raja lacks adaptation and Vitali is not self-financed; the thesis mechanism sits between them on CRPS while retaining Lambert's property set.
 
 The mechanism also satisfies its formal guarantees to machine precision: budget balance and mean profit are zero to numerical tolerance, sybil invariance holds exactly for identical reports, and synthetic validation recovers the true skill ranking with Spearman ρ = 1.0.
 
