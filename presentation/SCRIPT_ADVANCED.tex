@@ -1,5 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
@@ -18,13 +19,13 @@
   xleftmargin=0.2cm,
   xrightmargin=0.2cm,
 }
-\title{SCRIPT — Advanced Study Version}
+\title{SCRIPT --- Advanced Study Version}
 \author{}
 \date{}
 \begin{document}
 \maketitle
 
-\section*{SCRIPT — Advanced Study Version}
+\section*{SCRIPT --- Advanced Study Version}
 
 
 \begin{quote}
@@ -51,7 +52,7 @@ Conventions used throughout:
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 1 — Title + Anecdote}
+\section{SLIDE 1 --- Title + Anecdote}
 
 
 \textbf{Spoken line.} "Recently, on the way to the airport, I checked Google Maps, Apple Maps, and Citymapper. They all predicted the same journey time, but they did not give the same answer. And from experience, I knew I trusted Citymapper a little more."
@@ -61,7 +62,7 @@ Conventions used throughout:
 
 \begin{itemize}
 \item \textbf{Forecast heterogeneity.} Three forecasters, same query, different answers. This is the empirical starting point of the whole thesis: when forecasts disagree, the cost of using any single one unhedged is real.
-\item \textbf{Informal reputation.} My preference for Citymapper comes from accumulated experience — an implicit, unbounded, qualitative memory. The mechanism in this project formalises that into a bounded, quantitative object $\sigma_i(t) \in [\sigma_{\min}, 1]$ updated by a proper scoring rule.
+\item \textbf{Informal reputation.} My preference for Citymapper comes from accumulated experience --- an implicit, unbounded, qualitative memory. The mechanism in this project formalises that into a bounded, quantitative object $\sigma_i(t) \in [\sigma_{\min}, 1]$ updated by a proper scoring rule.
 \item \textbf{Strategic setting.} Maps apps are benign, but the \emph{general} problem (which this thesis addresses) is what happens when forecasters are paid, may strategise, can enter or leave, and can even split identities. The rest of the deck makes that generalisation formal.
 \end{itemize}
 
@@ -77,7 +78,7 @@ The title slide is rendered by \texttt{dashboard/src/components/slides/TitleSlid
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 2 — What Is a Prediction Market?}
+\section{SLIDE 2 --- What Is a Prediction Market?}
 
 
 \subsection{Definition (used throughout the thesis)}
@@ -89,8 +90,8 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 \item Takes, from each participating forecaster $i$, a pair $(r_i(t), b_i(t))$:
 \end{enumerate}
 \begin{itemize}
-\item a \textbf{probabilistic forecast} $r_i(t)$ — typically a vector of quantiles $(q_i^{(1)}(t), \dots, q_i^{(K)}(t))$ at probability levels $(\tau_1, \dots, \tau_K)$;
-\item a \textbf{wager} $b_i(t)$ — a non-negative monetary stake backing that forecast.
+\item a \textbf{probabilistic forecast} $r_i(t)$ --- typically a vector of quantiles $(q_i^{(1)}(t), \dots, q_i^{(K)}(t))$ at probability levels $(\tau_1, \dots, \tau_K)$;
+\item a \textbf{wager} $b_i(t)$ --- a non-negative monetary stake backing that forecast.
 \end{itemize}
 
 \begin{enumerate}
@@ -99,7 +100,7 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 \item Allocates \textbf{payoffs} $\pi_i(t)$ based on forecast quality and wagers, in such a way that at least the following hold:
 \end{enumerate}
 \begin{itemize}
-\item \textbf{budget balance}: $\sum_i \pi_i(t) = \sum_i b_i(t)$ (self-financing); in this project we split it into a refund and a skill payoff, see §[Slide 7](\#slide-7);
+\item \textbf{budget balance}: $\sum_i \pi_i(t) = \sum_i b_i(t)$ (self-financing); in this project we split it into a refund and a skill payoff, see \S\{}Slide 7;
 \item \textbf{incentive compatibility} in reporting (under risk neutrality);
 \item \textbf{Sybil resistance} under identical-report clones.
 \end{itemize}
@@ -109,15 +110,15 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 
 \begin{itemize}
 \item \textbf{Skin in the game.} The wager ties the monetary exposure of participant $i$ to the statistical quality of $r_i(t)$ through a proper scoring rule. Without this coupling, there is no reason for forecasters to report their true predictive distribution.
-\item \textbf{Aggregation under strategic participation.} A simple average assumes everyone is equally informed and equally honest. A market-based aggregator can exploit the wager as a \emph{self-reported confidence signal}: informed-and-confident forecasters pay to influence the market forecast more; uninformed forecasters who would rather not risk money can post a small wager (or none at all — intermittent participation, §[Slide 8](\#slide-8)).
-\item \textbf{Privacy.} Participants reveal a predictive distribution, not the underlying data or model. This is exactly the positioning argued in Raja et al. (2024, §1–§2) and reused here.
+\item \textbf{Aggregation under strategic participation.} A simple average assumes everyone is equally informed and equally honest. A market-based aggregator can exploit the wager as a \emph{self-reported confidence signal}: informed-and-confident forecasters pay to influence the market forecast more; uninformed forecasters who would rather not risk money can post a small wager (or none at all --- intermittent participation, \S\{}Slide 8).
+\item \textbf{Privacy.} Participants reveal a predictive distribution, not the underlying data or model. This is exactly the positioning argued in Raja et al. (2024, \S\{}1--\S\{}2) and reused here.
 \end{itemize}
 
 \subsection{Applications}
 
 
 \begin{itemize}
-\item \textbf{Energy.} Offshore wind production, imbalance prices — the Elia datasets we use on Slide 13. Energy is where probabilistic forecasting markets are most natural: decisions (dispatch, trading, reserve sizing) depend on predictive distributions, not just point forecasts.
+\item \textbf{Energy.} Offshore wind production, imbalance prices --- the Elia datasets we use on Slide 13. Energy is where probabilistic forecasting markets are most natural: decisions (dispatch, trading, reserve sizing) depend on predictive distributions, not just point forecasts.
 \item \textbf{Supply chain and inventory.} Demand distributions, lead-time distributions.
 \item \textbf{Finance.} Aggregation of analyst forecasts, volatility markets.
 \end{itemize}
@@ -126,14 +127,14 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 
 
 \begin{itemize}
-\item Lambert et al. (2008, 2015), \emph{Self-financed wagering mechanisms} — canonical definition of wagering markets, proof that the weighted-score rule is the unique mechanism satisfying seven desirable properties (anonymity, budget balance, truthfulness, sybilproofness, etc.).
-\item Gneiting \& Raftery (2007), \emph{Strictly proper scoring rules} — the scoring rule theory behind why $\text{CRPS}$ elicits truthful probabilistic reports.
-\item Raja et al. (2024, IJF), §3 — the \textbf{buyer/seller + aggregation operator + scoring rule + payoff} architecture we directly reuse.
+\item Lambert et al. (2008, 2015), \emph{Self-financed wagering mechanisms} --- canonical definition of wagering markets, proof that the weighted-score rule is the unique mechanism satisfying seven desirable properties (anonymity, budget balance, truthfulness, sybilproofness, etc.).
+\item Gneiting \& Raftery (2007), \emph{Strictly proper scoring rules} --- the scoring rule theory behind why $\text{CRPS}$ elicits truthful probabilistic reports.
+\item Raja et al. (2024, IJF), \S\{}3 --- the \textbf{buyer/seller + aggregation operator + scoring rule + payoff} architecture we directly reuse.
 \end{itemize}
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 3 — Why Combine Forecasts?}
+\section{SLIDE 3 --- Why Combine Forecasts?}
 
 
 \subsection{Statistical reason}
@@ -145,9 +146,9 @@ $$
 \text\{Var}\!\left(\sum\_j w\_j F\_j\right) = \frac\{1}\{\sum\_j 1/\sigma\_j^2} \le \min\_j \sigma\_j^2.
 $$
 
-So the combined forecast is (weakly) at least as accurate as the best component. The Bates–Granger (1969) result generalises this to correlated forecasts with a closed-form optimal weighting. In practice the optimal weights are unknown, which is exactly why we \emph{learn} them online.
+So the combined forecast is (weakly) at least as accurate as the best component. The Bates--Granger (1969) result generalises this to correlated forecasts with a closed-form optimal weighting. In practice the optimal weights are unknown, which is exactly why we \emph{learn} them online.
 
-\subsection{Why equal weights is the natural naïve baseline}
+\subsection{Why equal weights is the natural na\"\{\i}ve baseline}
 
 
 Equal weighting is what you get if:
@@ -159,14 +160,14 @@ Equal weighting is what you get if:
 
 Equal weights is also provably near-optimal in the "flat maximum" region (Claeskens et al., 2016; cited in \texttt{theory/extra/ForecastCombinations.md}). When forecasters are similar in quality, equal weights is \textbf{difficult to improve on}. This is why on slide 13 the electricity gain (8 \%) is modest: the forecasters are more homogeneous in that dataset.
 
-\subsection{Why strategic behaviour breaks naïve averaging}
+\subsection{Why strategic behaviour breaks na\"\{\i}ve averaging}
 
 
 Consider an attacker who submits a deliberately biased forecast $r_i = y^{\text{anti}}$. Simple averaging with $n$ participants dilutes the attack only by a factor $1/n$. Two defences we need:
 
 \begin{enumerate}
 \item \textbf{Skin-in-the-game} via the wager, so that bad forecasts cost money (this is what the \emph{settlement} layer provides).
-\item \textbf{History.} A truly adversarial forecaster performs badly under the proper scoring rule over time; the \emph{skill gate} converts their persistently high loss into a small effective wager, muting their influence (this is what §[Slide 8](\#slide-8) formalises).
+\item \textbf{History.} A truly adversarial forecaster performs badly under the proper scoring rule over time; the \emph{skill gate} converts their persistently high loss into a small effective wager, muting their influence (this is what \S\{}Slide 8 formalises).
 \end{enumerate}
 
 \subsection{Goal statement on the slide}
@@ -183,13 +184,13 @@ These three layers correspond to the three literatures on Slide 4.
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 4 — Where This Work Fits (Positioning Matrix)}
+\section{SLIDE 4 --- Where This Work Fits (Positioning Matrix)}
 
 
 \subsection{The three reference works}
 
 
-\textbf{Lambert et al. (2008)} — \emph{Self-financed weighted-score wagering}.
+\textbf{Lambert et al. (2008)} --- \emph{Self-financed weighted-score wagering}.
 Formal setup: each of $n$ participants submits a forecast $r_i \in \mathcal R$ and wager $b_i \ge 0$; there is an outcome $\omega$. The mechanism has scoring rule $s$ and allocates payoffs
 
 $$
@@ -199,30 +200,30 @@ $$
 They prove this is the \textbf{unique} mechanism satisfying seven axioms simultaneously:
 
 \begin{enumerate}
-\item \textbf{Budget balance} — $\sum_i \pi_i = \sum_i b_i$.
-\item \textbf{Anonymity} — payoffs invariant to participant labels.
-\item \textbf{Truthfulness} — under risk neutrality and a strictly proper $s$, truth-telling is optimal.
-\item \textbf{Individual rationality} — truth-tellers have non-negative expected profit.
-\item \textbf{Sybilproofness} — a participant cannot increase their expected profit by splitting into clones with identical reports and identical total wager.
+\item \textbf{Budget balance} --- $\sum_i \pi_i = \sum_i b_i$.
+\item \textbf{Anonymity} --- payoffs invariant to participant labels.
+\item \textbf{Truthfulness} --- under risk neutrality and a strictly proper $s$, truth-telling is optimal.
+\item \textbf{Individual rationality} --- truth-tellers have non-negative expected profit.
+\item \textbf{Sybilproofness} --- a participant cannot increase their expected profit by splitting into clones with identical reports and identical total wager.
 \item \textbf{Monotonicity} of payoff in own score.
-\item \textbf{Neutrality} — independence of non-participating participants.
+\item \textbf{Neutrality} --- independence of non-participating participants.
 \end{enumerate}
 
 \textbf{History-free.} Lambert's design uses $(r_i, b_i)$ for round $t$ only. There is no mechanism-level memory of past performance.
 
-\textbf{Raja, Pinson, Kazempour, Grammatico (2024, IJF)} — \emph{Wagering mechanism for forecast elicitation}.
+\textbf{Raja, Pinson, Kazempour, Grammatico (2024, IJF)} --- \emph{Wagering mechanism for forecast elicitation}.
 Adds a \textbf{client} (buyer) who posts a task, an explicit \textbf{forecast aggregation operator} $A: \mathcal R^n \to \mathcal R$, a scoring rule with a threshold $s_c$, and a \textbf{payoff allocation} that splits client payment $U$ between forecasters according to their scores. Budget balance is relaxed to allow the client utility $U > 0$ to flow into the system. Still history-free across rounds.
 
-\textbf{Vitali \& Pinson (2025)} — \emph{Repeated forecasting markets with intermittent contributions}.
+\textbf{Vitali \& Pinson (2025)} --- \emph{Repeated forecasting markets with intermittent contributions}.
 Repeated setting. Tracks per-quantile weights $W_{\tau} \in \Delta^{n-1}$ (the probability simplex) updated by \textbf{online gradient descent} on the pinball loss:
 
 $$
 W\_\{\tau}(t+1) = \Pi\_\{\Delta}\!\left( W\_\{\tau}(t) - \eta \nabla\_\{W\_\tau} L\_\tau(t) \right).
 $$
 
-Handles intermittent participation. But: weights are \emph{relative} (they live on $\Delta^{n-1}$), and the settlement is \textbf{Shapley-based}, not Lambert self-financed — meaning the mechanism is not budget-balanced in the Lambert sense.
+Handles intermittent participation. But: weights are \emph{relative} (they live on $\Delta^{n-1}$), and the settlement is \textbf{Shapley-based}, not Lambert self-financed --- meaning the mechanism is not budget-balanced in the Lambert sense.
 
-\subsection{The 2×2 positioning matrix (rendered by \texttt{presentation/R/plot\\_positioning\\_matrix.R})}
+\subsection{The 2$\times$2 positioning matrix (rendered by \texttt{presentation/R/plot\\_positioning\\_matrix.R})}
 
 
 \begin{center}
@@ -239,11 +240,11 @@ Handles intermittent participation. But: weights are \emph{relative} (they live 
 \subsection{What "this project" adds}
 
 
-The top-right corner — \textbf{adaptive and self-financed} — has, to our knowledge, no direct prior. The mechanism on Slide 7 fills it by introducing a pre-round \textbf{skill signal} $\sigma_i(t)$ computed from past realised losses, and using it to scale the wager that both drives aggregation and settles. This keeps Lambert's seven properties while gaining adaptivity.
+The top-right corner --- \textbf{adaptive and self-financed} --- has, to our knowledge, no direct prior. The mechanism on Slide 7 fills it by introducing a pre-round \textbf{skill signal} $\sigma_i(t)$ computed from past realised losses, and using it to scale the wager that both drives aggregation and settles. This keeps Lambert's seven properties while gaining adaptivity.
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 5 — Mechanism Comparison Table}
+\section{SLIDE 5 --- Mechanism Comparison Table}
 
 
 The visual is a 3-row comparison across five dimensions. This is the detailed version:
@@ -254,9 +255,9 @@ The visual is a 3-row comparison across five dimensions. This is the detailed ve
 Dimension & Lambert et al. (2008) & Raja et al. (2024) & Vitali \& Pinson (2025) & \textbf\{This project\} \\
 \midrule
 Financing & Self-financed & Self-financed + client utility & Shapley payoffs (\textbf\{not\} self-financed) & Self-financed (optional $U>0$ utility add-on) \\
-Weight update across rounds & None & None & OGD on simplex, per quantile & EWMA loss → bounded skill → scales wager \\
-Weight type & Stakes only & Stakes × confidence & Simplex weights $w \in \Delta^{n-1}$ & Absolute skill $\sigma_i \in [\sigma_{\min}, 1]$, scales own stake \\
-Intermittent participation & Supports via exclusion & Supports via exclusion & Explicit handling with decay & Staleness decay via $\kappa$ (see [Slide 8](\#slide-8)) \\
+Weight update across rounds & None & None & OGD on simplex, per quantile & EWMA loss $\rightarrow$ bounded skill $\rightarrow$ scales wager \\
+Weight type & Stakes only & Stakes $\times$ confidence & Simplex weights $w \in \Delta^{n-1}$ & Absolute skill $\sigma_i \in [\sigma_{\min}, 1]$, scales own stake \\
+Intermittent participation & Supports via exclusion & Supports via exclusion & Explicit handling with decay & Staleness decay via $\kappa$ (see Slide 8) \\
 Formal properties & 7 Lambert properties & 7 + client feasibility & Regret bound for OGD & 7 Lambert properties preserved, + absolute skill + deposit ablation \\
 \bottomrule
 \end{tabular}
@@ -266,17 +267,17 @@ Key observations on the slide:
 
 \begin{itemize}
 \item \textbf{"Self-financed"} means total payouts equal total wagers \emph{without any external funding source}. Vitali \& Pinson's Shapley layer requires a client payment to fund positive-expected-profit positions.
-\item \textbf{"Absolute vs relative"} matters. With simplex weights, one participant's weight can rise only if another's falls. In our design, $\sigma_i$ and $\sigma_j$ can both rise or fall independently — the signal is a property of forecaster $i$ alone, not a share of a fixed pie.
+\item \textbf{"Absolute vs relative"} matters. With simplex weights, one participant's weight can rise only if another's falls. In our design, $\sigma_i$ and $\sigma_j$ can both rise or fall independently --- the signal is a property of forecaster $i$ alone, not a share of a fixed pie.
 \end{itemize}
 
 \subsection{Code reference}
 
 
-The table is a React component: \texttt{dashboard/src/components/slides/MechanismComparisonSlide.tsx}. The Vitali row deliberately says "Shapley payoffs (not self-financed)" — we use the exact wording from §III of the 2025 paper.
+The table is a React component: \texttt{dashboard/src/components/slides/MechanismComparisonSlide.tsx}. The Vitali row deliberately says "Shapley payoffs (not self-financed)" --- we use the exact wording from \S\{}III of the 2025 paper.
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 6 — The Contribution of This Project}
+\section{SLIDE 6 --- The Contribution of This Project}
 
 
 \subsection{Problem with stake-only influence}
@@ -288,7 +289,7 @@ $$
 w\_i = \frac\{b\_i}\{\sum\_j b\_j} \xrightarrow\{W\_i \gg W\_\{-i}} 1.
 $$
 
-There is nothing in the Lambert mechanism that prevents this — Lambert's truthfulness argument concerns \emph{what} to report given a wager, not \emph{how much} to stake. So a separate mechanism layer is needed.
+There is nothing in the Lambert mechanism that prevents this --- Lambert's truthfulness argument concerns \emph{what} to report given a wager, not \emph{how much} to stake. So a separate mechanism layer is needed.
 
 \subsection{The effective wager: the single object that links learning to money}
 
@@ -299,7 +300,7 @@ $$
 g(\sigma\_i) = \lambda + (1 - \lambda)\, \sigma\_i^\{\eta}, \qquad \sigma\_i \in [0,1],\quad \lambda \in [0,1],\quad \eta > 0.
 $$
 
-Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 91–97.
+Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 91--97.
 
 Then the \textbf{effective wager} is
 
@@ -307,7 +308,7 @@ $$
 m\_i(t) = b\_i(t)\, g(\sigma\_i(t)) = b\_i(t)\,\bigl( \lambda + (1-\lambda)\,\sigma\_i(t)^\{\eta} \bigr).
 $$
 
-Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 100–109 (\texttt{effective\\_wager\\_bankroll}).
+Code: \texttt{onlinev2/src/onlinev2/core/staking.py} lines 100--109 (\texttt{effective\\_wager\\_bankroll}).
 
 \textbf{$m_i$ does three things simultaneously:}
 
@@ -319,7 +320,7 @@ $$
 \hat q^\{(k)}(t) = \frac\{\sum\_i m\_i(t)\, q\_i^\{(k)}(t)}\{\sum\_i m\_i(t)}.
 $$
 
-Code: \texttt{onlinev2/src/onlinev2/core/aggregation.py} lines 38–65 (\texttt{aggregate\\_forecast}).
+Code: \texttt{onlinev2/src/onlinev2/core/aggregation.py} lines 38--65 (\texttt{aggregate\\_forecast}).
 
 \begin{enumerate}
 \item \textbf{Drives settlement.} The skill payoff is
@@ -329,7 +330,7 @@ $$
 \pi\_i^\{\text\{skill}}(t) = m\_i(t)\,\bigl(1 + s(r\_i(t), y\_t) - \bar s(t)\bigr),\quad \bar s(t) = \frac\{\sum\_j m\_j(t)\, s(r\_j(t), y\_t)}\{\sum\_j m\_j(t)}.
 $$
 
-Code: \texttt{onlinev2/src/onlinev2/core/settlement.py} lines 11–36 (\texttt{skill\\_payoff}) and lines 67–125 (\texttt{settle\\_round}).
+Code: \texttt{onlinev2/src/onlinev2/core/settlement.py} lines 11--36 (\texttt{skill\\_payoff}) and lines 67--125 (\texttt{settle\\_round}).
 
 \begin{enumerate}
 \item \textbf{Determines financial exposure.} The refund is $b_i - m_i$ (returned to the participant regardless of outcome); the at-risk money is exactly $m_i$.
@@ -345,12 +346,12 @@ Because $\sigma_i$ is learned from \textbf{past} performance and therefore canno
 
 \begin{itemize}
 \item \textbf{Absolute.} $\sigma_i \in [\sigma_{\min}, 1]$ is defined independently of $\sigma_j$ for $j \ne i$. This is the key difference with Vitali \& Pinson, whose simplex weights are necessarily \emph{relative}.
-\item \textbf{Pre-round.} $\sigma_i(t)$ depends only on realised losses up to $t-1$. So the truthfulness argument from Lambert extends directly: at round $t$, a risk-neutral agent who takes $m_i(t)$ as given maximises expected payoff by reporting truthfully. Details in §[Appendix A](\#appendix-a).
+\item \textbf{Pre-round.} $\sigma_i(t)$ depends only on realised losses up to $t-1$. So the truthfulness argument from Lambert extends directly: at round $t$, a risk-neutral agent who takes $m_i(t)$ as given maximises expected payoff by reporting truthfully. Details in \S\{}Appendix A.
 \end{itemize}
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 7 — Mechanism: Round-by-Round (2 min — careful with timing)}
+\section{SLIDE 7 --- Mechanism: Round-by-Round (2 min --- careful with timing)}
 
 
 \subsection{Full pseudocode (what the slide diagram abstracts)}
@@ -395,11 +396,11 @@ for t = 1, ..., T:
 \toprule
 Step & Spoken phrase & Code & Theory \\
 \midrule
-Submit & "decide how much to deposit" & `staking.choose\_deposits` (staking.py:61) & See `theory/Pierre\_wagering.md` Raja §3.1 \\
-Skill gate & "multiply deposit by a factor" & `staking.skill\_gate` (staking.py:91); `effective\_wager\_bankroll` (staking.py:100) & Eq. 6 in Lambert; extended with $\sigma$ here \\
-Aggregation & "effective wagers as weights" & `aggregation.aggregate\_forecast` & Raja §3.2 (forecast aggregation operator) \\
-Settlement & "Lambert weighted-score formula" & `settlement.settle\_round` (settlement.py:67) & Lambert (2008) Thm. 1 \\
-Update & "skill estimate updates" & `skill.update\_ewma\_loss`, `skill.loss\_to\_skill` & CRPS-based online learning, Pinson et al. \\
+Submit & "decide how much to deposit" & \texttt\{staking.choose\\_deposits\} (staking.py:61) & See \texttt\{theory/Pierre\\_wagering.md\} Raja \S\{\}3.1 \\
+Skill gate & "multiply deposit by a factor" & \texttt\{staking.skill\\_gate\} (staking.py:91); \texttt\{effective\\_wager\\_bankroll\} (staking.py:100) & Eq. 6 in Lambert; extended with $\sigma$ here \\
+Aggregation & "effective wagers as weights" & \texttt\{aggregation.aggregate\\_forecast\} & Raja \S\{\}3.2 (forecast aggregation operator) \\
+Settlement & "Lambert weighted-score formula" & \texttt\{settlement.settle\\_round\} (settlement.py:67) & Lambert (2008) Thm. 1 \\
+Update & "skill estimate updates" & \texttt\{skill.update\\_ewma\\_loss\}, \texttt\{skill.loss\\_to\\_skill\} & CRPS-based online learning, Pinson et al. \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -409,7 +410,7 @@ Update & "skill estimate updates" & `skill.update\_ewma\_loss`, `skill.loss\_to\
 
 \begin{enumerate}
 \item \textbf{Budget balance per round.} Because $\sum_i \pi_i^{\text{skill}} = \sum_i m_i \cdot (1 + s_i - \bar s) = \sum_i m_i + \sum_i m_i s_i - \bar s \sum_i m_i = \sum_i m_i$. So total payouts of the skill pool exactly equal total at-risk wagers. The refund is identity-preserving. Tests: \texttt{onlinev2/tests/test\\_settlement*.py}.
-\item \textbf{Individual feasibility.} $m_i \le b_i$ always, since $g(\sigma_i) \in [\lambda, 1] \subseteq [0,1]$. Enforced at \texttt{settlement.py:95–98}.
+\item \textbf{Individual feasibility.} $m_i \le b_i$ always, since $g(\sigma_i) \in [\lambda, 1] \subseteq [0,1]$. Enforced at \texttt{settlement.py:95--98}.
 \end{enumerate}
 
 \subsection{What "the same object for influence and exposure" buys you}
@@ -421,7 +422,7 @@ If the aggregation used weight $w_i^A$ and the settlement used a different $w_i^
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 8 — The Skill Signal}
+\section{SLIDE 8 --- The Skill Signal}
 
 
 \subsection{The EWMA of normalised loss}
@@ -433,7 +434,7 @@ $$
 L\_i(t) = (1 - \rho\_\{\text\{eff}})\,L\_i(t-1) + \rho\_\{\text\{eff}}\,\ell\_i(t),
 $$
 
-with default $\rho \in (0, 1]$. Code: \texttt{skill.update\\_ewma\\_loss} (skill.py:32–81).
+with default $\rho \in (0, 1]$. Code: \texttt{skill.update\\_ewma\\_loss} (skill.py:32--81).
 
 \textbf{Exposure weighting (optional).} If \texttt{use\\_exposure\\_weighting=True}, the effective learning rate for participant $i$ is
 
@@ -449,7 +450,7 @@ $$
 L\_i(t) = (1 - \kappa)\,L\_i(t-1) + \kappa\,L\_0,
 $$
 
-so $L_i$ drifts toward a baseline $L_0$ when there is no new evidence. Code: \texttt{skill.py:78–80}.
+so $L_i$ drifts toward a baseline $L_0$ when there is no new evidence. Code: \texttt{skill.py:78--80}.
 
 \subsection{The loss-to-skill mapping (why bounded?)}
 
@@ -458,7 +459,7 @@ $$
 \sigma\_i(t) = \sigma\_\{\min} + (1 - \sigma\_\{\min})\,e^\{-\gamma\, L\_i(t)}.
 $$
 
-Code: \texttt{skill.loss\\_to\\_skill} (skill.py:84–89). Three properties:
+Code: \texttt{skill.loss\\_to\\_skill} (skill.py:84--89). Three properties:
 
 \begin{enumerate}
 \item \textbf{Bounded.} $\sigma_i \in [\sigma_{\min}, 1]$ by construction, even though $L_i$ can drift arbitrarily high when quantile forecasts are badly miscalibrated.
@@ -472,13 +473,13 @@ Code: \texttt{skill.loss\\_to\\_skill} (skill.py:84–89). Three properties:
 \begin{itemize}
 \item \textbf{Exposure control.} The skill gate $g(\sigma_i) \in [\lambda, 1]$ keeps $m_i \in [\lambda b_i, b_i]$, so the \emph{fraction} of deposit at risk is bounded away from zero and from one.
 \item \textbf{Stability of aggregation.} If $w_i \propto e^{-\gamma L_i}$, a single catastrophic round for $i$ sends $w_i$ to machine-zero. The boundedness prevents this "reputation cliff".
-\item \textbf{Self-similarity across datasets.} The same $\sigma_{\min}$ and $\gamma$ can be used across datasets with vastly different loss scales; only the calibration of $\gamma$ needs to be checked via \texttt{skill.calibrate\\_gamma} (skill.py:92–104).
+\item \textbf{Self-similarity across datasets.} The same $\sigma_{\min}$ and $\gamma$ can be used across datasets with vastly different loss scales; only the calibration of $\gamma$ needs to be checked via \texttt{skill.calibrate\\_gamma} (skill.py:92--104).
 \end{itemize}
 
 \subsection{Contrast with Vitali \& Pinson's simplex weights}
 
 
-Their $w_{\tau} \in \Delta^{n-1}$ implies $\sum_i w_{\tau,i} = 1$ per quantile. Our $\sigma_i$ is individual — $\sigma_i = 0.7$ means "this forecaster is currently estimated to perform better than a loss of about $L_i = \log((1 - \sigma_{\min})/(\sigma_i - \sigma_{\min}))/\gamma$" and is not affected by what happens elsewhere. This is the \emph{absolute} skill signal that Slide 4 refers to.
+Their $w_{\tau} \in \Delta^{n-1}$ implies $\sum_i w_{\tau,i} = 1$ per quantile. Our $\sigma_i$ is individual --- $\sigma_i = 0.7$ means "this forecaster is currently estimated to perform better than a loss of about $L_i = \log((1 - \sigma_{\min})/(\sigma_i - \sigma_{\min}))/\gamma$" and is not affected by what happens elsewhere. This is the \emph{absolute} skill signal that Slide 4 refers to.
 
 \subsection{Calibration of $\gamma$ (how $\gamma$ is set)}
 
@@ -498,13 +499,13 @@ Shows $\sigma(L)$ as an exponentially decreasing curve from 1 (at $L = 0$, "perf
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 9 — Models, Data, Synthetic Setup}
+\section{SLIDE 9 --- Models, Data, Synthetic Setup}
 
 
 \subsection{The 7-forecaster panel (real-data experiments)}
 
 
-Code: \texttt{onlinev2/src/onlinev2/real\\_data/forecasters.py}. All models are strictly causal — at round $t$ they see only $y_1, \dots, y_{t-1}$ — and implement the same \texttt{fit / predict / predict\\_quantiles} interface:
+Code: \texttt{onlinev2/src/onlinev2/real\\_data/forecasters.py}. All models are strictly causal --- at round $t$ they see only $y_1, \dots, y_{t-1}$ --- and implement the same \texttt{fit / predict / predict\\_quantiles} interface:
 
 \begin{enumerate}
 \item \textbf{Naive (last value).} $\hat y_t = y_{t-1}$. Retrains every step. Best on autocorrelated series. Residual window 100.
@@ -528,7 +529,7 @@ Quantile generation is a three-step pipeline in \texttt{BaseForecaster.predict\\
 
 
 \begin{itemize}
-\item \textbf{Elia offshore wind.} Raw Elia 15-minute "measured" offshore wind power for 2024–2025. Downsampled to hourly by $y^{\text{hourly}}_h = y^{\text{15min}}_{4h}$ (keep every 4th sample). Length: \textbf{17,544} hourly observations. Path: \texttt{data/elia\\_offshore\\_wind\\_2024\\_2025.csv}.
+\item \textbf{Elia offshore wind.} Raw Elia 15-minute "measured" offshore wind power for 2024--2025. Downsampled to hourly by $y^{\text{hourly}}_h = y^{\text{15min}}_{4h}$ (keep every 4th sample). Length: \textbf{17,544} hourly observations. Path: \texttt{data/elia\\_offshore\\_wind\\_2024\\_2025.csv}.
 \item \textbf{Elia imbalance prices.} Native hourly resolution. Path: \texttt{data/elia\\_imbalance\\_prices\\_2024\\_2025.csv}.
 \item Normalisation: $\tilde y = (y - \min)/(\max - \min)$, so $\tilde y \in [0,1]$. The mechanism works on $\tilde y$; the min and max are stored for denormalisation.
 \end{itemize}
@@ -549,7 +550,7 @@ First \textbf{200 rounds} (real data) or \textbf{100} (synthetic) are used for t
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 10 — Synthetic Validation: Convergence}
+\section{SLIDE 10 --- Synthetic Validation: Convergence}
 
 
 \subsection{The synthetic experiment}
@@ -559,7 +560,7 @@ Six forecasters with \textbf{known} true noise levels $s_1 < s_2 < \dots < s_6$ 
 
 \begin{itemize}
 \item \textbf{Spearman rank correlation} between the true noise ordering and the end-of-run skill ordering: $\rho = 1.0$. Code: \texttt{onlinev2/src/onlinev2/analysis/} + rank reporting in \texttt{simulation.py}.
-\item \textbf{Noise–skill Pearson correlation}: $r = -0.98$. The $0.02$ gap from $-1$ reflects sampling noise across seeds, not a systematic bias.
+\item \textbf{Noise--skill Pearson correlation}: $r = -0.98$. The $0.02$ gap from $-1$ reflects sampling noise across seeds, not a systematic bias.
 \end{itemize}
 
 \subsection{Why $\rho = 1$ is the right bar}
@@ -574,7 +575,7 @@ Six forecasters with \textbf{known} true noise levels $s_1 < s_2 < \dots < s_6$ 
 \subsection{Reward distribution}
 
 
-On top of ranking, we check that reward follows skill: the noisiest forecaster also has the lowest cumulative profit over the run, the cleanest has the highest. This is a second validation — the mechanism is not just ranking well, it is \textbf{paying} correctly under budget balance.
+On top of ranking, we check that reward follows skill: the noisiest forecaster also has the lowest cumulative profit over the run, the cleanest has the highest. This is a second validation --- the mechanism is not just ranking well, it is \textbf{paying} correctly under budget balance.
 
 \subsection{What this does \emph{not} prove}
 
@@ -583,7 +584,7 @@ It does \textbf{not} prove anything about real-data performance. Synthetic DGPs 
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 11 — Mechanism Guarantees}
+\section{SLIDE 11 --- Mechanism Guarantees}
 
 
 \subsection{Budget balance}
@@ -628,31 +629,31 @@ $$
 \pi\_i^\{\text\{util}} = \mathbb 1[U > 0] \cdot \frac\{\tilde s\_i m\_i}\{\sum\_j \tilde s\_j m\_j} \cdot U,\qquad \tilde s\_i = s\_i \cdot \mathbb 1[s\_i > s\_c].
 $$
 
-This adds $U$ to total payouts, so \textbf{with $U > 0$ cashflows are no longer strictly zero-sum} (they are zero-sum plus a fixed external input of $U$). All slide-11 claims use $U = 0$ (pure Lambert). Code: \texttt{settlement.utility\\_payoff} (settlement.py:39–64).
+This adds $U$ to total payouts, so \textbf{with $U > 0$ cashflows are no longer strictly zero-sum} (they are zero-sum plus a fixed external input of $U$). All slide-11 claims use $U = 0$ (pure Lambert). Code: \texttt{settlement.utility\\_payoff} (settlement.py:39--64).
 
 \subsection{Audit notes (honest caveats worth knowing)}
 
 
 \begin{itemize}
 \item \textbf{Scores are clipped to $[0,1]$} in \texttt{skill\\_payoff} (settlement.py:29). This matches the Lambert-bounded-score formulation but can cut off very-large-deviation scores; in MAE and CRPS-hat modes, this does not bind since those scores are already in $[0,1]$.
-\item \textbf{CRPS-hat ≠ exact CRPS.} We use a finite-quantile approximation on a non-equidistant grid $(0.1, 0.25, 0.5, 0.75, 0.9)$. The approximation is good but not exact; it is called "CRPS-hat" throughout the code (\texttt{scoring.py:83–103}).
+\item \textbf{CRPS-hat $\ne$ exact CRPS.} We use a finite-quantile approximation on a non-equidistant grid $(0.1, 0.25, 0.5, 0.75, 0.9)$. The approximation is good but not exact; it is called "CRPS-hat" throughout the code (\texttt{scoring.py:83--103}).
 \end{itemize}
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 12 — Deposit Design}
+\section{SLIDE 12 --- Deposit Design}
 
 
 \subsection{The 4 deposit policies we compare}
 
 
-Code: \texttt{onlinev2/src/onlinev2/behaviour/…} and \texttt{simulation.py} \texttt{deposit\\_mode}.
+Code: \texttt{onlinev2/src/onlinev2/behaviour/\ldots\\{\}} and \texttt{simulation.py} \texttt{deposit\\_mode}.
 
 \begin{enumerate}
 \item \textbf{Fixed.} $b_i(t) = b_0$ constant.
 \item \textbf{Random.} $b_i(t) \sim \text{Uniform}[0, W_i(t)]$.
 \item \textbf{Bankroll} (wealth-proportional). $b_i(t) = f \cdot W_i(t)$ with $f = 0.3$ default.
-\item \textbf{Bankroll × Confidence.}
+\item \textbf{Bankroll $\times$ Confidence.}
 \end{enumerate}
 
 $$
@@ -665,7 +666,7 @@ $$
 c\_i(t) = \text\{clip}\!\bigl(e^\{-\beta\_c\,\Delta z\_i(t)},\, c\_\{\min},\, c\_\{\max}\bigr),\quad \Delta z\_i = \Phi^\{-1}(q\_i^\{(0.9)}) - \Phi^\{-1}(q\_i^\{(0.1)}).
 $$
 
-Code: \texttt{staking.confidence\\_from\\_quantiles} (staking.py:17–58), \texttt{staking.choose\\_deposits} (staking.py:61–88).
+Code: \texttt{staking.confidence\\_from\\_quantiles} (staking.py:17--58), \texttt{staking.choose\\_deposits} (staking.py:61--88).
 
 \subsection{Oracle benchmark}
 
@@ -682,34 +683,34 @@ Relative CRPS improvement over the fixed-deposit baseline:
 \toprule
 Policy & CRPS & $\Delta$ vs fixed & \% \\
 \midrule
-Fixed & 0.0424 & — & 0 \% \\
-Random & ≈ 0.042 & near 0 & near 0 \% \\
-Bankroll & 0.035 & −0.007 & −17 \% \\
-\textbf\{Bankroll × Conf\} & \textbf\{0.0279\} & \textbf\{−0.0145\} & \textbf\{−34 \%\} \\
-Oracle (upper bound) & 0.024 & −0.0184 & −43 \% \\
+Fixed & 0.0424 & --- & 0 \% \\
+Random & $\approx$ 0.042 & near 0 & near 0 \% \\
+Bankroll & 0.035 & -0.007 & -17 \% \\
+\textbf\{Bankroll $\times$ Conf\} & \textbf\{0.0279\} & \textbf\{-0.0145\} & \textbf\{-34 \%\} \\
+Oracle (upper bound) & 0.024 & -0.0184 & -43 \% \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\textbf{Takeaway.} Bankroll × Confidence closes most of the oracle gap; the mechanism "looks good" only when deposits themselves carry useful signal. The slide badge therefore reads "Bankroll+Conf: −34\% relative to Fixed".
+\textbf{Takeaway.} Bankroll $\times$ Confidence closes most of the oracle gap; the mechanism "looks good" only when deposits themselves carry useful signal. The slide badge therefore reads "Bankroll+Conf: -34\% relative to Fixed".
 
 \subsection{Truthfulness caveat (important)}
 
 
-If $c_i$ is computed from the \textbf{current-round} report $r_i(t)$, deposits become report-dependent and Lambert's truthfulness argument does not apply directly. The safe version uses lagged quantiles or another exogenous/precommitted signal. Code warning is inlined in \texttt{staking.py:30–38} and \texttt{staking.py:72–79}.
+If $c_i$ is computed from the \textbf{current-round} report $r_i(t)$, deposits become report-dependent and Lambert's truthfulness argument does not apply directly. The safe version uses lagged quantiles or another exogenous/precommitted signal. Code warning is inlined in \texttt{staking.py:30--38} and \texttt{staking.py:72--79}.
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 13 — Real Data: Elia Wind + Electricity}
+\section{SLIDE 13 --- Real Data: Elia Wind + Electricity}
 
 
 \subsection{The experiment}
 
 
-Driver: \texttt{scripts/run\\_real\\_data\\_with\\_skill.py} → \texttt{onlinev2.real\\_data.runner.run\\_real\\_data\\_comparison}. For each dataset:
+Driver: \texttt{scripts/run\\_real\\_data\\_with\\_skill.py} $\rightarrow$ \texttt{onlinev2.real\\_data.runner.run\\_real\\_data\\_comparison}. For each dataset:
 
 \begin{itemize}
-\item $n = 7$ forecasters from §[Slide 9](\#slide-9), strictly causal.
+\item $n = 7$ forecasters from \S\{}Slide 9, strictly causal.
 \item $T = $ 17\{,}544 hourly observations (wind) / full native (electricity).
 \item Warm-up 200 rounds.
 \item $\tau = (0.1, 0.25, 0.5, 0.75, 0.9)$, CRPS-hat.
@@ -726,8 +727,8 @@ The runner reports \textbf{seven} weighting rules in one go (uniform, skill-only
 \toprule
 Dataset & Uniform CRPS & Mechanism CRPS & $\Delta$ & \% vs uniform \\
 \midrule
-Elia wind (offshore power) & ~0.089 & ~0.050 & −0.039 & \textbf\{−44 \%\} \\
-Elia electricity (imbalance) & ~0.048 & ~0.044 & −0.004 & \textbf\{−8 \%\} \\
+Elia wind (offshore power) & ~0.089 & ~0.050 & -0.039 & \textbf\{-44 \%\} \\
+Elia electricity (imbalance) & ~0.048 & ~0.044 & -0.004 & \textbf\{-8 \%\} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -752,7 +753,7 @@ Generated by \texttt{presentation/R/plot\\_real\\_data.R} from \texttt{compariso
 \item ARIMA/XGBoost/MLP/Theta converge to roughly the same low skill because their \emph{quantiles} are over-spread. Point forecasts might be fine, but the CRPS-hat penalises excess spread.
 \end{itemize}
 
-Key lesson: skill \textbf{is not point accuracy}. It is a calibrated probabilistic score — a forecaster can be point-accurate but be ranked low if they are over/under-dispersed.
+Key lesson: skill \textbf{is not point accuracy}. It is a calibrated probabilistic score --- a forecaster can be point-accurate but be ranked low if they are over/under-dispersed.
 
 \subsection{Calibration}
 
@@ -777,7 +778,7 @@ So the aggregate is slightly \textbf{under-dispersed} (tail events happen more o
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 14 — Benchmark Comparison: Prior Work and This Project}
+\section{SLIDE 14 --- Benchmark Comparison: Prior Work and This Project}
 
 
 \subsection{Purpose}
@@ -785,9 +786,9 @@ So the aggregate is slightly \textbf{under-dispersed} (tail events happen more o
 
 Isolate the effect of the \textbf{learning layer} by running \textbf{three prediction-market designs on exactly the same cached forecasts}. If the forecasts are the same and only the aggregation+settlement differ, the CRPS difference is pure mechanism effect.
 
-Driver: \texttt{scripts/run\\_baseline\\_comparison.py}. Writes \texttt{dashboard/public/data/real\\_data/\\{elia\\_wind,elia\\_electricity\}/data/baselines.json} and \texttt{presentation/plots/data/baseline\\_comparison\\_\\{wind,electricity\}.csv}. Plot: \texttt{presentation/R/plot\\_baseline\\_comparison.R} → \texttt{dashboard/public/presentation-plots/baseline\\_comparison.png}.
+Driver: \texttt{scripts/run\\_baseline\\_comparison.py}. Writes \texttt{dashboard/public/data/real\\_data/\\{elia\\_wind,elia\\_electricity\}/data/baselines.json} and \texttt{presentation/plots/data/baseline\\_comparison\\_\\{wind,electricity\}.csv}. Plot: \texttt{presentation/R/plot\\_baseline\\_comparison.R} $\rightarrow$ \texttt{dashboard/public/presentation-plots/baseline\\_comparison.png}.
 
-\subsection{The three methods — implementation-level detail}
+\subsection{The three methods --- implementation-level detail}
 
 
 \textbf{1. Raja history-free (\texttt{method\\_raja\\_history\\_free})}
@@ -812,7 +813,7 @@ $$
 
 \begin{itemize}
 \item Update $W_k(t+1) = \Pi_{\Delta}(W_k(t) - \eta\,\partial L_t)$ (Duchi et al. 2008 projection).
-\item \textbf{No Lambert settlement} — this is pure online aggregation, the Shapley layer of the original paper is omitted for comparability.
+\item \textbf{No Lambert settlement} --- this is pure online aggregation, the Shapley layer of the original paper is omitted for comparability.
 \item Learning rate: $\eta = 0.05$.
 \end{itemize}
 
@@ -830,12 +831,12 @@ $$
 \begin{center}
 \begin{tabular}{llllll}
 \toprule
-Method & wind CRPS & wind Δ vs uniform & wind \% & electricity CRPS & electricity \% \\
+Method & wind CRPS & wind $\Delta$ vs uniform & wind \% & electricity CRPS & electricity \% \\
 \midrule
-Uniform & 0.089 & — & 0 \% & 0.048 & 0 \% \\
-Raja (history-free) & ~0.087 & −0.002 & \textbf\{−2 \%\} & ~0.047 & \textbf\{−2 \%\} \\
-\textbf\{This project\} & \textbf\{~0.050\} & \textbf\{−0.039\} & \textbf\{−44 \%\} & \textbf\{~0.044\} & \textbf\{−8 \%\} \\
-Vitali OGD (per-quantile) & ~0.031 & −0.058 & \textbf\{−65 \%\} & ~0.038 & \textbf\{−20 \%\} \\
+Uniform & 0.089 & --- & 0 \% & 0.048 & 0 \% \\
+Raja (history-free) & ~0.087 & -0.002 & \textbf\{-2 \%\} & ~0.047 & \textbf\{-2 \%\} \\
+\textbf\{This project\} & \textbf\{~0.050\} & \textbf\{-0.039\} & \textbf\{-44 \%\} & \textbf\{~0.044\} & \textbf\{-8 \%\} \\
+Vitali OGD (per-quantile) & ~0.031 & -0.058 & \textbf\{-65 \%\} & ~0.038 & \textbf\{-20 \%\} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -844,7 +845,7 @@ Vitali OGD (per-quantile) & ~0.031 & −0.058 & \textbf\{−65 \%\} & ~0.038 & \
 
 
 \begin{itemize}
-\item \textbf{Raja ≪ This project.} The learning layer is what produces the big improvement over Raja on wind (−44 \% vs −2 \%). This is direct empirical evidence that \emph{history-free self-financed} is leaving a large gain on the table.
+\item \textbf{Raja $\ll$ This project.} The learning layer is what produces the big improvement over Raja on wind (-44 \% vs -2 \%). This is direct empirical evidence that \emph{history-free self-financed} is leaving a large gain on the table.
 \item \textbf{Vitali < This project on CRPS.} Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~21 pp gap on wind is quantified here, not glossed over.
 \item \textbf{The point of the project.} Adaptation + self-financing + absolute skill can coexist, and the empirical cost is now measurable.
 \end{itemize}
@@ -852,11 +853,11 @@ Vitali OGD (per-quantile) & ~0.031 & −0.058 & \textbf\{−65 \%\} & ~0.038 & \
 \subsection{Stability check}
 
 
-The \texttt{rolling\\_crps} panel in \texttt{baselines.json} (window = max(100, T\_eval/100)) shows the same ordering holds throughout the two-year series — the mechanism's rank is not driven by a single lucky segment.
+The \texttt{rolling\\_crps} panel in \texttt{baselines.json} (window = max(100, T\_eval/100)) shows the same ordering holds throughout the two-year series --- the mechanism's rank is not driven by a single lucky segment.
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 15 — Strategic Robustness}
+\section{SLIDE 15 --- Strategic Robustness}
 
 
 \subsection{Attack families implemented}
@@ -870,7 +871,7 @@ In \texttt{onlinev2/src/onlinev2/behaviour/} (nine families, 18 presets). Driver
 \item \textbf{Arbitrage.} Chen et al. (2014, \texttt{theory/extra/Unravelling\\_the\\_Probabilistic\\_Forest\\_\\_Arbitrage\\_in\\_Prediction\\_Market.md}) show weighted-score wagering admits an arbitrage interval in one round. In the repeated setting \emph{with the skill gate and wealth dynamics}, the arbitrage agent extracts \textbf{zero sustained profit} across our runs.
 \item \textbf{Reputation gaming.} The agent reports truthfully for a warm-up phase to build $\sigma$, then submits a biased report. Detection (via sharp drop in $\sigma$) within ~20 rounds.
 \item \textbf{Collusion.} Two or more participants coordinate reports. No sustained positive profit observed.
-\item \textbf{Risk-averse hedging, wash-trading, wealth dominance, dynamic drift tracking} and several others — all in \texttt{behaviour/} presets.
+\item \textbf{Risk-averse hedging, wash-trading, wealth dominance, dynamic drift tracking} and several others --- all in \texttt{behaviour/} presets.
 \end{enumerate}
 
 Each preset is evaluated on a standard metric panel: profit, HHI (Herfindahl concentration of wagers), detection latency, participation pattern.
@@ -882,7 +883,7 @@ Each preset is evaluated on a standard metric panel: profit, HHI (Herfindahl con
 
 \bigskip\hrule\bigskip
 
-\section{SLIDE 16 — Conclusion + Future Work}
+\section{SLIDE 16 --- Conclusion + Future Work}
 
 
 \subsection{What was built}
@@ -903,39 +904,39 @@ A repeated self-financed wagering market that:
 \begin{itemize}
 \item Synthetic: $\rho = 1$ rank recovery, reward aligned with true ordering.
 \item Guarantees: machine-precision budget balance, zero mean profit, exact identical-report sybilproofness.
-\item Deposit design: bankroll × confidence closes ~75 \% of the oracle gap over fixed deposits.
-\item Real data (Elia): \textbf{−44 \%} CRPS on wind, \textbf{−8 \%} on electricity vs uniform.
-\item Benchmark (same forecasts, three mechanisms): Raja −2 \%, This project −44 \%, Vitali −65 \% on wind. The three trade-offs are now quantified.
+\item Deposit design: bankroll $\times$ confidence closes ~75 \% of the oracle gap over fixed deposits.
+\item Real data (Elia): \textbf{-44 \%} CRPS on wind, \textbf{-8 \%} on electricity vs uniform.
+\item Benchmark (same forecasts, three mechanisms): Raja -2 \%, This project -44 \%, Vitali -65 \% on wind. The three trade-offs are now quantified.
 \end{itemize}
 
 \subsection{Clear priorities for future work}
 
 
 \begin{enumerate}
-\item \textbf{Close the Vitali gap without losing self-financing.} This likely requires richer scoring rules (non-linear opinion pools, quantile-specific scores) or richer aggregation primitives — \emph{not} dropping the Lambert framework.
+\item \textbf{Close the Vitali gap without losing self-financing.} This likely requires richer scoring rules (non-linear opinion pools, quantile-specific scores) or richer aggregation primitives --- \emph{not} dropping the Lambert framework.
 \item \textbf{Tail calibration.} The aggregate is under-dispersed by ~5 percentage points at $\tau = 0.9$.
 \item \textbf{Adaptive adversaries.} Behaviour presets are useful but limited; sophisticated co-adaptive adversaries remain open.
 \end{enumerate}
 
 \bigskip\hrule\bigskip
 
-\section{DEMO — Live Dashboard (1–2 min, if time)}
+\section{DEMO --- Live Dashboard (1--2 min, if time)}
 
 
 Suggested live path (same as \texttt{SCRIPT.md}):
 
 \begin{enumerate}
-\item \textbf{Home} — orientation.
-\item \textbf{Results page} — pick Elia wind → scroll mean CRPS by method → optional skill trajectories.
-\item \textbf{Diagnostics page} — budget gap plot (machine precision), sybil ratio plot.
-\item \textbf{Behaviour page} (optional) — preset families, comparison table.
+\item \textbf{Home} --- orientation.
+\item \textbf{Results page} --- pick Elia wind $\rightarrow$ scroll mean CRPS by method $\rightarrow$ optional skill trajectories.
+\item \textbf{Diagnostics page} --- budget gap plot (machine precision), sybil ratio plot.
+\item \textbf{Behaviour page} (optional) --- preset families, comparison table.
 \end{enumerate}
 
-All dashboard pages read \textbf{the same JSON} the slides are built from (\texttt{dashboard/public/data/…}), so anything on the slides can be reproduced live.
+All dashboard pages read \textbf{the same JSON} the slides are built from (\texttt{dashboard/public/data/\ldots\\{\}}), so anything on the slides can be reproduced live.
 
 \bigskip\hrule\bigskip
 
-\section{Appendix A — All formulas in one place}
+\section{Appendix A --- All formulas in one place}
 
 
 \textbf{1. Score (CRPS-hat mode).} For $\tau \in (0,1)$ and outcome $y$, the pinball loss is
@@ -968,64 +969,64 @@ $\pi_i^{\text{util}} = \mathbb 1[U>0]\,\frac{\tilde s_i m_i}{\sum_j \tilde s_j m
 
 \bigskip\hrule\bigskip
 
-\section{Appendix B — Code map (what lives where)}
+\section{Appendix B --- Code map (what lives where)}
 
 
 \begin{itemize}
-\item \textbf{Core mechanism (pure, no I/O)} — \texttt{onlinev2/src/onlinev2/core/}
-\item \texttt{scoring.py} — pinball, CRPS-hat, bounded scores.
-\item \texttt{aggregation.py} — weighted quantile averaging.
-\item \texttt{settlement.py} — \texttt{skill\\_payoff}, \texttt{utility\\_payoff}, \texttt{settle\\_round}.
-\item \texttt{skill.py} — EWMA loss, loss-to-skill, $\gamma$/$L_0$ calibration.
-\item \texttt{staking.py} — confidence, deposits, skill gate, effective wager, cap, wealth update.
+\item \textbf{Core mechanism (pure, no I/O)} --- \texttt{onlinev2/src/onlinev2/core/}
+\item \texttt{scoring.py} --- pinball, CRPS-hat, bounded scores.
+\item \texttt{aggregation.py} --- weighted quantile averaging.
+\item \texttt{settlement.py} --- \texttt{skill\\_payoff}, \texttt{utility\\_payoff}, \texttt{settle\\_round}.
+\item \texttt{skill.py} --- EWMA loss, loss-to-skill, $\gamma$/$L_0$ calibration.
+\item \texttt{staking.py} --- confidence, deposits, skill gate, effective wager, cap, wealth update.
 \item \texttt{runner.py}, \texttt{types.py}, \texttt{weights.py}, \texttt{intermittent.py}, \texttt{michael\\_allocation.py}, \texttt{shapley.py}.
 \end{itemize}
 
 \begin{itemize}
-\item \textbf{Real data} — \texttt{onlinev2/src/onlinev2/real\\_data/}
-\item \texttt{forecasters.py} — 7 causal models with seeded XGBoost/MLP.
-\item \texttt{loader.py} — CSV loaders.
-\item \texttt{runner.py} — \texttt{run\\_real\\_data\\_comparison} producing \texttt{comparison.json}.
-\item \texttt{experiments.py}, \texttt{stats.py} — Diebold-Mariano, rolling.
+\item \textbf{Real data} --- \texttt{onlinev2/src/onlinev2/real\\_data/}
+\item \texttt{forecasters.py} --- 7 causal models with seeded XGBoost/MLP.
+\item \texttt{loader.py} --- CSV loaders.
+\item \texttt{runner.py} --- \texttt{run\\_real\\_data\\_comparison} producing \texttt{comparison.json}.
+\item \texttt{experiments.py}, \texttt{stats.py} --- Diebold-Mariano, rolling.
 \end{itemize}
 
 \begin{itemize}
-\item \textbf{Simulation harness} — \texttt{onlinev2/src/onlinev2/simulation.py} — \texttt{run\\_simulation} used by both the real-data runner and the baseline comparison.
+\item \textbf{Simulation harness} --- \texttt{onlinev2/src/onlinev2/simulation.py} --- \texttt{run\\_simulation} used by both the real-data runner and the baseline comparison.
 \end{itemize}
 
 \begin{itemize}
-\item \textbf{Scripts} — \texttt{scripts/}
-\item \texttt{run\\_baseline\\_comparison.py} — 3-way Raja / Vitali / ours head-to-head.
-\item \texttt{run\\_real\\_data\\_with\\_skill.py} — the Slide-13 runner.
-\item \texttt{plot\\_*.R} and \texttt{plot\\_all\\_slides.R} — regenerate PNGs.
-\item \texttt{reproduce\\_submission.sh} — reproduce everything end-to-end.
+\item \textbf{Scripts} --- \texttt{scripts/}
+\item \texttt{run\\_baseline\\_comparison.py} --- 3-way Raja / Vitali / ours head-to-head.
+\item \texttt{run\\_real\\_data\\_with\\_skill.py} --- the Slide-13 runner.
+\item \texttt{plot\\_*.R} and \texttt{plot\\_all\\_slides.R} --- regenerate PNGs.
+\item \texttt{reproduce\\_submission.sh} --- reproduce everything end-to-end.
 \end{itemize}
 
 \begin{itemize}
-\item \textbf{Plots (R)} — \texttt{presentation/R/}
-\item \texttt{theme\\_thesis.R} — shared ggplot theme and palette.
+\item \textbf{Plots (R)} --- \texttt{presentation/R/}
+\item \texttt{theme\\_thesis.R} --- shared ggplot theme and palette.
 \item \texttt{plot\\_positioning\\_matrix.R}, \texttt{plot\\_baseline\\_comparison.R}, \texttt{plot\\_real\\_data.R}, \texttt{plot\\_skill\\_signal.R}, \texttt{plot\\_deposit\\_policy.R}, \texttt{plot\\_forecast\\_aggregation.R}, \texttt{plot\\_settlement\\_sanity.R}, \texttt{plot\\_skill\\_recovery.R}, \texttt{plot\\_sybil.R}.
 \end{itemize}
 
 \begin{itemize}
-\item \textbf{Dashboard} — \texttt{dashboard/}
-\item \texttt{src/pages/PresentationPage.tsx} — slide ordering.
-\item \texttt{src/components/slides/…} — per-slide components.
-\item \texttt{public/data/real\\_data/…/comparison.json}, \texttt{.../baselines.json}.
-\item \texttt{public/presentation-plots/*.png} — all the regenerated R plots.
+\item \textbf{Dashboard} --- \texttt{dashboard/}
+\item \texttt{src/pages/PresentationPage.tsx} --- slide ordering.
+\item \texttt{src/components/slides/\ldots\\{\}} --- per-slide components.
+\item \texttt{public/data/real\\_data/\ldots\\{\}/comparison.json}, \texttt{.../baselines.json}.
+\item \texttt{public/presentation-plots/*.png} --- all the regenerated R plots.
 \end{itemize}
 
 \bigskip\hrule\bigskip
 
-\section{Appendix C — Extended Q\&A (from \texttt{theory/extra/})}
+\section{Appendix C --- Extended Q\&A (from \texttt{theory/extra/})}
 
 
 \subsection{C1. "Why is the skill signal bounded but the accumulator unbounded?"}
 
 
-Because what the \emph{mechanism} uses is $\sigma$, and exposure has to be controllable. The \textbf{accumulator} $L$ is unbounded because it is a sufficient statistic — compressing it prematurely would lose information. The \textbf{public signal} $\sigma$ is bounded because it governs how much money is at stake, and we need to guarantee $m_i \in [\lambda b_i, b_i]$.
+Because what the \emph{mechanism} uses is $\sigma$, and exposure has to be controllable. The \textbf{accumulator} $L$ is unbounded because it is a sufficient statistic --- compressing it prematurely would lose information. The \textbf{public signal} $\sigma$ is bounded because it governs how much money is at stake, and we need to guarantee $m_i \in [\lambda b_i, b_i]$.
 
-\subsection{C2. "How does this compare to pure online convex optimisation (Cesa-Bianchi–Lugosi)?"}
+\subsection{C2. "How does this compare to pure online convex optimisation (Cesa-Bianchi--Lugosi)?"}
 
 
 Classical online aggregation gives regret bounds like $O(\sqrt T \log n)$ for bounded losses. It does not have:
@@ -1046,7 +1047,7 @@ Exact CRPS requires a closed-form predictive distribution. Our forecasters only 
 \subsection{C4. "Why not use exact Shapley payouts instead of Lambert?"}
 
 
-Shapley values for $n$ forecasters require $2^n$ marginal contributions. With $n = 7$ that is $128$ per round; feasible, but not scalable. More importantly, Shapley-based settlement in Vitali \& Pinson is \emph{not} self-financed — it requires an external payer — which breaks the market interpretation. See \texttt{theory/extra/Game-theoretic\\_Payoff\\_Allocation\\_in\\_Multiagent\\_Machine\\_Learning\\_Systems.md}.
+Shapley values for $n$ forecasters require $2^n$ marginal contributions. With $n = 7$ that is $128$ per round; feasible, but not scalable. More importantly, Shapley-based settlement in Vitali \& Pinson is \emph{not} self-financed --- it requires an external payer --- which breaks the market interpretation. See \texttt{theory/extra/Game-theoretic\\_Payoff\\_Allocation\\_in\\_Multiagent\\_Machine\\_Learning\\_Systems.md}.
 
 \subsection{C5. "Could the same mechanism work for classification or for non-monetary reputation?"}
 
@@ -1086,7 +1087,7 @@ All via grid search on a validation split. See \texttt{scripts/run\\_sensitivity
 \subsection{C9. "Why not compare against equal weights only on a smaller panel?"}
 
 
-We do — the "best\_single" line in \texttt{comparison.json} tracks the single best forecaster (lowest recent CRPS) and wins over equal weights on wind because Naive persistence is so strong there. The mechanism sits between Naive-only and equal weights: it captures the heterogeneity without committing to Naive.
+We do --- the "best\_single" line in \texttt{comparison.json} tracks the single best forecaster (lowest recent CRPS) and wins over equal weights on wind because Naive persistence is so strong there. The mechanism sits between Naive-only and equal weights: it captures the heterogeneity without committing to Naive.
 
 \subsection{C10. "What are the biggest code-level caveats I should be honest about in Q\&A?"}
 
@@ -1098,7 +1099,7 @@ From the audit:
 \item \texttt{omega\\_max} capping applies in aggregation but not in settlement; in our runs \texttt{omega\\_max = 0} so this never bites, but the inconsistency exists.
 \item CRPS-hat is a surrogate; the 5-point grid is non-equidistant.
 \item \texttt{use\\_exposure\\_weighting=True} is off by default in the Slide-13 runner, so EWMA updates are not weighted by economic stake there.
-\item In the real-data runner, \texttt{deposit\\_mode="fixed"} with $b_0=1$ — the full wealth/deposit dynamics are not exercised on the Elia runs. That is deliberate (comparability with the baselines) but worth flagging.
+\item In the real-data runner, \texttt{deposit\\_mode="fixed"} with $b_0=1$ --- the full wealth/deposit dynamics are not exercised on the Elia runs. That is deliberate (comparability with the baselines) but worth flagging.
 \end{itemize}
 
 \bigskip\hrule\bigskip
