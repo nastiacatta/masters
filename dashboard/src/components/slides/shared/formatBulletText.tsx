@@ -1,5 +1,5 @@
 import React from 'react';
-import { EMPHASIS } from './presentationConstants';
+import { EMPHASIS, PALETTE } from './presentationConstants';
 
 /**
  * Detect and wrap key terms in bullet text with appropriate emphasis styling.
@@ -31,7 +31,7 @@ export function formatBulletText(text: string): React.ReactNode {
         warningParts.push(text.slice(wLastIndex, wMatch.index));
       }
       warningParts.push(
-        <span key={`wn-${wMatch.index}`} style={{ color: '#E85D4A', fontWeight: 800 }}>
+        <span key={`wn-${wMatch.index}`} style={{ color: PALETTE.coral, fontWeight: 800 }}>
           {wMatch[0]}
         </span>,
       );
