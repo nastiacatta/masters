@@ -1,5 +1,5 @@
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, FIGURE_FRAME } from './shared/presentationConstants';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -26,7 +26,7 @@ export default function BaselineComparisonSlide() {
           flexDirection: 'column',
           fontFamily: TYPOGRAPHY.fontFamily,
           minHeight: 0,
-          gap: 10,
+          gap: 14,
         }}
       >
         {/* Figure fills the dominant slot */}
@@ -37,6 +37,7 @@ export default function BaselineComparisonSlide() {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: 0,
+            ...FIGURE_FRAME,
           }}
         >
           <img
@@ -46,26 +47,26 @@ export default function BaselineComparisonSlide() {
               maxWidth: '100%',
               maxHeight: '100%',
               objectFit: 'contain',
-              borderRadius: 10,
+              borderRadius: 8,
             }}
           />
         </div>
 
         {/* Three-card takeaway strip */}
-        <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
           <div
             style={{
               flex: 1,
               background: 'rgba(0, 62, 116, 0.06)',
               border: `1.5px solid ${PALETTE.imperial}`,
-              borderRadius: 10,
-              padding: '10px 14px',
+              borderRadius: 12,
+              padding: '12px 16px',
             }}
           >
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: PALETTE.imperial, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: PALETTE.imperial, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Raja et&nbsp;al. (history-free)
             </div>
-            <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
+            <div style={{ fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 6 }}>
               Self-financed but history-free. Small gains relative to equal weights (−2.5% wind, −2.3% electricity).
             </div>
           </div>
@@ -74,14 +75,14 @@ export default function BaselineComparisonSlide() {
               flex: 1,
               background: 'rgba(124, 58, 237, 0.06)',
               border: `1.5px solid ${PALETTE.purple}`,
-              borderRadius: 10,
-              padding: '10px 14px',
+              borderRadius: 12,
+              padding: '12px 16px',
             }}
           >
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: PALETTE.purple, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: PALETTE.purple, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Vitali & Pinson (OGD)
             </div>
-            <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
+            <div style={{ fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 6 }}>
               Lowest CRPS in this benchmark. Not self-financed; weights are relative on a simplex.
             </div>
           </div>
@@ -90,14 +91,14 @@ export default function BaselineComparisonSlide() {
               flex: 1,
               background: 'rgba(232, 93, 74, 0.08)',
               border: `1.5px solid ${PALETTE.coral}`,
-              borderRadius: 10,
-              padding: '10px 14px',
+              borderRadius: 12,
+              padding: '12px 16px',
             }}
           >
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: PALETTE.coral, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: PALETTE.coral, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               This project (skill + self-financed)
             </div>
-            <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
+            <div style={{ fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 6 }}>
               −44% wind, −8% electricity relative to equal weights. Retains Lambert&apos;s properties and reports absolute skill.
             </div>
           </div>

@@ -80,8 +80,8 @@ export default function MechanismComparisonSlide() {
           style={{
             ...CARD_STYLE,
             width: '100%',
-            maxWidth: 1100,
-            padding: '32px 40px',
+            maxWidth: 1120,
+            padding: '36px 44px',
           }}
         >
           {/* Header row */}
@@ -101,7 +101,7 @@ export default function MechanismComparisonSlide() {
               <span
                 key={header}
                 style={{
-                  fontSize: '1.15rem',
+                  fontSize: '1.2rem',
                   fontWeight: 700,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
@@ -137,7 +137,7 @@ export default function MechanismComparisonSlide() {
               {/* Feature label */}
               <span
                 style={{
-                  fontSize: '1.3rem',
+                  fontSize: '1.35rem',
                   fontWeight: 600,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
@@ -152,9 +152,10 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.1rem',
+                    fontSize: '1.12rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
+                    lineHeight: 1.45,
                   }}
                 >
                   {row.lambert}
@@ -165,9 +166,10 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.1rem',
+                    fontSize: '1.12rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
+                    lineHeight: 1.45,
                   }}
                 >
                   {row.raja}
@@ -178,9 +180,10 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.1rem',
+                    fontSize: '1.12rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
+                    lineHeight: 1.45,
                   }}
                 >
                   {row.vitali}
@@ -191,9 +194,10 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.1rem',
+                    fontSize: '1.12rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
+                    lineHeight: 1.45,
                   }}
                 >
                   {row.thesis}

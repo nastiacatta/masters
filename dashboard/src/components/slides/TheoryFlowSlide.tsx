@@ -115,7 +115,7 @@ export default function TheoryFlowSlide() {
                 x={pBoxX + 42}
                 y={p.y + 28}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="17"
+                fontSize="19"
                 fontWeight={600}
                 fill={PALETTE.navy}
               >
@@ -136,7 +136,7 @@ export default function TheoryFlowSlide() {
                   y="11"
                   textAnchor="middle"
                   fontFamily={TYPOGRAPHY.fontFamily}
-                  fontSize="10"
+                  fontSize="11"
                   fontWeight={700}
                   fill={PALETTE.coral}
                 >
@@ -147,7 +147,7 @@ export default function TheoryFlowSlide() {
                 x={pBoxX + 34}
                 y={p.y + 58}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="13"
+                fontSize="15"
                 fill={PALETTE.slate}
               >
                 + forecast
@@ -191,7 +191,7 @@ export default function TheoryFlowSlide() {
           y={aggCenterY + 8}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="19"
+          fontSize="20"
           fontWeight={700}
           fill={PALETTE.teal}
         >
@@ -202,7 +202,7 @@ export default function TheoryFlowSlide() {
           y={aggCenterY + 30}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="14"
+          fontSize="15"
           fill={PALETTE.slate}
         >
           Wager-weighted aggregation
@@ -225,7 +225,7 @@ export default function TheoryFlowSlide() {
           y={aggCenterY - 14}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="13"
+          fontSize="14"
           fontStyle="italic"
           fill={PALETTE.teal}
         >
@@ -269,7 +269,7 @@ export default function TheoryFlowSlide() {
           y={aggCenterY + 8}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="17"
+          fontSize="18"
           fontWeight={700}
           fill={PALETTE.white}
         >
@@ -280,7 +280,7 @@ export default function TheoryFlowSlide() {
           y={aggCenterY + 28}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="14"
+          fontSize="15"
           fill={PALETTE.darkText}
         >
           Prediction
@@ -292,7 +292,7 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
+          fontSize="16"
           fill={PALETTE.slate}
         >
           Participants submit forecasts + wagers
@@ -302,7 +302,7 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
+          fontSize="16"
           fill={PALETTE.slate}
         >
           Weighted combination
@@ -312,7 +312,7 @@ export default function TheoryFlowSlide() {
           y={520}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="15"
+          fontSize="16"
           fill={PALETTE.slate}
         >
           Better forecast

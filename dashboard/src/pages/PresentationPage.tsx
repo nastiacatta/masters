@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PasswordGate from '@/components/slides/PasswordGate';
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT } from '@/components/slides/shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT, SLIDE_PAGE_PADDING, DIAGRAM_PANEL } from '@/components/slides/shared/presentationConstants';
 import { formatBulletText } from '@/components/slides/shared/formatBulletText';
 import TheoryFlowSlide from '@/components/slides/TheoryFlowSlide';
 import MarketFlowSlide from '@/components/slides/MarketFlowSlide';
@@ -28,7 +28,6 @@ import TitleSlide from '@/components/slides/TitleSlide';
 const C = PALETTE;
 const FONT_FAMILY = TYPOGRAPHY.fontFamily;
 const TOTAL_SLIDES = MAIN_DECK_SLIDE_COUNT;
-const BASE = import.meta.env.BASE_URL;
 
 /* ─── Slide data ─────────────────────────────────────────────── */
 
@@ -261,13 +260,20 @@ function SlideNumberBadge({ slideNumber, dark }: { slideNumber?: number; dark?: 
     <div
       style={{
         position: 'absolute',
-        top: 16,
-        right: 24,
-        fontSize: '0.8rem',
-        fontWeight: 500,
-        color: dark ? PALETTE.darkText : PALETTE.slate,
+        top: 18,
+        right: 28,
+        fontSize: '0.8125rem',
+        fontWeight: 600,
+        letterSpacing: '0.03em',
+        color: dark ? PALETTE.darkText : PALETTE.navy,
         fontFamily: FONT_FAMILY,
         zIndex: 10,
+        padding: '6px 14px',
+        borderRadius: 999,
+        background: dark ? 'rgba(15, 23, 42, 0.55)' : 'rgba(255, 255, 255, 0.92)',
+        border: dark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${PALETTE.border}`,
+        boxShadow: dark ? 'none' : '0 2px 10px rgba(27, 42, 74, 0.06)',
+        backdropFilter: 'blur(8px)',
       }}
     >
       {slideNumber} / {TOTAL_SLIDES}
@@ -289,9 +295,9 @@ function SectionLabel({ slideNumber, dark }: { slideNumber?: number; dark?: bool
         letterSpacing: '0.12em',
         textTransform: 'uppercase' as const,
         color: dark ? PALETTE.darkText : PALETTE.slate,
-        marginBottom: 8,
+        marginBottom: 10,
         fontFamily: FONT_FAMILY,
-        opacity: 0.8,
+        opacity: 0.85,
       }}
     >
       {section.label}
@@ -329,13 +335,13 @@ function SlideFooter({ refText }: { refText?: string }) {
         overflow: 'hidden',
       }}
     >
-      <span style={{ fontSize: '0.85rem', color: C.slate }}>
+      <span style={{ fontSize: '0.875rem', color: C.slate }}>
         Anastasia Cattaneo — Imperial College London
       </span>
       {refText && (
         <span
           style={{
-            fontSize: '0.75rem',
+            fontSize: '0.8125rem',
             color: C.slate,
             marginLeft: 'auto',
             paddingLeft: 16,
@@ -364,8 +370,8 @@ function HighlightBar({ text }: { text: string }) {
         fontSize: '1.35rem',
         fontWeight: 700,
         padding: '0.9rem 1.5rem',
-        borderRadius: '0 10px 10px 0',
-        lineHeight: 1.4,
+        borderRadius: '0 12px 12px 0',
+        lineHeight: 1.45,
       }}
     >
       {text}
@@ -404,60 +410,29 @@ const darkGradient = DARK_GRADIENT;
 
 /* ─── Slide view components ──────────────────────────────────── */
 
-/** Title slide */
-function TitleSlideView({ slide }: { slide: SlideData }) {
-  return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '80px',
-        backgroundImage: `linear-gradient(180deg, rgba(7, 15, 35, 0.78) 0%, rgba(7, 15, 35, 0.82) 100%), url(${BASE}presentation-plots/title_background.png)`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: darkGradient,
-        fontFamily: FONT_FAMILY,
-        boxSizing: 'border-box',
-        position: 'relative',
-      }}
-    >
-      <SectionBar slideNumber={slide.slideNumber} />
-      <SlideNumberBadge slideNumber={slide.slideNumber} dark />
-      <h1
-        style={{
-          fontSize: '3.6rem',
-          fontWeight: 700,
-          color: C.white,
-          lineHeight: 1.2,
-          whiteSpace: 'pre-line',
-          marginBottom: 24,
-          letterSpacing: '-0.01em',
-        }}
-      >
-        {slide.title}
-      </h1>
-      {slide.subtitle && (
-        <p style={{ fontSize: '1.45rem', color: C.darkText, lineHeight: 1.6, maxWidth: 720, fontWeight: 400 }}>
-          {slide.subtitle}
-        </p>
-      )}
-      <p style={{ marginTop: 48, fontSize: '1.1rem', color: C.darkText }}>
-        Anastasia Cattaneo — Imperial College London
-      </p>
-    </div>
-  );
-}
-
 /** Section slide (dark, centred) */
 function SectionSlideView({ slide }: { slide: SlideData }) {
   if (slide.component) {
     const Comp = slide.component;
+    /* Title slide: full-bleed art; render chrome above so section bar + slide number stay visible */
+    if (slide.id === 'title') {
+      return (
+        <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+          <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 20,
+              pointerEvents: 'none',
+            }}
+          >
+            <SectionBar slideNumber={slide.slideNumber} />
+            <SlideNumberBadge slideNumber={slide.slideNumber} dark />
+          </div>
+        </div>
+      );
+    }
     return <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
   }
   return (
@@ -536,8 +511,7 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '52px 56px',
-        paddingTop: 56,
+        ...SLIDE_PAGE_PADDING,
         background: C.offWhite,
         fontFamily: FONT_FAMILY,
         boxSizing: 'border-box',
@@ -546,7 +520,7 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
     >
       <SectionBar slideNumber={slide.slideNumber} />
       <SlideNumberBadge slideNumber={slide.slideNumber} />
-      <div style={{ flexShrink: 0, marginBottom: 24 }}>
+      <div style={{ flexShrink: 0, marginBottom: 26 }}>
         <SectionLabel slideNumber={slide.slideNumber} />
         <h2
           style={{
@@ -602,8 +576,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '52px 56px',
-        paddingTop: 56,
+        ...SLIDE_PAGE_PADDING,
         background: C.offWhite,
         fontFamily: FONT_FAMILY,
         boxSizing: 'border-box',
@@ -612,7 +585,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
     >
       <SectionBar slideNumber={slide.slideNumber} />
       <SlideNumberBadge slideNumber={slide.slideNumber} />
-      <div style={{ flexShrink: 0, marginBottom: 24 }}>
+      <div style={{ flexShrink: 0, marginBottom: 26 }}>
         <SectionLabel slideNumber={slide.slideNumber} />
         <h2
           style={{
@@ -628,7 +601,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         </h2>
         <AccentBar />
       </div>
-      <div style={{ flex: 1, display: 'flex', gap: 40, minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', gap: 48, minHeight: 0 }}>
         {/* Left: bullets */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {slide.bullets && (
@@ -653,7 +626,7 @@ function SplitSlideView({ slide }: { slide: SlideData }) {
         </div>
         {/* Right: component */}
         {slide.rightComponent && (
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={DIAGRAM_PANEL}>
             <slide.rightComponent slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />
           </div>
         )}
@@ -748,9 +721,6 @@ export default function PresentationPage() {
 
   let content: React.ReactNode;
   switch (slide.type) {
-    case 'title':
-      content = <TitleSlideView slide={slide} />;
-      break;
     case 'section':
       content = <SectionSlideView slide={slide} />;
       break;

@@ -1,6 +1,6 @@
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT, SLIDE_PAGE_PADDING } from './shared/presentationConstants';
 
 /**
  * Slide 7: Mechanism Round-by-Round — horizontal pipeline with
@@ -183,8 +183,7 @@ export default function MechanismPipelineSlide() {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '48px 56px',
-        paddingTop: 56,
+        ...SLIDE_PAGE_PADDING,
         background: PALETTE.offWhite,
         fontFamily: FONT_FAMILY,
         boxSizing: 'border-box',
@@ -195,7 +194,24 @@ export default function MechanismPipelineSlide() {
       {/* Section bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.slate }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 18,
+          right: 28,
+          zIndex: 5,
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+          letterSpacing: '0.03em',
+          color: PALETTE.navy,
+          padding: '6px 14px',
+          borderRadius: 999,
+          background: 'rgba(255, 255, 255, 0.92)',
+          border: `1px solid ${PALETTE.border}`,
+          boxShadow: '0 2px 10px rgba(27, 42, 74, 0.06)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         {`7 / ${MAIN_DECK_SLIDE_COUNT}`}
       </div>
 

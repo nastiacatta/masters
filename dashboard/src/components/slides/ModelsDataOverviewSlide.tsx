@@ -47,7 +47,7 @@ export default function ModelsDataOverviewSlide() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 20,
+          gap: 22,
           fontFamily: TYPOGRAPHY.fontFamily,
           minHeight: 0,
         }}
@@ -57,7 +57,7 @@ export default function ModelsDataOverviewSlide() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 10,
+            gap: 12,
           }}
         >
           {FORECASTERS.map((f) => {

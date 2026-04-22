@@ -23,7 +23,7 @@ export default function TitleSlide() {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: '60px 80px',
+        padding: '64px 72px',
         backgroundImage: `linear-gradient(180deg, rgba(7, 15, 35, 0.78) 0%, rgba(7, 15, 35, 0.82) 100%), url(${BASE}presentation-plots/title_background.png)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -32,6 +32,7 @@ export default function TitleSlide() {
         fontFamily: TYPOGRAPHY.fontFamily,
         boxSizing: 'border-box',
         position: 'relative',
+        zIndex: 0,
         overflow: 'hidden',
       }}
     >

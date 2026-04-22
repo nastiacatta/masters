@@ -1,5 +1,5 @@
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, CARD_STYLE } from './shared/presentationConstants';
 
 /**
  * Slide 11: Mechanism Guarantees — table with pass indicators (SVG checkmarks, no emojis).
@@ -81,13 +81,10 @@ export default function CorrectnessSlide() {
 
         <div
           style={{
+            ...CARD_STYLE,
             width: '100%',
-            maxWidth: 850,
-            background: PALETTE.white,
-            borderRadius: 12,
-            border: `1.5px solid ${PALETTE.border}`,
-            padding: '36px 44px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            maxWidth: 880,
+            padding: '38px 48px',
           }}
         >
           {/* Header row */}
@@ -101,13 +98,13 @@ export default function CorrectnessSlide() {
               marginBottom: 10,
             }}
           >
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center' }}>
+            <span style={{ fontSize: '1.06rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center' }}>
               Status
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '1.06rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               Property
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '1.06rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               What it means
             </span>
           </div>
