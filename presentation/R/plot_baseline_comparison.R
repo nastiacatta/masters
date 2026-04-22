@@ -140,7 +140,5 @@ panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
     legend.position = "none"
   )
 
-# --- Combine: rolling chart (75%) | bar chart (25%) ------------------------
-combo <- panel_B | panel_A + plot_layout(widths = c(3, 1))
-
-save_dual(combo, "baseline_comparison.png", width = 16, height = 9, dpi = 300)
+# --- Combine: rolling chart only (full width) ------------------------------
+save_dual(panel_B, "baseline_comparison.png", width = 16, height = 9, dpi = 300)
