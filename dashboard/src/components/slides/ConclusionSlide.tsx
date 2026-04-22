@@ -168,7 +168,7 @@ export default function ConclusionSlide() {
             fontFamily: TYPOGRAPHY.fontFamily,
           }}
         >
-          In this benchmark, the thesis mechanism jointly provides adaptation across rounds,
+          In this benchmark, the mechanism jointly provides adaptation across rounds,
           self-financing, and an absolute skill signal.
         </p>
       </div>

@@ -12,7 +12,7 @@ export default function ThesisIntro() {
           <strong>Research question.</strong> {THESIS_RESEARCH_QUESTION}
         </p>
         <p>
-          This dashboard demonstrates how the system transforms inputs into an aggregate forecast, payoffs, and updated skill over repeated rounds. It foregrounds the thesis question: whether combining online skill updates with stake improves forecast accuracy and market outcomes under realistic and strategic user behaviour.
+          This dashboard demonstrates how the system transforms inputs into an aggregate forecast, payoffs, and updated skill over repeated rounds. It foregrounds the research question: whether combining online skill updates with stake improves forecast accuracy and market outcomes under realistic and strategic user behaviour.
         </p>
         <p className="text-slate-600">
           <strong>How to read this dashboard.</strong> Start with the Overview (below) for the pipeline and round evolution. Use the Mechanism explorer to step through each stage in detail. Experiments test robustness and mechanism design choices.

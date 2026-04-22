@@ -162,7 +162,7 @@ export default function TheoryValidationSlide() {
         Theory Validation
       </h3>
       <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-        How do the real-data results validate or challenge the thesis theory
+        How do the real-data results validate or challenge the project's theory
         claims? Each claim is tested against DGP, electricity, and wind evidence.
       </p>
 
@@ -191,7 +191,7 @@ export default function TheoryValidationSlide() {
       {/* Error banners */}
       {thesis.error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          Thesis data failed to load: {thesis.error}
+          Project data failed to load: {thesis.error}
         </div>
       )}
       {dgp.error && (
@@ -220,11 +220,11 @@ export default function TheoryValidationSlide() {
             <ClaimCard claim={equalClaim} evidence={equalEvidence} />
           )}
 
-          {/* Fallback: thesis failed but we still have data evidence */}
+          {/* Fallback: project data failed but we still have data evidence */}
           {!thesis.data && (skillEvidence.length > 0 || equalEvidence.length > 0) && (
             <div className="rounded-xl border border-slate-200 bg-white p-6">
               <h4 className="text-base font-bold text-slate-900">
-                Dataset Evidence (thesis claims unavailable)
+                Dataset Evidence (project claims unavailable)
               </h4>
               <div className="mt-4 flex flex-col gap-2">
                 {dgpMechDelta !== null && (

@@ -5,7 +5,7 @@ const BASE = import.meta.env.BASE_URL;
 /**
  * Slide 1: Title slide — dark, centred layout.
  *
- * Displays presenter name, thesis title, institution, and supervisor
+ * Displays presenter name, project title, institution, and supervisor
  * acknowledgements. Includes a subtle abstract SVG showing three
  * individual forecast arrows converging into one aggregated arrow
  * (prediction market concept).
