@@ -52,7 +52,7 @@ const COMPARISON_DATA: ComparisonRow[] = [
   },
 ];
 
-const COLUMN_HEADERS = ['Lambert et al.', 'Raja et al.', 'Vitali & Pinson', 'This Thesis'] as const;
+const COLUMN_HEADERS = ['Lambert et al.', 'Raja et al.', 'Vitali & Pinson', 'This Project'] as const;
 
 export default function MechanismComparisonSlide() {
   return (
@@ -174,7 +174,7 @@ export default function MechanismComparisonSlide() {
                 </span>
               </div>
 
-              {/* This Thesis */}
+              {/* This Project */}
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{

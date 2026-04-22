@@ -648,7 +648,7 @@ export function BehaviourInsightsSlide() {
 
       {/* Thesis verdict */}
       <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">Thesis Verdict</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">Project Verdict</p>
         <p className="text-sm text-white/90 leading-relaxed">
           The mechanism is <span className="font-semibold text-emerald-400">partially robust</span> to
           strategic behaviour. The skill gate g(σ) = 0.3 + 0.7σ combined with EWMA tracking
