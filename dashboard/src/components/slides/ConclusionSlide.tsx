@@ -51,7 +51,7 @@ function DarkCard({
         background: 'rgba(255,255,255,0.05)',
         border: `1.5px solid ${accent ?? PALETTE.border}`,
         borderRadius: 12,
-        padding: '20px 22px',
+        padding: '24px 28px',
         display: 'flex',
         flexDirection: 'column',
         gap: 6,
@@ -73,7 +73,7 @@ export default function ConclusionSlide() {
     <SlideShell
       title="Conclusion + Future Work"
       dark
-      slideNumber={15}
+      slideNumber={14}
     >
       {/* ── CRPS Comparison Cards ── */}
       <div style={{ display: 'flex', gap: 20, marginBottom: 28 }}>
@@ -161,7 +161,7 @@ export default function ConclusionSlide() {
         <p
           style={{
             margin: 0,
-            fontSize: '1.25rem',
+            fontSize: '1.4rem',
             fontWeight: 700,
             color: PALETTE.white,
             lineHeight: 1.5,
@@ -174,7 +174,7 @@ export default function ConclusionSlide() {
       </div>
 
       {/* ── Future Work ── */}
-      <div>
+      <div style={{ flex: 1 }}>
         <h3
           style={{
             fontSize: '1.15rem',
@@ -199,7 +199,7 @@ export default function ConclusionSlide() {
             <li
               key={item}
               style={{
-                fontSize: '1.1rem',
+                fontSize: '1.25rem',
                 color: PALETTE.darkText,
                 lineHeight: 1.6,
                 fontFamily: TYPOGRAPHY.fontFamily,
@@ -212,21 +212,6 @@ export default function ConclusionSlide() {
         </ul>
       </div>
 
-      {/* ── Qualified-language footer note ── */}
-      <p
-        style={{
-          marginTop: 'auto',
-          paddingTop: 12,
-          fontSize: '0.9rem',
-          fontStyle: 'italic',
-          color: PALETTE.slate,
-          fontFamily: TYPOGRAPHY.fontFamily,
-          lineHeight: 1.5,
-        }}
-      >
-        All methods evaluated on the same 7-forecaster panel, same warm-up,
-        same quantile grid. Percentages are mean-CRPS change relative to equal weights.
-      </p>
     </SlideShell>
   );
 }

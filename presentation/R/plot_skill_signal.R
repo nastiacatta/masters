@@ -53,24 +53,24 @@ p <- ggplot() +
   annotate("text",
            x = max(L_seq) * 0.85, y = sigma_min + 0.03,
            label = sprintf("\u03C3_min = %.2f", sigma_min),
-           size = 5, colour = PALETTE$coral, fontface = "bold") +
+           size = 7, colour = PALETTE$coral, fontface = "bold") +
   # σ = 1 ceiling line
   geom_hline(yintercept = 1, linetype = "dotted",
              colour = PALETTE$slate, linewidth = 0.4, alpha = 0.5) +
   annotate("text",
            x = max(L_seq) * 0.85, y = 0.97,
            label = "\u03C3 = 1 (perfect forecaster)",
-           size = 4.5, colour = PALETTE$slate, fontface = "italic") +
+           size = 6, colour = PALETTE$slate, fontface = "italic") +
   # Main curve
   geom_line(data = df_curve, aes(x = L, y = sigma),
             colour = PALETTE$navy, linewidth = 1.4) +
   # Forecaster dots
   geom_point(data = forecaster_dots, aes(x = L, y = sigma),
              fill = dot_colours, colour = "white",
-             shape = 21, size = 7, stroke = 1.5) +
+             shape = 21, size = 9, stroke = 1.5) +
   # Forecaster labels
   geom_label(data = forecaster_dots, aes(x = L, y = sigma, label = label),
-             size = 4, fontface = "bold",
+             size = 6, fontface = "bold",
              fill = "white", colour = PALETTE$charcoal,
              label.padding = unit(0.4, "lines"),
              label.r = unit(0.3, "lines"),

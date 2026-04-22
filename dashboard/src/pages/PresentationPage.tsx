@@ -12,7 +12,6 @@ import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide
 import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide';
 import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
 import ConclusionSlide from '@/components/slides/ConclusionSlide';
-import DepositAblationSlide from '@/components/slides/DepositAblationSlide';
 import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSlide';
 import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
@@ -175,46 +174,38 @@ const SLIDES: SlideData[] = [
     component: SyntheticResultsSlide,
     slideNumber: 10,
   },
-  /* 11 — Deposit Design */
-  {
-    id: 'deposit-design',
-    type: 'content',
-    title: 'Deposit Design',
-    component: DepositAblationSlide,
-    slideNumber: 11,
-  },
-  /* 12 — Real Data: Elia Wind + Electricity */
+  /* 11 — Real Data: Elia Wind + Electricity */
   {
     id: 'real-data',
     type: 'content',
     title: 'Real Data: Elia Wind + Electricity',
     component: ContributionsChartSlide,
-    slideNumber: 12,
+    slideNumber: 11,
   },
-  /* 13 — Benchmark comparison vs prior work */
+  /* 12 — Benchmark comparison vs prior work */
   {
     id: 'baseline-comparison',
     type: 'content',
     title: 'Benchmark: CRPS Comparison',
     component: BaselineComparisonSlide,
-    slideNumber: 13,
+    slideNumber: 12,
   },
-  /* 14 — Strategic Robustness */
+  /* 13 — Strategic Robustness */
   {
     id: 'strategic-robustness',
     type: 'content',
     title: 'Strategic Robustness',
     component: StrategicRobustnessSlide,
-    slideNumber: 14,
+    slideNumber: 13,
   },
-  /* 15 — Conclusion + Future Work */
+  /* 14 — Conclusion + Future Work */
   {
     id: 'conclusion',
     type: 'closing',
     title: 'Conclusion + Future Work',
     dark: true,
     component: ConclusionSlide,
-    slideNumber: 15,
+    slideNumber: 14,
   },
   /* Appendix — hidden backup slide, no slide number */
   {

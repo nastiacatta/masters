@@ -19,7 +19,7 @@ export default function BaselineComparisonSlide() {
   return (
     <SlideShell
       title="Benchmark: CRPS Comparison"
-      slideNumber={13}
+      slideNumber={12}
     >
       <div
         style={{
