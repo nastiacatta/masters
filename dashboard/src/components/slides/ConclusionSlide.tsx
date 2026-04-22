@@ -89,7 +89,7 @@ export default function ConclusionSlide() {
             >
               <span
                 style={{
-                  fontSize: '1.2rem',
+                  fontSize: '1.3rem',
                   fontWeight: 700,
                   color: PALETTE.white,
                   fontFamily: TYPOGRAPHY.fontFamily,
@@ -118,7 +118,7 @@ export default function ConclusionSlide() {
                 display: 'flex',
                 gap: 18,
                 marginTop: 10,
-                fontSize: '1.02rem',
+                fontSize: '1.1rem',
                 color: PALETTE.darkText,
                 fontFamily: TYPOGRAPHY.fontFamily,
                 fontVariantNumeric: 'tabular-nums',
@@ -136,7 +136,7 @@ export default function ConclusionSlide() {
             <p
               style={{
                 marginTop: 8,
-                fontSize: '0.92rem',
+                fontSize: '1.0rem',
                 color: PALETTE.darkText,
                 lineHeight: 1.5,
                 fontFamily: TYPOGRAPHY.fontFamily,
@@ -199,7 +199,7 @@ export default function ConclusionSlide() {
             <li
               key={item}
               style={{
-                fontSize: '1.08rem',
+                fontSize: '1.1rem',
                 color: PALETTE.darkText,
                 lineHeight: 1.6,
                 fontFamily: TYPOGRAPHY.fontFamily,

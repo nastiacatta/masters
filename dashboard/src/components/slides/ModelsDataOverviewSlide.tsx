@@ -83,7 +83,7 @@ export default function ModelsDataOverviewSlide() {
                 >
                   <span
                     style={{
-                      fontSize: '1rem',
+                      fontSize: '1.1rem',
                       fontWeight: 700,
                       color: PALETTE.navy,
                     }}
@@ -106,7 +106,7 @@ export default function ModelsDataOverviewSlide() {
                 </div>
                 <span
                   style={{
-                    fontSize: '1rem',
+                    fontSize: '1.05rem',
                     color: PALETTE.charcoal,
                     lineHeight: 1.35,
                   }}

@@ -80,7 +80,6 @@ export default function MechanismComparisonSlide() {
           style={{
             ...CARD_STYLE,
             width: '100%',
-            maxWidth: 1120,
             padding: '36px 44px',
           }}
         >

@@ -93,6 +93,7 @@ export default function SyntheticResultsSlide() {
             src={`${BASE}presentation-plots/quantiles_crps_recovery.png`}
             alt="Skill convergence: true noise vs learned skill showing perfect rank correlation across 20,000 rounds"
             style={{
+              flex: 1,
               maxWidth: '100%',
               maxHeight: '100%',
               objectFit: 'contain',

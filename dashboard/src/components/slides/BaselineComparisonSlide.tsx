@@ -44,6 +44,7 @@ export default function BaselineComparisonSlide() {
             src={`${BASE}presentation-plots/baseline_comparison.png`}
             alt="Mean CRPS on Elia wind and electricity for equal weights, Raja, Vitali, and the project's mechanism"
             style={{
+              flex: 1,
               maxWidth: '100%',
               maxHeight: '100%',
               objectFit: 'contain',
@@ -63,7 +64,7 @@ export default function BaselineComparisonSlide() {
               padding: '12px 16px',
             }}
           >
-            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: PALETTE.imperial, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '1.0rem', fontWeight: 700, color: PALETTE.imperial, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Raja et&nbsp;al. (history-free)
             </div>
             <div style={{ fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 6 }}>
@@ -79,7 +80,7 @@ export default function BaselineComparisonSlide() {
               padding: '12px 16px',
             }}
           >
-            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: PALETTE.purple, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '1.0rem', fontWeight: 700, color: PALETTE.purple, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Vitali & Pinson (OGD)
             </div>
             <div style={{ fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 6 }}>
@@ -95,7 +96,7 @@ export default function BaselineComparisonSlide() {
               padding: '12px 16px',
             }}
           >
-            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: PALETTE.coral, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '1.0rem', fontWeight: 700, color: PALETTE.coral, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               This project (skill + self-financed)
             </div>
             <div style={{ fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 6 }}>

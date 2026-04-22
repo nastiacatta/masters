@@ -18,7 +18,7 @@ export default function SkillSignalSlide() {
       <img
         src={`${BASE}presentation-plots/skill_signal_clean.png`}
         alt="Skill mapping: σ = σ_min + (1−σ_min)·exp(−γ·L) with three forecaster examples"
-        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
+        style={{ flex: 1, maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
       />
     </div>
   );

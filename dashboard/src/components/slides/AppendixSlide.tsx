@@ -93,7 +93,7 @@ function QACard({ item, index }: { item: QAItem; index: number }) {
       <p
         style={{
           margin: 0,
-          fontSize: '1.05rem',
+          fontSize: '1.15rem',
           fontWeight: 700,
           color: PALETTE.navy,
           lineHeight: 1.45,
@@ -105,7 +105,7 @@ function QACard({ item, index }: { item: QAItem; index: number }) {
       <p
         style={{
           margin: '8px 0 0',
-          fontSize: '0.95rem',
+          fontSize: '1.05rem',
           fontWeight: 400,
           color: PALETTE.charcoal,
           lineHeight: 1.55,
@@ -137,6 +137,7 @@ function FigureCard({ label, file }: { label: string; file: string }) {
         src={`${BASE}presentation-plots/${file}`}
         alt={label}
         style={{
+          flex: 1,
           maxWidth: '100%',
           maxHeight: 400,
           objectFit: 'contain',
