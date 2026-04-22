@@ -99,10 +99,15 @@ const SLIDES: SlideData[] = [
   /* 4 — Where This Work Fits */
   {
     id: 'literature',
-    type: 'content',
+    type: 'split',
     title: 'Where This Work Fits',
-    component: PositioningMatrixSlide,
+    bullets: [
+      '● Combining the three: memory across rounds + disciplined settlement + intermittency',
+      '',
+      '→ Gap: adaptive + self-financed + absolute skill',
+    ],
     ref: 'Lambert et al., 2008 · Raja et al., 2024 · Vitali & Pinson, 2025',
+    rightComponent: PositioningMatrixSlide,
     slideNumber: 4,
   },
   /* 5 — My Contribution */
