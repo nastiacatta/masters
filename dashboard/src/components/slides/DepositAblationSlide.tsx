@@ -5,7 +5,7 @@ const BASE = import.meta.env.BASE_URL;
 
 export default function DepositAblationSlide() {
   return (
-    <SlideShell title="Deposit Design" slideNumber={11}>
+    <SlideShell title="Deposit Design" slideNumber={12}>
       {/* Header badge */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <div style={{ background: PALETTE.purple, color: PALETTE.white, fontSize: '1rem', fontWeight: 700, padding: '8px 18px', borderRadius: 16, fontFamily: TYPOGRAPHY.fontFamily }}>

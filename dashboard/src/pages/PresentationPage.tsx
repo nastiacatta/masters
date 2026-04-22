@@ -9,7 +9,6 @@ import ContributionSlide from '@/components/slides/ContributionSlide';
 import MechanismPipelineSlide from '@/components/slides/MechanismPipelineSlide';
 import SkillSignalSlide from '@/components/slides/SkillSignalSlide';
 import CorrectnessSlide from '@/components/slides/CorrectnessSlide';
-import SkillRecoverySlide from '@/components/slides/SkillRecoverySlide';
 import ContributionsChartSlide from '@/components/slides/ContributionsChartSlide';
 import ModelsDataOverviewSlide from '@/components/slides/ModelsDataOverviewSlide';
 import SyntheticResultsSlide from '@/components/slides/SyntheticResultsSlide';
@@ -177,7 +176,7 @@ const SLIDES: SlideData[] = [
   /* 11 — Mechanism Guarantees */
   {
     id: 'guarantees',
-    type: 'split',
+    type: 'content',
     title: 'Mechanism Guarantees',
     bullets: [
       '▸ The mechanism satisfies formal guarantees to machine precision',
@@ -188,7 +187,6 @@ const SLIDES: SlideData[] = [
       '',
       '→ These are not approximate claims — verified to machine precision',
     ],
-    rightComponent: SkillRecoverySlide,
     component: CorrectnessSlide,
     slideNumber: 11,
   },

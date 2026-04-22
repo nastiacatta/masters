@@ -2,72 +2,57 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY, CARD_STYLE } from './shared/presentationConstants';
 
 /**
- * Slide 5: Mechanism Comparison — feature comparison between
- * Lambert et al., Raja et al., and this thesis.
+ * Slide 5: Mechanism Comparison — neutral feature comparison between
+ * Lambert et al., Raja et al., Vitali & Pinson, and this thesis.
  */
-
-interface ComparisonCell {
-  text: string;
-  present: boolean;
-}
 
 interface ComparisonRow {
   feature: string;
-  lambert: ComparisonCell;
-  raja: ComparisonCell;
-  thesis: ComparisonCell;
+  lambert: string;
+  raja: string;
+  vitali: string;
+  thesis: string;
 }
 
 const COMPARISON_DATA: ComparisonRow[] = [
   {
     feature: 'Financing',
-    lambert: { text: 'Self-financed', present: true },
-    raja: { text: 'Self-financed + client reward', present: true },
-    thesis: { text: 'Self-financed', present: true },
+    lambert: 'Self-financed',
+    raja: 'Self-financed + client reward',
+    vitali: 'Market-based (Shapley)',
+    thesis: 'Self-financed',
   },
   {
     feature: 'Weight Adaptation',
-    lambert: { text: 'Static (per-round)', present: false },
-    raja: { text: 'Static (per-round)', present: false },
-    thesis: { text: 'Adaptive (online learning)', present: true },
+    lambert: 'Static (per-round)',
+    raja: 'Static (per-round)',
+    vitali: 'Online gradient descent',
+    thesis: 'Online EWMA',
   },
   {
-    feature: 'Skill Learning',
-    lambert: { text: 'None', present: false },
-    raja: { text: 'None', present: false },
-    thesis: { text: 'EWMA skill signal', present: true },
+    feature: 'Skill/Weight Type',
+    lambert: 'Equal or deposit-based',
+    raja: 'Equal or deposit-based',
+    vitali: 'Relative (simplex)',
+    thesis: 'Absolute (per-forecaster)',
   },
   {
-    feature: 'Deposit Design',
-    lambert: { text: 'Not specified', present: false },
-    raja: { text: 'Not specified', present: false },
-    thesis: { text: 'Skill gate + deposit policy', present: true },
+    feature: 'Intermittency',
+    lambert: 'Not handled',
+    raja: 'Not handled',
+    vitali: 'Handled (online)',
+    thesis: 'Staleness decay',
   },
   {
     feature: 'Key Properties',
-    lambert: { text: '7 formal properties, uniqueness', present: true },
-    raja: { text: 'Client reward allocation', present: true },
-    thesis: { text: '7 properties + skill learning + deposit design', present: true },
+    lambert: '7 formal properties, uniqueness',
+    raja: 'Client reward, payoff allocation',
+    vitali: 'Regret bounds, missing data',
+    thesis: '7 properties + skill learning',
   },
 ];
 
-const COLUMN_HEADERS = ['Lambert et al.', 'Raja et al.', 'This Thesis'] as const;
-
-/** Indicator: teal checkmark for present, slate dash for absent */
-function Indicator({ present }: { present: boolean }) {
-  if (present) {
-    return (
-      <span style={{ color: PALETTE.teal, fontWeight: 700, fontSize: '1.2rem', marginRight: 8 }}>
-        ✓
-      </span>
-    );
-  }
-  return (
-    <span style={{ color: PALETTE.slate, fontWeight: 600, fontSize: '1.2rem', marginRight: 8 }}>
-      —
-    </span>
-  );
-}
+const COLUMN_HEADERS = ['Lambert et al.', 'Raja et al.', 'Vitali & Pinson', 'This Thesis'] as const;
 
 export default function MechanismComparisonSlide() {
   return (
@@ -87,7 +72,7 @@ export default function MechanismComparisonSlide() {
           style={{
             ...CARD_STYLE,
             width: '100%',
-            maxWidth: 950,
+            maxWidth: 1100,
             padding: '32px 40px',
           }}
         >
@@ -95,7 +80,7 @@ export default function MechanismComparisonSlide() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '180px 1fr 1fr 1fr',
+              gridTemplateColumns: '180px 1fr 1fr 1fr 1fr',
               gap: 16,
               paddingBottom: 14,
               borderBottom: `2px solid ${PALETTE.border}`,
@@ -110,17 +95,11 @@ export default function MechanismComparisonSlide() {
                 style={{
                   fontSize: '1.05rem',
                   fontWeight: 700,
-                  color: header === 'This Thesis' ? PALETTE.teal : PALETTE.slate,
+                  color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
                   textAlign: 'center',
                   padding: '6px 8px',
                   borderRadius: 6,
-                  ...(header === 'This Thesis'
-                    ? {
-                        borderBottom: `3px solid ${PALETTE.teal}`,
-                        background: 'rgba(46, 139, 139, 0.06)',
-                      }
-                    : {}),
                 }}
               >
                 {header}
@@ -134,7 +113,7 @@ export default function MechanismComparisonSlide() {
               key={row.feature}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '180px 1fr 1fr 1fr',
+                gridTemplateColumns: '180px 1fr 1fr 1fr 1fr',
                 gap: 16,
                 alignItems: 'center',
                 padding: '16px 0',
@@ -158,7 +137,6 @@ export default function MechanismComparisonSlide() {
 
               {/* Lambert */}
               <div style={{ textAlign: 'center' }}>
-                <Indicator present={row.lambert.present} />
                 <span
                   style={{
                     fontSize: '1.05rem',
@@ -166,13 +144,12 @@ export default function MechanismComparisonSlide() {
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}
                 >
-                  {row.lambert.text}
+                  {row.lambert}
                 </span>
               </div>
 
               {/* Raja */}
               <div style={{ textAlign: 'center' }}>
-                <Indicator present={row.raja.present} />
                 <span
                   style={{
                     fontSize: '1.05rem',
@@ -180,29 +157,33 @@ export default function MechanismComparisonSlide() {
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}
                 >
-                  {row.raja.text}
+                  {row.raja}
                 </span>
               </div>
 
-              {/* This Thesis — highlighted column */}
-              <div
-                style={{
-                  textAlign: 'center',
-                  background: 'rgba(46, 139, 139, 0.04)',
-                  borderRadius: 6,
-                  padding: '4px 6px',
-                }}
-              >
-                <Indicator present={row.thesis.present} />
+              {/* Vitali & Pinson */}
+              <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
                     fontSize: '1.05rem',
                     color: PALETTE.charcoal,
-                    fontWeight: row.thesis.present ? 600 : 400,
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}
                 >
-                  {row.thesis.text}
+                  {row.vitali}
+                </span>
+              </div>
+
+              {/* This Thesis */}
+              <div style={{ textAlign: 'center' }}>
+                <span
+                  style={{
+                    fontSize: '1.05rem',
+                    color: PALETTE.charcoal,
+                    fontFamily: TYPOGRAPHY.fontFamily,
+                  }}
+                >
+                  {row.thesis}
                 </span>
               </div>
             </div>
