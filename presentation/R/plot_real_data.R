@@ -127,7 +127,7 @@ make_crps_panel <- function(df, title_text, improv_pct) {
     scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
     labs(
       title    = title_text,
-      subtitle = sprintf("Mechanism: %d%% vs equal weights", improv_pct),
+      subtitle = sprintf("Mechanism: %d%% CRPS change relative to equal weights", improv_pct),
       x = NULL,
       y = "Mean CRPS (lower is better)"
     ) +

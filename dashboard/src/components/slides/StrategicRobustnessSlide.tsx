@@ -81,10 +81,10 @@ export default function StrategicRobustnessSlide() {
             background: PALETTE.white,
             borderRadius: 12,
             border: `1.5px solid ${PALETTE.border}`,
-            padding: '28px 40px',
+            padding: '28px 44px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
             width: '100%',
-            maxWidth: 620,
+            maxWidth: 720,
           }}
         >
           {/* Header */}
@@ -144,29 +144,34 @@ export default function StrategicRobustnessSlide() {
           ))}
         </div>
 
-        {/* Shield icon + message — centred below table */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+        {/* Shield icon + caption — centred below table */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <ShieldIcon />
           <p
             style={{
-              fontSize: '1.15rem',
+              fontSize: '1.1rem',
               fontWeight: 600,
               color: PALETTE.teal,
               fontFamily: TYPOGRAPHY.fontFamily,
               textAlign: 'center',
-              maxWidth: 280,
+              maxWidth: 420,
               lineHeight: 1.5,
               margin: 0,
             }}
           >
-            Mechanism resists standard attacks
+            Resists standard attacks
           </p>
-        </div>
-
-        {/* Behaviour analysis evidence — text summary */}
-        <div style={{ marginTop: 16, textAlign: 'center' }}>
-          <p style={{ fontSize: '1rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, margin: 0, lineHeight: 1.6 }}>
-            Tested across 18 behaviour presets in 9 families
+          <p
+            style={{
+              fontSize: '0.95rem',
+              color: PALETTE.slate,
+              fontFamily: TYPOGRAPHY.fontFamily,
+              textAlign: 'center',
+              margin: 0,
+              lineHeight: 1.5,
+            }}
+          >
+            Evaluated across 18 behaviour presets in 9 families
           </p>
         </div>
       </div>

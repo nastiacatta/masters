@@ -95,7 +95,7 @@ export default function BaselineComparisonSlide() {
             }}
           >
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: PALETTE.coral, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Ours (skill + self-financed)
+              This thesis (skill + self-financed)
             </div>
             <div style={{ fontSize: '1rem', color: PALETTE.charcoal, lineHeight: 1.4, marginTop: 4 }}>
               −44% wind, −8% electricity relative to equal weights. Retains Lambert&apos;s properties and reports absolute skill.

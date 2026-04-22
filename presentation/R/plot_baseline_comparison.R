@@ -93,8 +93,8 @@ panel_A <- ggplot(bars_df, aes(x = method, y = pct_vs_uniform, fill = method)) +
   scale_x_discrete(labels = METHOD_LABELS) +
   scale_y_continuous(expand = expansion(mult = c(0.14, 0.22))) +
   labs(
-    title = "Mean CRPS vs equal-weights baseline",
-    subtitle = "Lower is better.  Bars report % change vs the uniform aggregate on the same forecasts.",
+    title = "Mean CRPS relative to equal-weights baseline",
+    subtitle = "Lower is better.  Bars report percentage change in CRPS against the uniform aggregate on the same forecasts.",
     x = NULL,
     y = "% change in CRPS"
   ) +
@@ -128,7 +128,7 @@ combo <- panel_A / panel_B + plot_layout(heights = c(1, 1.1)) +
     title = "Benchmark comparison on real Elia data",
     subtitle = paste0(
       "Same 7-forecaster panel, same quantile reports, same warm-up (200).  ",
-      "The thesis mechanism keeps Lambert's seven economic properties; Vitali does not."
+      "The thesis mechanism retains Lambert's seven economic properties; Vitali & Pinson does not."
     ),
     theme = theme(
       plot.title    = element_text(size = 22, face = "bold", colour = PALETTE$navy),
