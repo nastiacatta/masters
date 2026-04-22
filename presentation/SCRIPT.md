@@ -6,25 +6,24 @@
 | 2 | What Is a Prediction Market? | PROBLEM | ~1.5 min |
 | 3 | Why Combine Forecasts? | PROBLEM | ~1.5 min |
 | 4 | Where This Work Fits | PROBLEM | ~1.5 min |
-| 5 | Mechanism Comparison | PROBLEM | ~1 min |
-| 6 | My Contribution | PROBLEM | ~1 min |
-| 7 | Mechanism: Round-by-Round | SOLUTION | ~2 min ⚠️ |
-| 8 | The Skill Signal | SOLUTION | ~1.5 min |
-| 9 | Models, Data, and Synthetic Setup | SOLUTION | ~1.5 min |
-| 10 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
-| 11 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
-| 12 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
-| 13 | Strategic Robustness | VALIDATION | ~1 min |
-| 14 | Conclusion + Future Work | CLOSING | ~1.5 min |
+| 5 | My Contribution | PROBLEM | ~1 min |
+| 6 | Mechanism: Round-by-Round | SOLUTION | ~2 min ⚠️ |
+| 7 | The Skill Signal | SOLUTION | ~1.5 min |
+| 8 | Models, Data, and Synthetic Setup | SOLUTION | ~1.5 min |
+| 9 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
+| 10 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
+| 11 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
+| 12 | Strategic Robustness | VALIDATION | ~1 min |
+| 13 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
-**Total: ~20 min**
+**Total: ~19 min**
 
-> ⚠️ Slides 7 and 11 are flagged at 2 minutes — keep narration tight and avoid tangents.
-> Slide 12 is the "why we improve" figure with compact takeaway cards below.
+> ⚠️ Slides 6 and 10 are flagged at 2 minutes — keep narration tight and avoid tangents.
+> Slide 11 is the "why we improve" figure with compact takeaway cards below.
 
 ---
 
-# Script Part I — PROBLEM (Slides 1–6, ~7.5 min)
+# Script Part I — PROBLEM (Slides 1–5, ~6.5 min)
 
 ---
 
@@ -44,7 +43,7 @@ Before going further, let me define the central concept.
 
 A prediction market is a market in which participants trade on uncertain future outcomes. In general, the payoff of the contract depends on what happens in the future. That is the broad definition.
 
-In this thesis, I study a more specific form of prediction market. Participants submit forecasts for a continuous outcome, and they also submit a **wager**, meaning the amount placed at risk in that round. The market then combines these submitted forecasts into a single aggregate forecast. Once the outcome is observed, the market settles and allocates rewards according to forecast performance.
+In this project, I study a more specific form of prediction market. Participants submit forecasts for a continuous outcome, and they also submit a **wager**, meaning the amount placed at risk in that round. The market then combines these submitted forecasts into a single aggregate forecast. Once the outcome is observed, the market settles and allocates rewards according to forecast performance.
 
 So the structure I work with has four elements: submitted forecasts, submitted wagers, an aggregation rule, and a settlement rule.
 
@@ -62,7 +61,7 @@ The reason is that different forecasters capture different parts of the signal a
 
 In a market setting, however, averaging alone is not enough. The issue is not only statistical. It is also economic. The market has to decide how much weight each contribution should receive, and that decision should reflect more than the current wager alone. Equal weighting does not use the information available about contribution quality.
 
-This is where the central problem of the thesis appears: how should a prediction market learn the value of each contribution over time, and use that information when forming the aggregate forecast — while preserving a disciplined reward mechanism?
+This is where the central problem appears: how should a prediction market learn the value of each contribution over time, and use that information when forming the aggregate forecast — while preserving a disciplined reward mechanism?
 
 > *Footer cite: Prediction markets as information aggregation mechanisms — Wolfers and Zitzewitz (2004).*
 
@@ -86,23 +85,7 @@ The positioning matrix shows where each approach sits. Lambert et al. and Raja e
 
 ---
 
-## [SLIDE 5] Mechanism Comparison (~1 min)
-
-Having set out where this project sits, it is useful to compare the three approaches concretely, so the design choices I make later are easy to locate.
-
-This table compares three approaches across five dimensions. All three mechanisms are self-financed — participants fund the market through their own wagers. But Lambert et al. and Raja et al. both use static, per-round weights. There is no memory of past performance — each round starts fresh. This project introduces adaptive weight learning that carries information across rounds.
-
-On skill learning: Lambert and Raja have none. The mechanism has no concept of forecaster quality beyond the current wager. This project adds an EWMA skill signal — an exponentially weighted moving average of realised forecasting loss — that tracks each participant's value over time.
-
-Deposit design is similar. Lambert and Raja do not specify how deposits should be chosen. This project introduces a skill gate that scales the effective wager by learned skill, plus a deposit policy framework that lets participants scale stakes by wealth and confidence.
-
-Finally, key properties. Lambert et al. proved seven formal properties including uniqueness. Raja et al. added client reward allocation. This project preserves those properties and adds skill learning and deposit design on top.
-
-The positioning matrix on the previous slide showed the gap. This table shows concretely what fills it.
-
----
-
-## [SLIDE 6] My Contribution (~1 min)
+## [SLIDE 5] My Contribution (~1 min)
 
 Why is deposit alone not enough to determine influence? Because a wealthy but unskilled forecaster could dominate the market simply by staking large amounts, drowning out more accurate but less wealthy participants. The market needs a way to separate willingness to pay from demonstrated ability.
 
@@ -112,11 +95,11 @@ The skill signal is absolute: it represents the importance of one participant's 
 
 ---
 
-# Script Part II — SOLUTION (Slides 7–9, ~5 min)
+# Script Part II — SOLUTION (Slides 6–8, ~5 min)
 
 ---
 
-## [SLIDE 7] Mechanism: Round-by-Round (~2 min)
+## [SLIDE 6] Mechanism: Round-by-Round (~2 min)
 
 > ⚠️ This slide is at the 2-minute limit — keep each step concise.
 
@@ -138,7 +121,7 @@ The critical design choice: the same effective wager controls both influence and
 
 ---
 
-## [SLIDE 8] The Skill Signal (~1.5 min)
+## [SLIDE 7] The Skill Signal (~1.5 min)
 
 Why does the skill signal need to be bounded? Because the raw loss accumulator — an exponentially weighted moving average of realised forecasting loss — can in principle grow without bound. A string of bad predictions pushes the accumulated loss toward positive infinity; a string of good ones toward negative infinity. If we used the raw accumulator directly, a single bad streak could permanently exclude a forecaster, and a single good streak could give them unbounded influence.
 
@@ -150,7 +133,7 @@ The critical difference from Vitali & Pinson: their weights are relative — on 
 
 ---
 
-## [SLIDE 9] Models, Data, and Synthetic Setup (~1.5 min)
+## [SLIDE 8] Models, Data, and Synthetic Setup (~1.5 min)
 
 Before showing results, let me introduce the experimental setup.
 
@@ -162,11 +145,11 @@ Why validate on synthetic data first? Because synthetic experiments use a known 
 
 ---
 
-# Script Part III — VALIDATION (Slides 10–13, ~6 min)
+# Script Part III — VALIDATION (Slides 9–12, ~6 min)
 
 ---
 
-## [SLIDE 10] Synthetic Validation: Convergence (~1.5 min)
+## [SLIDE 9] Synthetic Validation: Convergence (~1.5 min)
 
 The synthetic experiment answers a fundamental question: does the mechanism actually learn who is good?
 
@@ -180,7 +163,7 @@ The reward distribution follows the skill ranking: the least noisy forecaster ac
 
 ---
 
-## [SLIDE 11] Real Data: Elia Wind + Electricity (~2 min)
+## [SLIDE 10] Real Data: Elia Wind + Electricity (~2 min)
 
 This is the first real-data validation. Everything before this was controlled simulation.
 
@@ -192,7 +175,7 @@ On the Elia electricity dataset, the improvement is smaller — **8 %** over equ
 
 ---
 
-## [SLIDE 12] Benchmark Comparison: Prior Work and This Project (~1 min)
+## [SLIDE 11] Benchmark Comparison: Prior Work and This Project (~1 min)
 
 That 44 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
 
@@ -208,7 +191,7 @@ The takeaway is the point of the project: adaptation, self-financing, and an abs
 
 ---
 
-## [SLIDE 13] Strategic Robustness (~1 min)
+## [SLIDE 12] Strategic Robustness (~1 min)
 
 The mechanism must resist manipulation. Three main attack types from the literature.
 
@@ -222,11 +205,11 @@ The overall picture: the mechanism resists the standard attacks. Sophisticated a
 
 ---
 
-# Script Part IV — CLOSING (Slide 14, ~1.5 min)
+# Script Part IV — CLOSING (Slide 13, ~1.5 min)
 
 ---
 
-## [SLIDE 14] Conclusion + Future Work (~1.5 min)
+## [SLIDE 13] Conclusion + Future Work (~1.5 min)
 
 To summarise. This project develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 

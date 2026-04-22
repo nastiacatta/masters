@@ -174,7 +174,7 @@ function FeedbackArrow() {
 }
 
 export default function MechanismPipelineSlide() {
-  const section = getSectionForSlide(7);
+  const section = getSectionForSlide(6);
 
   return (
     <div
@@ -212,7 +212,7 @@ export default function MechanismPipelineSlide() {
           backdropFilter: 'blur(8px)',
         }}
       >
-        {`7 / ${MAIN_DECK_SLIDE_COUNT}`}
+        {`6 / ${MAIN_DECK_SLIDE_COUNT}`}
       </div>
 
       {/* Title */}

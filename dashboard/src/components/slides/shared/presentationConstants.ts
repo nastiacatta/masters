@@ -76,7 +76,7 @@ export const FIGURE_FRAME: React.CSSProperties = {
 };
 
 /** Numbered slides in the main deck (excludes appendix backup slide). */
-export const MAIN_DECK_SLIDE_COUNT = 14 as const;
+export const MAIN_DECK_SLIDE_COUNT = 13 as const;
 
 /**
  * Emphasis style mappings for inline text highlighting within bullet items.
@@ -111,19 +111,19 @@ export const CARD_STYLE: React.CSSProperties = {
 
 /**
  * Section definitions for the presentation flow.
- * 16-slide narrative: slide 5 = Mechanism Comparison, slide 14 = benchmark comparison slide.
+ * 13-slide narrative: Mechanism Comparison moved to appendix.
  */
 export const SECTIONS = {
-  PROBLEM:    { label: 'PROBLEM',    colour: '#003E74',    slides: [1, 2, 3, 4, 5, 6] },
-  SOLUTION:   { label: 'SOLUTION',   colour: '#2E8B8B',    slides: [7, 8, 9] },
-  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED',    slides: [10, 11, 12, 13] },
-  CLOSING:    { label: '',           colour: 'transparent', slides: [14] },
+  PROBLEM:    { label: 'PROBLEM',    colour: '#003E74',    slides: [1, 2, 3, 4, 5] },
+  SOLUTION:   { label: 'SOLUTION',   colour: '#2E8B8B',    slides: [6, 7, 8] },
+  VALIDATION: { label: 'VALIDATION', colour: '#7C3AED',    slides: [9, 10, 11, 12] },
+  CLOSING:    { label: '',           colour: 'transparent', slides: [13] },
 } as const;
 
 /** Get section info for a given slide number */
 export function getSectionForSlide(slideNumber: number): { label: string; colour: string } {
-  if (slideNumber >= 1 && slideNumber <= 6) return SECTIONS.PROBLEM;
-  if (slideNumber >= 7 && slideNumber <= 9) return SECTIONS.SOLUTION;
-  if (slideNumber >= 10 && slideNumber <= 13) return SECTIONS.VALIDATION;
+  if (slideNumber >= 1 && slideNumber <= 5) return SECTIONS.PROBLEM;
+  if (slideNumber >= 6 && slideNumber <= 8) return SECTIONS.SOLUTION;
+  if (slideNumber >= 9 && slideNumber <= 12) return SECTIONS.VALIDATION;
   return SECTIONS.CLOSING;
 }

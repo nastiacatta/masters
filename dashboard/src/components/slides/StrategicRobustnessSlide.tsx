@@ -67,7 +67,7 @@ function ShieldIcon() {
 
 export default function StrategicRobustnessSlide() {
   return (
-    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="Chen et al., 2014" slideNumber={13}>
+    <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="Chen et al., 2014" slideNumber={12}>
       <div
         style={{
           flex: 1,

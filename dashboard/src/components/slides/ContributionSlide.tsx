@@ -13,7 +13,7 @@ export default function ContributionSlide() {
   });
 
   const properties = ['Absolute', 'Pre-round', 'Handles Intermittency'] as const;
-  const section = getSectionForSlide(6);
+  const section = getSectionForSlide(5);
 
   return (
     <div
@@ -52,7 +52,7 @@ export default function ContributionSlide() {
           backdropFilter: 'blur(8px)',
         }}
       >
-        {`6 / ${MAIN_DECK_SLIDE_COUNT}`}
+        {`5 / ${MAIN_DECK_SLIDE_COUNT}`}
       </div>
       {/* Section label */}
       <div style={{ fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: PALETTE.darkText, marginBottom: 18, opacity: 0.88 }}>
