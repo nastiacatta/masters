@@ -17,6 +17,9 @@ const ATTACKS: AttackRow[] = [
   { attack: 'Sybil (diversified)', outcome: 'Small advantage (~6%)', pass: false },
   { attack: 'Arbitrage', outcome: 'No sustained profit', pass: true },
   { attack: 'Strategic Deposit', outcome: 'No advantage', pass: true },
+  { attack: 'Reputation Gaming', outcome: 'Detected within ~20 rounds', pass: true },
+  { attack: 'Collusion', outcome: 'Limited by individual skill gates', pass: true },
+  { attack: 'Risk-Averse Hedging', outcome: 'Minimal impact on aggregate', pass: true },
 ];
 
 /** SVG checkmark */
@@ -84,7 +87,7 @@ export default function StrategicRobustnessSlide() {
             padding: '28px 44px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
             width: '100%',
-            maxWidth: 720,
+            maxWidth: 800,
           }}
         >
           {/* Header */}
@@ -118,7 +121,7 @@ export default function StrategicRobustnessSlide() {
             >
               <span
                 style={{
-                  fontSize: '1.25rem',
+                  fontSize: '1.3rem',
                   fontWeight: 600,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
@@ -129,7 +132,7 @@ export default function StrategicRobustnessSlide() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span
                   style={{
-                    fontSize: '1.25rem',
+                    fontSize: '1.2rem',
                     fontWeight: 700,
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,

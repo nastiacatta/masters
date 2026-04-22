@@ -54,6 +54,14 @@ const COMPARISON_DATA: ComparisonRow[] = [
 
 const COLUMN_HEADERS = ['Lambert et al.', 'Raja et al.', 'Vitali & Pinson', 'This Project'] as const;
 
+/** Subtle column header tint colours matching each work's identity */
+const HEADER_TINTS = [
+  'rgba(0, 62, 116, 0.08)',   // Lambert — imperial
+  'rgba(100, 116, 139, 0.08)', // Raja — slate
+  'rgba(124, 58, 237, 0.08)',  // Vitali — purple
+  'rgba(46, 139, 139, 0.10)',  // This Project — teal
+] as const;
+
 export default function MechanismComparisonSlide() {
   return (
     <SlideShell title="Mechanism Comparison" slideNumber={5}>
@@ -89,17 +97,18 @@ export default function MechanismComparisonSlide() {
           >
             {/* Empty cell for feature column */}
             <span />
-            {COLUMN_HEADERS.map((header) => (
+            {COLUMN_HEADERS.map((header, idx) => (
               <span
                 key={header}
                 style={{
-                  fontSize: '1.05rem',
+                  fontSize: '1.15rem',
                   fontWeight: 700,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
                   textAlign: 'center',
                   padding: '6px 8px',
                   borderRadius: 6,
+                  background: HEADER_TINTS[idx],
                 }}
               >
                 {header}
@@ -121,15 +130,19 @@ export default function MechanismComparisonSlide() {
                   i < COMPARISON_DATA.length - 1
                     ? `1px solid ${PALETTE.border}`
                     : 'none',
+                background: i % 2 === 1 ? 'rgba(0,0,0,0.02)' : 'transparent',
+                borderRadius: 4,
               }}
             >
               {/* Feature label */}
               <span
                 style={{
-                  fontSize: '1.2rem',
+                  fontSize: '1.3rem',
                   fontWeight: 600,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
+                  borderLeft: `4px solid ${PALETTE.navy}`,
+                  paddingLeft: 12,
                 }}
               >
                 {row.feature}
@@ -139,7 +152,7 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.05rem',
+                    fontSize: '1.1rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}
@@ -152,7 +165,7 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.05rem',
+                    fontSize: '1.1rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}
@@ -165,7 +178,7 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.05rem',
+                    fontSize: '1.1rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}
@@ -178,7 +191,7 @@ export default function MechanismComparisonSlide() {
               <div style={{ textAlign: 'center' }}>
                 <span
                   style={{
-                    fontSize: '1.05rem',
+                    fontSize: '1.1rem',
                     color: PALETTE.charcoal,
                     fontFamily: TYPOGRAPHY.fontFamily,
                   }}

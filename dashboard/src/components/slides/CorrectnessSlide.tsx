@@ -3,12 +3,13 @@ import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 11: Mechanism Guarantees — table with pass indicators (SVG checkmarks, no emojis).
+ * 3-column layout: Status | Property | What it means.
+ * "Result" column removed — redundant with "What it means".
  */
 
 interface GuaranteeRow {
   property: string;
   meaning: string;
-  status: string;
   pass: boolean;
 }
 
@@ -16,25 +17,21 @@ const GUARANTEES: GuaranteeRow[] = [
   {
     property: 'Budget gap',
     meaning: 'Self-financed — no external subsidy needed',
-    status: 'Machine precision',
     pass: true,
   },
   {
     property: 'Mean profit',
     meaning: 'Zero-sum — no money created or destroyed',
-    status: 'Machine precision',
     pass: true,
   },
   {
     property: 'Sybil ratio',
     meaning: 'No advantage from splitting',
-    status: '= 1.0 (exact)',
     pass: true,
   },
   {
     property: 'Noise-skill corr.',
     meaning: 'Skilled forecasters reliably rewarded',
-    status: 'r = -0.98',
     pass: true,
   },
 ];
@@ -97,7 +94,7 @@ export default function CorrectnessSlide() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '48px 170px 1fr 160px',
+              gridTemplateColumns: '48px 170px 1fr',
               gap: 16,
               paddingBottom: 14,
               borderBottom: `2px solid ${PALETTE.border}`,
@@ -113,9 +110,6 @@ export default function CorrectnessSlide() {
             <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>
               What it means
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'right' }}>
-              Result
-            </span>
           </div>
 
           {GUARANTEES.map((row, i) => (
@@ -123,7 +117,7 @@ export default function CorrectnessSlide() {
               key={row.property}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '48px 170px 1fr 160px',
+                gridTemplateColumns: '48px 170px 1fr',
                 gap: 16,
                 alignItems: 'center',
                 padding: '18px 0 18px 0',
@@ -155,18 +149,6 @@ export default function CorrectnessSlide() {
                 }}
               >
                 {row.meaning}
-              </span>
-              <span
-                style={{
-                  fontSize: '1.15rem',
-                  fontWeight: 600,
-                  color: PALETTE.charcoal,
-                  fontFamily: TYPOGRAPHY.fontFamily,
-                  fontVariantNumeric: 'tabular-nums',
-                  textAlign: 'right',
-                }}
-              >
-                {row.status}
               </span>
             </div>
           ))}

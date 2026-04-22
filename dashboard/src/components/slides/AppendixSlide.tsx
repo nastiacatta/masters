@@ -48,7 +48,23 @@ const QA_ITEMS: QAItem[] = [
     answer:
       'Each round is O(N) where N is the number of forecasters. The EWMA update, skill gate, and Lambert settlement are all linear. The full 17,544-round Elia experiment runs in under 30 seconds on a laptop.',
   },
+  {
+    question: 'How does this compare to simple inverse-variance weighting?',
+    answer:
+      'Inverse-variance weighting uses forecast spread as a proxy for quality. Our mechanism learns skill from realised accuracy over time, which is more informative. On Elia wind, the mechanism outperforms inverse-variance by a wide margin.',
+  },
+  {
+    question: 'Could this work with non-probabilistic (point) forecasts?',
+    answer:
+      'The mechanism requires probabilistic forecasts (quantiles) because the CRPS scoring rule needs a full distribution. Point forecasts could be converted to distributions via residual resampling, which is what we do for the 7 models.',
+  },
+  {
+    question: 'What about the warm-up period?',
+    answer:
+      'The first 200 rounds are a warm-up where all forecasters have equal skill. This is needed for the EWMA to accumulate enough history. Results are reported on the post-warm-up period only.',
+  },
 ];
+
 
 /* ─── Extra figures references ────────────────────────────────── */
 
@@ -122,7 +138,7 @@ function FigureCard({ label, file }: { label: string; file: string }) {
         alt={label}
         style={{
           maxWidth: '100%',
-          maxHeight: 220,
+          maxHeight: 400,
           objectFit: 'contain',
           borderRadius: 8,
         }}
@@ -230,7 +246,7 @@ export default function AppendixSlide() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: '1fr',
               gap: 20,
             }}
           >

@@ -51,7 +51,7 @@ export const FORECASTERS: ForecasterData[] = [
     name: 'Theta',
     type: 'Statistical',
     description:
-      'Theta method (Assimakopoulos & Nikolopoulos 2000). Decomposes into trend components.',
+      'Theta method — decomposes the series into trend components.',
     strengths: 'Strong performance on M3 competition data.',
     weaknesses: 'Limited theoretical justification; struggles with complex seasonality.',
   },
