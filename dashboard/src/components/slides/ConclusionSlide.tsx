@@ -34,8 +34,6 @@ const futureWork = [
   'Close the CRPS gap to Vitali & Pinson without giving up self-financing',
   'Improve tail calibration (currently ~5 pp under-dispersion)',
   'Test against strategic adversaries beyond uniform sybils',
-  'Explore nonlinear combination methods to surpass the best single forecaster',
-  'Extend to multi-horizon and multi-variate forecasting tasks',
 ] as const;
 
 /* ── Card wrapper (dark-mode) ── */
@@ -53,10 +51,11 @@ function DarkCard({
         background: 'rgba(255,255,255,0.05)',
         border: `1.5px solid ${accent ?? PALETTE.border}`,
         borderRadius: 12,
-        padding: '24px 28px',
+        padding: '28px 32px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
+        justifyContent: 'center',
+        gap: 8,
       }}
     >
       {children}
@@ -64,172 +63,65 @@ function DarkCard({
   );
 }
 
-/**
- * Slide 16 — Conclusion + Future Work
- *
- * Dark background layout with three CRPS comparison cards,
- * a key-takeaway highlight, and a future-work section.
- */
 export default function ConclusionSlide() {
   return (
-    <SlideShell
-      title="Conclusion + Future Work"
-      dark
-      slideNumber={13}
-    >
-      {/* ── CRPS Comparison Cards ── */}
-      <div style={{ display: 'flex', gap: 20, marginBottom: 28 }}>
-        {comparisons.map((c) => (
-          <DarkCard key={c.label} accent={c.tagColour}>
-            {/* Header row */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '1.3rem',
-                  fontWeight: 700,
-                  color: PALETTE.white,
-                  fontFamily: TYPOGRAPHY.fontFamily,
-                }}
-              >
-                {c.label}
-              </span>
-              <span
-                style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: PALETTE.white,
-                  background: c.tagColour,
-                  borderRadius: 20,
-                  padding: '3px 12px',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                {c.tag}
-              </span>
-            </div>
+    <SlideShell title="Conclusion + Future Work" dark slideNumber={13}>
+      {/* Use flex column with justify-content to spread content evenly */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 
-            {/* Metrics row */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 18,
-                marginTop: 10,
-                fontSize: '1.1rem',
-                color: PALETTE.darkText,
-                fontFamily: TYPOGRAPHY.fontFamily,
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              <span>
-                Wind: <strong style={{ color: PALETTE.white }}>{c.wind}</strong>
-              </span>
-              <span>
-                Elec: <strong style={{ color: PALETTE.white }}>{c.elec}</strong>
-              </span>
-            </div>
-
-            {/* Note */}
-            <p
-              style={{
-                marginTop: 8,
-                fontSize: '1.0rem',
-                color: PALETTE.darkText,
-                lineHeight: 1.5,
-                fontFamily: TYPOGRAPHY.fontFamily,
-              }}
-            >
-              {c.note}
-            </p>
-          </DarkCard>
-        ))}
-      </div>
-
-      {/* ── Key Takeaway ── */}
-      <div
-        style={{
-          background: 'rgba(46, 139, 139, 0.12)',
-          borderLeft: `4px solid ${PALETTE.teal}`,
-          borderRadius: '0 10px 10px 0',
-          padding: '14px 22px',
-          marginBottom: 24,
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontSize: '1.4rem',
-            fontWeight: 700,
-            color: PALETTE.white,
-            lineHeight: 1.5,
-            fontFamily: TYPOGRAPHY.fontFamily,
-          }}
-        >
-          In this benchmark, the mechanism jointly provides adaptation across rounds,
-          self-financing, and an absolute skill signal.
-        </p>
-      </div>
-
-      {/* ── Future Work ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <h3
-          style={{
-            fontSize: '1.15rem',
-            fontWeight: 700,
-            color: PALETTE.teal,
-            marginBottom: 10,
-            fontFamily: TYPOGRAPHY.fontFamily,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase' as const,
-          }}
-        >
-          Future Work
-        </h3>
-        <ul
-          style={{
-            margin: 0,
-            paddingLeft: 22,
-            listStyleType: 'disc',
-          }}
-        >
-          {futureWork.map((item) => (
-            <li
-              key={item}
-              style={{
-                fontSize: '1.25rem',
-                color: PALETTE.darkText,
-                lineHeight: 1.6,
-                fontFamily: TYPOGRAPHY.fontFamily,
-                marginBottom: 6,
-              }}
-            >
-              {item}
-            </li>
+        {/* ── CRPS Comparison Cards — flex:1 so they grow ── */}
+        <div style={{ flex: 1, display: 'flex', gap: 20, alignItems: 'stretch' }}>
+          {comparisons.map((c) => (
+            <DarkCard key={c.label} accent={c.tagColour}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '1.4rem', fontWeight: 700, color: PALETTE.white, fontFamily: TYPOGRAPHY.fontFamily }}>
+                  {c.label}
+                </span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: PALETTE.white, background: c.tagColour, borderRadius: 20, padding: '4px 14px' }}>
+                  {c.tag}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 20, marginTop: 12, fontSize: '1.2rem', color: PALETTE.darkText, fontFamily: TYPOGRAPHY.fontFamily, fontVariantNumeric: 'tabular-nums' }}>
+                <span>Wind: <strong style={{ color: PALETTE.white }}>{c.wind}</strong></span>
+                <span>Elec: <strong style={{ color: PALETTE.white }}>{c.elec}</strong></span>
+              </div>
+              <p style={{ marginTop: 10, fontSize: '1.05rem', color: PALETTE.darkText, lineHeight: 1.55, fontFamily: TYPOGRAPHY.fontFamily }}>
+                {c.note}
+              </p>
+            </DarkCard>
           ))}
-        </ul>
+        </div>
 
-        {/* Closing statement */}
-        <p
+        {/* ── Key Takeaway — bigger, more breathing room ── */}
+        <div
           style={{
-            marginTop: 'auto',
-            paddingTop: 16,
-            fontSize: '1.3rem',
-            fontWeight: 700,
-            color: PALETTE.teal,
-            fontFamily: TYPOGRAPHY.fontFamily,
-            textAlign: 'center',
-            lineHeight: 1.5,
+            background: 'rgba(46, 139, 139, 0.12)',
+            borderLeft: `4px solid ${PALETTE.teal}`,
+            borderRadius: '0 12px 12px 0',
+            padding: '20px 28px',
+            marginTop: 28,
           }}
         >
-          The gains are real on real energy data. The mechanism satisfies its formal guarantees. Thank you.
-        </p>
-      </div>
+          <p style={{ margin: 0, fontSize: '1.45rem', fontWeight: 700, color: PALETTE.white, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+            Adaptation, self-financing, and an absolute skill signal can coexist in a single mechanism.
+          </p>
+        </div>
 
+        {/* ── Future Work — spread with bigger text ── */}
+        <div style={{ marginTop: 28 }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: PALETTE.teal, marginBottom: 14, fontFamily: TYPOGRAPHY.fontFamily, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>
+            Future Work
+          </h3>
+          <ul style={{ margin: 0, paddingLeft: 24, listStyleType: 'disc' }}>
+            {futureWork.map((item) => (
+              <li key={item} style={{ fontSize: '1.3rem', color: PALETTE.darkText, lineHeight: 1.7, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 10 }}>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+      </div>
     </SlideShell>
   );
 }
