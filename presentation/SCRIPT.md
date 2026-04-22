@@ -12,16 +12,15 @@
 | 8 | The Skill Signal | SOLUTION | ~1.5 min |
 | 9 | Models, Data, and Synthetic Setup | SOLUTION | ~1.5 min |
 | 10 | Synthetic Validation: Convergence | VALIDATION | ~1.5 min |
-| 11 | Deposit Design | VALIDATION | ~1 min |
-| 12 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
-| 13 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
-| 14 | Strategic Robustness | VALIDATION | ~1 min |
-| 15 | Conclusion + Future Work | CLOSING | ~1.5 min |
+| 11 | Real Data: Elia Wind + Electricity | VALIDATION | ~2 min ⚠️ |
+| 12 | Benchmark: CRPS Comparison | VALIDATION | ~1 min |
+| 13 | Strategic Robustness | VALIDATION | ~1 min |
+| 14 | Conclusion + Future Work | CLOSING | ~1.5 min |
 
-**Total: ~21 min**
+**Total: ~20 min**
 
-> ⚠️ Slides 7 and 12 are flagged at 2 minutes — keep narration tight and avoid tangents.
-> Slide 13 is the "why we improve" figure with compact takeaway cards below.
+> ⚠️ Slides 7 and 11 are flagged at 2 minutes — keep narration tight and avoid tangents.
+> Slide 12 is the "why we improve" figure with compact takeaway cards below.
 
 ---
 
@@ -163,7 +162,7 @@ Why validate on synthetic data first? Because synthetic experiments use a known 
 
 ---
 
-# Script Part III — VALIDATION (Slides 10–14, ~7 min)
+# Script Part III — VALIDATION (Slides 10–13, ~6 min)
 
 ---
 
@@ -181,17 +180,7 @@ The reward distribution follows the skill ranking: the least noisy forecaster ac
 
 ---
 
-## [SLIDE 11] Deposit Design (~1 min)
-
-Why does deposit design matter? Because the deposit determines how much information enters the market. If deposits are uninformative — random or fixed — the mechanism has less signal to work with.
-
-The experiments reveal a practical finding: the bankroll-confidence deposit rule — which scales the deposit by both wealth and forecast confidence — captures most of the available gain compared to an oracle that knows the true precision of each forecaster. The gap between bankroll-confidence and oracle is much smaller than the gap between random deposits and fixed deposits.
-
-In practice, we cannot force forecasters to use any particular deposit rule. The mechanism must work regardless. But providing a sensible default — stake proportional to wealth and confidence — helps the market extract more value from each round.
-
----
-
-## [SLIDE 12] Real Data: Elia Wind + Electricity (~2 min)
+## [SLIDE 11] Real Data: Elia Wind + Electricity (~2 min)
 
 This is the first real-data validation. Everything before this was controlled simulation.
 
@@ -203,7 +192,7 @@ On the Elia electricity dataset, the improvement is smaller — **8 %** over equ
 
 ---
 
-## [SLIDE 13] Benchmark Comparison: Prior Work and This Project (~1 min)
+## [SLIDE 12] Benchmark Comparison: Prior Work and This Project (~1 min)
 
 That 44 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
 
@@ -219,7 +208,7 @@ The takeaway is the point of the project: adaptation, self-financing, and an abs
 
 ---
 
-## [SLIDE 14] Strategic Robustness (~1 min)
+## [SLIDE 13] Strategic Robustness (~1 min)
 
 The mechanism must resist manipulation. Three main attack types from the literature.
 
@@ -233,11 +222,11 @@ The overall picture: the mechanism resists the standard attacks. Sophisticated a
 
 ---
 
-# Script Part IV — CLOSING (Slide 15, ~1.5 min)
+# Script Part IV — CLOSING (Slide 14, ~1.5 min)
 
 ---
 
-## [SLIDE 15] Conclusion + Future Work (~1.5 min)
+## [SLIDE 14] Conclusion + Future Work (~1.5 min)
 
 To summarise. This project develops a self-financed prediction market that couples weighted-score settlement with online skill learning. The skill signal is absolute, pre-round, and handles intermittent participation.
 

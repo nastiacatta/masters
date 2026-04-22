@@ -111,6 +111,6 @@ panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
     legend.text     = element_text(lineheight = 0.9)
   )
 
-combo <- panel_A / panel_B + plot_layout(heights = c(1, 1.1))
+combo <- panel_A / panel_B + plot_layout(heights = c(0.7, 1.5))
 
 save_dual(combo, "baseline_comparison.png", width = 16, height = 11, dpi = 300)

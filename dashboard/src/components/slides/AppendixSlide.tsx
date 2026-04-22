@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY, CARD_STYLE } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, CARD_STYLE, FIGURE_FRAME } from './shared/presentationConstants';
 
 /* ─── Q&A data ────────────────────────────────────────────────── */
 
@@ -68,6 +68,8 @@ const QA_ITEMS: QAItem[] = [
 
 /* ─── Extra figures references ────────────────────────────────── */
 
+const BASE = import.meta.env.BASE_URL;
+
 const EXTRA_FIGURES = [
   { label: 'Parameter sweep results', file: 'parameter_sweep.png' },
   { label: 'Calibration reliability diagram', file: 'calibration_reliability.png' },
@@ -77,7 +79,7 @@ const EXTRA_FIGURES = [
 
 /* ─── Tab type ────────────────────────────────────────────────── */
 
-type AppendixTab = 'qa' | 'figures' | 'guarantees';
+type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit';
 
 /* ─── Mechanism Guarantees data ───────────────────────────────── */
 
@@ -170,7 +172,6 @@ function QACard({ item, index }: { item: QAItem; index: number }) {
 /* ─── Figure reference card ───────────────────────────────────── */
 
 function FigureCard({ label, file }: { label: string; file: string }) {
-  const BASE = import.meta.env.BASE_URL;
   return (
     <div
       style={{
@@ -283,6 +284,11 @@ export default function AppendixSlide(_props: {
           label="C. Mechanism Guarantees"
           active={tab === 'guarantees'}
           onClick={() => setTab('guarantees')}
+        />
+        <TabButton
+          label="D. Deposit Design"
+          active={tab === 'deposit'}
+          onClick={() => setTab('deposit')}
         />
       </div>
 
@@ -408,6 +414,34 @@ export default function AppendixSlide(_props: {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {tab === 'deposit' && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16,
+              flex: 1,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+              <div style={{ background: PALETTE.purple, color: PALETTE.white, fontSize: '1rem', fontWeight: 700, padding: '8px 18px', borderRadius: 16, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Bankroll+Conf: −44% relative to Fixed
+              </div>
+            </div>
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', ...FIGURE_FRAME }}>
+              <img
+                src={`${BASE}presentation-plots/deposit_policy_comparison.png`}
+                alt="Deposit policy comparison showing Oracle, Bankroll+Confidence, Fixed, and Random"
+                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
+              />
+            </div>
+            <p style={{ fontSize: '1rem', color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
+              Practical deposit rules capture most of the available gain — but we cannot control what forecasters stake
+            </p>
           </div>
         )}
       </div>
