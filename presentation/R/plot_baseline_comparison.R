@@ -3,6 +3,10 @@
 # Benchmark CRPS comparison: Raja (history-free) and Vitali (OGD on simplex)
 # alongside the project's mechanism on Elia wind and electricity.
 #
+# Layout: side-by-side
+#   Left (75%):  Rolling mean CRPS line chart (wind only) with direct labels
+#   Right (25%): Compact bar chart showing % change (wind only, vertical)
+#
 # Reads:
 #   presentation/plots/data/baseline_comparison_{elia_wind,elia_electricity}.csv
 #   presentation/plots/data/baseline_rolling_{elia_wind,elia_electricity}.csv
@@ -31,6 +35,14 @@ METHOD_LABELS <- c(
   raja_history_free       = "Raja et al.\n(history-free, Lambert)",
   vitali_ogd_per_quantile = "Vitali & Pinson\n(OGD on simplex)",
   mechanism               = "This project\n(skill + self-financed)"
+)
+
+# Short labels for direct annotation on the rolling chart
+METHOD_SHORT <- c(
+  uniform                 = "Equal weights",
+  raja_history_free       = "Raja et al.",
+  vitali_ogd_per_quantile = "Vitali & Pinson",
+  mechanism               = "This project"
 )
 
 METHOD_COLOURS <- c(
@@ -65,55 +77,70 @@ load_rolling <- function(series) {
 }
 
 wind_sum <- load_summary("elia_wind")
-elec_sum <- load_summary("elia_electricity")
 
-# --- Panel A: headline bars (clean, no value labels on bars) ----------------
-bars_df <- bind_rows(wind_sum, elec_sum) %>%
+# --- Panel A (right): compact bar chart — wind only, vertical ---------------
+bars_df <- wind_sum %>%
   mutate(
-    series = factor(series, levels = names(SERIES_LABELS), labels = SERIES_LABELS)
+    method_label = METHOD_LABELS[as.character(method)]
   )
 
 panel_A <- ggplot(bars_df, aes(x = method, y = pct_vs_uniform, fill = method)) +
   geom_col(width = 0.72, alpha = 0.92) +
   geom_hline(yintercept = 0, colour = PALETTE$charcoal, linewidth = 0.4) +
-  facet_wrap(~ series, scales = "free_y") +
+  coord_flip() +
   scale_fill_manual(values = METHOD_COLOURS, labels = METHOD_LABELS, guide = "none") +
   scale_x_discrete(labels = METHOD_LABELS) +
   scale_y_continuous(expand = expansion(mult = c(0.14, 0.22))) +
   labs(
     title = NULL,
-    subtitle = NULL,
+    subtitle = "Elia wind — % change in CRPS",
     x = NULL,
     y = "% change in CRPS"
   ) +
   theme_thesis(base_size = 14) +
   theme(
-    axis.text.x   = element_text(size = 10, lineheight = 0.85),
-    axis.text.y   = element_text(size = 10),
-    axis.title.y  = element_text(size = 11),
-    strip.text    = element_text(size = 13, face = "bold", colour = PALETTE$navy),
-    panel.spacing = unit(1.2, "lines"),
-    plot.margin   = margin(8, 12, 4, 12)
+    plot.subtitle  = element_text(size = 13, face = "bold", colour = PALETTE$navy,
+                                  margin = margin(0, 0, 8, 0)),
+    axis.text.x    = element_text(size = 10),
+    axis.text.y    = element_text(size = 10, lineheight = 0.85),
+    axis.title.x   = element_text(size = 11),
+    plot.margin    = margin(8, 12, 4, 8)
   )
 
-# --- Panel B: rolling CRPS on wind (clean lines only) ----------------------
+# --- Panel B (left): rolling CRPS on wind with direct labels ----------------
 roll_wind <- load_rolling("elia_wind")
+
+# Get the last data point for each method for direct labelling
+label_df <- roll_wind %>%
+  group_by(method) %>%
+  filter(t == max(t)) %>%
+  ungroup() %>%
+  mutate(label = METHOD_SHORT[as.character(method)])
+
 panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
   geom_line(linewidth = 0.9, alpha = 0.95) +
-  scale_colour_manual(values = METHOD_COLOURS, labels = METHOD_LABELS) +
+  geom_text(
+    data = label_df,
+    aes(x = t, y = crps, label = label, colour = method),
+    hjust = -0.05, vjust = 0.35, size = 4.2, fontface = "bold",
+    show.legend = FALSE
+  ) +
+  scale_colour_manual(values = METHOD_COLOURS, labels = METHOD_LABELS, guide = "none") +
+  scale_x_continuous(expand = expansion(mult = c(0.02, 0.18))) +
   labs(
     title = NULL,
-    subtitle = NULL,
+    subtitle = "Elia wind — rolling mean CRPS over time",
     x = "Round t",
-    y = "Rolling mean CRPS",
-    colour = NULL
+    y = "Rolling mean CRPS"
   ) +
   theme_thesis(base_size = 16) +
   theme(
-    legend.position = "bottom",
-    legend.text     = element_text(lineheight = 0.9)
+    plot.subtitle  = element_text(size = 15, face = "bold", colour = PALETTE$navy,
+                                  margin = margin(0, 0, 8, 0)),
+    legend.position = "none"
   )
 
-combo <- panel_A / panel_B + plot_layout(heights = c(0.45, 1.8))
+# --- Combine: rolling chart (75%) | bar chart (25%) ------------------------
+combo <- panel_B | panel_A + plot_layout(widths = c(3, 1))
 
-save_dual(combo, "baseline_comparison.png", width = 16, height = 11, dpi = 300)
+save_dual(combo, "baseline_comparison.png", width = 16, height = 9, dpi = 300)
