@@ -22,16 +22,16 @@ export default function TheoryFlowSlide() {
 
   // Layout constants
   const pBoxX = 30;
-  const pBoxW = 200;
+  const pBoxW = 220;
   const pBoxH = 80;
   const iconSize = 18;
 
-  const aggX = 420;
+  const aggX = 440;
   const aggW = 200;
   const aggH = 120;
   const aggCenterY = 260;
 
-  const outX = 780;
+  const outX = 810;
   const outW = 180;
   const outH = 100;
 
@@ -52,7 +52,7 @@ export default function TheoryFlowSlide() {
       }}
     >
       <svg
-        viewBox="0 0 1000 540"
+        viewBox="0 0 1040 540"
         style={{ width: '100%', height: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
         role="img"

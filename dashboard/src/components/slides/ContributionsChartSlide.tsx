@@ -261,6 +261,7 @@ export default function ContributionsChartSlide() {
                 stroke={PALETTE.slate}
               />
               <Tooltip
+                isAnimationActive={false}
                 contentStyle={{
                   fontFamily: TYPOGRAPHY.fontFamily,
                   fontSize: 13,
