@@ -140,15 +140,16 @@ export default function TitleSlide() {
         Anastasia Cattaneo
       </p>
 
-      {/* Thesis title */}
+      {/* Project title */}
       <h1
         style={{
-          fontSize: '3.4rem',
+          fontSize: '4.2rem',
           fontWeight: TYPOGRAPHY.heading.fontWeight,
           color: PALETTE.white,
-          lineHeight: 1.2,
+          lineHeight: 1.15,
           marginBottom: 20,
-          maxWidth: 800,
+          maxWidth: 900,
+          letterSpacing: '-0.02em',
         }}
       >
         Adaptive Skill and Stake{'\n'}in Prediction Markets
@@ -168,27 +169,27 @@ export default function TitleSlide() {
         Coupling Self-Financed Wagering with Online Skill Learning
       </p>
 
-      {/* Institution */}
+      {/* Institution + Supervisors */}
       <p
         style={{
-          fontSize: '1.15rem',
+          fontSize: '1.2rem',
           color: PALETTE.darkText,
           fontWeight: 500,
-          marginBottom: 12,
+          marginBottom: 8,
         }}
       >
         Imperial College London
       </p>
 
-      {/* Supervisor acknowledgements */}
       <p
         style={{
-          fontSize: '1rem',
-          color: PALETTE.slate,
+          fontSize: '1.15rem',
+          color: PALETTE.teal,
+          fontWeight: 600,
           lineHeight: 1.6,
         }}
       >
-        Supervised by Pierre Pinson and Michael Vitali
+        Supervisors: Pierre Pinson · Michael Vitali
       </p>
     </div>
   );

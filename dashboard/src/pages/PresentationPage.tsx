@@ -18,6 +18,7 @@ import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSli
 import MechanismComparisonSlide from '@/components/slides/MechanismComparisonSlide';
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 import AppendixSlide from '@/components/slides/AppendixSlide';
+import TitleSlide from '@/components/slides/TitleSlide';
 
 /**
  * Full-screen presentation mode for project defence.
@@ -57,10 +58,11 @@ const SLIDES: SlideData[] = [
   /* 1 — Title */
   {
     id: 'title',
-    type: 'title',
+    type: 'section',
     title: 'Adaptive Skill and Stake\nin Prediction Markets',
     subtitle: 'Coupling Self-Financed Wagering with Online Skill Learning',
     dark: true,
+    component: TitleSlide,
     slideNumber: 1,
   },
   /* 2 — What Is a Prediction Market? */
