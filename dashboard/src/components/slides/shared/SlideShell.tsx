@@ -1,4 +1,4 @@
-import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT } from './presentationConstants';
+import { PALETTE, TYPOGRAPHY, DARK_GRADIENT, getSectionForSlide, SECTION_BAR_HEIGHT, MAIN_DECK_SLIDE_COUNT, SLIDE_PAGE_PADDING } from './presentationConstants';
 
 export interface SlideShellProps {
   title: string;
@@ -44,9 +44,9 @@ function SectionLabel({ slideNumber, dark }: { slideNumber?: number; dark?: bool
         letterSpacing: '0.12em',
         textTransform: 'uppercase' as const,
         color: dark ? PALETTE.darkText : PALETTE.slate,
-        marginBottom: 8,
+        marginBottom: 10,
         fontFamily: TYPOGRAPHY.fontFamily,
-        opacity: 0.8,
+        opacity: 0.85,
       }}
     >
       {section.label}
@@ -61,13 +61,20 @@ function SlideNumber({ slideNumber, totalSlides, dark }: { slideNumber?: number;
     <div
       style={{
         position: 'absolute',
-        top: 16,
-        right: 24,
-        fontSize: '0.8rem',
-        fontWeight: 500,
-        color: dark ? PALETTE.darkText : PALETTE.slate,
+        top: 18,
+        right: 28,
+        fontSize: '0.8125rem',
+        fontWeight: 600,
+        letterSpacing: '0.03em',
+        color: dark ? PALETTE.darkText : PALETTE.navy,
         fontFamily: TYPOGRAPHY.fontFamily,
         zIndex: 10,
+        padding: '6px 14px',
+        borderRadius: 999,
+        background: dark ? 'rgba(15, 23, 42, 0.55)' : 'rgba(255, 255, 255, 0.92)',
+        border: dark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${PALETTE.border}`,
+        boxShadow: dark ? 'none' : '0 2px 10px rgba(27, 42, 74, 0.06)',
+        backdropFilter: 'blur(8px)',
       }}
     >
       {slideNumber} / {totalSlides ?? MAIN_DECK_SLIDE_COUNT}
@@ -97,7 +104,7 @@ function SlideFooter({ refText, dark }: { refText?: string; dark?: boolean }) {
     <div
       style={{
         flexShrink: 0,
-        paddingTop: 16,
+        paddingTop: 18,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -107,7 +114,7 @@ function SlideFooter({ refText, dark }: { refText?: string; dark?: boolean }) {
     >
       <span
         style={{
-          fontSize: '0.8rem',
+          fontSize: '0.875rem',
           color: dark ? PALETTE.darkText : PALETTE.slate,
           textAlign: 'left',
         }}
@@ -117,7 +124,7 @@ function SlideFooter({ refText, dark }: { refText?: string; dark?: boolean }) {
       {refText && (
         <span
           style={{
-            fontSize: '0.72rem',
+            fontSize: '0.78rem',
             color: dark ? PALETTE.darkText : PALETTE.slate,
             marginLeft: 'auto',
             paddingLeft: 16,
@@ -142,13 +149,13 @@ function HighlightBar({ text }: { text: string }) {
         flexShrink: 0,
         marginTop: 20,
         background: 'rgba(46, 139, 139, 0.07)',
-        borderLeft: `4px solid ${PALETTE.teal}`,
+        borderLeft: `5px solid ${PALETTE.teal}`,
         color: PALETTE.navy,
         fontSize: '1.35rem',
         fontWeight: 700,
         padding: '0.9rem 1.5rem',
-        borderRadius: '0 10px 10px 0',
-        lineHeight: 1.4,
+        borderRadius: '0 12px 12px 0',
+        lineHeight: 1.45,
       }}
     >
       {text}
@@ -167,8 +174,7 @@ export default function SlideShell({ title, subtitle, dark, refText, highlight, 
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '52px 56px',
-        paddingTop: 56,
+        ...SLIDE_PAGE_PADDING,
         background: dark ? DARK_GRADIENT : PALETTE.offWhite,
         fontFamily: TYPOGRAPHY.fontFamily,
         boxSizing: 'border-box',
@@ -180,7 +186,7 @@ export default function SlideShell({ title, subtitle, dark, refText, highlight, 
       <SlideNumber slideNumber={slideNumber} totalSlides={totalSlides} dark={dark} />
 
       {/* Header */}
-      <div style={{ flexShrink: 0, marginBottom: 24 }}>
+      <div style={{ flexShrink: 0, marginBottom: 26 }}>
         <SectionLabel slideNumber={slideNumber} dark={dark} />
         <h2
           style={{

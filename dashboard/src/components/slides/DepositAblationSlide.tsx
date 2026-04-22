@@ -1,5 +1,5 @@
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, FIGURE_FRAME } from './shared/presentationConstants';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -14,16 +14,16 @@ export default function DepositAblationSlide() {
       </div>
 
       {/* Figure — fills ≥70% of content area */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', ...FIGURE_FRAME }}>
         <img
           src={`${BASE}presentation-plots/deposit_policy_comparison.png`}
           alt="Deposit policy comparison showing Oracle, Bankroll+Confidence, Fixed, and Random"
-          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 10 }}
+          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
         />
       </div>
 
       {/* Bottom note */}
-      <p style={{ fontSize: '0.9rem', color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, marginTop: 8, textAlign: 'center', flexShrink: 0 }}>
+      <p style={{ fontSize: '1rem', color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, marginTop: 10, textAlign: 'center', flexShrink: 0, lineHeight: 1.5 }}>
         Practical deposit rules capture most of the available gain — but we cannot control what forecasters stake
       </p>
     </SlideShell>

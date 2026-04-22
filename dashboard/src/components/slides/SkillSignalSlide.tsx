@@ -13,7 +13,7 @@ export default function SkillSignalSlide() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: 8,
+      padding: 4,
     }}>
       <img
         src={`${BASE}presentation-plots/skill_signal_clean.png`}

@@ -1,5 +1,5 @@
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, FIGURE_FRAME } from './shared/presentationConstants';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -86,6 +86,7 @@ export default function SyntheticResultsSlide() {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: 0,
+            ...FIGURE_FRAME,
           }}
         >
           <img
@@ -95,7 +96,7 @@ export default function SyntheticResultsSlide() {
               maxWidth: '100%',
               maxHeight: '100%',
               objectFit: 'contain',
-              borderRadius: 10,
+              borderRadius: 8,
             }}
           />
         </div>
@@ -108,7 +109,7 @@ export default function SyntheticResultsSlide() {
             background: 'rgba(46, 139, 139, 0.07)',
             borderLeft: `4px solid ${PALETTE.teal}`,
             padding: '10px 20px',
-            borderRadius: '0 10px 10px 0',
+            borderRadius: '0 12px 12px 0',
           }}
         >
           <span

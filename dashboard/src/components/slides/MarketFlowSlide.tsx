@@ -50,7 +50,7 @@ export default function MarketFlowSlide() {
               y={actor.y + boxH / 2 - 8}
               textAnchor="middle"
               fontFamily={TYPOGRAPHY.fontFamily}
-              fontSize="22"
+              fontSize="24"
               fontWeight={700}
               fill={i === 3 ? PALETTE.white : PALETTE.navy}
             >
@@ -61,7 +61,7 @@ export default function MarketFlowSlide() {
               y={actor.y + boxH / 2 + 16}
               textAnchor="middle"
               fontFamily={TYPOGRAPHY.fontFamily}
-              fontSize="15"
+              fontSize="17"
               fill={i === 3 ? PALETTE.darkText : PALETTE.slate}
             >
               {actor.subtitle}
@@ -89,7 +89,7 @@ export default function MarketFlowSlide() {
                 x={centerX + 20}
                 y={midY + 5}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="13"
+                fontSize="15"
                 fontWeight={600}
                 fill={PALETTE.slate}
               >

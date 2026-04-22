@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from 'recharts';
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, FIGURE_FRAME } from './shared/presentationConstants';
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -159,7 +159,7 @@ export default function ContributionsChartSlide() {
                 background: isActive ? ds.colour : 'transparent',
                 color: isActive ? '#fff' : ds.colour,
                 fontWeight: isActive ? 700 : 500,
-                fontSize: '0.95rem',
+                fontSize: '1.02rem',
                 fontFamily: TYPOGRAPHY.fontFamily,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -173,7 +173,7 @@ export default function ContributionsChartSlide() {
         {/* Active dataset info badge */}
         <span
           style={{
-            fontSize: '0.85rem',
+            fontSize: '0.95rem',
             color: PALETTE.slate,
             fontFamily: TYPOGRAPHY.fontFamily,
             marginLeft: 8,
@@ -212,7 +212,7 @@ export default function ContributionsChartSlide() {
       </div>
 
       {/* Chart area */}
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, ...FIGURE_FRAME }}>
         {hasError ? (
           <div
             style={{

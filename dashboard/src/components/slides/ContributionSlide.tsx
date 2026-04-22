@@ -25,7 +25,7 @@ export default function ContributionSlide() {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: '80px',
+        padding: '72px 64px',
         background: DARK_GRADIENT,
         fontFamily: TYPOGRAPHY.fontFamily,
         boxSizing: 'border-box',
@@ -35,22 +35,39 @@ export default function ContributionSlide() {
       {/* Section bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SECTION_BAR_HEIGHT, background: section.colour }} />
       {/* Slide number */}
-      <div style={{ position: 'absolute', top: 16, right: 24, fontSize: '0.8rem', color: PALETTE.darkText }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 18,
+          right: 28,
+          zIndex: 5,
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+          letterSpacing: '0.03em',
+          color: PALETTE.darkText,
+          padding: '6px 14px',
+          borderRadius: 999,
+          background: 'rgba(15, 23, 42, 0.55)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         {`6 / ${MAIN_DECK_SLIDE_COUNT}`}
       </div>
       {/* Section label */}
-      <div style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: PALETTE.darkText, marginBottom: 16, opacity: 0.8 }}>
+      <div style={{ fontSize: '0.78rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: PALETTE.darkText, marginBottom: 18, opacity: 0.88 }}>
         PROBLEM
       </div>
 
       {/* Title */}
       <h1
         style={{
-          fontSize: '3.4rem',
+          fontSize: '3.45rem',
           fontWeight: 700,
           color: PALETTE.white,
-          lineHeight: 1.2,
+          lineHeight: 1.15,
           marginBottom: 20,
+          letterSpacing: '-0.02em',
         }}
       >
         My Contribution
@@ -72,11 +89,12 @@ export default function ContributionSlide() {
       {/* Equation highlight box */}
       <div
         style={{
-          background: 'rgba(46, 139, 139, 0.12)',
+          background: 'rgba(46, 139, 139, 0.14)',
           border: `2px solid ${PALETTE.teal}`,
-          borderRadius: 16,
-          padding: '32px 56px',
+          borderRadius: 18,
+          padding: '36px 56px',
           marginBottom: 48,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
         }}
       >
         <div
