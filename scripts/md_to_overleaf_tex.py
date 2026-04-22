@@ -95,7 +95,7 @@ def normalize_unicode_to_latex(line: str) -> str:
         "π": r"$\pi$",
         "Δ": r"$\Delta$",
         "τ": r"$\tau$",
-        "§": r"\S{}",
+        "§": r"\S ",
         "…": r"\ldots{}",
         "“": "``",
         "”": "''",
@@ -160,7 +160,15 @@ def table_to_latex(rows: list[list[str]]) -> str:
         c = strip_md_links(c)
         c = normalize_unicode_to_latex(c)
         c = inline_code_to_texttt(inline_md_emphasis_to_tex(c))
-        return escape_outside_math(c)
+        c = escape_outside_math(c)
+        # Undo escaping for braces in inserted LaTeX commands.
+        c = (
+            c.replace(r"\texttt\{", r"\texttt{")
+            .replace(r"\textbf\{", r"\textbf{")
+            .replace(r"\emph\{", r"\emph{")
+            .replace(r"\}", r"}")
+        )
+        return c
 
     out.append(" & ".join(cell(c) for c in header) + r" \\")
     out.append(r"\midrule")

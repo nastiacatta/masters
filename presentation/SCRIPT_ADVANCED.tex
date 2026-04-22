@@ -100,7 +100,7 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 \item Allocates \textbf{payoffs} $\pi_i(t)$ based on forecast quality and wagers, in such a way that at least the following hold:
 \end{enumerate}
 \begin{itemize}
-\item \textbf{budget balance}: $\sum_i \pi_i(t) = \sum_i b_i(t)$ (self-financing); in this project we split it into a refund and a skill payoff, see \S\{}Slide 7;
+\item \textbf{budget balance}: $\sum_i \pi_i(t) = \sum_i b_i(t)$ (self-financing); in this project we split it into a refund and a skill payoff, see \S Slide 7;
 \item \textbf{incentive compatibility} in reporting (under risk neutrality);
 \item \textbf{Sybil resistance} under identical-report clones.
 \end{itemize}
@@ -110,8 +110,8 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 
 \begin{itemize}
 \item \textbf{Skin in the game.} The wager ties the monetary exposure of participant $i$ to the statistical quality of $r_i(t)$ through a proper scoring rule. Without this coupling, there is no reason for forecasters to report their true predictive distribution.
-\item \textbf{Aggregation under strategic participation.} A simple average assumes everyone is equally informed and equally honest. A market-based aggregator can exploit the wager as a \emph{self-reported confidence signal}: informed-and-confident forecasters pay to influence the market forecast more; uninformed forecasters who would rather not risk money can post a small wager (or none at all --- intermittent participation, \S\{}Slide 8).
-\item \textbf{Privacy.} Participants reveal a predictive distribution, not the underlying data or model. This is exactly the positioning argued in Raja et al. (2024, \S\{}1--\S\{}2) and reused here.
+\item \textbf{Aggregation under strategic participation.} A simple average assumes everyone is equally informed and equally honest. A market-based aggregator can exploit the wager as a \emph{self-reported confidence signal}: informed-and-confident forecasters pay to influence the market forecast more; uninformed forecasters who would rather not risk money can post a small wager (or none at all --- intermittent participation, \S Slide 8).
+\item \textbf{Privacy.} Participants reveal a predictive distribution, not the underlying data or model. This is exactly the positioning argued in Raja et al. (2024, \S 1--\S 2) and reused here.
 \end{itemize}
 
 \subsection{Applications}
@@ -129,7 +129,7 @@ A \textbf{prediction market} is a mechanism that at each round $t$:
 \begin{itemize}
 \item Lambert et al. (2008, 2015), \emph{Self-financed wagering mechanisms} --- canonical definition of wagering markets, proof that the weighted-score rule is the unique mechanism satisfying seven desirable properties (anonymity, budget balance, truthfulness, sybilproofness, etc.).
 \item Gneiting \& Raftery (2007), \emph{Strictly proper scoring rules} --- the scoring rule theory behind why $\text{CRPS}$ elicits truthful probabilistic reports.
-\item Raja et al. (2024, IJF), \S\{}3 --- the \textbf{buyer/seller + aggregation operator + scoring rule + payoff} architecture we directly reuse.
+\item Raja et al. (2024, IJF), \S 3 --- the \textbf{buyer/seller + aggregation operator + scoring rule + payoff} architecture we directly reuse.
 \end{itemize}
 
 \bigskip\hrule\bigskip
@@ -167,7 +167,7 @@ Consider an attacker who submits a deliberately biased forecast $r_i = y^{\text{
 
 \begin{enumerate}
 \item \textbf{Skin-in-the-game} via the wager, so that bad forecasts cost money (this is what the \emph{settlement} layer provides).
-\item \textbf{History.} A truly adversarial forecaster performs badly under the proper scoring rule over time; the \emph{skill gate} converts their persistently high loss into a small effective wager, muting their influence (this is what \S\{}Slide 8 formalises).
+\item \textbf{History.} A truly adversarial forecaster performs badly under the proper scoring rule over time; the \emph{skill gate} converts their persistently high loss into a small effective wager, muting their influence (this is what \S Slide 8 formalises).
 \end{enumerate}
 
 \subsection{Goal statement on the slide}
@@ -229,10 +229,10 @@ Handles intermittent participation. But: weights are \emph{relative} (they live 
 \begin{center}
 \begin{tabular}{lll}
 \toprule
- & \textbf\{History-free\} & \textbf\{Adaptive (online)\} \\
+ & \textbf{History-free} & \textbf{Adaptive (online)} \\
 \midrule
-\textbf\{Self-financed (Lambert)\} & Lambert et al. (2008); Raja et al. (2024) & \textbf\{This project\} \\
-\textbf\{Not self-financed\} & "Classical" online aggregation (e.g. Cesa-Bianchi \& Lugosi) & Vitali \& Pinson (2025) \\
+\textbf{Self-financed (Lambert)} & Lambert et al. (2008); Raja et al. (2024) & \textbf{This project} \\
+\textbf{Not self-financed} & "Classical" online aggregation (e.g. Cesa-Bianchi \& Lugosi) & Vitali \& Pinson (2025) \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -252,9 +252,9 @@ The visual is a 3-row comparison across five dimensions. This is the detailed ve
 \begin{center}
 \begin{tabular}{lllll}
 \toprule
-Dimension & Lambert et al. (2008) & Raja et al. (2024) & Vitali \& Pinson (2025) & \textbf\{This project\} \\
+Dimension & Lambert et al. (2008) & Raja et al. (2024) & Vitali \& Pinson (2025) & \textbf{This project} \\
 \midrule
-Financing & Self-financed & Self-financed + client utility & Shapley payoffs (\textbf\{not\} self-financed) & Self-financed (optional $U>0$ utility add-on) \\
+Financing & Self-financed & Self-financed + client utility & Shapley payoffs (\textbf{not} self-financed) & Self-financed (optional $U>0$ utility add-on) \\
 Weight update across rounds & None & None & OGD on simplex, per quantile & EWMA loss $\rightarrow$ bounded skill $\rightarrow$ scales wager \\
 Weight type & Stakes only & Stakes $\times$ confidence & Simplex weights $w \in \Delta^{n-1}$ & Absolute skill $\sigma_i \in [\sigma_{\min}, 1]$, scales own stake \\
 Intermittent participation & Supports via exclusion & Supports via exclusion & Explicit handling with decay & Staleness decay via $\kappa$ (see Slide 8) \\
@@ -273,7 +273,7 @@ Key observations on the slide:
 \subsection{Code reference}
 
 
-The table is a React component: \texttt{dashboard/src/components/slides/MechanismComparisonSlide.tsx}. The Vitali row deliberately says "Shapley payoffs (not self-financed)" --- we use the exact wording from \S\{}III of the 2025 paper.
+The table is a React component: \texttt{dashboard/src/components/slides/MechanismComparisonSlide.tsx}. The Vitali row deliberately says "Shapley payoffs (not self-financed)" --- we use the exact wording from \S III of the 2025 paper.
 
 \bigskip\hrule\bigskip
 
@@ -346,7 +346,7 @@ Because $\sigma_i$ is learned from \textbf{past} performance and therefore canno
 
 \begin{itemize}
 \item \textbf{Absolute.} $\sigma_i \in [\sigma_{\min}, 1]$ is defined independently of $\sigma_j$ for $j \ne i$. This is the key difference with Vitali \& Pinson, whose simplex weights are necessarily \emph{relative}.
-\item \textbf{Pre-round.} $\sigma_i(t)$ depends only on realised losses up to $t-1$. So the truthfulness argument from Lambert extends directly: at round $t$, a risk-neutral agent who takes $m_i(t)$ as given maximises expected payoff by reporting truthfully. Details in \S\{}Appendix A.
+\item \textbf{Pre-round.} $\sigma_i(t)$ depends only on realised losses up to $t-1$. So the truthfulness argument from Lambert extends directly: at round $t$, a risk-neutral agent who takes $m_i(t)$ as given maximises expected payoff by reporting truthfully. Details in \S Appendix A.
 \end{itemize}
 
 \bigskip\hrule\bigskip
@@ -396,11 +396,11 @@ for t = 1, ..., T:
 \toprule
 Step & Spoken phrase & Code & Theory \\
 \midrule
-Submit & "decide how much to deposit" & \texttt\{staking.choose\\_deposits\} (staking.py:61) & See \texttt\{theory/Pierre\\_wagering.md\} Raja \S\{\}3.1 \\
-Skill gate & "multiply deposit by a factor" & \texttt\{staking.skill\\_gate\} (staking.py:91); \texttt\{effective\\_wager\\_bankroll\} (staking.py:100) & Eq. 6 in Lambert; extended with $\sigma$ here \\
-Aggregation & "effective wagers as weights" & \texttt\{aggregation.aggregate\\_forecast\} & Raja \S\{\}3.2 (forecast aggregation operator) \\
-Settlement & "Lambert weighted-score formula" & \texttt\{settlement.settle\\_round\} (settlement.py:67) & Lambert (2008) Thm. 1 \\
-Update & "skill estimate updates" & \texttt\{skill.update\\_ewma\\_loss\}, \texttt\{skill.loss\\_to\\_skill\} & CRPS-based online learning, Pinson et al. \\
+Submit & "decide how much to deposit" & \texttt{staking.choose\\_deposits} (staking.py:61) & See \texttt{theory/Pierre\\_wagering.md} Raja \S 3.1 \\
+Skill gate & "multiply deposit by a factor" & \texttt{staking.skill\\_gate} (staking.py:91); \texttt{effective\\_wager\\_bankroll} (staking.py:100) & Eq. 6 in Lambert; extended with $\sigma$ here \\
+Aggregation & "effective wagers as weights" & \texttt{aggregation.aggregate\\_forecast} & Raja \S 3.2 (forecast aggregation operator) \\
+Settlement & "Lambert weighted-score formula" & \texttt{settlement.settle\\_round} (settlement.py:67) & Lambert (2008) Thm. 1 \\
+Update & "skill estimate updates" & \texttt{skill.update\\_ewma\\_loss}, \texttt{skill.loss\\_to\\_skill} & CRPS-based online learning, Pinson et al. \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -686,7 +686,7 @@ Policy & CRPS & $\Delta$ vs fixed & \% \\
 Fixed & 0.0424 & --- & 0 \% \\
 Random & $\approx$ 0.042 & near 0 & near 0 \% \\
 Bankroll & 0.035 & -0.007 & -17 \% \\
-\textbf\{Bankroll $\times$ Conf\} & \textbf\{0.0279\} & \textbf\{-0.0145\} & \textbf\{-34 \%\} \\
+\textbf{Bankroll $\times$ Conf} & \textbf{0.0279} & \textbf{-0.0145} & \textbf{-34 \%} \\
 Oracle (upper bound) & 0.024 & -0.0184 & -43 \% \\
 \bottomrule
 \end{tabular}
@@ -710,7 +710,7 @@ If $c_i$ is computed from the \textbf{current-round} report $r_i(t)$, deposits b
 Driver: \texttt{scripts/run\\_real\\_data\\_with\\_skill.py} $\rightarrow$ \texttt{onlinev2.real\\_data.runner.run\\_real\\_data\\_comparison}. For each dataset:
 
 \begin{itemize}
-\item $n = 7$ forecasters from \S\{}Slide 9, strictly causal.
+\item $n = 7$ forecasters from \S Slide 9, strictly causal.
 \item $T = $ 17\{,}544 hourly observations (wind) / full native (electricity).
 \item Warm-up 200 rounds.
 \item $\tau = (0.1, 0.25, 0.5, 0.75, 0.9)$, CRPS-hat.
@@ -727,8 +727,8 @@ The runner reports \textbf{seven} weighting rules in one go (uniform, skill-only
 \toprule
 Dataset & Uniform CRPS & Mechanism CRPS & $\Delta$ & \% vs uniform \\
 \midrule
-Elia wind (offshore power) & ~0.089 & ~0.050 & -0.039 & \textbf\{-44 \%\} \\
-Elia electricity (imbalance) & ~0.048 & ~0.044 & -0.004 & \textbf\{-8 \%\} \\
+Elia wind (offshore power) & ~0.089 & ~0.050 & -0.039 & \textbf{-44 \%} \\
+Elia electricity (imbalance) & ~0.048 & ~0.044 & -0.004 & \textbf{-8 \%} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -769,7 +769,7 @@ $\tau$ & empirical $\hat F$ (wind) & gap \\
 0.25 & ~0.22 & 0.03 \\
 0.50 & ~0.48 & 0.02 \\
 0.75 & ~0.72 & 0.03 \\
-0.90 & ~0.85 & \textbf\{0.05\} \\
+0.90 & ~0.85 & \textbf{0.05} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -834,9 +834,9 @@ $$
 Method & wind CRPS & wind $\Delta$ vs uniform & wind \% & electricity CRPS & electricity \% \\
 \midrule
 Uniform & 0.089 & --- & 0 \% & 0.048 & 0 \% \\
-Raja (history-free) & ~0.087 & -0.002 & \textbf\{-2 \%\} & ~0.047 & \textbf\{-2 \%\} \\
-\textbf\{This project\} & \textbf\{~0.050\} & \textbf\{-0.039\} & \textbf\{-44 \%\} & \textbf\{~0.044\} & \textbf\{-8 \%\} \\
-Vitali OGD (per-quantile) & ~0.031 & -0.058 & \textbf\{-65 \%\} & ~0.038 & \textbf\{-20 \%\} \\
+Raja (history-free) & ~0.087 & -0.002 & \textbf{-2 \%} & ~0.047 & \textbf{-2 \%} \\
+\textbf{This project} & \textbf{~0.050} & \textbf{-0.039} & \textbf{-44 \%} & \textbf{~0.044} & \textbf{-8 \%} \\
+Vitali OGD (per-quantile) & ~0.031 & -0.058 & \textbf{-65 \%} & ~0.038 & \textbf{-20 \%} \\
 \bottomrule
 \end{tabular}
 \end{center}
