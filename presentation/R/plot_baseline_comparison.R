@@ -1,7 +1,7 @@
 # presentation/R/plot_baseline_comparison.R
 # -----------------------------------------------------------------------------
-# Head-to-head CRPS comparison: Raja (history-free) vs Vitali (OGD on simplex)
-# vs Ours (self-financed + skill learning) on Elia wind and electricity.
+# Benchmark CRPS comparison: Raja (history-free) and Vitali (OGD on simplex)
+# alongside the thesis mechanism on Elia wind and electricity.
 #
 # Reads:
 #   presentation/plots/data/baseline_comparison_{elia_wind,elia_electricity}.csv
@@ -30,7 +30,7 @@ METHOD_LABELS <- c(
   uniform                 = "Equal weights\n(baseline)",
   raja_history_free       = "Raja et al.\n(history-free, Lambert)",
   vitali_ogd_per_quantile = "Vitali & Pinson\n(OGD on simplex)",
-  mechanism               = "Ours\n(skill + self-financed)"
+  mechanism               = "This thesis\n(skill + self-financed)"
 )
 
 METHOD_COLOURS <- c(
@@ -125,10 +125,10 @@ panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
 
 combo <- panel_A / panel_B + plot_layout(heights = c(1, 1.1)) +
   plot_annotation(
-    title = "Head-to-head: Raja vs Vitali vs Ours on real Elia data",
+    title = "Benchmark comparison on real Elia data",
     subtitle = paste0(
       "Same 7-forecaster panel, same quantile reports, same warm-up (200).  ",
-      "Our mechanism keeps Lambert's seven economic properties; Vitali does not."
+      "The thesis mechanism keeps Lambert's seven economic properties; Vitali does not."
     ),
     theme = theme(
       plot.title    = element_text(size = 22, face = "bold", colour = PALETTE$navy),

@@ -1,7 +1,7 @@
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
-/* ── CRPS comparison data (head-to-head on Elia) ── */
+/* ── CRPS comparison data (benchmark on Elia) ── */
 const comparisons = [
   {
     label: 'Raja et al.',
@@ -17,7 +17,7 @@ const comparisons = [
     tagColour: PALETTE.purple,
     wind: '−65 %',
     elec: '−20 %',
-    note: 'Best pure CRPS — drops self-financing and absolute skill',
+    note: 'Lowest CRPS in this benchmark — not self-financed; relative weights',
   },
   {
     label: 'Ours',
@@ -25,7 +25,7 @@ const comparisons = [
     tagColour: PALETTE.teal,
     wind: '−44 %',
     elec: '−8 %',
-    note: 'Adaptive, self-financed, absolute skill — controlled CRPS trade-off',
+    note: 'Adaptive and self-financed, with an absolute skill signal',
   },
 ] as const;
 
@@ -166,9 +166,8 @@ export default function ConclusionSlide() {
             fontFamily: TYPOGRAPHY.fontFamily,
           }}
         >
-          Ours is the only design that is adaptive, self-financed, and
-          reports absolute skill — we trade a controlled amount of CRPS for
-          Lambert&apos;s full property set.
+          In this benchmark, the thesis mechanism jointly provides adaptation across rounds,
+          self-financing, and an absolute skill signal.
         </p>
       </div>
 
