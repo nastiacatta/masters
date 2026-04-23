@@ -79,7 +79,7 @@ const EXTRA_FIGURES = [
 
 /* ─── Tab type ────────────────────────────────────────────────── */
 
-type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism' | 'skillmath';
+type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism' | 'skillmath' | 'params' | 'crps';
 
 /* ─── Mechanism Comparison data (moved from main deck) ─────── */
 
@@ -356,6 +356,16 @@ export default function AppendixSlide(_props: {
           label="F. Skill Signal Math"
           active={tab === 'skillmath'}
           onClick={() => setTab('skillmath')}
+        />
+        <TabButton
+          label="G. Tuned Parameters"
+          active={tab === 'params'}
+          onClick={() => setTab('params')}
+        />
+        <TabButton
+          label="H. CRPS Explained"
+          active={tab === 'crps'}
+          onClick={() => setTab('crps')}
         />
       </div>
 
@@ -673,6 +683,123 @@ export default function AppendixSlide(_props: {
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
                 λ is the staleness rate. This prevents a forecaster from building a high reputation and then disappearing to preserve it. With no new evidence, skill gradually reverts to a prior.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tab === 'params' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <p style={{ margin: 0, fontSize: '1.1rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+              All hyperparameters were selected via <strong>grid search on a held-out validation split</strong> of the Elia wind dataset. The table below lists each parameter, its tuned value, and its role in the mechanism.
+            </p>
+
+            <div style={{ ...CARD_STYLE, width: '100%', padding: '36px 44px' }}>
+              {/* Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: '160px 120px 1fr', gap: 16, paddingBottom: 14, borderBottom: `2px solid ${PALETTE.border}`, marginBottom: 10 }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Parameter</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAlign: 'center' }}>Value</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Role</span>
+              </div>
+
+              {[
+                { symbol: 'γ (gamma)', value: '16', role: 'Skill learning rate — controls how sharply the exponential mapping separates good from bad forecasters. Higher γ means faster differentiation.' },
+                { symbol: 'ρ (rho)', value: '0.5', role: 'EWMA decay — balances recent vs. historical performance. At 0.5, the half-life is about 1 round, so the mechanism adapts quickly.' },
+                { symbol: 'λ (lambda)', value: '0.05', role: 'Staleness decay rate — how fast an absent forecaster\'s skill reverts to baseline. Low λ means slow decay, giving forecasters time to return.' },
+                { symbol: 'σ_min', value: '0.05', role: 'Skill floor — the minimum skill any forecaster retains. Ensures no one is permanently excluded from the aggregate.' },
+                { symbol: 'Warm-up', value: '200 rounds', role: 'Initial period where all forecasters have equal skill. Allows the EWMA to accumulate enough history before differentiation begins.' },
+              ].map((row, i, arr) => (
+                <div
+                  key={row.symbol}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '160px 120px 1fr',
+                    gap: 16,
+                    alignItems: 'center',
+                    padding: '18px 0',
+                    borderBottom: i < arr.length - 1 ? `1px solid ${PALETTE.border}` : 'none',
+                    borderLeft: `4px solid ${PALETTE.teal}`,
+                    paddingLeft: 12,
+                    borderRadius: '4px 0 0 4px',
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: 'monospace' }}>{row.symbol}</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: PALETTE.teal, fontFamily: 'monospace', textAlign: 'center' }}>{row.value}</span>
+                  <span style={{ fontSize: '1.05rem', color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, lineHeight: 1.5 }}>{row.role}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ ...CARD_STYLE, padding: '20px 28px', background: 'rgba(46, 139, 139, 0.04)' }}>
+              <p style={{ margin: 0, fontSize: '1rem', color: PALETTE.slate, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                <strong>Sensitivity:</strong> The parameter sweep experiments show the mechanism is robust across a wide range of values. γ has the strongest effect — too low means slow adaptation, too high means overfitting to noise. The other parameters are less sensitive.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tab === 'crps' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* What is CRPS */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                What is CRPS?
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The <strong>Continuous Ranked Probability Score</strong> measures how close a probabilistic forecast is to the realised outcome. It generalises mean absolute error to full distributions. CRPS is always ≥ 0, and <strong>lower is better</strong>.
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.1rem', color: PALETTE.navy, fontWeight: 600 }}>
+                CRPS(F, y) = ∫ [F(x) − 𝟙(x ≥ y)]² dx
+              </div>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                where F is the forecast CDF and y is the observed value. A perfect forecast concentrating all mass at y gives CRPS = 0.
+              </p>
+            </div>
+
+            {/* What does 44% reduction mean */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                What Does "44% CRPS Reduction" Mean?
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The mechanism's aggregate forecast has a mean CRPS that is <strong>44% lower</strong> than equal-weight averaging on the Elia wind dataset. The calculation:
+              </p>
+              <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Equal weights CRPS</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>≈ 0.068</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Mechanism CRPS</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>≈ 0.038</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Relative change</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.038 − 0.068) / 0.068 ≈ −44%</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Context: other benchmarks */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px', background: 'rgba(46, 139, 139, 0.04)' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                How Does This Compare?
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                {[
+                  { label: 'This Project', wind: '−44%', elec: '−8%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
+                  { label: 'Vitali & Pinson', wind: '−65%', elec: '−20%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
+                  { label: 'Raja et al.', wind: '−2.5%', elec: '−2.3%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
+                ].map((item) => (
+                  <div key={item.label} style={{ padding: '16px 20px', background: item.tint, borderRadius: 10, textAlign: 'center' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: item.color, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 8 }}>{item.label}</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 700, color: PALETTE.navy, fontFamily: 'monospace' }}>{item.wind} wind</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 600, color: PALETTE.charcoal, fontFamily: 'monospace', marginTop: 4 }}>{item.elec} electricity</div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ margin: '14px 0 0', fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Vitali & Pinson achieve lower CRPS but use Shapley settlement (not self-financed). This project preserves all seven formal properties while still achieving substantial improvement over equal weights.
               </p>
             </div>
           </div>
