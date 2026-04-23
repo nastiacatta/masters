@@ -22,6 +22,66 @@ const ATTACKS: AttackRow[] = [
   { attack: 'Risk-Averse Hedging', outcome: 'Minimal impact on aggregate', pass: true },
 ];
 
+/** Colour-coded SVG icon per attack type (22×22) */
+function AttackIcon({ attack }: { attack: string }) {
+  const s = 22;
+  if (attack.startsWith('Sybil')) {
+    // Two overlapping circles — "split person" in coral
+    return (
+      <svg width={s} height={s} viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+        <circle cx="8" cy="11" r="6" stroke={PALETTE.coral} strokeWidth="1.8" fill={PALETTE.coral} fillOpacity={0.15} />
+        <circle cx="14" cy="11" r="6" stroke={PALETTE.coral} strokeWidth="1.8" fill={PALETTE.coral} fillOpacity={0.15} />
+      </svg>
+    );
+  }
+  if (attack === 'Arbitrage') {
+    // Dollar sign in a circle — purple
+    return (
+      <svg width={s} height={s} viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+        <circle cx="11" cy="11" r="9" stroke={PALETTE.purple} strokeWidth="1.8" fill={PALETTE.purple} fillOpacity={0.1} />
+        <text x="11" y="15.5" textAnchor="middle" fontSize="13" fontWeight="700" fill={PALETTE.purple} fontFamily="sans-serif">$</text>
+      </svg>
+    );
+  }
+  if (attack === 'Strategic Deposit') {
+    // Coin stack — imperial
+    return (
+      <svg width={s} height={s} viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+        <ellipse cx="11" cy="15" rx="7" ry="3" stroke={PALETTE.imperial} strokeWidth="1.6" fill={PALETTE.imperial} fillOpacity={0.12} />
+        <ellipse cx="11" cy="11" rx="7" ry="3" stroke={PALETTE.imperial} strokeWidth="1.6" fill={PALETTE.imperial} fillOpacity={0.12} />
+        <ellipse cx="11" cy="7" rx="7" ry="3" stroke={PALETTE.imperial} strokeWidth="1.6" fill={PALETTE.imperial} fillOpacity={0.12} />
+      </svg>
+    );
+  }
+  if (attack === 'Reputation Gaming') {
+    // Mask/eye icon — teal
+    return (
+      <svg width={s} height={s} viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+        <path d="M2 11 C5 5, 17 5, 20 11 C17 17, 5 17, 2 11Z" stroke={PALETTE.teal} strokeWidth="1.6" fill={PALETTE.teal} fillOpacity={0.1} />
+        <circle cx="11" cy="11" r="3" stroke={PALETTE.teal} strokeWidth="1.6" fill={PALETTE.teal} fillOpacity={0.2} />
+      </svg>
+    );
+  }
+  if (attack === 'Collusion') {
+    // Two handshake lines — slate
+    return (
+      <svg width={s} height={s} viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+        <path d="M3 14 L8 10 L11 12 L14 10 L19 14" stroke={PALETTE.slate} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 10 L8 6 L11 8 L14 6 L19 10" stroke={PALETTE.slate} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (attack === 'Risk-Averse Hedging') {
+    // Shield icon — slate
+    return (
+      <svg width={s} height={s} viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+        <path d="M11 2 L19 6 V12 C19 16.5 15.5 19.5 11 21 C6.5 19.5 3 16.5 3 12 V6 L11 2Z" stroke={PALETTE.slate} strokeWidth="1.6" fill={PALETTE.slate} fillOpacity={0.1} />
+      </svg>
+    );
+  }
+  return null;
+}
+
 /** SVG checkmark */
 function PassIcon() {
   return (
@@ -124,8 +184,12 @@ export default function StrategicRobustnessSlide() {
                   fontWeight: 600,
                   color: PALETTE.navy,
                   fontFamily: TYPOGRAPHY.fontFamily,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
+                <AttackIcon attack={row.attack} />
                 {row.attack}
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

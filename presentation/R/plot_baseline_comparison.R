@@ -122,11 +122,11 @@ panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
   geom_text(
     data = label_df,
     aes(x = t, y = crps, label = label, colour = method),
-    hjust = -0.05, vjust = 0.35, size = 4.2, fontface = "bold",
+    hjust = -0.05, vjust = 0.35, size = 5.5, fontface = "bold",
     show.legend = FALSE
   ) +
   scale_colour_manual(values = METHOD_COLOURS, labels = METHOD_LABELS, guide = "none") +
-  scale_x_continuous(expand = expansion(mult = c(0.02, 0.18))) +
+  scale_x_continuous(expand = expansion(mult = c(0.02, 0.22))) +
   labs(
     title = NULL,
     subtitle = "Elia wind — rolling mean CRPS over time",

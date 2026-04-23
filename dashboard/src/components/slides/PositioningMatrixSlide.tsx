@@ -24,6 +24,14 @@ const NODES: MatrixNode[] = [
   { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'Skill learning + Lambert properties', x: 75, y: 25, isThesis: true },
 ];
 
+/** Node numbering: circled number (or star for thesis) */
+const NODE_NUMBER: Record<string, string> = {
+  lambert: '1',
+  raja: '2',
+  vitali: '3',
+  thesis: '★',
+};
+
 export default function PositioningMatrixSlide() {
   const chartX = 60;
   const chartY = 30;
@@ -144,6 +152,10 @@ export default function PositioningMatrixSlide() {
         {/* Nodes as cards */}
         {NODES.map((node) => {
           const { cx, cy } = getCardCenter(node);
+          const strokeColour = node.isThesis ? PALETTE.teal : PALETTE.imperial;
+          const numX = cx - cardW / 2 + 20;
+          const numY = cy - 20;
+          const num = NODE_NUMBER[node.id];
 
           return (
             <g key={node.id}>
@@ -164,9 +176,22 @@ export default function PositioningMatrixSlide() {
                 width={cardW} height={cardH}
                 rx={12}
                 fill={PALETTE.white}
-                stroke={node.isThesis ? PALETTE.teal : PALETTE.imperial}
+                stroke={strokeColour}
                 strokeWidth={node.isThesis ? 3 : 2}
               />
+              {/* Circled number / star */}
+              <circle cx={numX} cy={numY} r={12} fill={strokeColour} fillOpacity={0.12} stroke={strokeColour} strokeWidth={1.5} />
+              <text
+                x={numX}
+                y={numY + (num === '★' ? 5 : 5)}
+                textAnchor="middle"
+                fontFamily={TYPOGRAPHY.fontFamily}
+                fontSize={num === '★' ? '14' : '13'}
+                fontWeight={700}
+                fill={strokeColour}
+              >
+                {num}
+              </text>
               <text
                 x={cx}
                 y={cy - 20}

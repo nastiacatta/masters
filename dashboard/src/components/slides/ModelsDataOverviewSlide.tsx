@@ -195,7 +195,7 @@ export default function ModelsDataOverviewSlide() {
         </div>
 
         {/* ── Middle: Elia dataset cards with colour tints ── */}
-        <div style={{ display: 'flex', gap: 18, marginTop: 18 }}>
+        <div style={{ display: 'flex', gap: 18, marginTop: 28 }}>
           {ELIA_DATASETS.map((ds) => (
             <div
               key={ds.label}
@@ -236,6 +236,7 @@ export default function ModelsDataOverviewSlide() {
         {/* ── Bottom: motivation bar with teal checkmark icon ── */}
         <div
           style={{
+            marginTop: 20,
             background: 'rgba(46, 139, 139, 0.08)',
             borderLeft: `5px solid ${PALETTE.teal}`,
             padding: '18px 28px',
