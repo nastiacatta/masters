@@ -80,7 +80,7 @@ export default function BaselineComparisonSlide() {
               Raja et&nbsp;al. (history-free)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              Self-financed but history-free — small gains vs equal weights.
+              −2.5% wind, −2.3% electricity. Self-financed but history-free.
             </div>
           </div>
 
@@ -101,7 +101,7 @@ export default function BaselineComparisonSlide() {
               Vitali &amp; Pinson (OGD)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              Lowest CRPS in this benchmark — not self-financed; relative weights.
+              −65% wind, −20% electricity. Lowest CRPS — not self-financed; Shapley-based.
             </div>
           </div>
 
