@@ -33,7 +33,7 @@ const comparisons = [
 const futureWork = [
   'Close the CRPS gap to Vitali & Pinson without giving up self-financing',
   'Improve tail calibration (currently ~5 pp under-dispersion)',
-  'Test against strategic adversaries beyond uniform sybils',
+  'Test against a wider range of strategic adversaries',
 ] as const;
 
 /* ── Card wrapper (dark-mode) ── */
