@@ -79,7 +79,7 @@ const EXTRA_FIGURES = [
 
 /* ─── Tab type ────────────────────────────────────────────────── */
 
-type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism';
+type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism' | 'skillmath';
 
 /* ─── Mechanism Comparison data (moved from main deck) ─────── */
 
@@ -352,6 +352,11 @@ export default function AppendixSlide(_props: {
           active={tab === 'mechanism'}
           onClick={() => setTab('mechanism')}
         />
+        <TabButton
+          label="F. Skill Signal Math"
+          active={tab === 'skillmath'}
+          onClick={() => setTab('skillmath')}
+        />
       </div>
 
       {/* Tab content */}
@@ -601,6 +606,74 @@ export default function AppendixSlide(_props: {
                   ))}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'skillmath' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Step 1: Per-round loss */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 1: Per-Round Forecasting Loss
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Each round, forecaster <em>i</em> submits a probabilistic forecast (a set of quantiles). After the outcome is observed, the forecast is scored using the <strong>Continuous Ranked Probability Score (CRPS)</strong>. CRPS is always ≥ 0, with lower values indicating better forecasts. This gives a per-round loss:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', color: PALETTE.navy, fontWeight: 600 }}>
+                ℓᵢ(t) = CRPS(qᵢ(t), y(t)) ≥ 0
+              </div>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                where qᵢ(t) is the submitted quantile forecast and y(t) is the realised outcome.
+              </p>
+            </div>
+
+            {/* Step 2: EWMA accumulator */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 2: Loss Accumulator (EWMA)
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The mechanism maintains an <strong>exponentially weighted moving average</strong> of past losses. Recent performance is weighted more heavily than distant history:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', color: PALETTE.navy, fontWeight: 600 }}>
+                Lᵢ(t) = ρ · Lᵢ(t−1) + (1 − ρ) · ℓᵢ(t)
+              </div>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                ρ ∈ (0, 1) is the decay parameter. Since ℓᵢ(t) ≥ 0 always, Lᵢ(t) ≥ 0 always. A consistently bad forecaster accumulates Lᵢ → large; a good one keeps Lᵢ ≈ 0. There is <strong>no upper bound</strong> on Lᵢ — it can grow without limit if the forecaster is persistently poor.
+              </p>
+            </div>
+
+            {/* Step 3: Exponential mapping */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 3: Exponential Mapping to Bounded Skill
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The unbounded accumulator is compressed into the interval [σ_min, 1] via an exponential decay:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', color: PALETTE.navy, fontWeight: 600 }}>
+                σᵢ = σ_min + (1 − σ_min) · exp(−γ · Lᵢ)
+              </div>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                γ {'>'} 0 controls sensitivity. When Lᵢ ≈ 0 (good): σᵢ ≈ 1. When Lᵢ is large (bad): σᵢ → σ_min. The floor σ_min {'>'} 0 ensures every forecaster retains some market access — no one is permanently excluded.
+              </p>
+            </div>
+
+            {/* Step 4: Staleness decay */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 4: Staleness Decay (Absent Forecasters)
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                When a forecaster is absent in round t, their loss state decays toward a neutral baseline:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', color: PALETTE.navy, fontWeight: 600 }}>
+                Lᵢ(t) = λ · L_baseline + (1 − λ) · Lᵢ(t−1)
+              </div>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                λ is the staleness rate. This prevents a forecaster from building a high reputation and then disappearing to preserve it. With no new evidence, skill gradually reverts to a prior.
+              </p>
             </div>
           </div>
         )}
