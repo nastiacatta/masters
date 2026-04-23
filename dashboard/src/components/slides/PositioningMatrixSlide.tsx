@@ -153,8 +153,8 @@ export default function PositioningMatrixSlide() {
         {NODES.map((node) => {
           const { cx, cy } = getCardCenter(node);
           const strokeColour = node.isThesis ? PALETTE.teal : PALETTE.imperial;
-          const numX = cx - cardW / 2 + 20;
-          const numY = cy - 20;
+          const numX = cx + cardW / 2 - 18;
+          const numY = cy - cardH / 2 + 18;
           const num = NODE_NUMBER[node.id];
 
           return (
@@ -183,8 +183,9 @@ export default function PositioningMatrixSlide() {
               <circle cx={numX} cy={numY} r={12} fill={strokeColour} fillOpacity={0.12} stroke={strokeColour} strokeWidth={1.5} />
               <text
                 x={numX}
-                y={numY + (num === '★' ? 5 : 5)}
+                y={numY}
                 textAnchor="middle"
+                dominantBaseline="central"
                 fontFamily={TYPOGRAPHY.fontFamily}
                 fontSize={num === '★' ? '14' : '13'}
                 fontWeight={700}
