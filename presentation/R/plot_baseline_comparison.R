@@ -111,17 +111,31 @@ panel_A <- ggplot(bars_df, aes(x = method, y = pct_vs_uniform, fill = method)) +
 roll_wind <- load_rolling("elia_wind")
 
 # Get the last data point for each method for direct labelling
+# Nudge overlapping labels apart (Equal Weights ≈ 0.073, Raja ≈ 0.071)
 label_df <- roll_wind %>%
   group_by(method) %>%
   filter(t == max(t)) %>%
   ungroup() %>%
-  mutate(label = METHOD_SHORT[as.character(method)])
+  mutate(label = METHOD_SHORT[as.character(method)]) %>%
+  arrange(desc(crps)) %>%
+  mutate(
+    nudged_y = case_when(
+      method == "uniform"           ~ crps + 0.003,
+      method == "raja_history_free" ~ crps - 0.003,
+      TRUE                          ~ crps
+    )
+  )
 
 panel_B <- ggplot(roll_wind, aes(x = t, y = crps, colour = method)) +
   geom_line(linewidth = 0.9, alpha = 0.95) +
+  geom_segment(
+    data = label_df %>% filter(method %in% c("uniform", "raja_history_free")),
+    aes(x = t, xend = t + 200, y = crps, yend = nudged_y, colour = method),
+    linewidth = 0.4, linetype = "dotted", show.legend = FALSE
+  ) +
   geom_text(
     data = label_df,
-    aes(x = t, y = crps, label = label, colour = method),
+    aes(x = t, y = nudged_y, label = label, colour = method),
     hjust = -0.05, vjust = 0.35, size = 5.5, fontface = "bold",
     show.legend = FALSE
   ) +
