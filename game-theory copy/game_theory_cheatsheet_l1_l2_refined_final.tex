@@ -1,0 +1,440 @@
+
+\documentclass[a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{multicol}
+\usepackage[top=0.12in,bottom=0.10in,left=0.15in,right=0.15in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+
+\pagestyle{empty}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\columnsep}{0.075in}
+\setlength{\columnseprule}{0.1pt}
+
+\setlength{\abovedisplayskip}{0.25pt}
+\setlength{\belowdisplayskip}{0.25pt}
+\setlength{\abovedisplayshortskip}{0.25pt}
+\setlength{\belowdisplayshortskip}{0.25pt}
+\setlength{\jot}{0.35pt}
+
+\setlist[itemize]{
+  leftmargin=0.78em,
+  label=\smallbullet,
+  labelsep=0.22em,
+  itemsep=0pt,
+  topsep=0pt,
+  parsep=0pt,
+  partopsep=0pt
+}
+
+\setlist[enumerate]{
+  leftmargin=1.05em,
+  itemsep=0pt,
+  topsep=0pt,
+  parsep=0pt,
+  partopsep=0pt
+}
+
+\titleformat{\section}
+  {\bfseries\fontsize{6.15}{6.45}\selectfont\color{black}}
+  {}
+  {0pt}
+  {\titlerule[0.13pt]\vspace{0.18ex}}
+
+\titlespacing*{\section}{0pt}{0.12ex}{0.04ex}
+
+\interdisplaylinepenalty=10000
+\relpenalty=10000
+\binoppenalty=10000
+\emergencystretch=1.2em
+\tolerance=1800
+\hbadness=4500
+\sloppy
+
+\newcommand{\game}{\Gamma}
+\newcommand{\BR}{\operatorname{BR}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\co}{\operatorname{co}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Ind}{\mathbf{1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\term}[1]{\textbf{#1:}}
+\newcommand{\tight}{\vspace{-0.25ex}}
+\newcommand{\smallbullet}{\raisebox{0.22ex}{\scalebox{0.43}{$\bullet$}}}
+\newcommand{\subhead}[1]{\vspace{0.25ex}\noindent\textbf{#1}\par\vspace{0.05ex}}
+
+% Displayed formulas: clear and fitted to column width only when necessary.
+\newcommand{\formula}[1]{%
+  \par\vspace{0.05ex}%
+  \noindent\makebox[\linewidth][c]{%
+    \adjustbox{max width=\linewidth}{$\displaystyle\begingroup\fontsize{6.60}{6.95}\selectfont #1\endgroup$}%
+  }%
+  \par\vspace{0.05ex}%
+}
+
+\begin{document}
+
+\fontsize{6.05}{6.55}\selectfont
+
+\begin{multicols}{3}
+\raggedright
+
+\section*{BASICS}
+\textbf{Game theory:} strategic interaction between rational, selfish agents.
+
+\subhead{PIMPS}
+\formula{\text{Players, Information, Moves, Payoffs, Strategies}}
+
+\subhead{Decision problem}
+\formula{(A,O,\succsim)}
+$A$: actions, $O$: outcomes, $\succsim$: preferences.
+
+\subhead{Preferences}
+\formula{\begin{gathered}
+o_1\succ o_2:\ \text{strictly preferred}\\[-0.15ex]
+o_1\succsim o_2:\ \text{at least as good}\\[-0.15ex]
+o_1\sim o_2:\ \text{indifferent}
+\end{gathered}}
+
+\subhead{Rational preferences}
+\formula{\begin{aligned}
+\text{Completeness: }&o_1\succsim o_2\ \text{or}\ o_2\succsim o_1,\\[-0.1ex]
+\text{Transitivity: }&o_1\succsim o_2,\ o_2\succsim o_3\Rightarrow o_1\succsim o_3.
+\end{aligned}}
+
+\subhead{Payoff function}
+\formula{u:O\to\mathbb R,\qquad u(o_1)\ge u(o_2)\Longleftrightarrow o_1\succsim o_2.}
+
+\textbf{Rational choice:} player knows actions, outcomes, action-outcome mapping, and own preferences, then maximises payoff.
+
+\textbf{Static game:} simultaneous, one-shot. \textbf{Dynamic game:} sequential, possibly repeated.
+
+\textbf{Non-cooperative:} no collaboration. \textbf{Cooperative:} collaboration may help.
+
+\textbf{Common knowledge:} everyone knows $E$, everyone knows that everyone knows $E$, and so on indefinitely.
+
+\textbf{Complete information:} common knowledge of actions, outcomes, action-outcome mapping, and each player's preferences. Otherwise: \textbf{incomplete information}.
+
+\subhead{Mechanism design}
+\formula{\begin{aligned}
+\text{given rules}&\to\text{ outcome},\\[-0.1ex]
+\text{desired outcome}&\to\text{ design rules}.
+\end{aligned}}
+
+\textbf{Braess paradox:}
+\formula{\text{more options}\not\Rightarrow\text{better outcome}.}
+Selfish choices can worsen total performance.
+
+\section*{EXTENSIVE AND NORMAL FORM GAMES}
+\subhead{Extensive-form game}
+\formula{\Gamma^E=\langle N,(A_i)_{i\in N},H,P,(I_i)_{i\in N},(u_i)_{i\in N}\rangle}
+\begin{itemize}
+    \item $N=\{1,\dots,n\}$: players.
+    \item $A_i$: actions available to player $i$.
+    \item Tree: root, decision/internal nodes, terminal/leaf nodes.
+    \item $H$: terminal histories, full paths from root to terminal node.
+    \item $SH$: proper subhistories, non-terminal histories.
+    \item $P:SH\to N$: player who moves after each non-terminal history.
+    \item $u_i:H\to\mathbb R$: player $i$'s pay-off at each terminal history.
+\end{itemize}
+\formula{\text{terminal history}=\text{complete path of play}}
+
+\subhead{Information sets}
+\formula{J\in I_i}
+An information set $J$ is a set of player $i$'s own decision nodes that player $i$ cannot distinguish.
+\formula{\forall h,h'\in J,\qquad C(h)=C(h')}
+All nodes in the same information set must have the same feasible actions.
+\begin{itemize}
+    \item Perfect information: every information set is a singleton, $|J|=1$ for all $J\in I_i$ and all $i$.
+    \item Imperfect information: at least one information set has more than one node, $\exists J\in I_i:|J|>1$.
+    \item Simultaneous moves can be represented by putting later-moving decision nodes in one information set.
+\end{itemize}
+
+\subhead{Strategy}
+\formula{s_i:I_i\to A_i,\qquad s_i(J)\in C(J)\quad\forall J\in I_i.}
+A strategy is a complete contingent plan: it specifies an action at every information set, including off-path ones.
+\formula{|S_i|=\prod_{j=1}^{m}k_j,\qquad k_j=|C(J_j)|.}
+\textbf{Exam trap:} action $\ne$ strategy. An action is one move; a strategy is a full plan.
+
+\subhead{Matching pennies strategy count}
+\formula{A_1=A_2=\{H,T\}}
+\textbf{With observation:}
+\formula{I_1=\{\{\emptyset\}\},\qquad I_2=\{\{H\},\{T\}\}}
+\formula{|S_1|=2,\qquad |S_2|=2\cdot2=4.}
+Player 2 strategies: $HH,HT,TH,TT$, meaning action after $H$ and action after $T$.
+
+\textbf{Without observation:}
+\formula{I_1=\{\{\emptyset\}\},\qquad I_2=\{\{H,T\}\}}
+\formula{|S_1|=2,\qquad |S_2|=2.}
+Player 2 cannot condition on player 1's move.
+
+\subhead{Normal-form game}
+\formula{\Gamma=\langle N,(S_i)_{i\in N},(u_i)_{i\in N}\rangle}
+\begin{itemize}
+    \item $S_i$: strategy set of player $i$.
+    \item $S=\prod_{i\in N}S_i$: strategy profiles.
+    \item $s=(s_i,s_{-i})$.
+    \item $S_{-i}=\prod_{j\ne i}S_j$.
+    \item $u_i:S_1\times\cdots\times S_n\to\mathbb R$.
+\end{itemize}
+\formula{s_{-i}=(s_1,\dots,s_{i-1},s_{i+1},\dots,s_n)}
+
+\subhead{Extensive form to normal form}
+\begin{enumerate}
+    \item List each player's complete strategies.
+    \item Form all profiles $S_1\times\cdots\times S_n$.
+    \item For each profile, follow the induced path in the tree.
+    \item Put terminal pay-offs in the matrix.
+\end{enumerate}
+\formula{s\mapsto O(s)\in H}
+Normal form preserves pay-offs but hides timing and information structure.
+
+\subhead{Best response}
+\formula{\BR_i(s_{-i})=\arg\max_{s_i\in S_i}u_i(s_i,s_{-i})}
+\formula{\begin{aligned}
+s_i\in\BR_i(s_{-i})\iff&\ u_i(s_i,s_{-i})\ge u_i(s_i',s_{-i})\\[-0.1ex]
+&\forall s_i'\in S_i.
+\end{aligned}}
+Matrix method: player 1 maximises down each column; player 2 maximises across each row.
+
+\subhead{Nash equilibrium}
+\formula{s^*=(s_1^*,\dots,s_n^*)}
+\formula{s_i^*\in\BR_i(s_{-i}^*)\quad\forall i\in N}
+Equivalently,
+\formula{\begin{aligned}
+u_i(s_i^*,s_{-i}^*)&\ge u_i(s_i,s_{-i}^*)\\[-0.1ex]
+&\forall s_i\in S_i,\ \forall i.
+\end{aligned}}
+No player can profitably deviate alone. \textbf{Exam trap:} equilibrium is the strategy profile $s^*$, not the pay-off vector $u(s^*)$.
+
+\subhead{Strict dominance}
+\formula{\begin{aligned}
+s_i\succ_i s_i'\iff&\ u_i(s_i,s_{-i})>u_i(s_i',s_{-i})\\[-0.1ex]
+&\forall s_{-i}\in S_{-i}.
+\end{aligned}}
+A rational player never plays a strictly dominated strategy.
+\formula{s_i'\text{ strictly dominated}\Rightarrow s_i'\notin\BR_i(s_{-i})\quad\forall s_{-i}.}
+
+\subhead{Weak dominance}
+\formula{u_i(s_i,s_{-i})\ge u_i(s_i',s_{-i})\quad\forall s_{-i}\in S_{-i}}
+and strict inequality holds for at least one $s_{-i}$:
+\formula{\exists s_{-i}:\ u_i(s_i,s_{-i})>u_i(s_i',s_{-i}).}
+Weak dominance is useful, but elimination order can matter.
+
+\subhead{Dominant strategy}
+A strategy $s_i$ is strictly dominant if it strictly dominates every other strategy:
+\formula{u_i(s_i,s_{-i})>u_i(s_i',s_{-i})\quad\forall s_i'\ne s_i,\ \forall s_{-i}.}
+A dominant strategy is best whatever opponents do:
+\formula{s_i\in\BR_i(s_{-i})\quad\forall s_{-i}.}
+
+\subhead{Dominant strategy equilibrium}
+\formula{s^D=(s_1^D,\dots,s_n^D)}
+\formula{s_i^D\text{ dominant }\forall i\Rightarrow s^D\text{ equilibrium}.}
+Strict dominant strategy equilibrium, if it exists, is unique.
+
+\subhead{IESDS}
+Iterated elimination of strictly dominated strategies.
+\formula{S_i^0=S_i}
+At round $k$, remove every $s_i\in S_i^k$ strictly dominated in the reduced game:
+\formula{S_i^{k+1}=S_i^k\setminus\{s_i:\exists s_i'\in S_i^k,\ s_i'\succ_i s_i\}.}
+Stop when no strictly dominated strategies remain. Surviving profiles are IESDS predictions.
+\formula{\text{rationality}+\text{everyone knows rationality}+\cdots}
+
+\subhead{Prisoner's dilemma reminder}
+Typical pay-offs:
+\formula{\begin{array}{c|cc}
+ & C & NC\\ \hline
+C & -4,-4 & -1,-10\\
+NC & -10,-1 & -2,-2
+\end{array}}
+For each player $C\succ NC$, so $(C,C)$ is the dominant strategy equilibrium, even though $(NC,NC)$ is Pareto better.
+
+\subhead{Pareto efficiency}
+Outcome $x$ Pareto-dominates $y$ if
+\formula{u_i(x)\ge u_i(y)\quad\forall i,\qquad u_j(x)>u_j(y)\quad\text{for some }j.}
+An equilibrium need not be Pareto efficient.
+
+\subhead{Exam checklist}
+\begin{itemize}
+    \item Identify players $N$, actions $A_i$, terminal histories $H$, and information sets $I_i$.
+    \item Count strategies using information sets, not nodes alone.
+    \item Convert to normal form using complete strategies.
+    \item Find best responses; Nash equilibrium means mutual best responses.
+    \item Check strict dominance before best responses.
+    \item For IESDS, eliminate only strategies dominated in the current reduced game.
+    \item Do not call pay-offs the equilibrium.
+    \item Do not confuse perfect information with complete information.
+\end{itemize}
+
+\section*{MIXED STRATEGIES}
+\begin{itemize}
+\item \term{Mixed strategy} for finite $S_i$, $\sigma_i\in\Delta(S_i)$ where
+\formula{\sigma_i(s_i)\ge0,\qquad \sum_{s_i\in S_i}\sigma_i(s_i)=1.}
+\item \term{Support} $\supp(\sigma_i)=\{s_i\in S_i:\sigma_i(s_i)>0\}$.
+\item \term{Expected payoff}
+\formula{u_i(\sigma)=\sum_{s\in S}\left(\prod_{j\in N}\sigma_j(s_j)\right)u_i(s).}
+\item \term{Mixed-strategy NE} $\sigma^*$ is a NE iff every pure strategy used with positive probability is a best response to $\sigma_{-i}^*$:
+\formula{\begin{aligned}s_i\in\supp(\sigma_i^*)\Rightarrow\;&u_i(s_i,\sigma_{-i}^*)\\[-0.1ex]&=\max_{s'_i\in S_i}u_i(s'_i,\sigma_{-i}^*).
+\end{aligned}}
+Unused pure strategies must yield weakly lower payoff.
+\item \term{Indifference method} in a two-action mix, choose $p,q$ so each player is indifferent between all pure strategies in their support.
+\item \term{Nash existence theorem} every finite normal-form game has at least one mixed-strategy Nash equilibrium.
+\end{itemize}
+
+\section*{BAYESIAN GAMES}
+\begin{itemize}
+\item \term{Bayesian game} $\langle N,(A_i),(T_i),p,(u_i)\rangle$. Nature draws type profile $t=(t_i,t_{-i})$; player $i$ observes $t_i$ and has belief $p(t_{-i}\mid t_i)$.
+\item \term{Bayesian strategy} complete contingent plan by type: $s_i:T_i\to A_i$.
+\item \term{Expected payoff conditional on type}
+\formula{\begin{aligned}U_i(s\mid t_i)&=\sum_{t_{-i}}p(t_{-i}\mid t_i)\\[-0.1ex]&\quad u_i\big(s_i(t_i),s_{-i}(t_{-i}),t_i,t_{-i}\big).
+\end{aligned}}
+\item \term{Bayesian Nash equilibrium}
+\formula{\begin{aligned}s_i^*(t_i)&\in\arg\max_{a_i\in A_i}\sum_{t_{-i}}p(t_{-i}\mid t_i)\\[-0.1ex]&\quad u_i\big(a_i,s_{-i}^*(t_{-i}),t_i,t_{-i}\big),\quad\forall i,t_i.
+\end{aligned}}
+\item \term{What to state in examples} players $N$, type sets $T_i$, beliefs such as $p(a\mid c)=p$, $p(b\mid c)=1-p$, action sets, and payoff matrices by type.
+\item \term{Selten/Harsanyi agent-normal-form equivalent} replace each player-type pair $(i,t_i)$ by an agent. This converts incomplete information into a complete-information normal-form game over type-contingent strategies, with expected payoffs.
+\item \term{Two-action mixing notation} if $\sigma_1=(p,1-p)$ and $\sigma_2=(q,1-q)$, solve $p$ from $u_2(\sigma_1,X)=u_2(\sigma_1,Y)$ and $q$ from $u_1(X,\sigma_2)=u_1(Y,\sigma_2)$; check pure best responses.
+\end{itemize}
+
+\section*{MECHANISM DESIGN AND AUCTIONS}
+\begin{itemize}
+\item \term{Environment} agents $N=\{1,\dots,n\}$, type spaces $\Theta_i$, outcome set $X$, valuation/payoff $u_i(x,\theta_i)$.
+\item \term{Social choice function}
+\formula{f:\Theta_1\times\cdots\times\Theta_n\to X.}
+It assigns an outcome to every reported type profile.
+\item \term{Mechanism} $M=\langle S_1,\dots,S_n,g\rangle$, where $g:S_1\times\cdots\times S_n\to X$.
+\item \term{Direct mechanism} $M^d=\langle \Theta_1,\dots,\Theta_n,f\rangle$; each agent reports a type.
+\item \term{Indirect mechanism} agents choose messages/actions $s_i\in S_i$; outcome is $g(s)$.
+\item \term{Implementation} $M$ implements $f$ in equilibrium $e$ if $g(s^*(\theta))=f(\theta)$ for all $\theta$.
+\item \term{Incentive compatibility} truth-telling is an equilibrium. Dominant-strategy IC:
+\formula{\begin{aligned}u_i(f(\theta_i,\theta_{-i}),\theta_i)&\ge u_i(f(\hat\theta_i,\theta_{-i}),\theta_i)\\[-0.1ex]&\forall i,\theta_i,\hat\theta_i,\theta_{-i}.
+\end{aligned}}
+\item \term{Open auctions} bids are observed dynamically: English ascending auction, Dutch descending auction.
+\item \term{Closed auctions} bids are private and simultaneous: first-price and second-price sealed-bid auctions.
+\item \term{Second-price sealed-bid auction} highest bidder wins, pays second-highest bid. Utility:
+\formula{\begin{aligned}b_{(2)}&=\max_{j\ne i}b_j,\\[-0.1ex]
+u_i&=\begin{cases}v_i-b_{(2)},& b_i>b_{(2)},\\0,& b_i<b_{(2)}.\end{cases}
+\end{aligned}}
+with tie rule specified separately. Bidding $b_i=v_i$ is weakly dominant.
+\item \term{First-price sealed-bid auction} highest bidder wins and pays own bid: $u_i=v_i-b_i$ if $i$ wins, otherwise $0$. Bids $b_i>v_i$ are weakly dominated; bidding at or above value is never strictly profitable. In equilibrium with private values, profitable bids usually shade below value.
+\end{itemize}
+
+\section*{CORRELATION AND CONTRACTS}
+\begin{itemize}
+\item \term{Security/minimax value} guaranteed payoff from choosing a strategy against the worst opponent response:
+\formula{v_i=\max_{s_i\in S_i}\min_{s_{-i}\in S_{-i}}u_i(s_i,s_{-i}).}
+Mixed version: $v_i=\max_{\sigma_i}\min_{\sigma_{-i}}u_i(\sigma_i,\sigma_{-i})$.
+\item \term{How to find} for each of your rows, take the minimum payoff the opponent can leave you with; choose the row with the largest of those minima.
+\item \term{Correlated strategy} probability distribution $\tau\in\Delta(S)$ over pure strategy profiles $s=(s_1,\dots,s_n)$.
+\item \term{Expected payoff under correlation}
+\formula{u_i(\tau)=\sum_{s\in S}\tau(s)u_i(s).}
+\item \term{Individual rationality for coalition $C$} $\tau_C$ is IR if $u_i(\tau_C)\ge v_i$ for every $i\in C$.
+\item \term{Correlated equilibrium obedience constraints} if recommendation $s_i$ is received, following it must be optimal:
+\formula{\begin{aligned}
+&\sum_{s_{-i}}\tau(s_i,s_{-i})[u_i(s_i,s_{-i})-u_i(s'_i,s_{-i})]\ge0\\[-0.1ex]
+&\hfill\forall i,s_i,s'_i.
+\end{aligned}}
+\item \term{Contract} agreement before or during play. If signed and enforceable, players are assumed to respect it; it can implement correlated or cooperative outcomes and raise payoffs relative to non-cooperation.
+\item \term{Prisoner's dilemma intuition} a contract/correlation device can recommend $(NC,C)$ or $(C,NC)$ probabilistically, improving expected payoffs if both accept and recommendations are binding or incentive-compatible.
+\end{itemize}
+
+\section*{BARGAINING}
+\begin{itemize}
+\item \term{Nash programme} transform strategic games into cooperative problems by enlarging feasible agreements, allowing correlation/contracts, and comparing payoffs to disagreement values.
+\item \term{Feasible set} all payoff vectors attainable by pure, mixed, or correlated strategies:
+\formula{F=\co\{u(s):s\in S\}\subseteq\mathbb R^n.}
+It is a convex hull.
+\item \term{Disagreement point} $d=(d_1,\dots,d_n)$, usually security values; minimum payoffs if bargaining fails.
+\item \term{Individually rational feasible set} $F_d=\{u\in F:u_i\ge d_i\ \forall i\}$.
+\item \term{Nash bargaining solution}
+\formula{u^*\in\arg\max_{u\in F,\ u\ge d}\prod_{i=1}^n(u_i-d_i).}
+For two players: $\max (u_1-d_1)(u_2-d_2)$. Multiplication penalises unequal gains and gives zero if any player gets only disagreement.
+\item \term{Nash axioms} strong Pareto efficiency; symmetry; independence of irrelevant alternatives; affine/scale invariance.
+\item \term{Egalitarian solution}
+\formula{\arg\max_{u\in F,\ u\ge d}\min_i(u_i-d_i).}
+Equivalently maximise $\lambda$ subject to $u_i-d_i\ge\lambda$ for all $i$.
+\item \term{Utilitarian solution}
+\formula{\arg\max_{u\in F,\ u\ge d}\sum_{i=1}^n u_i.}
+\end{itemize}
+
+\section*{COALITIONAL GAMES}
+\begin{itemize}
+\item \term{Transferable-utility game} $(N,v)$, where $N=\{1,\dots,n\}$ and $v:2^N\to\mathbb R$ with $v(\varnothing)=0$. There are $2^n$ coalitions.
+\item \term{Characteristic function} $v(C)$ is the worth/payoff a coalition $C$ can guarantee for itself.
+\item \term{Imputation} allocation $x\in\mathbb R^n$ satisfying individual and collective rationality:
+\formula{x_i\ge v(\{i\})\quad\forall i,\qquad \sum_{i\in N}x_i=v(N).}
+\item \term{Domination} $x$ dominates $y$ through coalition $C$ if coalition $C$ can afford $x$ and all its members prefer it:
+\formula{\sum_{i\in C}x_i\le v(C),\qquad x_i>y_i\quad\forall i\in C.}
+\item \term{Monotonicity} $C\subseteq D\Rightarrow v(C)\le v(D)$.
+\item \term{Superadditivity} for disjoint coalitions, $C\cap D=\varnothing$,
+\formula{v(C\cup D)\ge v(C)+v(D).}
+\item \term{Convexity / supermodularity}
+\formula{v(C\cup D)+v(C\cap D)\ge v(C)+v(D)\quad\forall C,D\subseteq N.}
+Equivalently, marginal contribution rises with coalition size:
+\formula{\begin{aligned}C\subseteq D,
+\ i\notin D\Rightarrow\;&v(C\cup\{i\})-v(C)\\[-0.1ex]&\le v(D\cup\{i\})-v(D).
+\end{aligned}}
+\item \term{Inessential game} $v(N)=\sum_{i\in N}v(\{i\})$. No gain from forming the grand coalition; unique imputation is $x_i=v(\{i\})$. Otherwise the game is essential.
+\end{itemize}
+
+\section*{THE CORE}
+\begin{itemize}
+\item \term{Coalitional rationality} no coalition can secure more by leaving:
+\formula{\sum_{i\in C}x_i\ge v(C)\quad\forall C\subseteq N.}
+\item \term{Core} set of allocations that are collectively and coalitionally rational:
+\formula{\begin{aligned}
+\operatorname{Core}(v)=\{x\in\mathbb R^n:\;&\sum_{i\in N}x_i=v(N),\\[-0.1ex]
+&\sum_{i\in C}x_i\ge v(C)\quad\forall C\subseteq N\}.
+\end{aligned}}
+Individual rationality is included by taking $C=\{i\}$. The core is convex and closed; with finite $v$ it is compact when non-empty. It may be empty.
+\item \term{Relation to deviation} an allocation in the core gives no coalition a profitable deviation; this parallels NE's no unilateral profitable deviation.
+\item \term{Three-player visualisation} normalise $v(\{i\})=0$ and $v(N)=1$; feasible allocations lie in the simplex with vertices $(1,0,0),(0,1,0),(0,0,1)$.
+\item \term{Pair constraints} if $x_1+x_2\ge v(\{1,2\})=0.3$ and $x_1+x_2+x_3=1$, then $x_3\le0.7$.
+\item \term{LP feasibility test for the core}
+\formula{\begin{aligned}\text{find }x\ \text{s.t.}\quad &\sum_{i\in N}x_i=v(N),\\[-0.1ex]&\sum_{i\in C}x_i\ge v(C)\quad\forall C\subseteq N.
+\end{aligned}}
+\end{itemize}
+
+\section*{SHAPLEY VALUE}
+\begin{itemize}
+\item \term{Efficiency axiom} all surplus is allocated:
+\formula{\sum_{i\in N}\phi_i(v)=v(N).}
+\item \term{Null/dummy player} if $v(C\cup\{i\})=v(C)$ for all $C\subseteq N\setminus\{i\}$, then $\phi_i(v)=0$. More generally, a dummy with constant marginal $v(\{i\})$ gets $v(\{i\})$.
+\item \term{Symmetry} if $v(C\cup\{i\})=v(C\cup\{j\})$ for every $C$ excluding $i,j$, then $\phi_i(v)=\phi_j(v)$.
+\item \term{Additivity} $\phi_i(v+w)=\phi_i(v)+\phi_i(w)$.
+\item \term{Marginal contribution} $\Delta_i v(C)=v(C\cup\{i\})-v(C)$.
+\item \term{Shapley value}
+\formula{\phi_i(v)=\sum_{C\subseteq N\setminus\{i\}}\frac{|C|!(n-|C|-1)!}{n!}\,\Delta_i v(C).}
+Equivalent form:
+\formula{\phi_i(v)=\frac1n\sum_{C\subseteq N\setminus\{i\}}\binom{n-1}{|C|}^{-1}\Delta_i v(C).}
+\item \term{Interpretation} average marginal contribution of player $i$ across all possible orders in which the grand coalition can be formed.
+\item \term{Core link} if the TU game is convex, the Shapley value lies in the core. If not convex, check individual and coalitional rationality manually.
+\end{itemize}
+
+\section*{STABLE MATCHING}
+\begin{itemize}
+\item \term{Setting} two sides $O$ and $D$ with strict preferences. A matching $\mu$ maps each $o\in O$ to a $d\in D$ and each $d$ to at most one $o$, with consistency $\mu(o)=d\Leftrightarrow\mu(d)=o$.
+\item \term{Perfect matching} every agent on both sides is matched.
+\item \term{Blocking/unstable pair} pair $(o,d)$ blocks $\mu$ if
+\formula{d\succ_o\mu(o)\quad\text{and}\quad o\succ_d\mu(d).}
+Both would rather be matched to each other than keep their assigned partners.
+\item \term{Stable matching} individually rational, perfect if required, and has no blocking pair.
+\item \term{Gale-Shapley deferred acceptance} proposers apply down their preference list; receivers hold their favourite current proposal and reject the rest; repeat until no rejections/proposals remain.
+\item \term{Guarantees} terminates in at most $n^2$ proposals; produces a stable matching.
+\item \term{Optimality} $O$-proposing version is $O$-optimal and $D$-pessimal among all stable matchings; reversing proposers reverses the result.
+\item \term{Strategy-proofness} with strict preferences, truthful reporting is a dominant strategy for the proposing side, but not generally for the receiving side.
+\end{itemize}
+
+\end{multicols}
+\end{document}
