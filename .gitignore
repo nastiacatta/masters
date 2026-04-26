@@ -32,6 +32,7 @@ dashboard/public/data/behaviour
 # PDFs (except theory/)
 *.pdf
 !theory/**/*.pdf
+!game-theory copy/**/*.pdf
 
 # Local editor state
 .vscode/
