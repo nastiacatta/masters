@@ -114,16 +114,8 @@ const CONV_TAU = [0.2, 0.6, 1.5] as const; // Good, Okay, Bad
 const CONV_LABELS = ['F1: Good (τ=0.2)', 'F2: Okay (τ=0.6)', 'F3: Bad (τ=1.5)'] as const;
 
 // ── Method chart colors & labels for real-data comparison ───────────
-const METHOD_CHART_COLORS: Record<string, string> = {
-  uniform: '#94a3b8',
-  skill: '#8b5cf6',
-  mechanism: '#6366f1',
-  best_single: '#f59e0b',
-  inverse_variance: '#0ea5e9',
-  trimmed_mean: '#14b8a6',
-  median: '#10b981',
-  oracle: '#64748b',
-};
+// Single source of truth lives in `@/lib/palette`.
+const METHOD_CHART_COLORS: Record<string, string> = METHOD_COLORS;
 
 const METHOD_CHART_LABELS: Record<string, string> = {
   uniform: 'Equal',

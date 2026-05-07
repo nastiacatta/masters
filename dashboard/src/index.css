@@ -32,22 +32,25 @@
   --ink-soft:   #5a6175;
   --ink-faint:  #8c92a3;
 
-  /* Accents */
-  --navy:    #1d3461;
-  --navy-ink:#0f1f3d;
-  --teal:    #0f766e;
-  --teal-deep:#115e59;
-  --amber:   #b45309;
-  --crimson: #9a1a2f;
-  --plum:    #5b21b6;
-  --gold:    #a16207;
+  /* Accents — anchored to slide deck palette (presentationConstants.ts) */
+  --navy:    #1B2A4A;
+  --navy-ink:#0F172A;
+  --imperial:#003E74;
+  --teal:    #2E8B8B;
+  --teal-deep:#246E6E;
+  --coral:   #E85D4A;
+  --amber:   #B45309;
+  --crimson: #9A1A2F;
+  --plum:    #7C3AED;
+  --gold:    #A16207;
 
-  /* Soft tints for panels */
-  --navy-tint:    #eef2f9;
-  --teal-tint:    #e7f3f1;
-  --amber-tint:   #fbf3e5;
-  --crimson-tint: #fbecef;
-  --plum-tint:    #f1ecfb;
+  /* Soft tints for panels — keep existing tokens, retuned to match anchors */
+  --navy-tint:    #EEF2F9;
+  --teal-tint:    #E7F3F1;
+  --coral-tint:   #FCEDEA;
+  --amber-tint:   #FBF3E5;
+  --crimson-tint: #FBECEF;
+  --plum-tint:    #F1ECFB;
 
   /* Type scale — academic, slightly larger than typical SaaS */
   --fs-xs:  13px;   /* labels, captions */

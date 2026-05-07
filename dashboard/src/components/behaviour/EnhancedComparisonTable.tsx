@@ -119,10 +119,12 @@ function deltaColor(v: number): string {
   return 'text-slate-500';
 }
 
+import { PALETTE } from '@/lib/palette';
+
 function deltaBarColor(v: number): string {
-  if (v < -1) return '#10b981';  // emerald-500
-  if (v > 1) return '#ef4444';   // red-500
-  return '#94a3b8';              // slate-400
+  if (v < -1) return PALETTE.teal;   // improvement
+  if (v > 1) return PALETTE.coral;   // regression
+  return PALETTE.slate;              // neutral
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -206,7 +208,7 @@ export default function EnhancedComparisonTable({
       <div className="flex flex-wrap items-center gap-2">
         {presentFamilies.map(family => {
           const isActive = activeFilters.includes(family);
-          const color = FAMILY_COLORS[family] ?? '#94a3b8';
+          const color = FAMILY_COLORS[family] ?? PALETTE.slate;
           return (
             <button
               key={family}
@@ -265,7 +267,7 @@ export default function EnhancedComparisonTable({
               ? familyOrder.map(family => {
                   const familyRows = groupedRows.get(family) ?? [];
                   const isCollapsed = collapsedFamilies.has(family);
-                  const color = FAMILY_COLORS[family] ?? '#94a3b8';
+                  const color = FAMILY_COLORS[family] ?? PALETTE.slate;
                   return (
                     <GroupSection
                       key={family}

@@ -1,28 +1,47 @@
 /**
  * Semantic colour and symbol tokens used across the whole dashboard.
  * One colour per conceptual object — reuse everywhere.
+ *
+ * Anchored on the slide palette (`presentationConstants.ts`) via
+ * `@/lib/palette` so the same concept has the same hue in the main app,
+ * the slide deck, and every R/Python-generated PNG.
  */
+import { PALETTE } from './palette';
+
+/** Tailwind-compatible rgba helper. */
+function alpha(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+/** Soft tint helper — a very light background derived from a base colour. */
+function tint(hex: string): string {
+  return alpha(hex, 0.12);
+}
 
 export const SEM = {
-  deposit:   { main: '#0ea5e9', light: '#e0f2fe', ring: '#0ea5e940', sym: 'b', label: 'Deposit' },
-  skill:     { main: '#8b5cf6', light: '#ede9fe', ring: '#8b5cf640', sym: 'σ', label: 'Skill' },
-  wager:     { main: '#6366f1', light: '#e0e7ff', ring: '#6366f140', sym: 'm', label: 'Eff. wager' },
-  aggregate: { main: '#0d9488', light: '#ccfbf1', ring: '#0d948840', sym: 'r̂', label: 'Aggregate' },
-  score:     { main: '#f59e0b', light: '#fef3c7', ring: '#f59e0b40', sym: 's', label: 'Score' },
-  payoff:    { main: '#10b981', light: '#d1fae5', ring: '#10b98140', sym: 'Π', label: 'Payoff' },
-  outcome:   { main: '#ef4444', light: '#fee2e2', ring: '#ef444440', sym: 'y', label: 'Outcome' },
-  wealth:    { main: '#ec4899', light: '#fce7f3', ring: '#ec489940', sym: 'W', label: 'Wealth' },
+  deposit:   { main: PALETTE.coral,    light: tint(PALETTE.coral),    ring: alpha(PALETTE.coral, 0.25),    sym: 'b', label: 'Deposit' },
+  skill:     { main: PALETTE.purple,   light: tint(PALETTE.purple),   ring: alpha(PALETTE.purple, 0.25),   sym: 'σ', label: 'Skill' },
+  wager:     { main: PALETTE.teal,     light: tint(PALETTE.teal),     ring: alpha(PALETTE.teal, 0.25),     sym: 'm', label: 'Eff. wager' },
+  aggregate: { main: PALETTE.imperial, light: tint(PALETTE.imperial), ring: alpha(PALETTE.imperial, 0.25), sym: 'r̂', label: 'Aggregate' },
+  score:     { main: '#E67E22',        light: tint('#E67E22'),        ring: alpha('#E67E22', 0.25),        sym: 's', label: 'Score' },
+  payoff:    { main: PALETTE.teal,     light: tint(PALETTE.teal),     ring: alpha(PALETTE.teal, 0.25),     sym: 'Π', label: 'Payoff' },
+  outcome:   { main: PALETTE.coral,    light: tint(PALETTE.coral),    ring: alpha(PALETTE.coral, 0.25),    sym: 'y', label: 'Outcome' },
+  wealth:    { main: PALETTE.navy,     light: tint(PALETTE.navy),     ring: alpha(PALETTE.navy, 0.25),     sym: 'W', label: 'Wealth' },
 } as const;
 
 export const METHOD = {
-  equal:      { color: '#64748b', label: 'Equal weight',  id: 'uniform'      as const, dash: undefined,   strokeWidth: 2 },
-  skill_only: { color: '#f97316', label: 'Skill-only',    id: 'skill_only'   as const, dash: '6 3',       strokeWidth: 2 },
-  blended:    { color: '#6366f1', label: 'Skill × stake', id: 'skill_stake'  as const, dash: undefined,   strokeWidth: 3 },
-  stake_only: { color: '#0d9488', label: 'Stake-only',    id: 'deposit_only' as const, dash: '2 3',       strokeWidth: 2 },
+  equal:      { color: PALETTE.slate,    label: 'Equal weight',  id: 'uniform'      as const, dash: undefined, strokeWidth: 2 },
+  skill_only: { color: PALETTE.purple,   label: 'Skill-only',    id: 'skill_only'   as const, dash: '6 3',     strokeWidth: 2 },
+  blended:    { color: PALETTE.teal,     label: 'Skill × stake', id: 'skill_stake'  as const, dash: undefined, strokeWidth: 3 },
+  stake_only: { color: PALETTE.coral,    label: 'Stake-only',    id: 'deposit_only' as const, dash: '2 3',     strokeWidth: 2 },
 } as const;
 
 export const METHOD_EXTRA = {
-  best_single: { color: '#eab308', label: 'Best single', id: 'best_single' as const, dash: '8 3 2 3', strokeWidth: 2 },
+  best_single: { color: PALETTE.navy, label: 'Best single', id: 'best_single' as const, dash: '8 3 2 3', strokeWidth: 2 },
 } as const;
 
 export const GLOSSARY_ENTRIES = [

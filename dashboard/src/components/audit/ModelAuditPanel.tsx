@@ -27,21 +27,10 @@ import {
   MODEL_ANNOTATIONS,
   XGBOOST_SUGGESTIONS,
 } from '@/lib/audit/auditContent';
-
-// ── Colour palette for forecasters ─────────────────────────────────────────
-
-const FORECASTER_COLOURS: Record<string, string> = {
-  Naive: '#64748b',
-  'EWMA(5)': '#0ea5e9',
-  'ARIMA(2,1,1)': '#8b5cf6',
-  XGBoost: '#f59e0b',
-  'Neural Net': '#ef4444',
-  Theta: '#10b981',
-  Ensemble: '#6366f1',
-};
+import { FORECASTER_COLOURS, PALETTE } from '@/lib/palette';
 
 function getColour(name: string): string {
-  return FORECASTER_COLOURS[name] ?? '#94a3b8';
+  return FORECASTER_COLOURS[name] ?? PALETTE.slate;
 }
 
 // ════════════════════════════════════════════════════════════════════════════

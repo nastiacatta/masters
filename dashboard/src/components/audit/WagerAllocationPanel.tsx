@@ -17,21 +17,10 @@ import {
 } from 'recharts';
 import { useAuditData } from '@/hooks/useAuditData';
 import { giniCoefficient, effectiveN } from '@/lib/audit/auditUtils';
-
-// ── Colour palette ─────────────────────────────────────────────────────────
-
-const FORECASTER_COLOURS: Record<string, string> = {
-  Naive: '#64748b',
-  'EWMA(5)': '#0ea5e9',
-  'ARIMA(2,1,1)': '#8b5cf6',
-  XGBoost: '#f59e0b',
-  'Neural Net': '#ef4444',
-  Theta: '#10b981',
-  Ensemble: '#6366f1',
-};
+import { FORECASTER_COLOURS, PALETTE } from '@/lib/palette';
 
 function getColour(name: string): string {
-  return FORECASTER_COLOURS[name] ?? '#94a3b8';
+  return FORECASTER_COLOURS[name] ?? PALETTE.slate;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -135,18 +124,18 @@ export default function WagerAllocationPanel() {
             <BarChart data={wagerBarData} layout="vertical">
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e2e8f0"
+                stroke={PALETTE.border}
                 horizontal={false}
               />
               <XAxis
                 type="number"
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: PALETTE.slate }}
                 tickLine={false}
               />
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={{ fontSize: 11, fill: '#475569' }}
+                tick={{ fontSize: 11, fill: PALETTE.charcoal }}
                 tickLine={false}
                 width={100}
               />
@@ -154,21 +143,21 @@ export default function WagerAllocationPanel() {
                 contentStyle={{
                   fontSize: 11,
                   borderRadius: 8,
-                  border: '1px solid #e2e8f0',
+                  border: `1px solid ${PALETTE.border}`,
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar
                 dataKey="deposit"
                 stackId="wager"
-                fill="#94a3b8"
+                fill={PALETTE.slate}
                 name="Deposit"
                 radius={[0, 0, 0, 0]}
               />
               <Bar
                 dataKey="skillGate"
                 stackId="wager"
-                fill="#6366f1"
+                fill={PALETTE.teal}
                 name="Skill Gate (σ)"
                 radius={[0, 4, 4, 0]}
               />
@@ -194,19 +183,19 @@ export default function WagerAllocationPanel() {
             <BarChart data={weightData} layout="vertical">
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e2e8f0"
+                stroke={PALETTE.border}
                 horizontal={false}
               />
               <XAxis
                 type="number"
                 domain={[0, 1]}
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: PALETTE.slate }}
                 tickLine={false}
               />
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={{ fontSize: 11, fill: '#475569' }}
+                tick={{ fontSize: 11, fill: PALETTE.charcoal }}
                 tickLine={false}
                 width={100}
               />
@@ -214,13 +203,13 @@ export default function WagerAllocationPanel() {
                 contentStyle={{
                   fontSize: 11,
                   borderRadius: 8,
-                  border: '1px solid #e2e8f0',
+                  border: `1px solid ${PALETTE.border}`,
                 }}
                 formatter={(value: unknown) => (Number(value) * 100).toFixed(1) + '%'}
               />
               <Bar
                 dataKey="weight"
-                fill="#6366f1"
+                fill={PALETTE.teal}
                 radius={[0, 4, 4, 0]}
                 name="Weight"
               />
@@ -280,14 +269,14 @@ export default function WagerAllocationPanel() {
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={depositPolicies}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
                 <XAxis
                   dataKey="policy"
-                  tick={{ fontSize: 11, fill: '#475569' }}
+                  tick={{ fontSize: 11, fill: PALETTE.charcoal }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tick={{ fontSize: 10, fill: PALETTE.slate }}
                   tickLine={false}
                   width={50}
                 />
@@ -295,26 +284,26 @@ export default function WagerAllocationPanel() {
                   contentStyle={{
                     fontSize: 11,
                     borderRadius: 8,
-                    border: '1px solid #e2e8f0',
+                    border: `1px solid ${PALETTE.border}`,
                   }}
                   formatter={(value: unknown) => Number(value).toFixed(4)}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar
                   dataKey="uniform"
-                  fill="#94a3b8"
+                  fill={PALETTE.slate}
                   name="Uniform"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
                   dataKey="skill"
-                  fill="#0ea5e9"
+                  fill={PALETTE.purple}
                   name="Skill"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
                   dataKey="mechanism"
-                  fill="#6366f1"
+                  fill={PALETTE.teal}
                   name="Mechanism"
                   radius={[4, 4, 0, 0]}
                 />

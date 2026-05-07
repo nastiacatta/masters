@@ -1,28 +1,34 @@
 import type { CSSProperties } from 'react';
+import { PALETTE, AGENT_COLORS, CHART_AXIS, CHART_GRID, CHART_BORDER } from '@/lib/palette';
 
-export const AGENT_PALETTE = [
-  '#6366f1', '#10b981', '#f59e0b', '#0ea5e9',
-  '#ef4444', '#ec4899', '#8b5cf6', '#14b8a6',
-  '#f97316', '#06b6d4', '#84cc16', '#a855f7',
-];
+/**
+ * Lab chart tokens — all anchored on the slide palette in
+ * `@/lib/palette` so every chart in the app, the password-gated slide
+ * deck, and every R/Python-generated PNG share the same colours.
+ */
+export const AGENT_PALETTE = [...AGENT_COLORS];
 
 export const CHART_MARGIN = { top: 10, right: 28, bottom: 6, left: 8 };
 
 /** Use when chart has X/Y axis labels so they are not clipped */
 export const CHART_MARGIN_LABELED = { top: 20, right: 32, bottom: 36, left: 64 };
 
-export const AXIS_TICK = { fontSize: 13, fill: '#5a6175' };
-export const AXIS_STROKE = '#8c92a3';
+export const AXIS_TICK = { fontSize: 13, fill: PALETTE.charcoal };
+export const AXIS_STROKE = CHART_AXIS;
 
-export const GRID_PROPS = { strokeDasharray: '3 3', stroke: '#e5e7eb', strokeOpacity: 0.7 } as const;
+export const GRID_PROPS = {
+  strokeDasharray: '3 3',
+  stroke: CHART_GRID,
+  strokeOpacity: 0.7,
+} as const;
 
 export const TOOLTIP_STYLE: CSSProperties = {
   borderRadius: 6,
-  border: '1px solid #d1d5db',
+  border: `1px solid ${CHART_BORDER}`,
   boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 12px -4px rgba(15, 23, 42, 0.08)',
   fontSize: 13,
   padding: '10px 14px',
-  background: 'rgba(255, 253, 248, 0.98)',
+  background: 'rgba(255, 255, 255, 0.98)',
   backdropFilter: 'blur(10px)',
   lineHeight: 1.5,
   maxWidth: 340,

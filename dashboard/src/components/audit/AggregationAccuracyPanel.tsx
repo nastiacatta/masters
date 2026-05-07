@@ -18,6 +18,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useAuditData } from '@/hooks/useAuditData';
+import { PALETTE } from '@/lib/palette';
 
 // ── Static content ─────────────────────────────────────────────────────────
 
@@ -293,34 +294,34 @@ export default function AggregationAccuracyPanel() {
         {calibrationData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={calibrationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
               <XAxis
                 dataKey="nominal"
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: PALETTE.slate }}
                 tickLine={false}
                 label={{
                   value: 'Nominal',
                   position: 'insideBottom',
                   offset: -5,
-                  style: { fontSize: 10, fill: '#94a3b8' },
+                  style: { fontSize: 10, fill: PALETTE.slate },
                 }}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: PALETTE.slate }}
                 tickLine={false}
                 width={50}
                 label={{
                   value: 'Empirical',
                   angle: -90,
                   position: 'insideLeft',
-                  style: { fontSize: 10, fill: '#94a3b8' },
+                  style: { fontSize: 10, fill: PALETTE.slate },
                 }}
               />
               <Tooltip
                 contentStyle={{
                   fontSize: 11,
                   borderRadius: 8,
-                  border: '1px solid #e2e8f0',
+                  border: `1px solid ${PALETTE.border}`,
                 }}
               />
               {/* Perfect calibration diagonal */}
@@ -329,14 +330,14 @@ export default function AggregationAccuracyPanel() {
                   { x: 0, y: 0 },
                   { x: 1, y: 1 },
                 ]}
-                stroke="#94a3b8"
+                stroke={PALETTE.slate}
                 strokeDasharray="3 3"
               />
               <Line
                 type="monotone"
                 dataKey="empirical"
-                stroke="#6366f1"
-                dot={{ r: 3, fill: '#6366f1' }}
+                stroke={PALETTE.teal}
+                dot={{ r: 3, fill: PALETTE.teal }}
                 strokeWidth={2}
                 name="Empirical coverage"
               />
@@ -360,14 +361,14 @@ export default function AggregationAccuracyPanel() {
         {perQuantileData.length > 0 ? (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={perQuantileData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
               <XAxis
                 dataKey="tau"
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: PALETTE.slate }}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: PALETTE.slate }}
                 tickLine={false}
                 width={50}
               />
@@ -375,13 +376,13 @@ export default function AggregationAccuracyPanel() {
                 contentStyle={{
                   fontSize: 11,
                   borderRadius: 8,
-                  border: '1px solid #e2e8f0',
+                  border: `1px solid ${PALETTE.border}`,
                 }}
                 formatter={(value: unknown) => Number(value).toFixed(4)}
               />
               <Bar
                 dataKey="gap"
-                fill="#6366f1"
+                fill={PALETTE.teal}
                 radius={[4, 4, 0, 0]}
                 name="|Gap|"
               />

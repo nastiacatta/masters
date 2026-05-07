@@ -71,24 +71,10 @@ export function sweepMetricLabel(key: string): string {
   return labels[key] ?? key;
 }
 
-export const AGENT_COLORS = [
-  '#64748b', '#6366f1', '#ec4899', '#0d9488',
-  '#10b981', '#8b5cf6', '#0d9488', '#06b6d4',
-  '#ef4444', '#84cc16', '#a855f7', '#14b8a6',
-];
-
-export const ACCENT = '#2563eb';
-export const MUTED = '#94a3b8';
-
-export const WEIGHTING_COLORS: Record<string, string> = {
-  crpsUniform: '#94a3b8',
-  crpsDeposit: '#0d9488',
-  crpsSkill: '#8b5cf6',
-  crpsMechanism: '#2563eb',
-  crpsBestSingle: '#10b981',
-  crpsUniformCum: '#94a3b8',
-  crpsDepositCum: '#0d9488',
-  crpsSkillCum: '#8b5cf6',
-  crpsMechanismCum: '#2563eb',
-  crpsBestSingleCum: '#10b981',
-};
+// ── Palette re-exports ──────────────────────────────────────────
+// `AGENT_COLORS`, `ACCENT`, `MUTED`, and `WEIGHTING_COLORS` live in
+// `lib/palette.ts` now, but are re-exported here so existing imports
+// from `@/lib/formatters` keep working. Palette is anchored on the
+// slide deck constants so the main app, the presentation, and every
+// R/Python-generated PNG share the same colours for the same concept.
+export { AGENT_COLORS, ACCENT, MUTED, WEIGHTING_COLORS } from './palette';

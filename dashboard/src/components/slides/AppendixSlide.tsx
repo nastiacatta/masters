@@ -791,8 +791,8 @@ export default function AppendixSlide(_props: {
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 {[
-                  { label: 'This Project', wind: '−7.0%', elec: '−0.2%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
-                  { label: 'Vitali OGD (per-τ)', wind: '−18.0%', elec: '−2.3%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
+                  { label: 'This Project', wind: '−7.0%', elec: '+0.0%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
+                  { label: 'Vitali OGD (per-τ)', wind: '−18.0%', elec: '−2.0%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
                   { label: 'Raja history-free', wind: '−1.5%', elec: '+0.0%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
                 ].map((item) => (
                   <div key={item.label} style={{ padding: '16px 20px', background: item.tint, borderRadius: 10, textAlign: 'center' }}>

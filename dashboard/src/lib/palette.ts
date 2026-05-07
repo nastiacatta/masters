@@ -1,19 +1,31 @@
 /**
- * Colourblind-safe palette and contrast utilities.
+ * Single source of truth for chart/page colours across the whole dashboard.
  *
- * CB_PALETTE: 8 colours distinguishable under protanopia, deuteranopia,
- * and tritanopia. Based on Wong (2011) "Points of view: Color blindness",
- * Nature Methods 8, 441.
+ * Anchored on the slide deck palette defined in
+ * `src/components/slides/shared/presentationConstants.ts`, which itself
+ * mirrors `presentation/R/theme_thesis.R` and
+ * `onlinev2/src/onlinev2/plotting/style.py`. Importing from that module
+ * means the main app, the password-gated slide deck, the R-generated
+ * PNGs, and the Python-generated PNGs all show the same colour for the
+ * same concept.
  *
- * VERDICT_COLOURS: semantic good/neutral/bad colours with foreground,
- * background, and border values that maintain WCAG 2.1 AA contrast
- * (≥ 4.5:1 for fg on bg).
+ * Also exports:
+ *   - `CB_PALETTE` — Wong (2011) colourblind-safe 8-colour palette
+ *   - `VERDICT_COLOURS` — good/neutral/bad tokens with WCAG AA contrast
+ *   - `METHOD_COLORS` — aggregation method → hex
+ *   - `FORECASTER_COLOURS` — model name → hex (aliases for every variant)
+ *   - `SCENARIO_COLOURS` — behaviour scenario → hex
+ *   - `FAMILY_COLORS` — behaviour family → hex
+ *   - `AGENT_COLORS` — ordered list for cycling through agents
+ *   - Contrast helpers (relativeLuminance, contrastRatio)
  */
 
-/**
- * Wong (2011) colourblind-safe palette — 8 colours.
- * Order: blue, orange, green, pink, sky blue, vermillion, yellow, black.
- */
+import { PALETTE } from '@/components/slides/shared/presentationConstants';
+
+/** Re-export the slide palette so other files have a single entry point. */
+export { PALETTE };
+
+// ─── Colourblind-safe palette (Wong 2011) ────────────────────────────
 export const CB_PALETTE = [
   '#0072B2', // blue
   '#E69F00', // orange
@@ -25,20 +37,127 @@ export const CB_PALETTE = [
   '#000000', // black
 ] as const;
 
-/**
- * Verdict colours with WCAG 4.5:1 contrast ratio (fg on bg).
- *
- * good:    emerald tones — fg #065f46 on bg #ecfdf5 ≈ 7.4:1
- * neutral: amber tones   — fg #78350f on bg #fffbeb ≈ 8.6:1
- * bad:     red tones      — fg #991b1b on bg #fef2f2 ≈ 7.8:1
- */
+// ─── Verdict colours (WCAG AA) ───────────────────────────────────────
+// good/neutral/bad tokens — fg colours are darkened variants that satisfy
+// WCAG 4.5:1 contrast against the tinted bg; border keeps the slide-palette
+// hue so the visual identity stays consistent with charts/slides.
 export const VERDICT_COLOURS = {
-  good:    { fg: '#065f46', bg: '#ecfdf5', border: '#10b981' },
-  neutral: { fg: '#78350f', bg: '#fffbeb', border: '#f59e0b' },
-  bad:     { fg: '#991b1b', bg: '#fef2f2', border: '#ef4444' },
+  good:    { fg: '#115E59', bg: '#E7F3F1', border: PALETTE.teal },
+  neutral: { fg: '#78350f', bg: '#FBF3E5', border: '#B45309' },
+  bad:     { fg: '#991B1B', bg: '#FBECEF', border: PALETTE.coral },
 } as const;
 
-// ── Contrast ratio helpers ──────────────────────────────────────────
+// ─── Aggregation method colour map ───────────────────────────────────
+// Keeps the existing key set but swaps generic Tailwind tones for the
+// slide palette. All slide charts, page charts, and table cells should
+// look up method colours through this map.
+export const METHOD_COLORS: Record<string, string> = {
+  uniform:          PALETTE.slate,
+  equal:            PALETTE.slate,
+  deposit:          PALETTE.coral,
+  stake:            PALETTE.coral,
+  skill:            PALETTE.purple,
+  mechanism:        PALETTE.teal,
+  blended:          PALETTE.teal,
+  best_single:      PALETTE.navy,
+  oracle:           PALETTE.navy,
+  inverse_variance: '#E67E22', // warm orange, matches R FORECASTER_COLOURS.MLP
+  trimmed_mean:     '#95A5A6',
+  median:           PALETTE.charcoal,
+  raja_history_free:       PALETTE.imperial,
+  vitali_ogd_per_quantile: PALETTE.purple,
+};
+
+// ─── Forecaster colour map ───────────────────────────────────────────
+// Key set covers every spelling of the seven base forecasters used
+// across panels: short name (e.g. "EWMA"), parameterised variant
+// (e.g. "EWMA(5)"), and descriptive ("Neural Net"). All variants map
+// to the same slide/R colour so a forecaster is always the same hue.
+const FC_BASE = {
+  Naive:    PALETTE.navy,
+  EWMA:     PALETTE.teal,
+  ARIMA:    PALETTE.coral,
+  XGBoost:  PALETTE.purple,
+  MLP:      '#E67E22',    // warm orange
+  Theta:    PALETTE.slate,
+  Ensemble: PALETTE.imperial,
+};
+
+export const FORECASTER_COLOURS: Record<string, string> = {
+  ...FC_BASE,
+  // Parameterised variants
+  'EWMA(5)':      FC_BASE.EWMA,
+  'ARIMA(2,1,1)': FC_BASE.ARIMA,
+  'Neural Net':   FC_BASE.MLP,
+  'Neural Net (MLP)': FC_BASE.MLP,
+  'Ensemble (Naive+EWMA)': FC_BASE.Ensemble,
+};
+
+// ─── Behaviour scenario colour map ───────────────────────────────────
+export const SCENARIO_COLOURS: Record<string, string> = {
+  benign_baseline:     PALETTE.teal,
+  bursty_kelly:        PALETTE.imperial,
+  risk_averse_hedged:  PALETTE.slate,
+  lumpy_miscalibrated: '#E67E22',
+  edge_threshold:      PALETTE.purple,
+  sybil_split:         PALETTE.coral,
+};
+
+// ─── Behaviour family colour map ─────────────────────────────────────
+export const FAMILY_COLORS: Record<string, string> = {
+  participation: PALETTE.teal,
+  information:   PALETTE.imperial,
+  reporting:     PALETTE.purple,
+  staking:       '#E67E22',
+  objectives:    PALETTE.navy,
+  identity:      PALETTE.coral,
+  learning:      PALETTE.teal,
+  adversarial:   PALETTE.coral,
+  operational:   PALETTE.slate,
+};
+
+// ─── Ordered agent palette (cycle-safe) ─────────────────────────────
+// Matches the Python `PALETTE` list in plotting/style.py and the R
+// `FORECASTER_COLOURS` vector in theme_thesis.R.
+export const AGENT_COLORS = [
+  PALETTE.navy,
+  PALETTE.teal,
+  PALETTE.coral,
+  PALETTE.purple,
+  '#E67E22',          // orange
+  PALETTE.slate,
+  PALETTE.imperial,
+  PALETTE.charcoal,
+] as const;
+
+// Cumulative CRPS line colours for the forecast-aggregation chart —
+// named legacy keys kept so callers that imported `WEIGHTING_COLORS`
+// don't need to change at the call site.
+export const WEIGHTING_COLORS: Record<string, string> = {
+  crpsUniform:        PALETTE.slate,
+  crpsDeposit:        PALETTE.coral,
+  crpsSkill:          PALETTE.purple,
+  crpsMechanism:      PALETTE.teal,
+  crpsBestSingle:     PALETTE.navy,
+  crpsUniformCum:     PALETTE.slate,
+  crpsDepositCum:     PALETTE.coral,
+  crpsSkillCum:       PALETTE.purple,
+  crpsMechanismCum:   PALETTE.teal,
+  crpsBestSingleCum:  PALETTE.navy,
+};
+
+/** Primary accent colour for solitary charts with no legend. */
+export const ACCENT = PALETTE.teal;
+
+/** Muted fill used for zero-weight / inactive elements. */
+export const MUTED = PALETTE.slate;
+
+/** Neutral grid / axis line colour used across all Recharts charts. */
+export const CHART_GRID   = PALETTE.border;
+export const CHART_AXIS   = PALETTE.slate;
+export const CHART_BORDER = PALETTE.border;
+
+// ─── Contrast helpers (unchanged) ────────────────────────────────────
 
 /** Parse a 3- or 6-digit hex colour string into [r, g, b] (0–255). */
 function hexToRGB(hex: string): [number, number, number] {
@@ -56,57 +175,29 @@ function hexToRGB(hex: string): [number, number, number] {
   ];
 }
 
-/**
- * Convert an sRGB channel value (0–255) to its linear-light value.
- * Per WCAG 2.1 relative luminance definition.
- */
+/** Convert an sRGB channel (0–255) to linear-light value (WCAG 2.1). */
 function linearise(channel: number): number {
   const s = channel / 255;
   return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 }
 
-/**
- * Relative luminance of a hex colour per WCAG 2.1.
- * Returns a value in [0, 1] where 0 is darkest and 1 is lightest.
- */
+/** Relative luminance of a hex colour per WCAG 2.1. */
 export function relativeLuminance(hex: string): number {
   const [r, g, b] = hexToRGB(hex);
   return 0.2126 * linearise(r) + 0.7152 * linearise(g) + 0.0722 * linearise(b);
 }
 
-/** Aggregation method colour map — consistent across all pages. */
-export const METHOD_COLORS: Record<string, string> = {
-  uniform:   '#64748b',  // slate
-  deposit:   '#0ea5e9',  // sky
-  skill:     '#8b5cf6',  // violet
-  mechanism: '#10b981',  // emerald
-};
-
-/** Behaviour family hex colour map — consistent across all pages. */
-export const FAMILY_COLORS: Record<string, string> = {
-  participation: '#0ea5e9',
-  information:   '#3b82f6',
-  reporting:     '#8b5cf6',
-  staking:       '#14b8a6',
-  objectives:    '#6366f1',
-  identity:      '#f59e0b',
-  learning:      '#10b981',
-  adversarial:   '#ef4444',
-  operational:   '#64748b',
-};
-
 /**
  * WCAG 2.1 contrast ratio between two hex colours.
  *
- * @param fg - Foreground colour as a hex string (e.g. "#065f46")
- * @param bg - Background colour as a hex string (e.g. "#ecfdf5")
- * @returns Contrast ratio in the range [1, 21]. A ratio ≥ 4.5 satisfies
- *          WCAG 2.1 AA for normal text.
+ * @param fg Foreground colour hex (e.g. "#1B2A4A")
+ * @param bg Background colour hex
+ * @returns Contrast ratio in [1, 21]. ≥ 4.5 passes WCAG 2.1 AA for normal text.
  */
 export function contrastRatio(fg: string, bg: string): number {
   const lFg = relativeLuminance(fg);
   const lBg = relativeLuminance(bg);
   const lighter = Math.max(lFg, lBg);
-  const darker = Math.min(lFg, lBg);
+  const darker  = Math.min(lFg, lBg);
   return (lighter + 0.05) / (darker + 0.05);
 }
