@@ -16,17 +16,20 @@ Every figure and table that will appear in the thesis. Each entry has:
 | T2 | Skill recovery on known-noise panel | `experiments.py --exp skill_recovery` output | 50_results_synthetic | LOCKED |
 | T3 | Deposit policy ablation | `experiments.py --exp deposit_policies` output | 50_results_synthetic | LOCKED |
 | T4 | Weight rule comparison (fixed vs bankroll deposits) | `experiments.py --exp weight_rules` output | 50_results_synthetic | LOCKED |
-| T5 | Bankroll pipeline ablation (A–E) | `experiments.py --exp bankroll_ablation` output | 50_results_synthetic | PENDING |
-| T6 | Elia wind 3000-point audit slice: aggregate comparison (9 methods) | `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/comparison.json` | 60_results_real_data | LOCKED |
-| T6b | Elia wind 17 344-hour post-fix run: aggregate + baselines head-to-head | `onlinev2/outputs/post_fix_deltas/SUMMARY.md` + `dashboard/public/data/real_data/elia_wind/data/` | 60_results_real_data | LOCKED |
+| T5 | Bankroll pipeline ablation (A–E) | `onlinev2/outputs/core/experiments/bankroll_ablation/data/bankroll_ablation.csv` | 50_results_synthetic | LOCKED |
+| T6 | Elia wind full-length run: aggregate comparison (post-fix, expanding-mode) | `dashboard/public/data/real_data/elia_wind/data/comparison.json` | 60_results_real_data | LOCKED |
+| T6a | Elia wind audit slice: aggregate comparison (static-mode, calibration anchor) | `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/comparison.json` | 60_results_real_data | LOCKED |
+| T6b | Elia wind baselines head-to-head (vitali_ogd, raja, mechanism) — static-mode | `dashboard/public/data/real_data/elia_wind/data/baselines.json` | 60_results_real_data | LOCKED (static) |
+| T6c | Elia operational forecast comparison (mostrecent, dayahead, weekahead) | `onlinev2/outputs/elia_forecast_baseline.json` | 60_results_real_data | LOCKED |
 | T7 | Elia wind: per-forecaster CRPS and σ | same comparison.json, `per_agent_crps` | 60_results_real_data | LOCKED |
 | T8 | Elia wind: per-τ coverage (mechanism) | `onlinev2/outputs/audit_per_quantile/coverage.json` | 60_results_real_data | LOCKED |
 | T9 | Elia wind: recalibration headline | `onlinev2/outputs/audit_per_quantile/RECALIBRATION_SUMMARY.md` | 70_recalibration_layer | LOCKED |
 | T10 | Elia wind: recalibration spec assertions | same source | 70_recalibration_layer | LOCKED |
-| T11 | Elia electricity: aggregate comparison (post-fix T ≈ 70 000) | `onlinev2/outputs/post_fix_deltas/SUMMARY.md` + `dashboard/public/data/real_data/elia_electricity/data/comparison.json` | 60_results_real_data | LOCKED |
-| T12 | Day-ahead horizon comparison (h = 24) | `onlinev2/outputs/post_fix_deltas/SUMMARY.md` | 60_results_real_data | LOCKED |
-| T13 | 4h-ahead horizon comparison (h = 4) | `onlinev2/outputs/post_fix_deltas/SUMMARY.md` | 60_results_real_data | LOCKED |
-| T13b | Within-run seasonal slice + per-season table | `onlinev2/outputs/post_fix_deltas/SUMMARY.md` | 60_results_real_data | LOCKED |
+| T11 | Elia electricity: aggregate comparison (post-fix, expanding-mode) | `dashboard/public/data/real_data/elia_electricity/data/comparison.json` | 60_results_real_data | LOCKED |
+| T12 | Day-ahead horizon comparison (h = 1 on daily series, warmup ≥ 70) | `dashboard/public/data/real_data/elia_wind/data/day_ahead.json` | 60_results_real_data | LOCKED (static) |
+| T13 | 4h-ahead horizon comparison (h = 16 on 15-minute series) | `dashboard/public/data/real_data/elia_wind/data/4h_ahead.json` | 60_results_real_data | LOCKED (static) |
+| T13a | Within-run seasonal slice + per-season table | `dashboard/public/data/real_data/elia_wind/data/regime_shift.json` | 60_results_real_data | LOCKED (static) |
+| T13b | Elia electricity baselines head-to-head (static-mode) | `dashboard/public/data/real_data/elia_electricity/data/baselines.json` | 60_results_real_data | LOCKED (static) |
 | T14 | Critical behaviour presets (Δ CRPS > 10%) | `dashboard/docs/MECHANISM_ANALYSIS.md` §7 | 80_robustness | LOCKED (pre-audit) |
 | T15 | Contained behaviour presets (Δ CRPS < 2%) | same | 80_robustness | LOCKED (pre-audit) |
 | T16 | Sybil regimes (identical vs diversified) | `experiments.py --exp sybil` output | 80_robustness | LOCKED |

@@ -229,16 +229,19 @@ for the skill update:
 The price: EWMA is not a regret-minimising aggregator. Our σ_i is an
 *estimator* of reliability, not a game-theoretically optimal weight.
 The empirical consequence is that `michael_ogd` matches our mechanism
-within 0.3% CRPS on the wind slice; both lose to the inverse-variance
-baseline which is essentially a closed-form MLE for the Gaussian case.
-We accept this cost in exchange for the economic structure.
+within 0.3% CRPS on the 3000-point audit slice; on the full-length
+expanding-mode run the renamed `michael_ogd_centered_median_fan`
+baseline beats our mechanism by ~7 pp (0.0349 vs 0.0379 CRPS). We
+accept the CRPS cost in exchange for the economic structure.
 
 ## 3.5 Parameter tuning
 
 Defaults (γ = 4, ρ = 0.1) are tuned for synthetic panels with ~10
-participants and T ~ 1000. The Elia wind slice has T = 17544 hours and
-7 forecasters with stable relative quality, which rewards faster, more
-decisive skill differentiation; hence the tuned values γ = 16, ρ = 0.5.
+participants and T ~ 1000. The Elia wind series has T = 17 544 raw
+hourly points (17 344 evaluation rounds after a 200-round warmup) and
+7 forecasters with stable relative quality, which rewards faster,
+more decisive skill differentiation; hence the tuned values γ = 16,
+ρ = 0.5.
 
 The hyperparameter sweep protocol is the held-out-split design in
 `scripts/run_sensitivity_sweep.py` [PENDING — once the post-B3-fix

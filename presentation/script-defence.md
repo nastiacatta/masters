@@ -170,15 +170,15 @@ The critical difference from relative-weight approaches: my skill signal is abso
 
 ### Slide bullets
 
-* Elia wind: ~7.6% CRPS reduction vs equal weights (post-audit, strictly-causal)
-* Elia electricity: near-tied with equal weights (forecasters similar)
+* Elia wind: ~7.1% CRPS reduction vs equal weights (post-audit, strictly-causal)
+* Elia electricity: tied with equal weights (forecasters similar)
 * Mechanism correctly ranks forecasters by skill
-* best_single (per-round oracle-of-best) still beats the mechanism on wind
+* Per-round oracle-of-best still beats the mechanism on wind (~16%)
 * Gains depend on forecaster heterogeneity
 
 ### Script
 
-On the Elia wind dataset — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, γ = 16, ρ = 0.5 — the mechanism achieves a seven-point-six per cent reduction in mean CRPS compared to equal weighting, under strictly-causal normalisation.
+On the Elia wind dataset — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, γ = 16, ρ = 0.5 — the mechanism achieves a seven-point-one per cent reduction in mean CRPS compared to equal weighting, under strictly-causal normalisation.
 
 The graph shows the learned skill for each forecaster over time. The skill layer recovers the per-forecaster CRPS ordering correctly — this is the headline skill-recovery result. But on this dataset the gap between the top and bottom forecasters in real CRPS is modest, so the mechanism's reweighting produces only a modest gain in the aggregate.
 
@@ -186,7 +186,7 @@ An earlier version of this deck reported thirty-four per cent. That figure was p
 
 On the Elia electricity dataset, the mechanism is essentially tied with equal weights — the improvement is under one per cent. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill layer to exploit.
 
-Importantly, per-round best_single — picking the forecaster with the lowest rolling CRPS over the last hundred rounds — beats the mechanism by roughly twenty-four per cent on wind. This is the forecast-combination puzzle surfacing honestly. The thesis contribution is not universal CRPS dominance; it is conditional improvement over equal weights while preserving the seven Lambert properties (budget balance, self-financing, sybil-proofness).
+Importantly, a per-round oracle-of-best — picking the forecaster with the lowest rolling CRPS over the last hundred rounds — beats the mechanism by roughly sixteen per cent on wind. This is the forecast-combination puzzle surfacing honestly. The thesis contribution is not universal CRPS dominance; it is conditional improvement over equal weights while preserving the seven Lambert properties (budget balance, self-financing, sybil-proofness).
 
 ---
 

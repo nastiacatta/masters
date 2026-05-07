@@ -91,13 +91,19 @@ weights. Introduces an in-sample + out-of-sample payoff allocation.
 
 **What we take:** the framing of prediction markets with online learning
 and intermittency, and their OGD port as our published reference
-aggregator — `michael_port.py` in the codebase, `michael_ogd` in
-`comparison.json`. The ratio mechanism / michael_ogd = 1.003× on the
-3000-point Elia wind slice [source:
+aggregator — `michael_port.py` in the codebase, `michael_ogd` in the
+3000-point audit `comparison.json` and
+`michael_ogd_centered_median_fan` in the full-length expanding-mode
+JSONs. The ratio mechanism / michael_ogd = 1.003× on the 3000-point
+audit slice [source:
 `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/comparison.json`]
 is the empirical statement that our self-financed design pays
 effectively no CRPS cost relative to a state-of-the-art online learner
-for this setting.
+on that slice. On the full-length 17 344-hour run the
+centered-median-fan baseline beats our mechanism by ~7 pp CRPS (0.0349
+vs 0.0379) and Vitali's per-τ OGD from `baselines.json` beats us by
+~11 pp; both gaps quantify the CRPS cost of keeping the Lambert
+budget-balance guarantee.
 
 Sources: `theory/intermittentcontributions_michael.md`,
 [arXiv:2510.13385](https://arxiv.org/abs/2510.13385).
@@ -128,13 +134,16 @@ weighting. Timmermann: *Handbook of Economic Forecasting* chapter
 documenting the "forecast combination puzzle" — simple equal weights
 often beat estimated optimal weights in practice due to estimation error.
 
-**What we take:** the puzzle is directly relevant to our headline claim.
-We are *not* claiming universal dominance over equal weighting. We claim
-that when (i) there is enough heterogeneity between forecasters and
-(ii) we run long enough for the EWMA to converge, the adaptive
-skill-weighting improves CRPS. On the Elia wind slice we see a −5.3%
-mechanism gain vs uniform; on electricity we see ~ −0.45% which is
-within the puzzle regime.
+**What we take:** the puzzle is directly relevant to our headline
+claim. We are *not* claiming universal dominance over equal weighting.
+We claim that when (i) there is enough heterogeneity between
+forecasters and (ii) we run long enough for the EWMA to converge, the
+adaptive skill-weighting improves CRPS. On the 3000-point Elia wind
+audit slice we see a −5.3% mechanism gain vs uniform; on the full-
+length 17 344-hour run under expanding normalisation we see −7.1%
+(t = 40.77, p ≈ 0); on Elia electricity imbalance prices we see a
+clean null (t = 0.008, p = 0.994), which is inside the puzzle regime
+and is reported honestly as such in Chapter 5.2 §6.3.
 
 Sources: `docs/references_sources.md`.
 

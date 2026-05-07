@@ -714,16 +714,20 @@ def run_real_data_comparison(
     #  is no true train/test separation; this checks temporal stability.)
     half = len(crps_u_arr) // 2
     first_vs_second = {}
-    for method_name in crps_per_rule:
-        arr = np.array(crps_per_rule[method_name])
-        first_mean = float(np.mean(arr[:half]))
-        second_mean = float(np.mean(arr[half:]))
-        first_vs_second[method_name] = {
-            "first_half_crps": round(first_mean, 6),
-            "second_half_crps": round(second_mean, 6),
-            "first_half_delta_vs_uniform": round(first_mean - float(np.mean(crps_u_arr[:half])), 6),
-            "second_half_delta_vs_uniform": round(second_mean - float(np.mean(crps_u_arr[half:])), 6),
-        }
+    # Need at least 2 scored rounds for a meaningful half/half split.
+    # With fewer, `arr[:half]` is empty and np.mean emits a
+    # "Mean of empty slice" RuntimeWarning and returns NaN.
+    if half >= 1 and len(crps_u_arr) >= 2:
+        for method_name in crps_per_rule:
+            arr = np.array(crps_per_rule[method_name])
+            first_mean = float(np.mean(arr[:half]))
+            second_mean = float(np.mean(arr[half:]))
+            first_vs_second[method_name] = {
+                "first_half_crps": round(first_mean, 6),
+                "second_half_crps": round(second_mean, 6),
+                "first_half_delta_vs_uniform": round(first_mean - float(np.mean(crps_u_arr[:half])), 6),
+                "second_half_delta_vs_uniform": round(second_mean - float(np.mean(crps_u_arr[half:])), 6),
+            }
     result["temporal_stability"] = {
         "description": (
             "First-half vs second-half mean CRPS across the SAME online "
@@ -770,24 +774,29 @@ def run_real_data_comparison(
     n_scored = len(crps_u_arr)
     block_size_preq = n_scored // K_preq
     online_block_mean_methods: dict[str, dict] = {}
-    for method_name in crps_per_rule:
-        arr = np.array(crps_per_rule[method_name])
-        block_test_crps = []
-        block_test_delta = []
-        for k in range(1, K_preq):
-            b_start = k * block_size_preq
-            b_end = (k + 1) * block_size_preq if k < K_preq - 1 else n_scored
-            test_mean = float(np.mean(arr[b_start:b_end]))
-            u_test_mean = float(np.mean(crps_u_arr[b_start:b_end]))
-            block_test_crps.append(round(test_mean, 6))
-            block_test_delta.append(round(test_mean - u_test_mean, 6))
-        online_block_mean_methods[method_name] = {
-            "block_test_crps": block_test_crps,
-            "block_test_delta_vs_uniform": block_test_delta,
-            "mean_test_crps": round(float(np.mean(block_test_crps)), 6),
-            "std_test_crps": round(float(np.std(block_test_crps, ddof=1)), 6),
-            "mean_test_delta": round(float(np.mean(block_test_delta)), 6),
-        }
+    # Need at least K_preq >= 2 scored rounds per block for the
+    # sequential-block breakdown to be well-defined. When n_scored is
+    # too small to populate the grid, emit an empty methods dict with a
+    # note instead of producing NaN means from empty slices.
+    if block_size_preq >= 1 and n_scored >= K_preq:
+        for method_name in crps_per_rule:
+            arr = np.array(crps_per_rule[method_name])
+            block_test_crps = []
+            block_test_delta = []
+            for k in range(1, K_preq):
+                b_start = k * block_size_preq
+                b_end = (k + 1) * block_size_preq if k < K_preq - 1 else n_scored
+                test_mean = float(np.mean(arr[b_start:b_end]))
+                u_test_mean = float(np.mean(crps_u_arr[b_start:b_end]))
+                block_test_crps.append(round(test_mean, 6))
+                block_test_delta.append(round(test_mean - u_test_mean, 6))
+            online_block_mean_methods[method_name] = {
+                "block_test_crps": block_test_crps,
+                "block_test_delta_vs_uniform": block_test_delta,
+                "mean_test_crps": round(float(np.mean(block_test_crps)), 6),
+                "std_test_crps": round(float(np.std(block_test_crps, ddof=1)), 6),
+                "mean_test_delta": round(float(np.mean(block_test_delta)), 6),
+            }
     result["online_block_mean"] = {
         "description": "Windowed mean of a single online run, bucketed into K "
                        "sequential blocks. NOT a prequential evaluation — no "

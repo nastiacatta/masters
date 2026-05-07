@@ -10,44 +10,58 @@ checklist so nothing slips between the results and the manuscript.
   `scripts/run_sensitivity_sweep.py`). Need the chosen (γ, ρ, λ)
   values and the 2-D sensitivity heatmap. Updates Chapter 3.5,
   Appendix B, and T18.
-- [ ] **Full-pipeline re-run with `causal_normalize_expanding`** (Open #1
-  in the post-fix SUMMARY). The current warmup-window normalisation
-  clips ~33% of Elia wind evaluation observations to 0 or 1. Switching
-  to the expanding variant will change absolute CRPS magnitudes
-  without changing the comparative direction of any result.
-- [ ] **Dashboard adapter rename** (Open #4) for `online_window_mean`,
-  `online_block_mean`, `michael_ogd_centered_median_fan`.
-- [ ] **Full 6.6 block-level summary table** once the renamed keys are
-  extracted into a clean Markdown form.
-- [ ] **Restart-per-season regime evaluation** (B13 follow-up spec). T17
-  appendix.
-- [ ] **Bankroll pipeline ablation re-run** under post-audit pipeline.
-  T5. Numbers from the presentation slide are pre-audit.
+- [ ] **Horizon runs re-run under expanding normalisation.** Current
+  `day_ahead.json`, `4h_ahead.json`, `regime_shift.json` are static-
+  mode. The body of §6.4 uses them; the thesis should flag this
+  honestly or wait for the refresh.
+- [ ] **`baselines.json` re-run under expanding normalisation** for
+  both wind and electricity. Current Vitali OGD / Raja head-to-head
+  numbers in §6.5 are static-mode.
+- [ ] **Restart-per-season regime evaluation** (B13.8 follow-up
+  spec).
+- [ ] **Re-confirm recalibration numbers under expanding
+  normalisation.** The recalibration chapter uses the 3000-point
+  audit slice (static-mode), which is fine for the current write-up
+  but worth re-running on the full-length expanding slice to confirm
+  the 59% tail reduction transfers.
 
 ## Numbers to double-check against sources
 
+- [x] Full-length wind mechanism CRPS 0.03788 — matches
+  `dashboard/public/data/real_data/elia_wind/data/comparison.json`
+  to 5 decimals.
+- [x] Full-length wind DM t = 40.77, p ≈ 0 — matches the `dm_test`
+  block in the same file.
+- [x] Electricity DM t = 0.008, p = 0.994 — matches
+  `onlinev2/outputs/post_fix_deltas/SUMMARY.md`.
+- [x] Electricity mechanism CRPS 0.09052 — matches
+  `dashboard/public/data/real_data/elia_electricity/data/comparison.json`.
 - [x] Mechanism CRPS 0.01874 on 3000-point audit slice — matches
-  `comparison.json` to six decimals (0.01874371688219978).
-- [x] Ratio mechanism / michael_ogd = 1.003 — 0.01874 / 0.01869 =
-  1.0027 (4sf). Round to 1.003 in the thesis; state exact value in T6.
-- [ ] DM statistic +15.92 on mechanism vs uniform (audit slice) —
-  sourced from THESIS_CLAIMS.md Claim 4 body. Re-derive from the
-  per-round crps series in comparison.json at write-time using
-  `onlinev2/src/onlinev2/real_data/stats.py` so the SE is reproducible.
-- [ ] DM statistic +13.95 on mechanism vs uniform (17 344-hour post-fix
-  run). Same re-derivation at write-time.
-- [ ] Synthetic skill recovery T = 20000, 6 forecasters — confirm
-  this matches the current runner default, not a legacy number.
-  Presentation slide 12 quotes σ_5 = 0.820 but the committed
-  `skill_recovery` experiment may have slightly different settings.
-- [ ] Sybil ratio 1.065 for diversified reports — confirm this is from
-  the current dashboard preset, not the pre-refactor version.
+  `audit_fresh/data/comparison.json` to six decimals.
+- [x] Ratio mechanism / michael_ogd = 1.003 (audit slice).
+- [ ] DM statistic +15.92 on the 3000-point audit slice — still in
+  THESIS_CLAIMS.md Claim 4 body; re-derive from the per-round series
+  in comparison.json using `onlinev2/src/onlinev2/real_data/stats.py`
+  at write-time and confirm.
+- [x] Synthetic skill recovery σ values — match `skill_recovery/data/
+  quantiles_crps_summary.csv` to 3 decimals.
+- [x] Deposit policy comparison means — match
+  `deposit_policy_comparison.csv` exactly (bankroll_conf = 0.03796,
+  oracle_precision = 0.02271).
+- [x] Weight rule comparison means — match
+  `weight_rule_comparison.csv` exactly.
+- [x] Bankroll ablation means — computed directly from
+  `bankroll_ablation.csv` (20 seeds per variant).
+- [ ] Sybil ratio 1.065 for diversified reports — still quoted from
+  the dashboard pre-refactor preset. Verify against
+  `onlinev2/outputs/core/experiments/sybil/` after the next re-run.
 - [x] η default value — runner hardcodes `eta=2.0`, not the `η = 1`
   the original draft said. Fixed in `30_mechanism_design.md`.
 - [x] `best_single` semantics — it is a 100-step rolling CRPS
-  selector, not a per-round oracle. Fixed in
-  `60_results_real_data.md` §6.1.1; `oracle` is the per-round
-  hindsight row.
+  selector, not a per-round oracle. Fixed throughout.
+- [x] Elia operational forecast MW-eq numbers — match
+  `onlinev2/outputs/elia_forecast_baseline.json` (best_single 62.6,
+  mechanism 76.2, Elia real-time 74.0).
 
 ## Conceptual points still to nail down
 

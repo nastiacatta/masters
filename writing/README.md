@@ -23,7 +23,7 @@ supported by committed outputs and should be treated as stable.
 | `30_mechanism_design.md` | Full mechanism description — math + intuition | [LOCKED] |
 | `40_methodology.md` | DGPs, forecaster panel, experiment protocol | [LOCKED] |
 | `50_results_synthetic.md` | Correctness, skill recovery, ablation | [LOCKED] |
-| `60_results_real_data.md` | Elia wind + electricity headline results | [LOCKED] on 3000-point audit slice and 17 344-hour post-fix run; electricity and horizon results also [LOCKED] |
+| `60_results_real_data.md` | Elia wind + electricity headline results | [LOCKED] — full-length wind (expanding mode), audit slice (static mode for calibration), electricity null, Elia operational-forecast baseline; horizons and published-OGD head-to-head still static-mode pending expanding re-run |
 | `70_recalibration_layer.md` | Calibration deviation + isotonic fix | [LOCKED] |
 | `80_robustness.md` | Behaviour presets, sybils, arbitrage | [LOCKED] |
 | `90_discussion_and_limits.md` | Interpretation, caveats, what this is not | partial draft |

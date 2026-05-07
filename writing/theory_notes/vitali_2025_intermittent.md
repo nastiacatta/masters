@@ -43,9 +43,23 @@ allocation step.
 
 The online-market framing and the *reference baseline* implementation.
 Our `onlinev2/src/onlinev2/mechanism/michael_port.py` is a Python port
-of their Julia `michael/main_rewards.jl`. On the 3000-point Elia wind
-slice we observe mechanism / michael_ogd CRPS ratio = 1.003
-[source: `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/comparison.json`].
+of their Julia `michael/main_rewards.jl`.
+
+- On the 3000-point Elia wind **audit slice**, mechanism /
+  `michael_ogd` CRPS ratio = 0.01874 / 0.01869 = **1.003**
+  [source: `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/
+  comparison.json`].
+- On the 17 344-hour **full-length expanding-mode run**, the renamed
+  `michael_ogd_centered_median_fan` row lands at 0.03487 vs our
+  mechanism at 0.03788, a gap of ~7 pp CRPS [source:
+  `dashboard/public/data/real_data/elia_wind/data/comparison.json`].
+- In the `baselines.json` head-to-head (static-mode, pending
+  expanding refresh), Vitali's true per-τ OGD reaches −18.3% vs
+  uniform compared to our −7.6%, a ~11 pp gap [source:
+  `dashboard/public/data/real_data/elia_wind/data/baselines.json`].
+
+The audit-slice parity is real; the full-length gaps are the CRPS
+cost of the Lambert budget-balance constraint.
 
 ## Difference summary
 

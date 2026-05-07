@@ -68,19 +68,25 @@ Source files: `writing/40_methodology.md`, `onlinev2/README.md`,
 - 13/13 Lambert invariants and 60-snapshot golden-value suite.
 - Known-noise-panel skill recovery (Spearman σ vs CRPS = 1.0).
 - Deposit policy ablation (fixed < bankroll-confidence < oracle).
-- Bankroll pipeline ablation (A–E).
+- Bankroll pipeline ablation (A–E), 20 seeds, fresh from the CSV.
 
 Source: `writing/50_results_synthetic.md`.
 
-### 5.2 Real-data validation — Elia wind
+### 5.2 Real-data validation — Elia wind and electricity
 
-- 3000-point slice, headline comparison table (mechanism vs eight
-  baselines including Michael's OGD port).
-- Per-forecaster CRPS and skill ordering (XGBoost wins; σ matches CRPS).
-- Tail-calibration deviation (Ranjan–Gneiting gap).
-- DM test mechanism vs uniform.
-- Horizon comparison (day-ahead and 4h-ahead) — LOCKED (post-fix
-  numbers in `onlinev2/outputs/post_fix_deltas/SUMMARY.md`).
+- Full-length 17 344-hour Elia wind run under expanding
+  normalisation: mechanism −7.1% vs uniform, DM t = 40.77, p ≈ 0.
+- 3000-point audit slice: mechanism vs `michael_ogd` ratio 1.003
+  (Claim 4 reference), mean tail deviation 0.0171 (Claim 6
+  reference).
+- Elia electricity: null result (t = 0.008, p = 0.994), seven
+  forecasters indistinguishable.
+- Elia operational-forecast external validation: our best_single
+  (online XGBoost, no weather) beats Elia's `mostrecentforecast` by
+  ~15% CRPS-MW-eq; our mechanism roughly on par with Elia's
+  operational forecast.
+- Horizon blocks (day-ahead, 4h-ahead, seasonal slice) still in
+  static-mode; refresh pending.
 
 Source: `writing/60_results_real_data.md`.
 

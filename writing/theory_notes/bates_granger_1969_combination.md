@@ -29,9 +29,11 @@ the best individual forecaster.
 ## What we take
 
 The inverse-variance rule as one of our mandatory baselines
-(`NEXT_STEPS.md`). On the 3000-point Elia wind slice, inverse-variance
-beats our mechanism on CRPS (−8.1% vs −5.3%). We are honest about
-this in Chapter 7.
+(`NEXT_STEPS.md`). On the 3000-point Elia wind audit slice, inverse-
+variance beats our mechanism on CRPS (−8.1% vs −5.3%). On the
+17 344-hour full-length expanding-mode run the two are effectively
+tied (mechanism −7.1%, inverse-variance −7.0%). We are honest about
+both in Chapter 7.
 
 ## Where we use it
 
