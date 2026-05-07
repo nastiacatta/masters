@@ -39,7 +39,7 @@ function getColour(name: string): string {
 export default function WagerAllocationPanel() {
   const { comparison, depositSensitivity } = useAuditData();
 
-  const steadyState = comparison?.steady_state ?? [];
+  const steadyState = useMemo(() => comparison?.steady_state ?? [], [comparison]);
 
   // ── Effective wager data (deposit + skill gate) ────────────────
   const wagerBarData = useMemo(() => {

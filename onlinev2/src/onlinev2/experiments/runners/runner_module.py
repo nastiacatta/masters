@@ -3157,9 +3157,10 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
             top1_ts = []
             top5_ts = []
             wealth_by_t = []
+            agg_hist: list = []
             for t in range(T):
                 pub = RoundPublicState(
-                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                     weights_prev=state.weights_prev, sigma_prev=state.sigma,
                     wealth_prev=state.wealth, profit_prev=state.profit_prev,
                 )
@@ -3184,6 +3185,7 @@ def run_preference_stress_test(outdir="outputs", seed=42, block="behaviour", wri
                 else:
                     top1_ts.append(0.0)
                     top5_ts.append(0.0)
+                agg_hist.append(logs["r_hat"])
 
             # Capture dashboard logs from first seed, first scenario
             if s_idx == 0 and scenario_idx == 0 and write_summary:
@@ -3321,9 +3323,10 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
         top1_ts = []
         top5_ts = []
         wealth_by_t = []
+        agg_hist: list = []
         for t in range(T):
             pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
+                t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                 weights_prev=state.weights_prev, sigma_prev=state.sigma,
                 wealth_prev=state.wealth, profit_prev=state.profit_prev,
             )
@@ -3350,6 +3353,7 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
             else:
                 top1_ts.append(0.0)
                 top5_ts.append(0.0)
+            agg_hist.append(logs["r_hat"])
 
         if mode_idx == 0 and write_summary:
             dashboard_logs["participation_per_round"] = n_t_list
@@ -3851,9 +3855,10 @@ def _run_behaviour_scenario_loop(T, n_users, seed, scenarios, ep, block, write_s
         for u in pop:
             state.wealth[u.traits.user_id] = u.traits.initial_wealth
         profits, n_t_list, gini_ts, n_eff_ts = [], [], [], []
+        agg_hist: list = []
         for t in range(T):
             pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
+                t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                 weights_prev=state.weights_prev, sigma_prev=state.sigma,
                 wealth_prev=state.wealth, profit_prev=state.profit_prev,
             )
@@ -3864,6 +3869,7 @@ def _run_behaviour_scenario_loop(T, n_users, seed, scenarios, ep, block, write_s
             n_t_list.append(sum(1 for a in actions if a.participate))
             gini_ts.append(logs["Gini"])
             n_eff_ts.append(logs["N_eff"])
+            agg_hist.append(logs["r_hat"])
         results.append({
             scenario_key: scenario_name,
             "total_profit": sum(profits),

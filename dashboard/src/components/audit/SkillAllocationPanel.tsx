@@ -49,8 +49,8 @@ export default function SkillAllocationPanel() {
     [comparison],
   );
 
-  const steadyState = comparison?.steady_state ?? [];
-  const skillHistory = comparison?.skill_history ?? [];
+  const steadyState = useMemo(() => comparison?.steady_state ?? [], [comparison]);
+  const skillHistory = useMemo(() => comparison?.skill_history ?? [], [comparison]);
 
   // ── Sigma bar chart data (sorted highest to lowest) ────────────
   const sigmaBarData = useMemo(() => {
