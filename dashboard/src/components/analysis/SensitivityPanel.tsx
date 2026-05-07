@@ -1,9 +1,8 @@
 /**
- * Sensitivity analysis panel.
+ * Sensitivity analysis panel (academic redesign).
  *
  * Line chart per parameter showing ΔCRPS variation using Recharts.
  * Highlights crossover points with vertical reference lines.
- * One-sentence summary below the chart.
  *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
  */
@@ -19,60 +18,84 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { SensitivitySummary } from '../../lib/analysis/types';
+import { TOOLTIP_STYLE } from '@/components/lab/shared';
 
 interface SensitivityPanelProps {
   summary: SensitivitySummary;
 }
 
 const PARAM_COLORS: Record<string, string> = {
-  lam: '#6366f1',
-  sigmaMin: '#f59e0b',
-  eta: '#10b981',
-  gamma: '#8b5cf6',
-  n: '#ef4444',
-  T: '#06b6d4',
+  lam:       '#1d3461', // navy
+  sigmaMin:  '#b45309', // amber
+  eta:       '#0f766e', // teal
+  gamma:     '#5b21b6', // plum
+  n:         '#9a1a2f', // crimson
+  T:         '#115e59', // deep teal
 };
+
+const CARD_STYLE: React.CSSProperties = {
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
+  borderRadius: 6,
+  padding: 18,
+  boxShadow: 'var(--shadow-sm)',
+};
+
+function PanelHeader({
+  title,
+  accent = 'var(--navy)',
+}: {
+  title: string;
+  accent?: string;
+}) {
+  return (
+    <h3
+      className="font-serif flex items-center gap-2.5 mb-4 tracking-tight"
+      style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block"
+        style={{ width: 3, height: 16, background: accent, borderRadius: 2 }}
+      />
+      {title}
+    </h3>
+  );
+}
 
 export default function SensitivityPanel({ summary }: SensitivityPanelProps) {
   const { points, crossoverPoints, summaryText } = summary;
 
   if (points.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-        <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-teal-500" />
-          Sensitivity Analysis
-        </h3>
-        <p className="text-xs text-slate-400">No sweep data available.</p>
+      <div style={CARD_STYLE}>
+        <PanelHeader title="Sensitivity analysis" />
+        <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>No sweep data available.</p>
       </div>
     );
   }
 
-  // Group points by parameter
   const paramNames = [...new Set(points.map((p) => p.paramName))];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-        <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-teal-500" />
-        Sensitivity Analysis
-      </h3>
+    <div style={CARD_STYLE}>
+      <PanelHeader title="Sensitivity analysis" />
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {paramNames.map((paramName) => {
           const paramPoints = points
             .filter((p) => p.paramName === paramName)
             .sort((a, b) => a.paramValue - b.paramValue);
 
-          const paramCrossovers = crossoverPoints.filter(
-            (c) => c.paramName === paramName,
-          );
-
-          const color = PARAM_COLORS[paramName] ?? '#64748b';
+          const paramCrossovers = crossoverPoints.filter((c) => c.paramName === paramName);
+          const color = PARAM_COLORS[paramName] ?? 'var(--ink-muted)';
 
           return (
             <div key={paramName}>
-              <p className="text-[11px] font-semibold text-slate-600 mb-1 font-mono">
+              <p
+                className="font-mono mb-1"
+                style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-muted)' }}
+              >
                 {paramName}
               </p>
               <ResponsiveContainer width="100%" height={160}>
@@ -80,50 +103,39 @@ export default function SensitivityPanel({ summary }: SensitivityPanelProps) {
                   data={paramPoints}
                   margin={{ top: 8, right: 12, left: 10, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.5} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" strokeOpacity={0.7} />
                   <XAxis
                     dataKey="paramValue"
-                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tick={{ fontSize: 10, fill: '#5a6175' }}
                     tickLine={false}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    axisLine={{ stroke: '#d3ccb9' }}
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tick={{ fontSize: 10, fill: '#5a6175' }}
                     tickLine={false}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    axisLine={{ stroke: '#d3ccb9' }}
                     tickFormatter={(v: number) => v.toFixed(3)}
                   />
                   <Tooltip
-                    contentStyle={{
-                      fontSize: 11,
-                      borderRadius: 8,
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                      boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 12px -4px rgba(15, 23, 42, 0.08)',
-                      background: 'rgba(255,255,255,0.98)',
-                      backdropFilter: 'blur(10px)',
-                    }}
+                    contentStyle={TOOLTIP_STYLE}
                     formatter={(value: unknown) => [
                       typeof value === 'number' ? value.toFixed(4) : String(value),
                       'ΔCRPS',
                     ]}
-                    labelFormatter={(label: unknown) =>
-                      `${paramName} = ${label}`
-                    }
+                    labelFormatter={(label: unknown) => `${paramName} = ${label}`}
                   />
-                  {/* Zero reference line */}
-                  <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
-                  {/* Crossover points */}
+                  <ReferenceLine y={0} stroke="#8c92a3" strokeDasharray="3 3" />
                   {paramCrossovers.map((c, i) => (
                     <ReferenceLine
                       key={i}
                       x={c.value}
-                      stroke="#ef4444"
+                      stroke="var(--crimson)"
                       strokeDasharray="4 2"
                       label={{
                         value: `crossover ≈ ${c.value.toFixed(3)}`,
                         position: 'top',
                         fontSize: 9,
-                        fill: '#ef4444',
+                        fill: '#9a1a2f',
                       }}
                     />
                   ))}
@@ -142,8 +154,15 @@ export default function SensitivityPanel({ summary }: SensitivityPanelProps) {
         })}
       </div>
 
-      {/* Summary text */}
-      <p className="mt-3 text-xs text-slate-600 border-t border-slate-100 pt-3 leading-relaxed">
+      <p
+        className="mt-4 pt-4"
+        style={{
+          fontSize: 13,
+          color: 'var(--ink-muted)',
+          lineHeight: 1.6,
+          borderTop: '1px solid var(--border)',
+        }}
+      >
         {summaryText}
       </p>
     </div>

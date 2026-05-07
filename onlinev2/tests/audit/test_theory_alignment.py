@@ -481,3 +481,62 @@ def test_latent_fixed_dgp_rejects_mismatched_kappa():
             sigma_z=1.0, quantiles=np.array([0.1, 0.9]),
             kappa_i=np.array([1.0, 1.0]),  # wrong length (2 vs 4)
         )
+
+
+# ---------------------------------------------------------------------------
+# (7) michael_predict must match the Julia reference port exactly for theta.
+# After fix (theta no longer projected), our internal aggregator is now
+# numerically equivalent to the audit-only Julia port on the predict step.
+# This pins that equivalence so any future regression (e.g. reintroducing
+# the simplex projection) trips this test.
+# ---------------------------------------------------------------------------
+def test_michael_predict_matches_julia_port_predict():
+    """Our ``core.intermittent.michael_predict`` and the audit-only
+    ``mechanism.michael_port`` compute the same ``theta = w + D alpha`` and
+    ``y_hat = theta . masked_x``.
+
+    The Julia port lives under ``mechanism/michael_port.py`` and is the
+    reference translation of Vitali's published code. After the Round 1
+    fix (removing the simplex projection from our predict), the two
+    agree to machine precision.
+    """
+    from onlinev2.core.intermittent import michael_predict
+    from onlinev2.mechanism.michael_port import adaptive_robust_qr_update_multi_lead
+
+    rng = np.random.default_rng(2024)
+    n = 5
+
+    # Start from a w on the simplex and a small random D.
+    w = np.array([0.3, 0.2, 0.2, 0.15, 0.15], dtype=np.float64)
+    D = 0.1 * rng.standard_normal((n, n))
+    x = rng.uniform(0.0, 1.0, size=n)
+    alpha = np.array([0, 1, 0, 1, 0], dtype=np.int32)
+
+    # Internal path.
+    y_hat_ours, aux = michael_predict(x, alpha, w, D)
+    theta_ours = np.asarray(aux["theta"], dtype=np.float64)
+
+    # Julia-port path: call the 1-lead update with eta=0 to fetch y_hat
+    # without moving the state (the port exposes y_hat as a side output).
+    port_out = adaptive_robust_qr_update_multi_lead(
+        state={"w": w, "D": D},
+        x=x,
+        y=float(rng.uniform(0.0, 1.0)),  # y is not used by theta/y_hat
+        alpha_vec=alpha.astype(np.float64),
+        tau=0.5,
+        eta=0.0,  # no update -> we observe the predict pathway only
+    )
+    y_hat_port = float(port_out["y_hat"])
+
+    # theta reference value from the port's own formula.
+    theta_expected = w + D @ alpha.astype(np.float64)
+    masked_x = x * (1.0 - alpha.astype(np.float64))
+
+    # Compare the internal aggregator against both the port's y_hat and
+    # the algebraic expectation.
+    np.testing.assert_array_almost_equal(theta_ours, theta_expected, decimal=12)
+    assert abs(y_hat_ours - float(theta_expected @ masked_x)) < 1e-12
+    assert abs(y_hat_ours - y_hat_port) < 1e-9, (
+        f"michael_predict ({y_hat_ours}) must match Julia port y_hat "
+        f"({y_hat_port}) to 1e-9"
+    )

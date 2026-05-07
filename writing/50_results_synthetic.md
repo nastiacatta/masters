@@ -1,12 +1,12 @@
 # Results — synthetic validation
 
-Status: **[LOCKED]** on correctness, skill recovery, deposit policy
-ablation, weight rule comparison, and bankroll pipeline ablation. All
-numbers below verified against committed CSV / JSON outputs.
+Status: **LOCKED** on correctness, skill recovery, deposit-policy
+ablation, weight-rule comparison, and bankroll-pipeline ablation. All
+numbers below are verified against committed CSV / JSON outputs.
 
-This chapter is the foundation the real-data chapter stands on. If any
-of these results fail, the mechanism is not trustworthy and the rest of
-the thesis is moot. All three pass.
+This chapter is the foundation the real-data chapter stands on: if any
+of these results failed, the mechanism would not be trustworthy and the
+rest of the thesis would be moot. All three pass.
 
 ## 5.1.1 Mechanism correctness (Rung 1)
 

@@ -77,25 +77,49 @@ Convention for every entry:
   outcomes; the buyer–seller framing.
 - Primary source: `theory/Pierre_wagering.md`.
 
-### Chen et al. 2014
+### Chen, Devanur, Pennock, Vaughan 2014
 
 ```bibtex
-@inproceedings{chen2014gaming,
-  title     = {Gaming prediction markets: Equilibrium strategies with a
-               market maker},
-  author    = {Chen, Yiling and Dimitrov, Stanko and Sami, Rahul and
-               Reeves, Daniel M. and Pennock, David M. and Hanson, Robin
-               and Fortnow, Lance and Gonen, Rica},
-  booktitle = {Proceedings of the 14th ACM Conference on Economic and
-               Computation (EC '13)},
-  year      = {2014}
+@inproceedings{chen2014arbitrage,
+  title     = {Removing arbitrage from wagering mechanisms},
+  author    = {Chen, Yiling and Devanur, Nikhil R. and Pennock,
+               David M. and Vaughan, Jennifer Wortman},
+  booktitle = {Proceedings of the 15th ACM Conference on Economics
+               and Computation (EC '14)},
+  year      = {2014},
+  pages     = {377--394},
+  doi       = {10.1145/2600057.2602876}
 }
 ```
 
-- Used in: Chapter 6.7 (arbitrage analysis).
-- What we take: the single-round arbitrage-interval result for
-  weighted-score wagering mechanisms. [PENDING] verify year and venue
-  against theory/ PDFs.
+- Used in: Chapters 2, 3.3 (arbitrage), 6.7, 8.3 (arbitrage-seeking
+  adversary), 8.5 (sybil-arbitrage), 8.7 (informed coalition).
+- What we take: the arbitrage-interval characterisation for weighted
+  score wagering mechanisms (Thm 3.3), the no-arbitrage wagering
+  family (NAWMs, §4--5), and the sybilproofness of the $f$-NAWM
+  subclass (Thm 5.8). Our `ArbitrageSeekingBehaviour` implements
+  Thm 3.3 for the MAE analogue; our `CoordinatedGroupBehaviour`
+  implements the Chun-Shachter coalition variant.
+- Primary source: `theory/arbitrage.md`.
+
+### Chun, Shachter 2011
+
+```bibtex
+@article{chun2011cooperating,
+  title   = {Strictly proper mechanisms with cooperating players},
+  author  = {Chun, So Yeon and Shachter, Ross D.},
+  journal = {arXiv preprint arXiv:1202.3710},
+  year    = {2011},
+  url     = {https://arxiv.org/abs/1202.3710}
+}
+```
+
+- Used in: Chapter 8.6 (coordinated-group coalition attack), 8.7
+  (informed coalition).
+- What we take: the coalition-report formula
+  $p_C = \sum_{i\in C}(w_i/W_C) p_i$ which provides riskless arbitrage
+  when members disagree; used as the theoretical basis for
+  `CoordinatedGroupBehaviour` in weighted-mean mode.
 
 ## B. Online learning for forecast combination
 

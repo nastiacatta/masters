@@ -6,7 +6,7 @@ This thesis extends the Lambert (2008) self-financed wagering mechanism with an 
 
 The key research question: **does this adaptive weighting actually produce better forecasts than simply averaging everyone equally?**
 
-**Answer:** Conditionally yes. Under strictly-causal normalisation (training-pipeline audit, May 2026), the mechanism achieves a 7.6% CRPS reduction over equal weighting on the Elia offshore wind slice and is essentially tied with equal weights on Elia electricity prices. Equal weighting is a surprisingly strong baseline, and per-round best_single still outperforms the mechanism on wind. The mechanism's real value lies in its economic properties (budget balance, sybil-proofness, incentive compatibility) plus a conditional forecasting improvement when forecasters are heterogeneous — not raw CRPS dominance.
+**Answer:** Conditionally yes. Under strictly-causal normalisation (training-pipeline audit, May 2026), the mechanism achieves a 7.1% CRPS reduction over equal weighting on the Elia offshore wind slice and is essentially tied with equal weights on Elia electricity prices. Equal weighting is a surprisingly strong baseline, and per-round best_single still outperforms the mechanism on wind. The mechanism's real value lies in its economic properties (budget balance, sybil-proofness, incentive compatibility) plus a conditional forecasting improvement when forecasters are heterogeneous — not raw CRPS dominance.
 
 ---
 

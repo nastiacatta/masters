@@ -1,9 +1,7 @@
 /**
- * Failure mode documentation panel.
+ * Failure mode documentation panel (academic redesign).
  *
- * List of cards showing conditions where the mechanism underperforms
- * equal weighting. Neutral slate colour scheme with same visual weight
- * as positive claims.
+ * Cards showing conditions where the mechanism underperforms equal weighting.
  *
  * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
  */
@@ -14,55 +12,119 @@ interface FailureModePanelProps {
   failureModes: FailureMode[];
 }
 
+const CARD_STYLE: React.CSSProperties = {
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
+  borderRadius: 6,
+  padding: 18,
+  boxShadow: 'var(--shadow-sm)',
+};
+
+function PanelHeader({
+  title,
+  count,
+  accent = 'var(--ink-faint)',
+}: {
+  title: string;
+  count?: number;
+  accent?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-4 gap-3">
+      <h3
+        className="font-serif flex items-center gap-2.5 tracking-tight"
+        style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+      >
+        <span
+          aria-hidden="true"
+          className="inline-block"
+          style={{ width: 3, height: 16, background: accent, borderRadius: 2 }}
+        />
+        {title}
+      </h3>
+      {count != null && (
+        <span
+          className="inline-flex items-center font-mono tabular-nums px-2"
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            background: 'var(--cream)',
+            color: 'var(--ink-soft)',
+            border: '1px solid var(--border)',
+            borderRadius: 999,
+            padding: '2px 8px',
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function FailureModePanel({ failureModes }: FailureModePanelProps) {
   if (failureModes.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-        <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-slate-400" />
-          Limitations &amp; Failure Modes
-        </h3>
-        <p className="text-xs text-slate-400">No failure modes documented.</p>
+      <div style={CARD_STYLE}>
+        <PanelHeader title="Limitations & failure modes" />
+        <p style={{ fontSize: 13, color: 'var(--ink-faint)' }}>No failure modes documented.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <div className="flex items-center justify-between mb-3 gap-3">
-        <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-slate-400" />
-          Limitations &amp; Failure Modes
-        </h3>
-        <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-500 text-[10px] font-mono font-semibold px-1.5 py-0.5 tabular-nums">
-          {failureModes.length}
-        </span>
-      </div>
+    <div style={CARD_STYLE}>
+      <PanelHeader title="Limitations & failure modes" count={failureModes.length} />
       <div className="space-y-3">
         {failureModes.map((fm) => (
           <div
             key={fm.id}
-            className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-50/40 p-3 hover:border-slate-300 transition-colors"
+            className="p-4"
+            style={{
+              background: 'var(--cream)',
+              border: '1px solid var(--border)',
+              borderLeft: '3px solid var(--ink-faint)',
+              borderRadius: 4,
+            }}
           >
-            {/* Condition */}
-            <p className="text-sm font-medium text-slate-800">{fm.condition}</p>
+            <p
+              className="font-serif"
+              style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4 }}
+            >
+              {fm.condition}
+            </p>
 
             {/* ΔCRPS with CI bar */}
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-mono tabular-nums text-slate-700 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+            <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+              <span
+                className="font-mono tabular-nums"
+                style={{
+                  fontSize: 12,
+                  background: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  padding: '2px 8px',
+                  borderRadius: 3,
+                  color: 'var(--ink-muted)',
+                }}
+              >
                 ΔCRPS = {fm.deltaCrps.toFixed(4)}
               </span>
-              <span className="text-[10px] font-mono tabular-nums text-slate-500">
+              <span
+                className="font-mono tabular-nums"
+                style={{ fontSize: 11, color: 'var(--ink-faint)' }}
+              >
                 [{fm.ciLow.toFixed(4)}, {fm.ciHigh.toFixed(4)}]
               </span>
-              {/* Visual CI bar */}
               <div
-                className="flex-1 h-1.5 bg-slate-200 rounded-full relative max-w-[140px]"
+                className="flex-1 max-w-[140px] relative"
+                style={{ height: 4, background: 'var(--border-strong)', borderRadius: 4 }}
                 title={`95% CI: [${fm.ciLow.toFixed(4)}, ${fm.ciHigh.toFixed(4)}]`}
               >
                 <div
-                  className="absolute h-full bg-gradient-to-r from-slate-400 to-slate-500 rounded-full"
+                  className="absolute h-full"
                   style={{
+                    background: 'var(--ink-soft)',
+                    borderRadius: 4,
                     left: `${Math.max(0, ((fm.ciLow + 0.1) / 0.2) * 100)}%`,
                     right: `${Math.max(0, 100 - ((fm.ciHigh + 0.1) / 0.2) * 100)}%`,
                   }}
@@ -70,16 +132,23 @@ export default function FailureModePanel({ failureModes }: FailureModePanelProps
               </div>
             </div>
 
-            {/* Explanation */}
-            <p className="mt-2 text-xs text-slate-600 leading-relaxed">{fm.explanation}</p>
+            <p
+              className="mt-2.5"
+              style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.55 }}
+            >
+              {fm.explanation}
+            </p>
 
-            {/* Experiment link */}
             <a
               href={`#experiment-${fm.experimentName}`}
-              className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-teal-700 transition-colors group"
+              className="mt-2 inline-flex items-center gap-1 group"
+              style={{ fontSize: 12, fontWeight: 600, color: 'var(--navy)' }}
             >
               See {fm.experimentName}
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+              <svg
+                width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+                className="transition-transform group-hover:translate-x-0.5"
+              >
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
