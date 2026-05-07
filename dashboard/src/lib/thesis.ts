@@ -85,4 +85,4 @@ export const THESIS_RESEARCH_QUESTION =
   'Can combining stake with an online, time-varying skill layer improve aggregate forecasts under non-stationarity, strategic behaviour, and intermittent participation?';
 
 /** Short project title. */
-export const THESIS_TITLE = 'Adaptive skill and stake in forecast markets';
+export const THESIS_TITLE = 'Adaptive Skill and Stake in Prediction Markets';

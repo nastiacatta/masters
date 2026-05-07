@@ -134,77 +134,94 @@ export default function Sidebar() {
     >
       {/* Header — brand mark + toggle */}
       <div
-        className="px-2 py-3 flex items-center gap-2"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        className="px-3 py-3 flex items-center gap-2"
+        style={{ borderBottom: '1px solid var(--border)', minHeight: 56 }}
       >
-        <button
-          onClick={toggle}
-          className={clsx(
-            'flex items-center justify-center rounded-md transition-colors duration-150 shrink-0',
-            showLabels ? '' : 'mx-auto',
-          )}
-          style={{
-            minWidth: 32,
-            minHeight: 32,
-            width: 32,
-            height: 32,
-            color: 'var(--ink-faint)',
-          }}
-          onMouseOver={(e) => {
-            (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
-            (e.currentTarget as HTMLElement).style.background = 'rgba(15, 23, 42, 0.04)';
-          }}
-          onMouseOut={(e) => {
-            (e.currentTarget as HTMLElement).style.color = 'var(--ink-faint)';
-            (e.currentTarget as HTMLElement).style.background = 'transparent';
-          }}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
-        >
-          <span className="text-[14px] leading-none font-mono">
-            {isCollapsed ? '»' : '«'}
-          </span>
-        </button>
-        {showLabels && (
-          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-            <span
-              aria-hidden="true"
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-[13px] font-semibold shrink-0"
-              style={{
-                fontFamily: 'var(--font-serif)',
-                background: 'var(--navy)',
-                color: '#fbf9f4',
-                fontFeatureSettings: "'kern', 'liga'",
-              }}
-            >
-              σ
-            </span>
-            <div className="min-w-0 overflow-hidden">
+        {showLabels ? (
+          <>
+            <div className="flex-1 min-w-0 overflow-hidden">
               <div
-                className="text-[13px] font-semibold tracking-tight truncate"
-                style={{ color: 'var(--ink)', fontFamily: 'var(--font-serif)' }}
+                className="font-semibold tracking-tight truncate"
+                style={{
+                  fontSize: 16,
+                  color: 'var(--ink)',
+                  fontFamily: 'var(--font-serif)',
+                  lineHeight: 1.15,
+                }}
               >
-                Skill &times; Stake
+                Skill &amp; Stake
               </div>
               <div
-                className="text-[10px] truncate uppercase tracking-[0.14em]"
-                style={{ color: 'var(--ink-faint)', letterSpacing: '0.1em' }}
+                className="truncate uppercase"
+                style={{
+                  fontSize: 10,
+                  color: 'var(--ink-faint)',
+                  letterSpacing: '0.14em',
+                  marginTop: 3,
+                }}
               >
-                MSc thesis
+                Master&rsquo;s project
               </div>
             </div>
-          </div>
+            <button
+              onClick={toggle}
+              className="flex items-center justify-center rounded-md transition-colors duration-150 shrink-0"
+              style={{
+                minWidth: 28,
+                minHeight: 28,
+                width: 28,
+                height: 28,
+                color: 'var(--ink-faint)',
+              }}
+              onMouseOver={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
+                (e.currentTarget as HTMLElement).style.background = 'rgba(15, 23, 42, 0.04)';
+              }}
+              onMouseOut={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--ink-faint)';
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <span className="text-[14px] leading-none font-mono">«</span>
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={toggle}
+            className="flex items-center justify-center rounded-md transition-colors duration-150 mx-auto"
+            style={{
+              minWidth: 32,
+              minHeight: 32,
+              width: 32,
+              height: 32,
+              color: 'var(--ink-faint)',
+            }}
+            onMouseOver={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
+              (e.currentTarget as HTMLElement).style.background = 'rgba(15, 23, 42, 0.04)';
+            }}
+            onMouseOut={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--ink-faint)';
+              (e.currentTarget as HTMLElement).style.background = 'transparent';
+            }}
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+          >
+            <span className="text-[14px] leading-none font-mono">»</span>
+          </button>
         )}
       </div>
 
       {/* Navigation — grouped with subtle eyebrow labels */}
-      <nav className="flex-1 px-1.5 pt-3 pb-3 overflow-y-auto">
+      <nav className="flex-1 px-2 pt-4 pb-3 overflow-y-auto">
         {showLabels && (
           <p
-            className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase"
-            style={{ letterSpacing: '0.14em', color: 'var(--ink-faint)' }}
+            className="px-3 mb-2 text-[10px] font-semibold uppercase"
+            style={{ letterSpacing: '0.16em', color: 'var(--ink-faint)' }}
           >
-            Thesis
+            Main
           </p>
         )}
         <ul className="space-y-0.5">
@@ -217,14 +234,14 @@ export default function Sidebar() {
 
         {/* Subtle separator */}
         <div
-          className="my-3 mx-2"
+          className="my-3 mx-3"
           style={{ borderTop: '1px solid var(--border)' }}
         />
 
         {showLabels && (
           <p
-            className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase"
-            style={{ letterSpacing: '0.14em', color: 'var(--ink-faint)' }}
+            className="px-3 mb-2 text-[10px] font-semibold uppercase"
+            style={{ letterSpacing: '0.16em', color: 'var(--ink-faint)' }}
           >
             Reference
           </p>
@@ -290,14 +307,15 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
       title={showLabel ? undefined : `${item.label}${item.shortcut ? ` (${item.shortcut})` : ''}`}
       className={({ isActive }) =>
         clsx(
-          'group relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150',
-          showLabel ? 'gap-2 px-2.5 py-1.5' : 'justify-center px-1 py-1.5',
+          'group relative flex items-center rounded-md font-medium transition-colors duration-150',
+          showLabel ? 'gap-2.5 px-3 py-2' : 'justify-center px-1 py-2',
           isActive && 'shadow-sm',
         )
       }
       style={({ isActive }: { isActive: boolean }) => ({
         background: isActive ? 'var(--navy)' : 'transparent',
         color: isActive ? '#fbf9f4' : 'var(--ink-soft)',
+        fontSize: 14,
       })}
       onMouseOver={(e) => {
         const el = e.currentTarget as HTMLElement;
@@ -319,8 +337,11 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
           {/* Step number (numbered pages) or icon (reference pages) */}
           {item.step != null ? (
             <span
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors"
+              className="rounded-full flex items-center justify-center font-semibold shrink-0 transition-colors"
               style={{
+                width: 22,
+                height: 22,
+                fontSize: 11,
                 background: isActive ? 'rgba(251, 249, 244, 0.18)' : 'rgba(15, 23, 42, 0.06)',
                 color: isActive ? '#fbf9f4' : 'var(--ink-soft)',
                 fontFamily: 'var(--font-serif)',

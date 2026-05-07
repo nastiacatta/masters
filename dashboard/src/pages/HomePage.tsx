@@ -100,7 +100,7 @@ function ArrowFlow() {
 export default function HomePage() {
   return (
     <div className="flex-1 overflow-y-auto" style={{ background: 'var(--paper)' }}>
-      <div className="max-w-[780px] mx-auto px-8 sm:px-10 pt-20 pb-24 space-y-16">
+      <div className="max-w-[820px] mx-auto px-8 sm:px-10 pt-20 pb-24 space-y-16">
 
         {/* ─── Masthead ───────────────────────────────────────── */}
         <header>
@@ -108,40 +108,41 @@ export default function HomePage() {
             className="eyebrow mb-5"
             style={{ color: 'var(--navy)' }}
           >
-            MSc Thesis &middot; Imperial College London &middot; 2026
+            Master&rsquo;s project &middot; Imperial College London &middot; 2026
           </p>
           <h1
             className="font-serif tracking-tight"
             style={{
-              fontSize: 'clamp(40px, 6vw, 56px)',
-              lineHeight: 1.08,
+              fontSize: 'clamp(36px, 5vw, 48px)',
+              lineHeight: 1.1,
               fontWeight: 600,
               color: 'var(--ink)',
             }}
           >
-            Skill <span style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>&times;</span>{' '}
-            <span style={{ color: 'var(--teal)' }}>Stake</span>
+            Adaptive Skill and Stake in Prediction Markets
           </h1>
           <p
-            className="font-serif mt-6"
+            className="font-serif mt-3"
             style={{
-              fontSize: 20,
-              lineHeight: 1.55,
+              fontSize: 'clamp(20px, 2.5vw, 24px)',
+              lineHeight: 1.3,
               color: 'var(--ink-muted)',
               fontWeight: 400,
-              maxWidth: 640,
+              fontStyle: 'italic',
             }}
           >
-            An online skill-estimation layer for self-financed forecast aggregation
-            under non-stationarity and strategic behaviour.
+            Coupling Self-Financed Wagering with Online Skill Learning
           </p>
 
-          <p
-            className="mt-4"
-            style={{ fontSize: 14, color: 'var(--ink-soft)' }}
+          <div
+            className="mt-8"
+            style={{ fontSize: 16, lineHeight: 1.6, color: 'var(--ink-muted)' }}
           >
-            Anastasia Cattaneo
-          </p>
+            <div style={{ fontWeight: 600, color: 'var(--ink)' }}>Anastasia Cattaneo</div>
+            <div style={{ marginTop: 4, color: 'var(--ink-soft)' }}>
+              Supervisors: Pierre Pinson &middot; Michael Vitali
+            </div>
+          </div>
         </header>
 
         {/* ─── Research question ───────────────────────────────── */}
@@ -162,8 +163,8 @@ export default function HomePage() {
             <p
               className="font-serif"
               style={{
-                fontSize: 19,
-                lineHeight: 1.55,
+                fontSize: 20,
+                lineHeight: 1.6,
                 color: 'var(--ink-muted)',
               }}
             >
@@ -220,7 +221,7 @@ export default function HomePage() {
                   </div>
                 )}
                 <div
-                  className="p-5"
+                  className="p-6"
                   style={{
                     background: 'var(--card)',
                     border: '1px solid var(--border)',
@@ -229,23 +230,23 @@ export default function HomePage() {
                   }}
                 >
                   <div
-                    className="font-mono font-semibold mb-2"
+                    className="font-mono font-semibold mb-3"
                     style={{
-                      width: 28, height: 28,
+                      width: 30, height: 30,
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       background: s.color, color: '#fff',
-                      fontSize: 13, borderRadius: 3,
+                      fontSize: 14, borderRadius: 3,
                     }}
                   >
                     {s.mark}
                   </div>
                   <div
                     className="font-serif"
-                    style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}
+                    style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.3 }}
                   >
                     {s.title}
                   </div>
-                  <p style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--ink-soft)', marginTop: 6 }}>
+                  <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink-soft)', marginTop: 8 }}>
                     {s.body}
                   </p>
                 </div>
@@ -267,17 +268,17 @@ export default function HomePage() {
               borderRadius: 4,
             }}
           >
-            <ol className="grid sm:grid-cols-2 gap-x-10 gap-y-6">
+            <ol className="grid sm:grid-cols-2 gap-x-10 gap-y-7">
               {ROUND_STEPS.map((step) => (
                 <li key={step.n} className="flex gap-4">
                   <div
                     className="font-mono shrink-0"
                     style={{
-                      width: 32, height: 32, borderRadius: '50%',
+                      width: 34, height: 34, borderRadius: '50%',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: '1.5px solid var(--navy)',
                       color: 'var(--navy)',
-                      fontWeight: 600, fontSize: 14,
+                      fontWeight: 600, fontSize: 15,
                     }}
                   >
                     {step.n}
@@ -285,11 +286,11 @@ export default function HomePage() {
                   <div>
                     <div
                       className="font-serif"
-                      style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}
+                      style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.3 }}
                     >
                       {step.label}
                     </div>
-                    <p style={{ fontSize: 14.5, lineHeight: 1.55, color: 'var(--ink-soft)', marginTop: 4 }}>
+                    <p style={{ fontSize: 15.5, lineHeight: 1.6, color: 'var(--ink-soft)', marginTop: 4 }}>
                       {step.body}
                     </p>
                   </div>
@@ -306,7 +307,7 @@ export default function HomePage() {
           </h2>
           <p
             className="font-serif"
-            style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--ink-muted)' }}
+            style={{ fontSize: 19, lineHeight: 1.65, color: 'var(--ink-muted)' }}
           >
             This project extends the Lambert (2008) self-financed wagering mechanism with an{' '}
             <span style={{ color: 'var(--ink)', fontWeight: 600 }}>online skill layer</span>. Each round,
@@ -335,21 +336,21 @@ export default function HomePage() {
               >
                 <p
                   className="eyebrow mb-2"
-                  style={{ color: f.accent, fontSize: 11 }}
+                  style={{ color: f.accent, fontSize: 11.5 }}
                 >
                   {f.kicker}
                 </p>
                 <h3
                   className="font-serif"
                   style={{
-                    fontSize: 20, lineHeight: 1.3,
+                    fontSize: 22, lineHeight: 1.3,
                     fontWeight: 600, color: 'var(--ink)',
                   }}
                 >
                   {f.title}
                 </h3>
                 <p
-                  style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink-soft)', marginTop: 8 }}
+                  style={{ fontSize: 16, lineHeight: 1.65, color: 'var(--ink-soft)', marginTop: 10 }}
                 >
                   {f.body}
                 </p>
@@ -361,7 +362,7 @@ export default function HomePage() {
         {/* ─── Navigation ────────────────────────────────────── */}
         <nav aria-labelledby="nav-cards">
           <h2 id="nav-cards" className="eyebrow mb-5" style={{ color: 'var(--ink-soft)' }}>
-            Explore the thesis
+            Explore the project
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {NAV_CARDS.map((l) => (
@@ -378,7 +379,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between gap-3">
                   <span
                     className="font-serif"
-                    style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
+                    style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink)' }}
                   >
                     {l.label}
                   </span>
@@ -387,7 +388,7 @@ export default function HomePage() {
                     color="var(--navy)"
                   />
                 </div>
-                <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--ink-soft)', marginTop: 6 }}>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--ink-soft)', marginTop: 8 }}>
                   {l.desc}
                 </p>
               </Link>

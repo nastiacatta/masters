@@ -170,24 +170,23 @@ The critical difference from relative-weight approaches: my skill signal is abso
 
 ### Slide bullets
 
-* Elia wind: 34% CRPS improvement over equal weights
-* Elia electricity: ~4% improvement
-* Mechanism identifies Naive as strongest, ARIMA as weakest
+* Elia wind: ~7.6% CRPS reduction vs equal weights (post-audit, strictly-causal)
+* Elia electricity: near-tied with equal weights (forecasters similar)
+* Mechanism correctly ranks forecasters by skill
+* best_single (per-round oracle-of-best) still beats the mechanism on wind
 * Gains depend on forecaster heterogeneity
 
 ### Script
 
-On the Elia wind dataset — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, tuned parameters — the mechanism achieves a thirty-four per cent CRPS improvement over equal weights.
+On the Elia wind dataset — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, γ = 16, ρ = 0.5 — the mechanism achieves a seven-point-six per cent reduction in mean CRPS compared to equal weighting, under strictly-causal normalisation.
 
-The graph shows the learned skill for each forecaster over time. The mechanism correctly identifies Naive persistence as the strongest forecaster — it achieves the highest skill at zero point eight two. That makes sense: wind power is highly autocorrelated, so the most recent observation is a strong predictor. The MLP and the Naive-plus-EWMA ensemble are close behind, both around zero point eight zero five. EWMA and XGBoost sit in the middle. Theta and ARIMA are weakest — ARIMA at zero point five five — because linear models and trend decomposition are less suited to the nonlinear, non-stationary structure of wind power.
+The graph shows the learned skill for each forecaster over time. The skill layer recovers the per-forecaster CRPS ordering correctly — this is the headline skill-recovery result. But on this dataset the gap between the top and bottom forecasters in real CRPS is modest, so the mechanism's reweighting produces only a modest gain in the aggregate.
 
-The mechanism learns this ranking from data alone, without being told which model is better. That is the skill layer working as intended.
+An earlier version of this deck reported thirty-four per cent. That figure was produced under a whole-series min/max normalisation that leaked evaluation-window extremes into every training round. After the training-pipeline audit, all reported CRPS numbers use only warmup-window statistics for normalisation, and the mechanism's advantage shrinks correspondingly. The post-audit numbers are the right ones to defend.
 
-On the Elia electricity dataset, the improvement is smaller, at around four per cent. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill layer to exploit.
+On the Elia electricity dataset, the mechanism is essentially tied with equal weights — the improvement is under one per cent. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill layer to exploit.
 
-A skill-only variant already improves over equal weighting by about thirty per cent. The full mechanism — coupling skill with the deposit and settlement structure — improves further to thirty-four per cent. That supports the claim that learned reliability is genuinely useful for aggregation.
-
-At the same time, the best single forecaster — Naive — still outperforms the aggregate at minus forty-seven per cent. That is an important point to state clearly. The contribution is conditional improvement, not universal dominance.
+Importantly, per-round best_single — picking the forecaster with the lowest rolling CRPS over the last hundred rounds — beats the mechanism by roughly twenty-four per cent on wind. This is the forecast-combination puzzle surfacing honestly. The thesis contribution is not universal CRPS dominance; it is conditional improvement over equal weights while preserving the seven Lambert properties (budget balance, self-financing, sybil-proofness).
 
 ---
 
@@ -233,7 +232,7 @@ The mechanism improves the aggregate forecast in a disciplined market setting, e
 
 The limitations are clear. Tail calibration shows under-dispersion of about five percentage points — the aggregate is well-calibrated for central quantiles but weakens in the tails, a known limitation of the linear opinion pool. Truthfulness holds only under risk neutrality, following Lambert's original assumption. And richer strategic behaviour — sophisticated adaptive adversaries — remains open.
 
-To conclude: this thesis develops a self-financed forecasting market with online skill learning. Influence depends on earned reliability rather than deposit alone. On real energy data with seven forecasting models, the improvement is thirty-four per cent over equal weights on wind power. The mechanism is correct to machine precision, the skill signal recovers true ordering perfectly, and the standard attacks are contained.
+To conclude: this thesis develops a self-financed forecasting market with online skill learning. Influence depends on earned reliability rather than deposit alone. On real energy data with seven forecasting models, the mechanism reduces mean CRPS by seven-point-six per cent over equal weights on wind power and is essentially tied on electricity prices — substantially more modest than the pre-audit figures, but genuine and measured under a strictly-causal pipeline. The mechanism is correct to machine precision, the skill signal recovers true ordering perfectly, and the standard attacks are contained.
 
 The answer to the thesis question is yes, but conditionally. The gains are real when there is heterogeneity to exploit.
 

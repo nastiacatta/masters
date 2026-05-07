@@ -31,7 +31,7 @@ import pandas as pd
 from onlinev2.core.recalibration import RollingRecalibrator
 from onlinev2.core.scoring import crps_hat_from_quantiles
 from onlinev2.real_data.forecasters import get_all_forecasters
-from onlinev2.real_data.runner import normalize_series
+from onlinev2.real_data.runner import causal_normalize
 from onlinev2.simulation import run_simulation
 
 
@@ -51,13 +51,16 @@ def main() -> int:
     series_raw = series_raw[:slice_len]
 
     print(f"Slice: {len(series_raw)} points")
-    norm_series, _, _ = normalize_series(series_raw)
+    # Strictly-causal normalisation: (lo, hi) from warmup-window only.
+    # Replaces the legacy whole-series normalize_series which leaked
+    # evaluation-window extremes into training (bugfix clause 1.1 / 2.1).
+    warmup = 200
+    norm_series, _, _ = causal_normalize(series_raw, warmup_len=warmup)
 
     taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     forecasters = get_all_forecasters()
     N = len(forecasters)
     T = len(norm_series)
-    warmup = 200
 
     # --- 1. Forecaster sweep -----------------------------------------------
     print("Step 1/3: forecaster sweep")

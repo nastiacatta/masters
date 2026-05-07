@@ -167,25 +167,27 @@ The reward distribution follows the skill ranking: the least noisy forecaster ac
 
 This is the first real-data validation. Everything before this was controlled simulation.
 
-On Elia wind power — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, tuned parameters — the mechanism achieves a **44 % CRPS reduction** over equal weights. The skill-weighted aggregate is substantially more accurate than simply averaging all seven forecasters with equal influence.
+On Elia wind power — seventeen thousand five hundred and forty-four hourly observations, seven forecasters — the mechanism achieves about a **7.6 % CRPS reduction** over equal weights under strictly-causal normalisation. The skill-weighted aggregate is measurably more accurate than simply averaging all seven forecasters with equal influence.
 
-The skill trajectories on the right tell the story. The mechanism correctly identifies Naive persistence as the strongest forecaster — wind power is highly autocorrelated, so the most recent observation is a strong predictor. The Ensemble and EWMA follow. ARIMA, XGBoost, MLP, and Theta all land at roughly the same low skill — their quantile forecasts are over-spread relative to the realised distribution, so the CRPS penalises them similarly.
+*Note: earlier revisions of this deck reported 44 %. That figure was produced under a whole-series min/max normalisation that leaked evaluation-window extremes into every training round. The post-audit pipeline (May 2026) uses only warmup-window statistics and the improvement shrinks accordingly. See the training-testing audit spec for details.*
 
-On the Elia electricity dataset, the improvement is smaller — **8 %** over equal weights. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill signal to exploit. This confirms a clear empirical pattern: gains are conditional on forecaster diversity. When everyone is roughly equally good, equal weights are hard to beat.
+The skill trajectories on the right tell the story. The mechanism recovers the per-forecaster CRPS ordering and gives more weight to the consistently-better models. But the forecasters' real CRPS differences are modest on this series, so the aggregate gain is modest too.
+
+On the Elia electricity dataset the improvement is effectively zero — mechanism and equal weights are tied to within 0.2 %. The forecasters are more similar in quality on that task, so there is no heterogeneity for the skill signal to exploit. This confirms a clear empirical pattern: gains are conditional on forecaster diversity. When everyone is roughly equally good, equal weights are hard to beat.
 
 ---
 
 ## [SLIDE 11] Benchmark Comparison: Prior Work and This Project (~1 min)
 
-That 44 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
+That 7.6 % improvement over equal weights is the headline number, but the key question is: how does this mechanism compare with the two closest prior designs on exactly the same data?
 
 This figure evaluates all three methods on the same 7-forecaster panel, the same quantile reports, and the same 200-round warm-up, so the comparison is controlled.
 
-Raja's history-free design shows modest gains — about 2 % improvement on both datasets. Without memory across rounds, the mechanism cannot systematically separate persistent forecasting value from noise, and confidence weighting alone is limited.
+Raja's history-free design shows modest gains — about 1–2 % improvement on wind and essentially flat on electricity (−1.5 % / +0.0 %). Without memory across rounds, the mechanism cannot systematically separate persistent forecasting value from noise, and confidence weighting alone is limited.
 
-Vitali and Pinson's online gradient descent on the simplex achieves the lowest CRPS in this benchmark — 65 % on wind and 20 % on electricity. The trade-off is that the settlement is Shapley-based rather than Lambert self-financed wagering, and the learned weights are relative on a probability simplex: increasing one weight mechanically decreases the others.
+Vitali and Pinson's online gradient descent on the simplex achieves the lowest CRPS in this benchmark — 18.3 % on wind and 2.3 % on electricity. The trade-off is that the settlement is Shapley-based rather than Lambert self-financed wagering, and the learned weights are relative on a probability simplex: increasing one weight mechanically decreases the others.
 
-This project's mechanism sits between them on CRPS — 44 % on wind and 8 % on electricity — while retaining Lambert's economic properties and reporting an absolute per-forecaster skill signal. The rolling CRPS panel shows that the relative ordering is stable over the full two-year series, rather than driven by a short segment.
+This project's mechanism sits between them on CRPS — 7.6 % on wind and 0.2 % on electricity — while retaining Lambert's economic properties and reporting an absolute per-forecaster skill signal. The rolling CRPS panel shows that the relative ordering is stable over the full two-year series, rather than driven by a short segment.
 
 The takeaway is the point of the project: adaptation, self-financing, and an absolute skill signal can coexist in a single mechanism, and the empirical cost of keeping all three can be quantified in this benchmark.
 
@@ -251,16 +253,16 @@ If we have a moment after questions — or you prefer to see it now — I will s
 ## Q1: "Why not just use Vitali & Pinson's approach?"
 
 Key points:
-- Vitali achieves −65 % CRPS on wind — the best in this benchmark.
+- Vitali achieves −18.3 % CRPS on wind — the best in this benchmark.
 - Trade-off: Shapley settlement (not self-financed), relative weights on a simplex.
 - This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness.
-- The cost is ~21 pp in CRPS — quantified, not hand-waved.
+- The cost is about 11 pp in CRPS on wind — quantified, not hand-waved.
 
 ## Q2: "Why does Naive still beat the aggregate?"
 
 Key points:
 - Wind power is highly autocorrelated → Naive persistence is exceptionally strong.
-- The mechanism improves the aggregate by −44 % vs equal weights, but the ceiling is the best individual.
+- The mechanism improves the aggregate by −7.6 % vs equal weights, but the ceiling is the best individual (best_single is −24 % on this panel).
 - Known limitation of linear opinion pools. Future work: nonlinear combination methods.
 
 ## Q3: "How sensitive are the results to hyperparameters?"

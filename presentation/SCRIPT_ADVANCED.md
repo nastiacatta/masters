@@ -684,13 +684,13 @@ $$
 b_i(t) = \min\!\bigl(W_i(t),\, b_{\max},\, f\, W_i(t)\, c_i(t)\bigr),
 $$
 
-with confidence derived from quantile width in probit space:
+with confidence derived from quantile width on the raw observation scale (Masters notes §Step 1):
 
 $$
-c_i(t) = \text{clip}\!\bigl(e^{-\beta_c\,\Delta z_i(t)},\, c_{\min},\, c_{\max}\bigr),\quad \Delta z_i = \Phi^{-1}(q_i^{(0.9)}) - \Phi^{-1}(q_i^{(0.1)}).
+c_i(t) = \text{clip}\!\bigl(e^{-\beta_c\,\Delta_i(t)},\, c_{\min},\, c_{\max}\bigr),\quad \Delta_i = q_i^{(0.9)} - q_i^{(0.1)}.
 $$
 
-Code: `staking.confidence_from_quantiles` (staking.py:17–58), `staking.choose_deposits` (staking.py:61–88).
+Code: `staking.confidence_from_quantiles` (staking.py:17–58), `staking.choose_deposits` (staking.py:61–88). A `space='probit'` flag preserves the earlier Gaussian-latent width for backward-compatible ablations.
 
 ### Oracle benchmark
 
@@ -735,10 +735,19 @@ The runner reports **seven** weighting rules in one go (uniform, skill-only, mec
 
 | Dataset | Uniform CRPS | Mechanism CRPS | $\Delta$ | % vs uniform |
 |---------|--------------|----------------|----------|--------------|
-| Elia wind (offshore power) | ~0.089 | ~0.050 | −0.039 | **−44 %** |
-| Elia electricity (imbalance) | ~0.048 | ~0.044 | −0.004 | **−8 %** |
+| Elia wind (offshore power) | 0.04265 | 0.03930 | −0.00335 | **−7.86 %** |
+| Elia electricity (imbalance) | 0.09345 | 0.09320 | −0.00025 | **−0.27 %** |
 
-DM statistic is highly significant on wind ($p < 0.001$) and less but still significant on electricity. JSON output: `dashboard/public/data/real_data/{elia_wind,elia_electricity}/data/comparison.json`.
+_Numbers regenerated under the post-fix pipeline (strictly-causal
+normalisation + pending-queue horizon residuals; model-training-testing
+audit, May 2026). Earlier revisions of this script reported −44 % / −8 %;
+those figures were produced under a whole-series min/max normalisation
+that leaked evaluation-window extremes into every training round. See
+`onlinev2/outputs/post_fix_deltas/SUMMARY.md`._
+
+DM statistic on wind is still highly significant ($\mathrm{DM}=+13.95$,
+$p < 10^{-6}$; mechanism vs uniform on `comparison.json`). JSON output:
+`dashboard/public/data/real_data/{elia_wind,elia_electricity}/data/comparison.json`.
 
 ### Why the gap between the two datasets
 
@@ -783,7 +792,7 @@ Driver: `scripts/run_baseline_comparison.py`. Writes `dashboard/public/data/real
 
 **1. Raja history-free (`method_raja_history_free`)**
 
-- For each round, compute per-agent confidence $c_i(t)$ from quantile width in probit space (same formula as Slide 12).
+- For each round, compute per-agent confidence $c_i(t)$ from quantile width on the observation scale (same formula as Slide 12).
 - Normalise: $w_i(t) = c_i(t) / \sum_j c_j(t)$.
 - Aggregate with those weights; settle with Lambert's formula.
 - **No memory** across rounds.
@@ -807,19 +816,19 @@ $$
 - Uses effective wagers $m_i(t) = b_i(t)\,g(\sigma_i(t))$ as both aggregation weights and Lambert-settlement wagers.
 - Fixed deposits ($b_0 = 1$) and `omega_max=0` for comparability.
 
-### Numerical headline (from `baselines.json`)
+### Numerical headline (from `baselines.json`, post-fix pipeline)
 
-| Method | wind CRPS | wind Δ vs uniform | wind % | electricity CRPS | electricity % |
-|--------|-----------|-------------------|--------|------------------|----------------|
-| Uniform | 0.089 | — | 0 % | 0.048 | 0 % |
-| Raja (history-free) | ~0.087 | −0.002 | **−2 %** | ~0.047 | **−2 %** |
-| **This project** | **~0.050** | **−0.039** | **−44 %** | **~0.044** | **−8 %** |
-| Vitali OGD (per-quantile) | ~0.031 | −0.058 | **−65 %** | ~0.038 | **−20 %** |
+| Method | wind CRPS | wind Δ vs uniform | wind % | elec CRPS | elec % |
+|--------|-----------|-------------------|--------|-----------|--------|
+| Uniform | 0.04405 | — | 0 % | 0.09609 | 0 % |
+| Raja (history-free) | 0.04337 | −0.00067 | **−1.5 %** | 0.09611 | **+0.0 %** |
+| **This project** | **0.04071** | **−0.00334** | **−7.6 %** | **0.09591** | **−0.2 %** |
+| Vitali OGD (per-quantile) | 0.03599 | −0.00806 | **−18.3 %** | 0.09386 | **−2.3 %** |
 
 ### Interpretation
 
-- **Raja ≪ This project.** The learning layer is what produces the big improvement over Raja on wind (−44 % vs −2 %). This is direct empirical evidence that *history-free self-financed* is leaving a large gain on the table.
-- **Vitali < This project on CRPS.** Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~21 pp gap on wind is quantified here, not glossed over.
+- **Raja ≪ This project.** The learning layer is what produces the improvement over Raja on wind (−7.6 % vs −1.5 %). This is direct empirical evidence that *history-free self-financed* is leaving gain on the table, even under the corrected strictly-causal pipeline where the absolute gains are an order of magnitude smaller than what earlier revisions of this script reported.
+- **Vitali < This project on CRPS.** Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~11 pp gap on wind (−18.3 % vs −7.6 %) is quantified here, not glossed over.
 - **The point of the project.** Adaptation + self-financing + absolute skill can coexist, and the empirical cost is now measurable.
 
 ### Stability check
@@ -867,8 +876,8 @@ A repeated self-financed wagering market that:
 - Synthetic: $\rho = 1$ rank recovery, reward aligned with true ordering.
 - Guarantees: machine-precision budget balance, zero mean profit, exact identical-report sybilproofness.
 - Deposit design: bankroll × confidence closes ~75 % of the oracle gap over fixed deposits.
-- Real data (Elia): **−44 %** CRPS on wind, **−8 %** on electricity vs uniform.
-- Benchmark (same forecasts, three mechanisms): Raja −2 %, This project −44 %, Vitali −65 % on wind. The three trade-offs are now quantified.
+- Real data (Elia, post-fix pipeline): **−7.6 %** CRPS on wind, **−0.2 %** on electricity vs uniform.
+- Benchmark (same forecasts, three mechanisms): Raja −1.5 %, This project −7.6 %, Vitali −18.3 % on wind. The three trade-offs are now quantified.
 
 ### Clear priorities for future work
 

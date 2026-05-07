@@ -308,3 +308,143 @@ All claims are reproducible from committed code and data:
 _Generated from the mechanism-correctness-audit-fix and
 mechanism-recalibration-layer specs. Last updated on the commit where
 Claim 7 lands._
+
+
+---
+
+## Claim 9 — Training-testing audit: 14 methodological defects surfaced and fixed
+
+All 14 B1–B14 defects from the `model-training-testing-audit` spec are
+fixed in source. After regeneration under the post-fix pipeline, the
+headline mechanism-vs-uniform number on Elia wind is **−7.86%** (not
+−44.1%); the pre-fix 44% figure was largely an artefact of B1
+(whole-series min/max normalization leaking evaluation-window extremes
+into every training round).
+
+### Fixes landed (source + tests green)
+
+- **B1 — Causal normalization.** `causal_normalize(series, warmup_len)`
+  replaces the whole-series `normalize_series` in every training path
+  (`runner.py`, `experiments.py`, `scripts/run_baseline_comparison.py`,
+  `scripts/run_sensitivity_sweep.py`).
+- **B2 — Cache pipeline versioning.** Forecast caches at
+  `onlinev2/outputs_cache/*.npz` embed `pipeline_version="v2-causal-norm"`
+  and a `forecaster_config_hash`; stale caches regenerate automatically.
+- **B3 — Sensitivity sweep artefact.** `scripts/run_sensitivity_sweep.py`
+  implements a held-out-split grid sweep over (γ, ρ, λ); the runner
+  reads `optimal_params` / `optimal_improvement_pct` from the emitted
+  `sensitivity_sweep.json` instead of a hardcoded constant.
+- **B4 — Horizon residual alignment.** `_run_horizon_comparison` uses a
+  pending-prediction deque to pair `(y_u, ŷ_u)` at matched target
+  indices, so residuals are h-step-ahead errors by construction.
+- **B5 — XGBoost expanding-window CV with gap.** Early-stopping
+  validation uses the last 20% of training with a `val_gap=24` gap to
+  avoid autocorrelation bleed from the tail.
+- **B6 — MLP deterministic seeding.** `MLPForecaster.seed` is a
+  constant propagated from the runner; retraining schedule shifts no
+  longer perturb MLP output.
+- **B7 — Surfaced fallback counters.** `fallback_summary` is written
+  into every output JSON; `strict_no_fallback=True` raises at
+  end-of-run when any ML model silently reduced to persistence.
+- **B8 — Recalibration causality.** The `recalibrate=True` branch runs
+  `transform → score → update → refit on cadence` so the map `G`
+  applied at round t was fitted only on PITs from rounds < t.
+- **B9 — Shared `best_single_by_crps` helper.** The two runners
+  (`run_real_data_comparison`, `_run_horizon_comparison`) use the same
+  CRPS-based selector with `lookback=100`.
+- **B10 — `michael_ogd` renamed.** The shifted-median fan is now labelled
+  `michael_ogd_centered_median_fan` so the label matches the object.
+- **B11 / B12 — Block renames.** `rep_holdout` → `online_window_mean`;
+  `prequential_blocks` → `online_block_mean`; no more citations to
+  Cerqueira 2020, Tashman 2000, or Dawid 1984 on blocks that do not
+  refit per split.
+- **B13 — Regime-shift flagged.** `regime_shift.json` carries
+  `within_run_seasonal_slice: true` and a `todo` key pointing at the
+  follow-up restart-per-season implementation.
+- **B14 — Day-ahead warmup floor.** `min_warmup_for(forecasters)` bumps
+  the day-ahead warmup from 30 to ≥70 so XGBoost and MLP are not
+  silently reduced to persistence for the first ~40 scored rounds.
+
+### Post-fix headline numbers (regenerated under the full fixed pipeline)
+
+Main runner, `comparison.json`, γ=16, ρ=0.5, λ=0.05:
+
+| Series | Method | Mean CRPS | Δ% vs uniform |
+| --- | --- | ---: | ---: |
+| Elia wind (T=17344) | uniform | 0.042648 | — |
+| Elia wind (T=17344) | skill | 0.040154 | −5.85% |
+| Elia wind (T=17344) | **mechanism** | **0.039297** | **−7.86%** |
+| Elia wind (T=17344) | best_single | 0.032261 | −24.35% |
+| Elia wind (T=17344) | oracle (per-round) | 0.020801 | −51.23% |
+| Elia electricity (T≈70k) | uniform | 0.093452 | — |
+| Elia electricity (T≈70k) | **mechanism** | **0.093198** | **−0.27%** |
+| Elia electricity (T≈70k) | best_single | 0.088720 | −5.06% |
+
+Baseline head-to-head (`baselines.json`):
+
+| Series | Method | Mean CRPS | Δ% vs uniform |
+| --- | --- | ---: | ---: |
+| Elia wind | raja_history_free | 0.043373 | −1.53% |
+| Elia wind | **mechanism** | **0.040709** | **−7.58%** |
+| Elia wind | vitali_ogd_per_quantile | 0.035992 | −18.29% |
+| Elia electricity | raja_history_free | 0.096107 | +0.02% |
+| Elia electricity | **mechanism** | **0.095906** | **−0.19%** |
+| Elia electricity | vitali_ogd_per_quantile | 0.093862 | −2.31% |
+
+Horizon experiments (wind only):
+
+| Block | Mechanism CRPS | Uniform CRPS | Δ% vs uniform |
+| --- | ---: | ---: | ---: |
+| day_ahead (warmup ≥ 70) | 0.192202 | 0.192361 | −0.08% |
+| 4h_ahead (T=20k, horizon=16) | 0.108081 | 0.108744 | −0.61% |
+| regime_shift (within-run slice) | 0.066457 | 0.067163 | −1.05% |
+
+Diebold–Mariano (uniform vs mechanism) on the wind `comparison.json`
+row: DM = +13.95, p < 1e-6 — mechanism advantage is statistically
+significant but small in magnitude. Fallback summary: XGBoost = 2 or
+3, MLP = 1 or 2 across all blocks; every other forecaster = 0.
+
+### Sources
+
+- Spec: [`.kiro/specs/model-training-testing-audit/`](.kiro/specs/model-training-testing-audit/)
+- Fixed runner: [`onlinev2/src/onlinev2/real_data/runner.py`](onlinev2/src/onlinev2/real_data/runner.py)
+  (`causal_normalize`, `best_single_by_crps`, `fallback_summary`,
+  sweep-artefact reader, renamed blocks, recalibration reorder).
+- Fixed horizon runner: [`onlinev2/src/onlinev2/real_data/experiments.py`](onlinev2/src/onlinev2/real_data/experiments.py)
+  (`min_warmup_for`, pending-queue residual drain).
+- Fixed forecasters: [`onlinev2/src/onlinev2/real_data/forecasters.py`](onlinev2/src/onlinev2/real_data/forecasters.py)
+  (XGBoost `val_gap`, MLP seed, fallback counters).
+- Sensitivity sweep: [`scripts/run_sensitivity_sweep.py`](scripts/run_sensitivity_sweep.py)
+  (not yet run on the full Elia series; `sensitivity.note` honestly
+  flags the missing artefact).
+- Delta report: [`onlinev2/outputs/post_fix_deltas/consolidated_deltas.json`](onlinev2/outputs/post_fix_deltas/consolidated_deltas.json).
+- Summary (this claim): [`onlinev2/outputs/post_fix_deltas/SUMMARY.md`](onlinev2/outputs/post_fix_deltas/SUMMARY.md).
+- Tests: 14/14 bug-condition tests green; 10/10 preservation tests
+  green; 105 audit tests pass; 418 non-audit tests pass; mvp.py 29
+  inline tests pass.
+
+### Known remaining issues (not in scope of this spec)
+
+1. **Warmup-window clipping — mitigated.** `causal_normalize` (static
+   warmup) clips ~33% of Elia wind evaluation-window observations to
+   `{0, 1}` because the warmup-window range `[160, 2100]` is narrower
+   than the full-series range `[0, 2208]`. The runners now accept a
+   `normalize_mode` kwarg (`"static"` default; `"expanding"` opt-in)
+   so future runs can switch to `causal_normalize_expanding` via
+   `scripts/run_real_data_with_skill.py --normalize-mode expanding`.
+   The dashboard JSONs currently on disk were produced with `static`.
+   Tests: `onlinev2/tests/test_normalize_mode.py`.
+2. **Presentation copy aligned with post-fix numbers (May 2026).** The
+   dashboard slides, speaker scripts, and `THESIS_CLAIMS.md` now cite
+   −7.6% / −0.2% (wind / electricity) under the strictly-causal
+   pipeline; earlier −44% / −8% figures have been superseded.
+3. **Dashboard adapters verified clean.** No adapter or audit panel
+   keys off the renamed blocks (`rep_holdout` / `prequential_blocks` /
+   `michael_ogd` / `regime_shift.regime_summary`); grep sweep on
+   `dashboard/src/**` returned zero hits. The renamed runner output is
+   consumed through the new keys only.
+
+---
+
+_Claim 9 added after the model-training-testing-audit spec landed and
+the dashboard JSONs were regenerated under the full fixed pipeline._

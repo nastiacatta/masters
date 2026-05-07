@@ -1,0 +1,138 @@
+# Thesis outline
+
+Working structure. Chapter word counts are planning targets, not hard
+limits. Final length is whatever the argument needs, but the budget keeps
+us honest about which chapters pay the rent.
+
+## Chapter 1 — Introduction (≈1500 words)
+
+- Motivation: distributed predictive information in energy and operations.
+- Gap: forecasting markets with adaptivity and self-financing at the same
+  time.
+- Research question: can a market learn who is reliable, use that to
+  improve aggregates, and preserve market discipline?
+- Contributions (5 bullets, source-linked to `THESIS_CLAIMS.md`).
+- Thesis roadmap.
+
+Source files: `writing/10_abstract_and_question.md`,
+`writing/20_literature_review.md`.
+
+## Chapter 2 — Background and related work (≈3000 words)
+
+- Lambert et al. 2008 self-financed wagering mechanisms. Seven axioms,
+  uniqueness.
+- Raja et al. 2024 forecasting market. Extension to quantile forecasts
+  and continuous outcomes.
+- Vitali and Pinson 2025 online learning with intermittent contributions.
+  OGD on the simplex, robust regression, in-sample vs out-of-sample payoff.
+- Scoring rules: Gneiting and Raftery 2007; CRPS and pinball loss.
+- Probabilistic forecast calibration: Gneiting, Balabdaoui and Raftery
+  2007; Ranjan and Gneiting 2010; Kuleshov, Fenner and Ermon 2018.
+- Forecast combination: Bates and Granger 1969; Timmermann 2006 (the
+  combination puzzle).
+- Online learning: Cesa-Bianchi and Lugosi 2006.
+- Evaluation methodology: Dawid 1984; Tashman 2000; Cerqueira et al. 2020.
+
+Source files: `writing/20_literature_review.md`,
+`writing/theory_notes/*`, `writing/bibliography.md`.
+
+## Chapter 3 — Mechanism design (≈3500 words)
+
+- Round structure (submit → skill gate → aggregate → settle → update).
+- Effective wager as a single object controlling influence and exposure.
+- Skill layer: EWMA, staleness decay, exponential loss-to-skill mapping.
+- Settlement: weighted-score payout, budget balance by construction.
+- Deposit policies and the skill gate.
+- Theoretical properties preserved vs extended.
+
+Source files: `writing/30_mechanism_design.md`.
+
+## Chapter 4 — Implementation and methodology (≈2500 words)
+
+- Three-layer architecture (environment / agents / platform).
+- Data: synthetic DGPs + Elia offshore wind + Elia electricity imbalance.
+- Forecaster panel (Naive, EWMA, ARIMA, XGBoost, MLP, Theta, ensemble).
+- Strict causality and training protocol (post-audit fixes from
+  `model-training-testing-audit`).
+- Experiment protocol and the validity ladder.
+- Reproducibility (`AUDIT_SEEDS`, `PIPELINE_VERSION`, cache invalidation).
+
+Source files: `writing/40_methodology.md`, `onlinev2/README.md`,
+`.kiro/specs/model-training-testing-audit/design.md`.
+
+## Chapter 5 — Results (≈5000 words, split across three sub-chapters)
+
+### 5.1 Synthetic validation — correctness and skill recovery
+
+- Budget balance, sybil invariance, scoring bounds.
+- 13/13 Lambert invariants and 60-snapshot golden-value suite.
+- Known-noise-panel skill recovery (Spearman σ vs CRPS = 1.0).
+- Deposit policy ablation (fixed < bankroll-confidence < oracle).
+- Bankroll pipeline ablation (A–E).
+
+Source: `writing/50_results_synthetic.md`.
+
+### 5.2 Real-data validation — Elia wind
+
+- 3000-point slice, headline comparison table (mechanism vs eight
+  baselines including Michael's OGD port).
+- Per-forecaster CRPS and skill ordering (XGBoost wins; σ matches CRPS).
+- Tail-calibration deviation (Ranjan–Gneiting gap).
+- DM test mechanism vs uniform.
+- Horizon comparison (day-ahead and 4h-ahead) — LOCKED (post-fix
+  numbers in `onlinev2/outputs/post_fix_deltas/SUMMARY.md`).
+
+Source: `writing/60_results_real_data.md`.
+
+### 5.3 Recalibration layer
+
+- Rolling isotonic post-processing (Kuleshov–Fenner–Ermon).
+- Tail deviation −59%, centre deviation −79%.
+- CRPS +1.3%, sharpness −9% (calibration-sharpness floor).
+- Orthogonality: economic structure preserved, byte-identical at
+  `recalibrate=False`.
+
+Source: `writing/70_recalibration_layer.md`.
+
+## Chapter 6 — Robustness (≈2500 words)
+
+- Eighteen behaviour presets. Attack-gain-vs-benign frame.
+- Participation as the dominant vulnerability (bursty +934%).
+- Sybil narrow invariance vs diversified-report leakage.
+- Arbitrage scan over γ × λ; no sustained profit in the repeated setting.
+- Detection-adaptation: collateral cost of defences.
+
+Source: `writing/80_robustness.md`.
+
+## Chapter 7 — Discussion (≈2000 words)
+
+- What the mechanism does well and what it does not.
+- Conditional improvement, not universal dominance.
+- Deposit design > weighting rule (the main empirical finding).
+- Connection to the forecast combination puzzle.
+- Threats to validity.
+
+Source: `writing/90_discussion_and_limits.md`.
+
+## Chapter 8 — Conclusion and future work (≈1000 words)
+
+- Summary of contributions.
+- Open directions: per-quantile OGD aggregation, Beta-transformed linear
+  pool, conformal wrappers, collusion-resistant scoring, richer strategic
+  agents.
+
+Source: `writing/99_conclusion.md`.
+
+## Appendices
+
+- A. Proofs of invariants (budget balance, sybil invariance, skill
+  monotonicity).
+- B. Hyperparameter tuning table.
+- C. Full table of behaviour presets and resulting Δ CRPS.
+- D. Full XGBoost / MLP training details.
+- E. Code listing for the five-step bankroll pipeline.
+
+## Target submission date
+
+To fill in. Back out the `[PENDING]` dependencies from that date so each
+chapter has a draft, review, and revision pass.

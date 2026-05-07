@@ -309,6 +309,19 @@ class ARIMAForecaster(BaseForecaster):
                     "ignore",
                     message="Non-invertible starting MA parameters",
                 )
+                # statsmodels' conditional-sum-of-squares start-params routine
+                # (sarimax.py:_conditional_sum_squares) calls `np.linalg.pinv`
+                # which in turn issues numpy matmul RuntimeWarnings for near-
+                # singular design matrices on short/degenerate windows. The
+                # pinv itself handles the singularity gracefully (the MLE
+                # refines the starting params), so silence the downstream
+                # matmul noise here rather than let it bubble up through the
+                # test suite.
+                warnings.filterwarnings(
+                    "ignore",
+                    message=".*encountered in matmul.*",
+                    category=RuntimeWarning,
+                )
                 model = ARIMA(tail, order=self.order)
                 self._model = model.fit(method_kwargs={"maxiter": 50})
             forecast = self._model.forecast(steps=1)

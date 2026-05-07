@@ -68,9 +68,17 @@ Every multi-seed adversary experiment writes two CSVs under
 - `<name>_summary.csv` — mean, SE, 95% CI, n_seeds per scenario.
 
 Adversary-specific plots live under `.../plots/`:
-`arbitrage_profit_by_lam.png`, `coalition_profit.png`,
-`insider_profit.png`, `wash_activity.png`,
+`arbitrage_profit_by_lam.png`, `arbitrage_wealth_trajectories.png`,
+`arbitrage_crowd_size.png`, `coalition_profit.png`,
+`informed_collusion.png`, `insider_profit.png`, `wash_activity.png`,
 `strategic_reporting_frontier.png`, `sybil_arbitrage_profit.png`.
+
+Additional adversary-focused experiments:
+
+- `arbitrage_crowd_size` — 2D sweep (λ, n_benign) showing the attack
+  scales roughly linearly with crowd size.
+- `informed_collusion` — combines a Chun-Shachter coalition with
+  per-member privileged-information signals under an AR(1) DGP.
 
 ### Backwards-compatible aliases
 

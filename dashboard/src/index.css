@@ -117,9 +117,9 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); font-weight: 600; }
 /* A thin, understated small-caps label for eyebrows */
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
@@ -135,11 +135,11 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); font-weight: 600; }
 /* Subtle prose flow for reading blocks */
 .prose-academic p {
   font-family: var(--font-serif);
-  font-size: 17px;
-  line-height: 1.65;
+  font-size: 18px;
+  line-height: 1.7;
   color: var(--ink-muted);
 }
-.prose-academic p + p { margin-top: 0.8em; }
+.prose-academic p + p { margin-top: 0.85em; }
 
 /* Text selection */
 ::selection {

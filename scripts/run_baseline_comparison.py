@@ -57,12 +57,13 @@ from onlinev2.real_data.loader import load_csv_series  # noqa: E402
 from onlinev2.real_data.runner import (  # noqa: E402
     PIPELINE_VERSION,
     causal_normalize,
+    causal_normalize_expanding,
 )
 from onlinev2.simulation import run_simulation  # noqa: E402
 from scipy.stats import norm  # noqa: E402
 
 
-def _forecaster_config_hash() -> str:
+def _forecaster_config_hash(taus: np.ndarray | None = None) -> str:
     """Stable hash of forecaster-set configuration (post-audit issue #4).
 
     Invalidates the cache when any of the following change:
@@ -70,7 +71,11 @@ def _forecaster_config_hash() -> str:
     - XGBoost's n_lags or val_gap,
     - MLP's n_lags or hidden size,
     - the seed passed to deterministic forecasters,
-    - the top-level PIPELINE_VERSION.
+    - the top-level PIPELINE_VERSION,
+    - the τ-grid used to fit per-tau XGBoost quantile models
+      (added in the grid-unification pass so swapping the 5-level
+      non-equidistant grid for the 9-level equidistant grid forces
+      cache regeneration).
 
     Keeps the cache stricter than a version string alone; fresh caches
     are generated whenever any of these knobs shift.
@@ -79,11 +84,21 @@ def _forecaster_config_hash() -> str:
 
     forecasters = get_all_forecasters()
     sig_parts: list[str] = [PIPELINE_VERSION]
+    if taus is not None:
+        taus_arr = np.asarray(taus, dtype=np.float64).ravel()
+        sig_parts.append(
+            "taus:" + ",".join(f"{t:.6f}" for t in taus_arr)
+        )
     for fc in forecasters:
         sig_parts.append(fc.name)
         if isinstance(fc, XGBoostForecaster):
             sig_parts.append(f"xgb:n_lags={fc.n_lags}")
             sig_parts.append(f"xgb:val_gap={fc.val_gap}")
+            if fc._taus is not None:
+                sig_parts.append(
+                    "xgb:qtaus:"
+                    + ",".join(f"{t:.6f}" for t in np.asarray(fc._taus).ravel())
+                )
         elif isinstance(fc, MLPForecaster):
             sig_parts.append(f"mlp:n_lags={fc.n_lags}")
             sig_parts.append(f"mlp:hidden={fc.hidden}")
@@ -92,7 +107,13 @@ def _forecaster_config_hash() -> str:
     return hashlib.sha256(signature.encode("utf-8")).hexdigest()[:16]
 
 
-FORECASTER_CONFIG_HASH = _forecaster_config_hash()
+# Module-level hash is computed against the grid used by default
+# (the 9-level equidistant TAUS_FINE). Callers that override taus at
+# run time should recompute via _forecaster_config_hash(taus) so the
+# cache is keyed to the grid actually used.
+FORECASTER_CONFIG_HASH = _forecaster_config_hash(
+    taus=np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+)
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -110,16 +131,28 @@ def confidence_from_quantiles(
     c_min: float = 0.5,
     c_max: float = 1.0,
     eps: float = 1e-6,
+    space: str = "raw",
 ) -> np.ndarray:
-    """Replicates `core.staking.confidence_from_quantiles` for standalone use."""
+    """Replicates ``core.staking.confidence_from_quantiles`` for standalone use.
+
+    ``space='raw'`` uses q(tau_H)-q(tau_L) on the observation scale (canonical,
+    Masters notes). ``space='probit'`` uses the Gaussian-latent width (legacy).
+    """
     q_t = np.asarray(q_t, dtype=np.float64)
     taus = np.asarray(taus, dtype=np.float64).ravel()
     idx_L = int(np.argmin(np.abs(taus - tau_L)))
     idx_H = int(np.argmin(np.abs(taus - tau_H)))
-    q_lo = np.clip(q_t[:, idx_L], eps, 1.0 - eps)
-    q_hi = np.clip(q_t[:, idx_H], eps, 1.0 - eps)
-    dz = np.maximum(norm.ppf(q_hi) - norm.ppf(q_lo), 0.0)
-    c = np.exp(-float(beta_c) * dz)
+    q_lo = q_t[:, idx_L]
+    q_hi = q_t[:, idx_H]
+    if space == "raw":
+        delta = np.maximum(q_hi - q_lo, 0.0)
+    elif space == "probit":
+        q_lo_c = np.clip(q_lo, eps, 1.0 - eps)
+        q_hi_c = np.clip(q_hi, eps, 1.0 - eps)
+        delta = np.maximum(norm.ppf(q_hi_c) - norm.ppf(q_lo_c), 0.0)
+    else:
+        raise ValueError(f"space must be 'raw' or 'probit', got {space!r}")
+    c = np.exp(-float(beta_c) * delta)
     return np.clip(c, float(c_min), float(c_max))
 
 
@@ -181,6 +214,7 @@ def ensure_cache(
     hourly: bool,
     warmup: int,
     force: bool = False,
+    normalize_mode: str = "static",
 ) -> dict:
     if os.path.isfile(cache_path) and not force:
         data = np.load(cache_path, allow_pickle=True)
@@ -194,9 +228,15 @@ def ensure_cache(
             if "forecaster_config_hash" in data.files
             else "legacy"
         )
+        cached_normalize_mode = (
+            str(data["normalize_mode"].item())
+            if "normalize_mode" in data.files
+            else "legacy"
+        )
         if (
             cached_version == PIPELINE_VERSION
             and cached_hash == FORECASTER_CONFIG_HASH
+            and cached_normalize_mode == normalize_mode
         ):
             print(f"  Using cached forecasts: {cache_path}")
             fc_counts: dict[str, int] = {}
@@ -217,7 +257,8 @@ def ensure_cache(
         print(
             f"  Cache mismatch — regenerating "
             f"(pipeline_version got={cached_version!r}, want={PIPELINE_VERSION!r}; "
-            f"forecaster_config_hash got={cached_hash!r}, want={FORECASTER_CONFIG_HASH!r})."
+            f"forecaster_config_hash got={cached_hash!r}, want={FORECASTER_CONFIG_HASH!r}; "
+            f"normalize_mode got={cached_normalize_mode!r}, want={normalize_mode!r})."
         )
 
     print(f"  Loading series from {series_path}")
@@ -247,9 +288,16 @@ def ensure_cache(
                 series = np.clip(series, p1, p99)
         else:
             series = load_csv_series(series_path)
-    print(f"  Series length = {len(series)}")
+    print(f"  Series length = {len(series)} (normalize_mode={normalize_mode})")
 
-    norm_series, s_min, s_max = causal_normalize(series, warmup_len=warmup)
+    if normalize_mode == "expanding":
+        norm_series, lo_traj, hi_traj = causal_normalize_expanding(
+            series, warmup_len=warmup
+        )
+        s_min = float(lo_traj[-1])
+        s_max = float(hi_traj[-1])
+    else:
+        norm_series, s_min, s_max = causal_normalize(series, warmup_len=warmup)
     y_all, q_reports, names, fallback_counts = run_forecasters(norm_series, taus)
 
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
@@ -263,6 +311,7 @@ def ensure_cache(
         series_max=s_max,
         pipeline_version=np.array(PIPELINE_VERSION),
         forecaster_config_hash=np.array(FORECASTER_CONFIG_HASH),
+        normalize_mode=np.array(normalize_mode),
         fallback_counts=np.array(json.dumps(fallback_counts)),
     )
     print(
@@ -471,12 +520,21 @@ def run_dataset(
     force_cache: bool,
     outdir_dashboard: str,
     outdir_presentation: str,
+    normalize_mode: str = "static",
 ) -> dict:
-    print(f"\n[{series_name}] Running baseline comparison")
-    taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+    print(f"\n[{series_name}] Running baseline comparison (normalize_mode={normalize_mode})")
+    # Use the 9-level equidistant grid so CRPS-hat values are directly
+    # comparable with those emitted by `run_real_data_comparison`
+    # (runner.py) and with Claim 4 / Claim 6 in THESIS_CLAIMS.md.
+    # The 5-level non-equidistant default silently dropped 20% of the
+    # classical CRPS integration range — see scoring.py docstring.
+    taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     cache_path = os.path.join(REPO_ROOT, "onlinev2", "outputs_cache", f"{series_name}_forecasts.npz")
 
-    cache = ensure_cache(cache_path, csv_path, taus, hourly=hourly, warmup=warmup, force=force_cache)
+    cache = ensure_cache(
+        cache_path, csv_path, taus, hourly=hourly, warmup=warmup, force=force_cache,
+        normalize_mode=normalize_mode,
+    )
     y_all = cache["y_norm"]
     q_reports = cache["q_reports"]
     names: list[str] = list(cache["names"])
@@ -583,6 +641,8 @@ def main() -> None:
     p.add_argument("--eta", type=float, default=2.0)
     p.add_argument("--vitali-lr", type=float, default=0.05)
     p.add_argument("--force-cache", action="store_true", help="Regenerate forecast cache")
+    p.add_argument("--normalize-mode", choices=["static", "expanding"], default="static",
+                   help="Causal normalisation mode; see run_real_data_with_skill.py for details.")
     args = p.parse_args()
 
     dashboard_dir = os.path.join(REPO_ROOT, "dashboard", "public", "data")
@@ -616,6 +676,7 @@ def main() -> None:
             force_cache=args.force_cache,
             outdir_dashboard=dashboard_dir,
             outdir_presentation=presentation_dir,
+            normalize_mode=args.normalize_mode,
         )
         combined_rows.extend(out["summary"])
 

@@ -81,7 +81,7 @@ describe('ModelAuditPanel', () => {
     expect(screen.getByText('Per-Round CRPS')).toBeTruthy();
     expect(screen.getByText('Regime Breakdown')).toBeTruthy();
     expect(screen.getByText('Model Annotations')).toBeTruthy();
-    expect(screen.getByText('XGBoost Deep Dive')).toBeTruthy();
+    expect(screen.getByText('XGBoost deep dive')).toBeTruthy();
   });
 
   it('displays all 7 forecasters', () => {
