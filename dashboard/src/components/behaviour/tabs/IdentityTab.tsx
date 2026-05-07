@@ -17,6 +17,7 @@ import MechanismResponseCard from '@/components/behaviour/MechanismResponseCard'
 import { useMechanismMetrics } from '@/hooks/useMechanismMetrics';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, PLACEHOLDER_DESCRIPTIONS } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 function PlaceholderBanner({ description }: { family: string; description: string }) {
   return (
@@ -63,6 +64,7 @@ export default function IdentityTab({ sybil, collusion, repReset, baseline }: {
   return (
     <div className="space-y-6">
       <PlaceholderBanner family="Identity" description={PLACEHOLDER_DESCRIPTIONS.Identity} />
+      <PresetCallout presetIds={['sybil', 'collusion', 'reputation_reset']} />
       <p className="text-sm text-slate-600">
         Identity attacks exploit the mechanism by splitting into multiple accounts (sybil),
         coordinating with allies (collusion), or building reputation then exploiting it

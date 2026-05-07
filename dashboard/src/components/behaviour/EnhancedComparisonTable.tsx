@@ -15,7 +15,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { fmt } from '@/components/lab/shared';
 import { FAMILY_COLORS } from '@/lib/palette';
 import type { ComparisonRow } from '@/hooks/useBehaviourSimulations';
-import type { BehaviourFamily } from '@/lib/behaviour/hiddenAttributes';
+import type { BehaviourFamily, BehaviourPresetId } from '@/lib/behaviour/hiddenAttributes';
+import { PLAIN_EXPLANATION } from '@/components/behaviour/PresetCallout';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -83,7 +84,8 @@ export function groupAndFilterRows(
       r =>
         r.name.toLowerCase().includes(q) ||
         r.family.toLowerCase().includes(q) ||
-        r.presetId.toLowerCase().includes(q),
+        r.presetId.toLowerCase().includes(q) ||
+        (r.description ?? '').toLowerCase().includes(q),
     );
   }
 
@@ -366,6 +368,8 @@ function DataRow({
 }) {
   const isBaseline = row.name === baselineName;
   const barWidth = maxAbsDelta > 0 ? (Math.abs(row.deltaCrpsPct) / maxAbsDelta) * 100 : 0;
+  const explanation =
+    PLAIN_EXPLANATION[row.presetId as BehaviourPresetId] ?? row.description ?? '';
 
   return (
     <tr
@@ -374,10 +378,17 @@ function DataRow({
         onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''
       } ${isBaseline ? 'bg-blue-50/30' : ''}`}
     >
-      <td className="px-3 py-1.5 font-medium text-slate-700">{row.name}</td>
-      <td className="px-3 py-1.5 capitalize text-slate-500">{row.family}</td>
-      <td className="px-3 py-1.5 font-mono">{fmt(row.meanCrps)}</td>
-      <td className={`px-3 py-1.5 font-mono font-semibold ${deltaColor(row.deltaCrpsPct)}`}>
+      <td className="px-3 py-2 align-top">
+        <div className="font-medium text-slate-700">{row.name}</div>
+        {explanation && (
+          <div className="text-[11px] text-slate-500 mt-0.5 max-w-[340px] leading-snug">
+            {explanation}
+          </div>
+        )}
+      </td>
+      <td className="px-3 py-2 align-top capitalize text-slate-500">{row.family}</td>
+      <td className="px-3 py-2 align-top font-mono">{fmt(row.meanCrps)}</td>
+      <td className={`px-3 py-2 align-top font-mono font-semibold ${deltaColor(row.deltaCrpsPct)}`}>
         <div className="flex items-center gap-1.5">
           <span className="shrink-0">
             {row.deltaCrpsPct > 0 ? '+' : ''}
@@ -394,9 +405,9 @@ function DataRow({
           </div>
         </div>
       </td>
-      <td className="px-3 py-1.5 font-mono">{fmt(row.gini)}</td>
-      <td className="px-3 py-1.5 font-mono">{fmt(row.nEff, 1)}</td>
-      <td className="px-3 py-1.5 font-mono">{fmt(row.participation * 100, 1)}%</td>
+      <td className="px-3 py-2 align-top font-mono">{fmt(row.gini)}</td>
+      <td className="px-3 py-2 align-top font-mono">{fmt(row.nEff, 1)}</td>
+      <td className="px-3 py-2 align-top font-mono">{fmt(row.participation * 100, 1)}%</td>
     </tr>
   );
 }

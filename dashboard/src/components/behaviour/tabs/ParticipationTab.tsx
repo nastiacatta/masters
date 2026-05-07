@@ -17,6 +17,7 @@ import ZoomBadge from '@/components/charts/ZoomBadge';
 import MathBlock from '@/components/dashboard/MathBlock';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, cumulativeAverage } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 export default function ParticipationTab({ bursty, baseline }: {
   bursty: PipelineResult; baseline: PipelineResult;
@@ -43,6 +44,7 @@ export default function ParticipationTab({ bursty, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PresetCallout presetIds={['bursty']} />
       <p className="text-sm text-slate-600">
         What happens when agents go offline? The EWMA freezes during absences, preventing drift.
       </p>

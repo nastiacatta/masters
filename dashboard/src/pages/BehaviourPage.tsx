@@ -67,6 +67,28 @@ export default function BehaviourPage() {
           subtitle="Stress-tests of the mechanism under diverse agent behaviours, strategic attacks, and parameter shifts. Eighteen behaviour presets are compared against a truthful baseline using paired runs, same underlying outcomes and seeds, so every reported difference comes from the behaviour alone."
         />
 
+        <div
+          className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed"
+          style={{ marginTop: 8 }}
+        >
+          <div className="font-semibold text-slate-700 text-[11px] uppercase tracking-wider mb-1.5">
+            Why synthetic data here, when the forecasting chapter uses real Elia data?
+          </div>
+          <p>
+            Adversarial agents make <em>decisions</em> — whether to participate, which account to
+            play from, how much to stake, how far to pull the aggregate. Real-world time series
+            (Elia wind, Elia imbalance) can&apos;t generate those decisions: the forecaster panel
+            (XGBoost, ARIMA, MLP, etc.) is passive and has no strategy layer. To test sybil-
+            proofness, collusion, or manipulation you need three things real data can&apos;t give
+            you — a <strong>paired counterfactual</strong> (&ldquo;what if the attacker had been
+            honest?&rdquo;), a <strong>ground-truth label</strong> of which accounts belong to
+            whom, and <strong>controlled stake and arrival choices</strong>. Every attack below
+            is therefore run on the same synthetic DGP and paired seeds, so the only thing moving
+            is the attacker. The honest-forecaster results on Elia wind/electricity live in the
+            Results and Validation pages.
+          </p>
+        </div>
+
         {/* ── Tab bar with experiment/taxonomy indicators ─────────────── */}
         <TabBar
           tabs={DISPLAY_TABS}

@@ -19,6 +19,7 @@ import MechanismResponseCard from '@/components/behaviour/MechanismResponseCard'
 import { useMechanismMetrics } from '@/hooks/useMechanismMetrics';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 export default function AdversarialTab({ manipulator, arbitrageur, sybil, collusion, repReset, evader, baseline }: {
   manipulator: PipelineResult; arbitrageur: PipelineResult; sybil: PipelineResult;
@@ -64,6 +65,9 @@ export default function AdversarialTab({ manipulator, arbitrageur, sybil, collus
 
   return (
     <div className="space-y-6">
+      <PresetCallout
+        presetIds={['manipulator', 'arbitrageur', 'sybil', 'collusion', 'reputation_reset', 'evader']}
+      />
       <p className="text-sm text-slate-600">
         Six attack types, each optimised against the mechanism's rules.
       </p>

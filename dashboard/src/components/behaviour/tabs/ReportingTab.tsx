@@ -17,6 +17,7 @@ import ZoomBadge from '@/components/charts/ZoomBadge';
 import MathBlock from '@/components/dashboard/MathBlock';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, cumulativeAverage } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 export default function ReportingTab({ riskAverse, noisyReporter, reputationGamer, sandbagger, baseline }: {
   riskAverse: PipelineResult; noisyReporter: PipelineResult;
@@ -71,6 +72,9 @@ export default function ReportingTab({ riskAverse, noisyReporter, reputationGame
 
   return (
     <div className="space-y-8">
+      <PresetCallout
+        presetIds={['risk_averse', 'noisy_reporter', 'reputation_gamer', 'sandbagger']}
+      />
       {/* ── Section 1: Hedging ────────────────────────────────────────── */}
       <div className="space-y-6">
         <h3 className="text-sm font-semibold text-slate-800">Risk-averse hedging</h3>

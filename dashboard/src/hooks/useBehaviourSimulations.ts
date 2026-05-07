@@ -10,6 +10,8 @@ export interface ComparisonRow {
   name: string;
   presetId: string;
   family: string;
+  /** Plain-English description of the behaviour (from PRESET_CONFIGS). */
+  description: string;
   meanCrps: number;
   deltaCrpsPct: number;
   gini: number;
@@ -146,6 +148,7 @@ export function useBehaviourSimulations(config?: {
       return {
         name: config?.label ?? id,
         family: config?.family ?? 'reporting',
+        description: config?.description ?? '',
         meanCrps: pipeline.summary.meanError,
         deltaCrpsPct: deltaPct,
         gini: pipeline.summary.finalGini,

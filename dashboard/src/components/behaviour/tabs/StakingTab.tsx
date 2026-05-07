@@ -16,6 +16,7 @@ import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, PLACEHOLDER_DESCRIPTIONS, cumulativeAverage } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 function PlaceholderBanner({ description }: { family: string; description: string }) {
   return (
@@ -74,6 +75,7 @@ export default function StakingTab({ budgetConstrained, houseMoney, kellySizer, 
   return (
     <div className="space-y-6">
       <PlaceholderBanner family="Staking" description={PLACEHOLDER_DESCRIPTIONS.Staking} />
+      <PresetCallout presetIds={['budget_constrained', 'house_money', 'kelly_sizer']} />
       <p className="text-sm text-slate-600">
         How much agents wager determines their influence on the aggregate. Budget constraints
         can cause ruin (agents forced out), the house-money effect increases risk-taking after

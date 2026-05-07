@@ -16,6 +16,7 @@ import { useChartZoom } from '@/hooks/useChartZoom';
 import MathBlock from '@/components/dashboard/MathBlock';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, PLACEHOLDER_DESCRIPTIONS, cumulativeAverage } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 function PlaceholderBanner({ description }: { family: string; description: string }) {
   return (
@@ -47,6 +48,7 @@ export default function ObjectivesTab({ riskAverse, baseline }: {
   return (
     <div className="space-y-6">
       <PlaceholderBanner family="Objectives" description={PLACEHOLDER_DESCRIPTIONS.Objectives} />
+      <PresetCallout presetIds={['risk_averse']} />
       <p className="text-sm text-slate-600">
         Not all agents maximise expected value. Under CRRA (Constant Relative
         Risk Aversion) utility, agents with higher risk-aversion coefficient

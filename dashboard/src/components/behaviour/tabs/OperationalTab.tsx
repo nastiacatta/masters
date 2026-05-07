@@ -15,6 +15,7 @@ import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, cumulativeAverage } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 export default function OperationalTab({ latencyExploiter, baseline }: {
   latencyExploiter: PipelineResult; baseline: PipelineResult;
@@ -29,6 +30,7 @@ export default function OperationalTab({ latencyExploiter, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PresetCallout presetIds={['latency_exploiter']} />
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-4">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-slate-400" />

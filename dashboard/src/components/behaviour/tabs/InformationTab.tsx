@@ -16,6 +16,7 @@ import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
 import { compare } from '@/hooks/useBehaviourSimulations';
 import { SEED, N, T, VERDICT_VARIANT, cumulativeAverage } from '@/lib/behaviour/helpers';
+import PresetCallout from '@/components/behaviour/PresetCallout';
 
 export default function InformationTab({ biased, miscalibrated, baseline }: {
   biased: PipelineResult; miscalibrated: PipelineResult; baseline: PipelineResult;
@@ -56,6 +57,7 @@ export default function InformationTab({ biased, miscalibrated, baseline }: {
 
   return (
     <div className="space-y-6">
+      <PresetCallout presetIds={['biased', 'miscalibrated']} />
       <p className="text-sm text-slate-600">
         Biased and miscalibrated agents both degrade signal quality. Biased
         agents systematically over- or under-report the truth; miscalibrated
