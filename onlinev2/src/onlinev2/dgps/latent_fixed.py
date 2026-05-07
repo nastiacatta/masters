@@ -1,11 +1,31 @@
 """
 DGP: Truth fixed first (exogenous). Forecasters observe noisy signals of Z_t.
 
-Z_t ~ N(0, sigma_Z^2), y_t = Phi(Z_t)
-X_{i,t} = Z_t + beta_i + eps_{i,t}, reports = Phi(mu_{i,t})
+Canonical Bayes-consistent setup (Masters notes §10, Option C):
+    Z_t ~ N(0, sigma_Z^2)
+    y_t = Phi(Z_t)
+    X_{i,t} = Z_t + beta_i + tau_i * eps_{i,t},    eps_{i,t} ~ N(0, 1)
 
-Symbol hygiene: beta_i = DGP bias (not deposit b_i),
-mu_{i,t} = posterior mean (not wager m_i).
+    Posterior for Z_t | X_{i,t}:
+        mu_{i,t} = (sigma_Z^2 / (sigma_Z^2 + tau_i^2)) * (X_{i,t} - beta_i)
+        v_i      = sigma_Z^2 * tau_i^2 / (sigma_Z^2 + tau_i^2)
+
+    Point report (median-optimal for MAE, probit link):
+        r_{i,t} = Phi(mu_{i,t})
+
+    Predictive quantile (Bayes-calibrated, kappa_i = 1):
+        q_{i,t}(tau) = Phi(mu_{i,t} + kappa_i * sqrt(v_i) * Phi^{-1}(tau))
+
+The optional ``kappa_i`` keyword (``kwargs["kappa_i"]``) scales the posterior
+standard deviation used to build predictive quantiles, exposing a concrete
+miscalibration knob:
+  * ``kappa_i = 1.0`` -> Bayes-calibrated (default)
+  * ``kappa_i < 1``   -> overconfident / under-dispersed forecaster
+  * ``kappa_i > 1``   -> underconfident / over-dispersed forecaster
+
+Symbol hygiene: ``beta_i`` = DGP bias (not deposit ``b_i``); ``mu_{i,t}`` =
+posterior mean (not wager ``m_i``); ``tau_i`` = forecaster noise std (not
+quantile level ``tau``).
 """
 from __future__ import annotations
 
@@ -44,6 +64,14 @@ class _DGPLatentFixed:
         quantiles: np.ndarray | None = None,
         **kwargs,
     ) -> DGPOutput:
+        """Generate Bayes-consistent signals, reports and (optional) quantiles.
+
+        Extra kwargs:
+          kappa_i : array-like (n,) or scalar, default 1.0
+              Per-forecaster miscalibration multiplier on the posterior std
+              in the quantile formula. 1.0 = Bayes-calibrated. Accepts a
+              scalar broadcast across all forecasters.
+        """
         rng = np.random.default_rng(seed)
         tau_true = np.asarray(tau_i, dtype=np.float64).ravel()
         if tau_true.size != n:
@@ -51,6 +79,8 @@ class _DGPLatentFixed:
 
         _beta = beta_i if beta_i is not None else b_i
         _beta = np.zeros(n, dtype=np.float64) if _beta is None else np.asarray(_beta, dtype=np.float64).ravel()
+        if _beta.size != n:
+            raise ValueError(f"beta_i must have length n (got {_beta.size})")
 
         Z = rng.normal(0.0, sigma_z, size=T).astype(np.float64)
         y = _phi(Z)
@@ -71,8 +101,15 @@ class _DGPLatentFixed:
             taus = np.asarray(quantiles, dtype=np.float64).ravel()
             z_tau = norm.ppf(taus).astype(np.float64)
             v = (sig2 * tau_true**2 / denom)[:, None]
-            kappa = kwargs.get("kappa_i", np.ones(n, dtype=np.float64))
-            kappa = np.broadcast_to(np.asarray(kappa).ravel()[:n], (n,))[:, None, None]
+            kappa_raw = kwargs.get("kappa_i", np.ones(n, dtype=np.float64))
+            kappa_arr = np.asarray(kappa_raw, dtype=np.float64).ravel()
+            if kappa_arr.size == 1:
+                kappa_arr = np.full(n, float(kappa_arr[0]), dtype=np.float64)
+            if kappa_arr.size != n:
+                raise ValueError(
+                    f"kappa_i must have length n={n} (got {kappa_arr.size}) or be scalar"
+                )
+            kappa = kappa_arr[:, None, None]
             q_latent = mu[:, :, None] + (kappa * np.sqrt(v)[:, :, None] * z_tau[None, None, :])
             q_reports = _phi(q_latent)
             for i in range(n):

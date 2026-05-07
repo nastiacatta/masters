@@ -1,8 +1,16 @@
 """
 Optional Michael-style intermittent aggregation backend.
 
-Model: y_hat = (w + D @ alpha)^T x(alpha), with x_i(alpha) = 0 when alpha_i = 1.
-Updates (w, D) online under pinball loss. Deterministic and side-effect free.
+Model (Vitali & Pinson 2025, arXiv:2510.13385, eqs. 1–7):
+    y_hat = (w + D @ alpha)^T x(alpha),
+with x_i(alpha) = 0 when alpha_i = 1. Updates (w, D) online under pinball
+loss. Deterministic and side-effect free.
+
+Constraint regime (eq. 1): w lies on the non-negative unit simplex
+(sum(w)=1, w>=0). D is unconstrained; theta = w + D alpha is NOT projected
+to the simplex. Only w is projected after each gradient step (eq. 6);
+D is updated freely (eq. 7).
+
 Do not combine with wager weights in the same aggregate.
 """
 
@@ -10,7 +18,7 @@ import numpy as np
 
 
 def project_simplex_nonnegative(w):
-    """Project vector onto non-negative simplex (sum = 1)."""
+    """Project vector onto non-negative simplex (sum = 1). Applied to w only."""
     w = np.maximum(np.asarray(w, dtype=np.float64).ravel(), 0.0)
     s = float(w.sum())
     if s <= 0.0:
@@ -20,7 +28,14 @@ def project_simplex_nonnegative(w):
 
 def michael_predict(x_t, alpha_t, w_t, D_t):
     """
-    Predict: y_hat = (w + D @ alpha)^T x(alpha), with x(alpha) zero at missing.
+    Predict: y_hat = theta^T x(alpha), with theta = w + D @ alpha and x(alpha)
+    zeroed at missing indices.
+
+    theta is returned as-is (NOT projected onto the simplex). This matches the
+    Vitali & Pinson formulation where only the base weight vector w is
+    constrained to the simplex; the correction matrix D may push theta off-
+    simplex to compensate for missing forecasts.
+
     Returns (y_hat, aux) with aux containing theta and alpha for downstream use.
     """
     x = np.asarray(x_t, dtype=np.float64).ravel().copy()
@@ -31,7 +46,6 @@ def michael_predict(x_t, alpha_t, w_t, D_t):
     D = np.asarray(D_t, dtype=np.float64)
 
     theta = w + D @ alpha.astype(np.float64)
-    theta = project_simplex_nonnegative(theta)
 
     y_hat = float(theta @ x)
     return y_hat, {"theta": theta, "alpha": alpha}

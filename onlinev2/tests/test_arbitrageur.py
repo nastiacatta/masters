@@ -49,8 +49,16 @@ class TestArbitrageurActions:
 
         for entry in arb.arbitrage_log:
             if entry["arbitrage_found"]:
-                assert entry["worst_case_profit"] > 0.0, (
-                    f"Logged arbitrage found but worst_case_profit={entry['worst_case_profit']}"
+                # Under MAE the arbitrageur participates iff expected profit
+                # (under y ~ Uniform[0,1]) is strictly positive; worst-case
+                # is only >= 0 because MAE is not strictly convex.
+                assert entry["expected_profit"] > 0.0, (
+                    f"Logged arbitrage found but expected_profit="
+                    f"{entry['expected_profit']}"
+                )
+                assert entry["worst_case_profit"] >= 0.0, (
+                    f"Logged arbitrage found but worst_case_profit="
+                    f"{entry['worst_case_profit']}"
                 )
 
     def test_zero_wealth_no_participation(self):

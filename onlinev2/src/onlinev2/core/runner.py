@@ -287,18 +287,20 @@ def run_round(
                 x_k = np.asarray(reports_for_agg, dtype=float).ravel().copy()
             x_k[alpha == 1] = 0.0
 
-            # Per-agent pinball loss for oos allocation
+            # Per-agent pinball loss for oos allocation.
+            # L_tau(y, yhat) = tau*(y-yhat)      if y >= yhat
+            #                = (1-tau)*(yhat-y)  otherwise
+            # Equivalent: np.where(err>=0, tau*err, (tau-1)*err) with err = y - yhat.
+            # Applied identically for both scoring modes so the same canonical
+            # pinball enters the OOS score sc_i = 1 - L_i / sum_j L_j.
             present = alpha == 0
-            if params.scoring_mode == "quantiles_crps":
-                losses_k = np.zeros(n, dtype=float)
-                err = y_t - x_k
-                losses_k[present] = np.where(
-                    err[present] >= 0,
-                    tau_k * err[present],
-                    (tau_k - 1.0) * err[present],
-                )
-            else:
-                losses_k = np.abs(y_t - x_k) * tau_k + np.abs(x_k - y_t) * (1.0 - tau_k)
+            losses_k = np.zeros(n, dtype=float)
+            err = y_t - x_k
+            losses_k[present] = np.where(
+                err[present] >= 0,
+                tau_k * err[present],
+                (tau_k - 1.0) * err[present],
+            )
 
             r_oos_k = michael_oos_allocation(losses_k, alpha, eps=params.eps)
 

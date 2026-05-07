@@ -7,10 +7,19 @@ the predictive median is unique.
 Quantile mode (`quantiles_crps`) uses a finite-grid quantile score (CRPS-hat):
     C_hat = (2 / K) * sum_k L^{tau_k}(y, q_k),
 i.e. average pinball loss over reported quantiles. This is a quantile-grid
-approximation to CRPS, not exact CRPS. The standard CRPS approximation argument
-assumes an equidistant probability grid; the default grid (0.1, 0.25, 0.5, 0.75, 0.9)
-is not equidistant, so describe this as "finite quantile score" or "CRPS-hat"
-rather than exact CRPS.
+approximation to CRPS, not exact CRPS. Tail caveats:
+
+  * The classical Gneiting–Raftery CRPS integrates pinball over tau in (0, 1).
+    Any finite grid ``taus`` only covers ``[taus[0], taus[-1]]``, so the
+    tails ``[0, taus[0]) u (taus[-1], 1]`` contribute zero to C_hat. On the
+    default ``TAUS_COARSE = [0.1, 0.25, 0.5, 0.75, 0.9]`` this silently
+    drops 20% of the classical integration range. Use ``TAUS_FINE`` for a
+    9-level equidistant grid, or a denser grid for tail-sensitive work.
+  * The simple-average formula ``(2/K) * sum pinball`` is only exact for
+    equidistant grids (trapezoidal rule). For non-equidistant grids this
+    module applies trapezoidal weights so existing results on equidistant
+    grids are unchanged.
+  * Report C_hat as "CRPS-hat" or "finite quantile score", not "CRPS".
 
 Settlement uses bounded affine score maps that land in [0, 1]:
     score_mae      = 1 - |y - r|

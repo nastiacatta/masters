@@ -1,12 +1,30 @@
 """
-Coordinated multi-account participation.
+Coordinated group (coalition) behavioural regime.
 
-A strategy class in which multiple participant identities submit the same
-report in a round (coordinated participation).
+Theory (Chun & Shachter 2011, Chen-Devanur-Pennock-Vaughan 2014):
+in a WSWM with immutable, disagreeing beliefs, a coalition C that reports a
+common value
+
+    p_coalition = sum_{i in C} (w_i / W_C) * p_i         (*)
+
+earns *strictly higher* total payoff under every outcome than everyone in
+the coalition reporting truthfully, whenever members disagree. The extra
+profit is extracted from non-coalition members who "leave money on the
+table" by disagreeing.
+
+With the bounded-MAE WSWM used here, the analogous coalition target is the
+wager-weighted median of the *coalition* beliefs -- this is the MAE
+arbitrage-free point in the convex hull of members' reports. We implement
+(*) literally and fall back to the median for CRPS-hat / MAE equivalence.
+
+Members still submit individual stakes (preserving sybilproofness audits),
+but all members submit the same *report* p_coalition. When individual
+beliefs disagree across members, this strictly improves the coalition's
+aggregate payoff against a benign population.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
@@ -15,31 +33,104 @@ from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
 
+def _coalition_beliefs(
+    members: Sequence[UserTraits],
+    state: RoundPublicState,
+    rng: np.random.Generator,
+    history_window: int = 20,
+) -> np.ndarray:
+    """Private belief of each member -- lagged public anchor + trait bias/noise."""
+    anchor = 0.5
+    if state.y_history:
+        tail = state.y_history[-history_window:]
+        anchor = float(np.mean(tail))
+    beliefs = []
+    for tr in members:
+        b = anchor + tr.bias + rng.normal(0.0, max(1e-4, tr.noise_level))
+        beliefs.append(clamp01(b))
+    return np.asarray(beliefs, dtype=float)
+
+
 @dataclass
 class CoordinatedGroupBehaviour:
     """
-    Coordinated group behavioural regime: members share a single
-    coordinated report per round, with individual stakes.
+    Coalition attack: members share a common report computed as the
+    wager-weighted mean (Chun-Shachter) of coalition-internal beliefs.
+
+    Parameters
+    ----------
+    members
+        Coalition member traits.
+    aggregation
+        "weighted_mean" (Chun-Shachter) or "weighted_median" (MAE variant).
+    belief_history_window
+        How far back to look when forming individual beliefs.
     """
     members: Sequence[UserTraits]
     scoring_mode: str = "point_mae"
     taus: Optional[Sequence[float]] = None
     b_max: float = 10.0
+    aggregation: str = "weighted_mean"
+    belief_history_window: int = 20
+    # Optional jitter on the shared report to avoid trivial fake_activity_loop
+    # detection while retaining the arbitrage. Keep small.
+    camouflage: float = 0.0
+    coalition_log: List[Dict[str, Any]] = field(default_factory=list)
 
     def reset(self, seed: int) -> None:
         self.rng = np.random.default_rng(seed)
+        self.coalition_log = []
+
+    def _aggregate_report(self, beliefs: np.ndarray, wagers: np.ndarray) -> float:
+        wagers = np.clip(wagers, 0.0, None)
+        total = float(wagers.sum())
+        if total <= 0.0 or beliefs.size == 0:
+            return 0.5
+        if self.aggregation == "weighted_median":
+            order = np.argsort(beliefs)
+            b_sorted = beliefs[order]
+            w_sorted = wagers[order]
+            cdf = np.cumsum(w_sorted)
+            idx = int(np.searchsorted(cdf, 0.5 * total, side="left"))
+            idx = max(0, min(idx, beliefs.size - 1))
+            return float(b_sorted[idx])
+        # Default: weighted mean (Chun-Shachter arbitrage-free point for
+        # differentiable proper scoring rules with identity f-norm).
+        return float(np.dot(beliefs, wagers) / total)
 
     def act(self, state: RoundPublicState) -> List[AgentAction]:
         if not self.members:
             return []
 
-        anchor = 0.5 if not state.y_history else float(np.mean(state.y_history[-min(15, len(state.y_history)):]))
-        coordinated_report = clamp01(anchor + self.rng.normal(0.0, 0.03))
+        # Members' wagers (pre-skill) — use each trait's stake_fraction * wealth
+        wealth = np.array([
+            max(0.0, float(state.wealth_prev.get(tr.user_id, tr.initial_wealth)))
+            for tr in self.members
+        ], dtype=float)
+        stake_frac = np.array([float(tr.stake_fraction) for tr in self.members], dtype=float)
+        intended_b = np.clip(stake_frac * wealth, 0.0, self.b_max)
+        intended_b = np.minimum(intended_b, wealth)  # cannot exceed wealth
+
+        beliefs = _coalition_beliefs(
+            self.members, state, self.rng, self.belief_history_window
+        )
+
+        report = self._aggregate_report(beliefs, intended_b)
+        if self.camouflage > 0.0:
+            report = clamp01(report + self.rng.normal(0.0, self.camouflage))
+        report = clamp01(report)
+
+        self.coalition_log.append({
+            "t": int(state.t),
+            "report": float(report),
+            "beliefs": beliefs.tolist(),
+            "wagers": intended_b.tolist(),
+            "spread": float(np.max(beliefs) - np.min(beliefs)) if beliefs.size else 0.0,
+        })
 
         out: List[AgentAction] = []
-        for tr in self.members:
-            wealth = max(0.0, float(state.wealth_prev.get(tr.user_id, tr.initial_wealth)))
-            if wealth <= 0.0:
+        for tr, b_i in zip(self.members, intended_b):
+            if b_i <= 0.0:
                 out.append(
                     AgentAction(
                         account_id=tr.user_id,
@@ -50,15 +141,17 @@ class CoordinatedGroupBehaviour:
                     )
                 )
                 continue
-
-            deposit = float(np.clip(tr.stake_fraction * wealth, 0.0, min(wealth, self.b_max)))
             out.append(
                 AgentAction(
                     account_id=tr.user_id,
                     participate=True,
-                    report=coordinated_report,
-                    deposit=deposit,
-                    meta={"agent_type": "coordinated_group", "coordinated": True},
+                    report=float(report),
+                    deposit=float(b_i),
+                    meta={
+                        "agent_type": "coordinated_group",
+                        "coordinated": True,
+                        "aggregation": self.aggregation,
+                    },
                 )
             )
         return out

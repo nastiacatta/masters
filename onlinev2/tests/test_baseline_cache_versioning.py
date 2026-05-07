@@ -99,8 +99,8 @@ def test_ensure_cache_regenerates_on_missing_tag(tmp_path: Path):
 
 
 def test_ensure_cache_reuses_on_version_match(tmp_path: Path):
-    """When pipeline_version AND forecaster_config_hash match, the cache
-    is reused as-is."""
+    """When pipeline_version AND forecaster_config_hash AND normalize_mode
+    all match, the cache is reused as-is."""
     cache = tmp_path / "cache.npz"
     csv = tmp_path / "series.csv"
     taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
@@ -117,6 +117,7 @@ def test_ensure_cache_reuses_on_version_match(tmp_path: Path):
         series_max=1.0,
         pipeline_version=np.array(rbc.PIPELINE_VERSION),
         forecaster_config_hash=np.array(rbc.FORECASTER_CONFIG_HASH),
+        normalize_mode=np.array("static"),
     )
     _write_dummy_csv(csv)
     mtime_before = cache.stat().st_mtime
@@ -124,6 +125,7 @@ def test_ensure_cache_reuses_on_version_match(tmp_path: Path):
     time.sleep(0.05)
     rbc.ensure_cache(
         str(cache), str(csv), taus, hourly=False, warmup=100,
+        normalize_mode="static",
     )
 
     # Unchanged mtime — cache was not regenerated.
@@ -169,3 +171,51 @@ def test_forecaster_config_hash_stable():
     hash_b = rbc._forecaster_config_hash()
     assert hash_a == hash_b
     assert len(hash_a) == 16  # 16-char hex
+
+
+def test_cache_normalize_mode_invalidates_on_mismatch(tmp_path: Path):
+    """Post-audit issue #1: caches carry a normalize_mode tag and are
+    regenerated when the caller requests a different mode than the cache
+    was built with."""
+    cache = tmp_path / "cache.npz"
+    csv = tmp_path / "series.csv"
+    taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    T = 300
+    fake_y = np.linspace(0.1, 0.9, T).astype(np.float64)
+    fake_q = np.tile(fake_y[None, :, None], (3, 1, len(taus)))
+    np.savez_compressed(
+        cache,
+        y_norm=fake_y,
+        q_reports=fake_q,
+        names=np.array(["a", "b", "c"]),
+        taus=taus,
+        series_min=0.0,
+        series_max=1.0,
+        pipeline_version=np.array(rbc.PIPELINE_VERSION),
+        forecaster_config_hash=np.array(rbc.FORECASTER_CONFIG_HASH),
+        normalize_mode=np.array("static"),
+    )
+    _write_dummy_csv(csv)
+    mtime_before = cache.stat().st_mtime
+
+    time.sleep(0.05)
+    # Request expanding — must regenerate.
+    rbc.ensure_cache(
+        str(cache), str(csv), taus, hourly=False, warmup=100,
+        normalize_mode="expanding",
+    )
+
+    data = np.load(cache, allow_pickle=True)
+    assert "normalize_mode" in data.files
+    assert str(data["normalize_mode"].item()) == "expanding"
+    assert cache.stat().st_mtime > mtime_before
+
+
+def test_forecaster_config_hash_taus_invalidate():
+    """The hash changes when the τ-grid changes, so cache built on one
+    grid is not silently reused when the caller requests another."""
+    taus_5 = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+    taus_9 = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    h5 = rbc._forecaster_config_hash(taus_5)
+    h9 = rbc._forecaster_config_hash(taus_9)
+    assert h5 != h9

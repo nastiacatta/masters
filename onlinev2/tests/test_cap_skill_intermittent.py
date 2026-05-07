@@ -109,8 +109,12 @@ def test_exposure_weighting_small_bet_moves_less():
 
 
 def test_michael_predict_handles_missing_forecasts():
-    """With one missing forecast, output uses present forecasts plus correction."""
-    from onlinev2.core.intermittent import michael_predict, project_simplex_nonnegative
+    """With one missing forecast, output uses present forecasts plus correction.
+
+    theta = w + D alpha is NOT projected onto the simplex (Vitali & Pinson 2025,
+    eqs. 5–7). Only w is constrained to the simplex; D is free.
+    """
+    from onlinev2.core.intermittent import michael_predict
 
     n = 3
     x_t = np.array([0.2, 0.5, 0.8], dtype=np.float64)
@@ -121,11 +125,35 @@ def test_michael_predict_handles_missing_forecasts():
     y_hat, aux = michael_predict(x_t, alpha_t, w, D)
 
     theta = aux["theta"]
-    np.testing.assert_array_almost_equal(theta, project_simplex_nonnegative(theta))
+    # With D = 0, theta = w (already on simplex); no projection applied.
+    np.testing.assert_array_almost_equal(theta, w)
     # x(alpha) has index 1 zeroed, so prediction is theta @ x_masked
     assert not np.isnan(y_hat) and np.isfinite(y_hat)
     # Present forecasts 0.2 and 0.8 contribute; missing does not
     assert 0.0 <= y_hat <= 1.0 + 1e-9
+
+
+def test_michael_predict_theta_not_projected_when_D_active():
+    """With nonzero D and a missing forecast, theta can leave the simplex
+    (sum != 1 or negative entries), matching the paper; predict must not
+    project it back."""
+    from onlinev2.core.intermittent import michael_predict
+
+    n = 3
+    x_t = np.array([0.2, 0.5, 0.8], dtype=np.float64)
+    alpha_t = np.array([0, 1, 0], dtype=np.int32)
+    w = np.array([0.5, 0.3, 0.2], dtype=np.float64)
+    # D column 1 adds mass to coordinate 0 only when agent 1 is missing.
+    D = np.zeros((n, n))
+    D[0, 1] = 0.4
+
+    _, aux = michael_predict(x_t, alpha_t, w, D)
+    theta = aux["theta"]
+
+    # Expected: theta = w + D @ [0,1,0] = [0.5+0.4, 0.3, 0.2] = [0.9, 0.3, 0.2]
+    np.testing.assert_array_almost_equal(theta, np.array([0.9, 0.3, 0.2]))
+    # Explicitly off-simplex (sum = 1.4, not 1.0)
+    assert abs(theta.sum() - 1.4) < 1e-12
 
 
 def test_default_mode_unchanged_when_new_flags_off():

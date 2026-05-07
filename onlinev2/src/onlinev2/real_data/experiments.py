@@ -50,15 +50,36 @@ def _run_horizon_comparison(
     label: str,
     seed: int = 42,
     strict_no_fallback: bool = False,
+    normalize_mode: str = "static",
 ) -> dict:
     """Run forecasters with a given forecast horizon.
 
     At each round t, models see data up to t-horizon and predict t.
     This ensures strictly causal forecasting at the given horizon.
+
+    ``normalize_mode`` mirrors the same kwarg on
+    :func:`onlinev2.real_data.runner.run_real_data_comparison`:
+    ``"static"`` (default) freezes ``(lo, hi)`` to the warmup window and
+    clips evaluation-window observations outside that range;
+    ``"expanding"`` refits ``(lo_t, hi_t)`` over ``series[:t+1]``
+    while preserving strict causality. See post-audit issue #1.
     """
-    # Strictly-causal normalization using only series[:warmup] for (lo, hi)
-    # (bugfix clause 1.1 / 2.1 of .kiro/specs/model-training-testing-audit/).
-    norm, s_min, s_max = causal_normalize(series, warmup_len=warmup)
+    if normalize_mode not in {"static", "expanding"}:
+        raise ValueError(
+            f"normalize_mode must be 'static' or 'expanding', got {normalize_mode!r}."
+        )
+
+    # Strictly-causal normalization (bugfix clause 1.1 / 2.1 of
+    # .kiro/specs/model-training-testing-audit/).
+    if normalize_mode == "expanding":
+        from .runner import causal_normalize_expanding
+        norm, lo_traj, hi_traj = causal_normalize_expanding(
+            series, warmup_len=warmup
+        )
+        s_min = float(lo_traj[-1])
+        s_max = float(hi_traj[-1])
+    else:
+        norm, s_min, s_max = causal_normalize(series, warmup_len=warmup)
     T = len(norm)
     n = len(forecasters)
 
@@ -236,6 +257,7 @@ def _run_horizon_comparison(
             "T": T, "n_forecasters": n, "warmup": warmup,
             "horizon": horizon, "label": label,
             "forecasters": [fc.name for fc in forecasters],
+            "normalize_mode": normalize_mode,
         },
         "rows": rows,
         "per_round": per_round,
@@ -262,7 +284,7 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
     df["datetime"] = pd.to_datetime(df["datetime"], utc=True)
     df = df.set_index("datetime")
 
-    taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+    taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     results = {}
 
     # === 1. Day-ahead (daily resolution, horizon=1 day) ===
@@ -399,3 +421,59 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
             print(f"  {season:8s}: {data['n_rounds']:5d} rounds, mechanism {data['pct_mechanism']:+.1f}%, skill {data['pct_skill']:+.1f}%")
 
     return results
+
+
+def _cli_main() -> None:
+    """Thin CLI entrypoint for regenerating horizon experiments.
+
+    Runs ``run_all_real_experiments`` on the Elia offshore wind dataset
+    (the hard-coded series in ``run_all_real_experiments``) and writes
+    the output JSONs under ``<outdir>/real_data/elia_wind/data/``.
+
+    This is the missing command referenced by the
+    ``model-training-testing-audit`` spec (Task 14.1). It exists so the
+    day-ahead / 4h-ahead / regime-shift blocks get regenerated under the
+    post-fix pipeline (causal normalization, horizon residual rewrite,
+    warmup floor, rename of within-run slices).
+
+    Usage::
+
+        onlinev2/.venv/bin/python -m onlinev2.real_data.experiments
+        onlinev2/.venv/bin/python -m onlinev2.real_data.experiments \
+            --data data/elia_offshore_wind_2024_2025.csv \
+            --outdir dashboard/public/data
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run day-ahead / 4h-ahead / regime-shift horizon experiments "
+            "on the Elia offshore wind series."
+        )
+    )
+    parser.add_argument(
+        "--data",
+        type=str,
+        default=os.path.join(
+            os.path.dirname(__file__),
+            "..", "..", "..", "..",
+            "data", "elia_offshore_wind_2024_2025.csv",
+        ),
+        help="Path to the Elia wind CSV.",
+    )
+    parser.add_argument(
+        "--outdir",
+        type=str,
+        default=os.path.join(
+            os.path.dirname(__file__),
+            "..", "..", "..", "..",
+            "dashboard", "public", "data",
+        ),
+        help="Output root; JSONs land under <outdir>/real_data/elia_wind/data/.",
+    )
+    args = parser.parse_args()
+    run_all_real_experiments(args.data, outdir=args.outdir)
+
+
+if __name__ == "__main__":
+    _cli_main()

@@ -777,6 +777,7 @@ def run_simulation(
     lag_confidence: bool = True,
     use_constant_confidence: bool = False,
     freeze_wealth: bool = False,
+    strict_truthfulness: bool = False,
     # ---
     y_pre: np.ndarray = None,
     reports_pre: np.ndarray = None,
@@ -784,6 +785,19 @@ def run_simulation(
     forecaster_noise_pre: np.ndarray = None,
     alpha_pre: np.ndarray = None,
 ) -> dict:
+    """Run the onlinev2 simulation loop. See module docstring for mechanism details.
+
+    Truthfulness guard
+    ------------------
+    ``strict_truthfulness``: when ``True``, any configuration that would make
+    the effective wager depend on the current-round report (in particular
+    ``lag_confidence=False`` under quantile scoring with bankroll deposits)
+    raises ``ValueError`` instead of emitting a ``RuntimeWarning``. Use this
+    flag whenever the downstream analysis claims truthfulness under
+    Lambert/Raja; leave it ``False`` (default) for explicit empirical
+    ablations that deliberately violate truthfulness to measure its
+    contribution.
+    """
     # Optional pre-generated data (e.g. from latent generator). Strict: require y_pre + reports_pre (point_mae) or y_pre + q_reports_pre (quantiles_crps). forecaster_noise_pre is optional metadata.
     use_pre = False
     if scoring_mode == "point_mae":
@@ -961,6 +975,17 @@ def run_simulation(
                             c_max=float(c_max),
                         )
                 else:
+                    if strict_truthfulness:
+                        raise ValueError(
+                            "strict_truthfulness=True is incompatible with "
+                            "lag_confidence=False: the current-round quantile "
+                            "report would enter the deposit computation, "
+                            "making the effective wager report-dependent and "
+                            "breaking Lambert/Raja truthfulness. Set "
+                            "lag_confidence=True (use the previous round's "
+                            "quantiles) or strict_truthfulness=False "
+                            "(explicit empirical ablation)."
+                        )
                     import warnings
                     warnings.warn(
                         "lag_confidence=False makes deposits depend on the current report. "
@@ -1121,6 +1146,7 @@ def run_simulation(
             "W0": W0, "f_stake": f_stake, "b_max": b_max,
             "beta_c": beta_c, "c_min": c_min, "c_max": c_max,
             "omega_max": omega_max, "lag_confidence": lag_confidence,
+            "strict_truthfulness": strict_truthfulness,
         })
     if taus is not None:
         params_out["taus"] = np.asarray(taus, dtype=np.float64)

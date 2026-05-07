@@ -1,7 +1,26 @@
 """
 DGP: Truth from forecaster aggregation (endogenous).
 
-y_latent = w @ x_latent + noise. Methods 1/2 same model; 3 adds mean shocks.
+Model (Masters notes §10, "aggregation methods"):
+
+  Shared backbone (methods 1, 2, 3):
+    mu_t      = rho * mu_{t-1} + eta_t,       eta_t ~ N(0, sigma_state^2)    # AR(1)
+    x_{i,t}   = mu_t + delta_{i,t} + tau_i * xi_{i,t}                         # signal
+    y_latent  = sum_i w_i * x_{i,t} + sigma_eps * eps_t                       # truth
+    y_t       = link(y_latent),   reports_{i,t} = link(x_{i,t})               # probit or identity
+
+  Method 1 / 2: delta_{i,t} = 0 (shared centre, differ only in noise).
+  Method 3:     delta_{i,t} ~ N(0, sigma_mu_noise^2) per-forecaster drift.
+
+Quantile formation (non-Bayesian, by design):
+    q_{i,t}(tau) = link(x_{i,t} + tau_i * Phi^{-1}(tau))
+
+    NOTE: This produces predictive quantiles centred on x_{i,t} (the noisy
+    signal itself), not on the Bayes posterior mean of mu_t given x_{i,t}.
+    That is an intentional design choice for endogenous-truth experiments
+    to keep truth construction, forecast generation, and weight-recovery
+    separable. The reported forecaster is not Bayes-consistent for mu_t;
+    use ``dgps/latent_fixed`` when Bayes-consistency is required.
 """
 from __future__ import annotations
 

@@ -213,7 +213,7 @@ onlinev2/
 | `Π_i` | **payout** | total returned from settlement pool (≥ 0 for active agents) |
 | `π_i` | **profit** | `Π_i - m_i`, can be negative (you can lose up to your wager) |
 | `W_i` | **wealth** | bankroll, updated as `max(0, W + π)` each round |
-| `c_i` | **confidence** | multiplier from quantile width (probit space), in [c_min, c_max] |
+| `c_i` | **confidence** | multiplier from quantile width on the observation scale (Masters notes §Step 1), in [c_min, c_max] |
 | `η` | **skill gate exponent** | power-law steepness (1=linear, 2–4=recommended) |
 | `ω_max` | **weight cap** | max aggregation share any single agent may hold |
 
@@ -246,9 +246,9 @@ Each round follows five steps in theorem-safe mode:
 6. Weight cap (optional): bounded simplex projection with upper bound `ω_max`.
 7. Wealth update: `W_{i,t+1} = max(0, W_{i,t} + π_{i,t})`.
 
-Per-round truthfulness is preserved only when `b_{i,t}` and hence `m_{i,t}` are fixed with respect to the round-t report. Using current-round report width to set deposits (`lag_confidence=False`) is an empirical design variant, not a theorem-preserving one.
+Per-round truthfulness is preserved only when `b_{i,t}` and hence `m_{i,t}` are fixed with respect to the round-t report. Using current-round report width to set deposits (`lag_confidence=False`) is an empirical design variant, not a theorem-preserving one. Pass `strict_truthfulness=True` to turn that violation from a runtime warning into a hard error — recommended whenever the downstream analysis claims Lambert/Raja truthfulness.
 
-Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` (base fraction), `omega_max` (cap), `beta_c` (confidence steepness).
+Key parameters: `eta` (exponent, default 2.0), `W0` (initial wealth), `f_stake` (base fraction), `omega_max` (cap), `beta_c` (confidence steepness), `strict_truthfulness` (opt-in truthfulness guard).
 
 ---
 

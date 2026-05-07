@@ -345,7 +345,7 @@ class XGBoostForecaster(BaseForecaster):
     """
 
     def __init__(self, n_lags: int = 24, taus: np.ndarray | None = None,
-                 residual_window: int = 500, val_gap: int = 24):
+                 residual_window: int = 500, val_gap: int = 24, seed: int = 0):
         super().__init__(
             "XGBoost",
             retrain_every=20,
@@ -359,6 +359,9 @@ class XGBoostForecaster(BaseForecaster):
         # loss from being dominated by the immediate autocorrelation
         # structure of the training tail.
         self.val_gap = val_gap
+        # Deterministic seed, piped from the runner (audit fix #A4 —
+        # previously hardcoded at random_state=0 regardless of runner seed).
+        self.seed = seed
         self._model = None
         self._last_pred = 0.5
         self._history: np.ndarray = np.array([])
@@ -427,7 +430,7 @@ class XGBoostForecaster(BaseForecaster):
                 reg_alpha=0.1, reg_lambda=1.0,
                 subsample=0.8, colsample_bytree=0.8,
                 early_stopping_rounds=20,
-                verbosity=0, n_jobs=1, random_state=0,
+                verbosity=0, n_jobs=1, random_state=self.seed,
             )
             self._model.fit(
                 X_train, y_train,
@@ -453,7 +456,7 @@ class XGBoostForecaster(BaseForecaster):
                             subsample=0.8, colsample_bytree=0.8,
                             objective='reg:quantileerror', quantile_alpha=float(tau),
                             early_stopping_rounds=20,
-                            verbosity=0, n_jobs=1, random_state=0,
+                            verbosity=0, n_jobs=1, random_state=self.seed,
                         )
                         q_model.fit(
                             X_train, y_train,
@@ -528,6 +531,11 @@ class MLPForecaster(BaseForecaster):
         self._model = None
         self._last_pred = 0.5
         self._history: np.ndarray = np.array([])
+        # Feature standardization statistics (audit fix #C1). Populated
+        # at each fit() call; until then predict() won't use the model
+        # branch because self._model is None.
+        self._feature_mean: np.ndarray | None = None
+        self._feature_std: np.ndarray | None = None
 
     def _make_features(self, series: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Create features for residual modeling (shared with XGBoost)."""
@@ -553,11 +561,38 @@ class MLPForecaster(BaseForecaster):
                 self._fitted = True
                 return
 
-            X_t = torch.tensor(X, dtype=torch.float32)
-            y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
+            # Feature standardization (audit fix #C1). Tree models are
+            # scale-invariant but MLPs with nn.Linear + MSELoss learn
+            # more efficiently from zero-mean, unit-variance inputs.
+            # Stats are computed on the training window only (no leakage)
+            # and reused at predict() time.
+            self._feature_mean = X.mean(axis=0)
+            std = X.std(axis=0)
+            self._feature_std = np.where(std < 1e-8, 1.0, std)
+            X_scaled = (X - self._feature_mean) / self._feature_std
+
+            # Expanding-window validation split with a temporal gap for
+            # early stopping (audit fix #A3). Without this, 200 epochs
+            # of Adam(lr=0.01) on a 500-point window with no dropout
+            # overfits quickly.
+            n = len(X_scaled)
+            val_gap = min(24, max(5, n // 20))
+            val_size = max(10, n // 5)
+            has_val = n >= val_size + val_gap + 20
+            if has_val:
+                val_start = n - val_size
+                train_end = val_start - val_gap
+                X_train = torch.tensor(X_scaled[:train_end], dtype=torch.float32)
+                y_train = torch.tensor(y[:train_end], dtype=torch.float32).unsqueeze(1)
+                X_val = torch.tensor(X_scaled[val_start:], dtype=torch.float32)
+                y_val = torch.tensor(y[val_start:], dtype=torch.float32).unsqueeze(1)
+            else:
+                X_train = torch.tensor(X_scaled, dtype=torch.float32)
+                y_train = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
+                X_val, y_val = None, None
 
             torch.manual_seed(self.seed)  # bugfix clause 1.8 / 2.8
-            n_input = X_t.shape[1]
+            n_input = X_train.shape[1]
             model = nn.Sequential(
                 nn.Linear(n_input, self.hidden),
                 nn.ReLU(),
@@ -565,22 +600,48 @@ class MLPForecaster(BaseForecaster):
                 nn.ReLU(),
                 nn.Linear(self.hidden // 2, 1),
             )
-            optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+            # Weight decay is a light L2 regulariser complementing early
+            # stopping (Goodfellow-Bengio-Courville 2016, §7.8).
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
             loss_fn = nn.MSELoss()
 
+            # Early stopping with best-weights restoration (audit fix #A3).
+            best_val = float("inf")
+            best_state: dict | None = None
+            patience = 20
+            no_improve = 0
             model.train()
-            for epoch in range(200):
-                pred = model(X_t)
-                loss = loss_fn(pred, y_t)
+            for _epoch in range(200):
+                pred = model(X_train)
+                loss = loss_fn(pred, y_train)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
+                if has_val and X_val is not None:
+                    model.eval()
+                    with torch.no_grad():
+                        val_pred = model(X_val)
+                        val_loss = float(loss_fn(val_pred, y_val).item())
+                    model.train()
+                    if val_loss < best_val - 1e-6:
+                        best_val = val_loss
+                        best_state = {k: v.detach().clone()
+                                      for k, v in model.state_dict().items()}
+                        no_improve = 0
+                    else:
+                        no_improve += 1
+                        if no_improve >= patience:
+                            break
+
+            if has_val and best_state is not None:
+                model.load_state_dict(best_state)
+
             model.eval()
             with torch.no_grad():
-                last_features = torch.tensor(
-                    self._make_predict_features(history), dtype=torch.float32
-                )
+                feat_raw = self._make_predict_features(history)
+                feat_scaled = (feat_raw - self._feature_mean) / self._feature_std
+                last_features = torch.tensor(feat_scaled, dtype=torch.float32)
                 delta = float(model(last_features).item())
                 self._last_pred = float(np.clip(history[-1] + delta, 0, 1))
             self._model = model
@@ -601,7 +662,10 @@ class MLPForecaster(BaseForecaster):
                 with torch.no_grad():
                     feat = self._make_predict_features(self._history)
                     if feat is not None:
-                        last_features = torch.tensor(feat, dtype=torch.float32)
+                        # Apply the same standardization used at fit time
+                        # (audit fix #C1).
+                        feat_scaled = (feat - self._feature_mean) / self._feature_std
+                        last_features = torch.tensor(feat_scaled, dtype=torch.float32)
                         delta = float(self._model(last_features).item())
                         return float(np.clip(self._history[-1] + delta, 0, 1))
             except Exception:
@@ -684,6 +748,13 @@ class EnsembleForecaster(BaseForecaster):
 
     def update_residuals(self, y_true: float, y_pred: float) -> None:
         super().update_residuals(y_true, y_pred)
+        # Ensemble members retain their own residual buffers so their
+        # individual quantile fans remain well-formed. Each member's
+        # current predict() reflects state from before round t's outcome
+        # (the outer runner only advances state *after* this call), so
+        # the pair (y_true, member.predict()) is correctly aligned as
+        # a round-t residual. Verified against standalone Naive/EWMA
+        # residual buffers in tests/audit/test_bug_condition_c_training.py.
         self._naive.update_residuals(y_true, self._naive.predict())
         self._ewma.update_residuals(y_true, self._ewma.predict())
 

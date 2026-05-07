@@ -38,11 +38,21 @@ def compute_pit(
     """
     Truncated PIT diagnostic from interpolated quantiles.
 
-    When y_t is outside the reported quantile range, returns the first or last
-    reported tau (e.g. with default taus, PIT values are truncated to [0.1, 0.9],
-    not the full [0, 1]). So this is an approximate/truncated PIT, not the
-    classical PIT (predictive CDF at the observation). Use for approximate PIT
-    histograms only. Assumes quantiles are ordered (validate_quantile_monotonicity).
+    When ``y_t`` is outside the reported quantile range, returns the first or
+    last reported ``tau`` (e.g. with default ``taus = [0.1, ..., 0.9]``, PIT
+    values are truncated to ``[0.1, 0.9]``, not the full ``[0, 1]``). So this
+    is an *approximate, truncated* PIT, not the classical PIT (predictive CDF
+    at the observation). Under a perfectly calibrated predictive CDF the
+    output has atoms of mass ``taus[0]`` at ``taus[0]`` and mass ``1 - taus[-1]``
+    at ``taus[-1]``, plus the continuous restriction of a uniform distribution
+    on ``(taus[0], taus[-1])``.
+
+    For the KS test against this correct null distribution, use
+    :func:`_ks_uniform_truncated`. Comparing to ``Uniform(0, 1)`` (e.g. via
+    :func:`_ks_uniform`) inflates the KS statistic by roughly
+    ``max(taus[0], 1 - taus[-1])`` even for a perfectly calibrated forecaster.
+
+    Assumes quantiles are ordered (:func:`validate_quantile_monotonicity`).
     """
     quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
     taus = np.asarray(taus, dtype=np.float64).ravel()
@@ -303,13 +313,25 @@ class RoundMetricsLogger:
         return metrics
 
     def summary(self) -> Dict[str, Any]:
-        """Return summary statistics across all rounds."""
+        """Return summary statistics across all rounds.
+
+        ``pit_ks_uniform`` is computed against the *truncated uniform* null
+        distribution on ``[taus[0], taus[-1]]`` with point masses at the
+        boundaries equal to ``taus[0]`` and ``1 - taus[-1]``. This is the
+        correct null for ``compute_pit``'s truncated PIT (see docstring):
+        PIT values below ``taus[0]`` collapse to ``taus[0]`` and values
+        above ``taus[-1]`` collapse to ``taus[-1]``. Using Uniform(0, 1) as
+        the null here would trigger a spurious ~``taus[0] + (1 - taus[-1])``
+        KS bias even on a perfectly calibrated forecaster. The legacy
+        ``pit_ks_uniform01`` is also emitted for backward compatibility.
+        """
         out: Dict[str, Any] = {}
         if self.pit_values:
             pit_arr = np.array(self.pit_values)
             out["pit_mean"] = float(np.mean(pit_arr))
             out["pit_std"] = float(np.std(pit_arr))
-            out["pit_ks_uniform"] = _ks_uniform(pit_arr)
+            out["pit_ks_uniform"] = _ks_uniform_truncated(pit_arr, self.taus)
+            out["pit_ks_uniform01"] = _ks_uniform(pit_arr)
         if self.hhi_values:
             out["hhi_mean"] = float(np.mean(self.hhi_values))
             out["n_eff_mean"] = float(np.mean(self.n_eff_values))
@@ -319,8 +341,94 @@ class RoundMetricsLogger:
 
 
 def _ks_uniform(x: np.ndarray) -> float:
-    """KS statistic against Uniform(0,1)."""
+    """KS statistic against Uniform(0,1). Kept for backward compatibility.
+
+    Prefer ``_ks_uniform_truncated`` when ``x`` is the output of
+    ``compute_pit`` on a finite quantile grid; see that function's docstring
+    for why the Uniform(0, 1) null is wrong in that setting.
+    """
     x_sorted = np.sort(x)
     n = len(x_sorted)
     ecdf = np.arange(1, n + 1) / n
     return float(np.max(np.abs(ecdf - x_sorted)))
+
+
+def _ks_uniform_truncated(x: np.ndarray, taus: np.ndarray) -> float:
+    """KS statistic against the truncated-PIT null on ``[taus[0], taus[-1]]``.
+
+    ``compute_pit`` returns values in ``[taus[0], taus[-1]]`` with point
+    masses at the boundaries: under a perfectly calibrated predictive CDF
+    the mass at ``taus[0]`` is exactly ``taus[0]`` (from ``y <= q(taus[0])``)
+    and the mass at ``taus[-1]`` is exactly ``1 - taus[-1]``. The correct
+    null CDF is
+
+        F_null(u) = 0                    for u < taus[0]
+                  = taus[0]              at u = taus[0]  (lower atom)
+                  = u                    for taus[0] < u < taus[-1]
+                  = 1                    for u >= taus[-1] (upper atom)
+
+    i.e. a mixture of a continuous uniform on the open interior plus two
+    boundary point masses with total mass ``taus[0] + (1 - taus[-1])``.
+
+    The Kolmogorov–Smirnov statistic ``sup_u |F_emp(u) - F_null(u)|`` is
+    evaluated at all jump points of either distribution (the sample values
+    plus the two boundaries), including both the right and left limits at
+    each jump to catch jump mismatches. Ties are handled correctly: the
+    empirical CDF at a tied value equals ``(# samples <= u) / n``, not
+    ``(rank) / n``.
+
+    Using Uniform(0, 1) as the null instead inflates the KS statistic by
+    roughly ``max(taus[0], 1 - taus[-1])`` even for a perfectly calibrated
+    forecaster — on the default 5-tau grid ``[0.1, ..., 0.9]`` this spurious
+    bias is ≈ 0.1.
+
+    Returns a non-negative KS distance; 0.0 for an empty input.
+    """
+    taus = np.asarray(taus, dtype=np.float64).ravel()
+    x = np.asarray(x, dtype=np.float64).ravel()
+    n = x.size
+    if n == 0:
+        return 0.0
+
+    tau_lo = float(taus[0])
+    tau_hi = float(taus[-1])
+
+    # Build candidate evaluation points: unique sample values + boundaries.
+    candidates = np.unique(np.concatenate([x, [tau_lo, tau_hi]]))
+    x_sorted = np.sort(x)
+
+    def _emp_cdf_right(u: float) -> float:
+        """F_emp(u) = (#samples <= u) / n."""
+        return float(np.searchsorted(x_sorted, u, side="right")) / n
+
+    def _emp_cdf_left(u: float) -> float:
+        """F_emp(u-) = (#samples < u) / n."""
+        return float(np.searchsorted(x_sorted, u, side="left")) / n
+
+    def _null_right(u: float) -> float:
+        if u < tau_lo:
+            return 0.0
+        if u >= tau_hi:
+            return 1.0
+        return float(u)  # in [tau_lo, tau_hi), with the atom at tau_lo giving F = tau_lo
+
+    def _null_left(u: float) -> float:
+        """Left limit of the null CDF at u."""
+        if u <= tau_lo:
+            return 0.0
+        if u > tau_hi:
+            return 1.0
+        if u == tau_hi:
+            return tau_hi  # just below tau_hi, null is continuous with value = tau_hi
+        return float(u)
+
+    ks = 0.0
+    for u in candidates:
+        u = float(u)
+        d_right = abs(_emp_cdf_right(u) - _null_right(u))
+        d_left = abs(_emp_cdf_left(u) - _null_left(u))
+        if d_right > ks:
+            ks = d_right
+        if d_left > ks:
+            ks = d_left
+    return float(ks)

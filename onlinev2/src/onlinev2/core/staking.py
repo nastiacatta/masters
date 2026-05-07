@@ -24,17 +24,39 @@ def confidence_from_quantiles(
     beta_c: float = 1.0,
     c_min: float = 0.8,
     c_max: float = 1.0,
+    space: str = "raw",
 ) -> np.ndarray:
     """
-    Bounded confidence multiplier c_i from quantile width in probit space.
-    c_i = exp(-beta_c * Delta z_i) with Delta z_i >= 0, so values are in (0, 1].
-    Returns (n,) in [c_min, c_max]. c_max=1.0 is consistent with the formula.
+    Bounded confidence multiplier c_i from quantile width.
 
-    Important:
-        This is safe for theorem claims only when the input quantiles are from
-        history (e.g. t-1) or otherwise fixed before the current round report is
-        chosen. If q_t is the current round report, deposits become
-        report-dependent and the standard truthfulness argument does not apply.
+    Canonical formula (Masters notes, §Step 1):
+        Delta_i = q_i(tau_H) - q_i(tau_L)         # width on the observation scale
+        c_i     = clip(exp(-beta_c * Delta_i), c_min, c_max).
+
+    A wider forecast produces a smaller c; a narrower forecast produces a larger
+    c. Values are bounded in [c_min, c_max].
+
+    Parameters
+    ----------
+    q_t : (n, K) quantile matrix on the observation scale, values in [0, 1].
+    taus : (K,) nominal levels (used to locate tau_L and tau_H).
+    space : {'raw', 'probit'}, default 'raw'
+        - 'raw' (canonical): width is q_i(tau_H) - q_i(tau_L) on the [0, 1]
+          observation scale. Matches Masters notes and the HTML explorer.
+        - 'probit' (legacy): width is Phi^{-1}(q_i(tau_H)) - Phi^{-1}(q_i(tau_L))
+          on the latent Gaussian axis. Exposed for backward compatibility;
+          retained because it is used in earlier experiments. Do not use
+          'probit' without also updating the thesis text — the theory notes
+          describe raw width.
+
+    Important
+    ---------
+    Safe for theorem claims only when the input quantiles are history (e.g.
+    t-1) or otherwise fixed before the current round report is chosen. If q_t
+    is the current round report, deposits become report-dependent and the
+    standard truthfulness argument does not apply.
+
+    Returns (n,) in [c_min, c_max].
     """
     q_t = np.asarray(q_t, dtype=np.float64)
     taus = np.asarray(taus, dtype=np.float64).ravel()
@@ -46,15 +68,23 @@ def confidence_from_quantiles(
     idx_L = int(np.argmin(np.abs(taus - tau_L)))
     idx_H = int(np.argmin(np.abs(taus - tau_H)))
 
-    q_lo = np.clip(q_t[:, idx_L], eps, 1.0 - eps)
-    q_hi = np.clip(q_t[:, idx_H], eps, 1.0 - eps)
+    q_lo = q_t[:, idx_L]
+    q_hi = q_t[:, idx_H]
 
-    z_lo = norm.ppf(q_lo)
-    z_hi = norm.ppf(q_hi)
+    if space == "raw":
+        # Canonical (Masters notes §Step 1): width on the observation scale.
+        delta = np.maximum(q_hi - q_lo, 0.0)
+    elif space == "probit":
+        # Legacy: width on the latent Gaussian axis. Clip to avoid +/-inf.
+        q_lo_c = np.clip(q_lo, eps, 1.0 - eps)
+        q_hi_c = np.clip(q_hi, eps, 1.0 - eps)
+        z_lo = norm.ppf(q_lo_c)
+        z_hi = norm.ppf(q_hi_c)
+        delta = np.maximum(z_hi - z_lo, 0.0)
+    else:
+        raise ValueError(f"space must be 'raw' or 'probit', got {space!r}")
 
-    delta_z = np.maximum(z_hi - z_lo, 0.0)
-
-    c = np.exp(-float(beta_c) * delta_z)
+    c = np.exp(-float(beta_c) * delta)
     return np.clip(c, float(c_min), float(c_max))
 
 

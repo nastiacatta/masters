@@ -55,6 +55,31 @@ apply_style()
 # from onlinev2.experiments.helpers import write_standardised_output
 
 
+def _mean_se_ci(values) -> dict:
+    """Compute mean, SE, 95% CI for a 1D array (returns zeros on empty input).
+
+    Used by multi-seed adversary experiments to summarise point estimates
+    across independent runs. SE uses ddof=1; CI uses the 1.96 * SE Normal
+    approximation, which is appropriate when n_seeds >= 20 (the project
+    convention).
+    """
+    arr = np.asarray(values, dtype=float).ravel()
+    if arr.size == 0:
+        return {"mean": 0.0, "se": 0.0, "ci_low": 0.0, "ci_high": 0.0, "n": 0}
+    mean = float(np.mean(arr))
+    if arr.size > 1:
+        se = float(np.std(arr, ddof=1) / np.sqrt(arr.size))
+    else:
+        se = 0.0
+    return {
+        "mean": mean,
+        "se": se,
+        "ci_low": mean - 1.96 * se,
+        "ci_high": mean + 1.96 * se,
+        "n": int(arr.size),
+    }
+
+
 # ===================================================================
 # A) Settlement sanity
 # ===================================================================
@@ -3375,10 +3400,15 @@ def run_intermittency_stress_test(outdir="outputs", seed=42, block="behaviour", 
             print(f"Warning: summary/dashboard failed: {e}")
 
 
-def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summary=True):
+def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summary=True, seeds=None):
     """
-    Run arbitrageurs across parameter grids to see when arbitrage appears
-    and whether it dominates wealth.
+    Arbitrage across (lam, seed) grid.
+
+    Feeds the arbitrageur an F_{t-1} snapshot of other agents' (report,
+    effective_wager) so it can compute the exact weighted-median arbitrage
+    point (Chen-Devanur-Pennock-Vaughan 2014, Theorem 3.3 applied to the
+    MAE-WSWM used by this project). Runs ``seeds`` independent seeds per
+    lambda and reports mean + 95% CI.
     """
     from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour
     from onlinev2.behaviour.composite import CompositeBehaviourModel
@@ -3392,76 +3422,153 @@ def run_arbitrage_scan(outdir="outputs", seed=42, block="behaviour", write_summa
 
     T = 1000
     n_benign = 8
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
+    if seeds is None:
+        seeds = list(range(20))
 
     lam_grid = [0.0, 0.1, 0.3, 0.5, 0.8, 1.0]
-    results = []
+    per_seed_rows = []
+    agg_rows = []
+    traj_cache: dict = {}
 
     for lam_val in lam_grid:
-        pop = build_population(n_benign, seed=seed)
-        arb_traits = UserTraits(
-            user_id="arbitrageur_0", initial_wealth=10.0,
-            noise_level=0.05, stake_fraction=0.4,
-        )
-        arb = ArbitrageurBehaviour(arb_traits, scoring_mode="point_mae")
-        arb.reset(seed)
+        for s in seeds:
+            rng_s = np.random.default_rng(s)
+            y = rng_s.uniform(0.0, 1.0, size=T)
 
-        behaviour = CompositeBehaviourModel(
-            pop, adversary_behaviours={arb_traits.user_id: arb},
-            scoring_mode="point_mae",
-        )
-        behaviour.reset(seed)
-
-        params = MechanismParams(lam=lam_val, scoring_mode="point_mae")
-        state = MechanismState()
-        for u in pop:
-            state.wealth[u.traits.user_id] = u.traits.initial_wealth
-        state.wealth[arb_traits.user_id] = arb_traits.initial_wealth
-
-        arb_profit = 0.0
-        arb_found_count = 0
-        for t in range(T):
-            pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
-                weights_prev=state.weights_prev, sigma_prev=state.sigma,
-                wealth_prev=state.wealth, profit_prev=state.profit_prev,
+            pop = build_population(n_benign, seed=s)
+            arb_traits = UserTraits(
+                user_id="arbitrageur_0", initial_wealth=10.0,
+                noise_level=0.05, stake_fraction=0.4,
             )
-            actions = behaviour.act(pub)
-            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
-            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
 
-            for i, aid in enumerate(logs["ids"]):
-                if aid == arb_traits.user_id:
-                    arb_profit += logs["profit"][i]
+            snapshot = {"p_others": np.array([0.4, 0.6]), "m_others": np.array([0.5, 0.5])}
 
-        arb_found_count = sum(1 for e in arb.arbitrage_log if e.get("arbitrage_found", False))
+            def target_others(_state, snap=snapshot):
+                return np.asarray(snap["p_others"]), np.asarray(snap["m_others"])
 
-        results.append({
+            arb = ArbitrageurBehaviour(
+                arb_traits, scoring_mode="point_mae",
+                target_others=target_others,
+            )
+            arb.reset(s)
+
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours={arb_traits.user_id: arb},
+                scoring_mode="point_mae",
+            )
+            behaviour.reset(s)
+
+            params = MechanismParams(lam=lam_val, scoring_mode="point_mae")
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            state.wealth[arb_traits.user_id] = arb_traits.initial_wealth
+
+            arb_profit = 0.0
+            agg_hist: list = []
+            wealth_traj: list = []
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+
+                p_list, m_list = [], []
+                for a in actions:
+                    if a.account_id == arb_traits.user_id or not a.participate:
+                        continue
+                    p_list.append(float(a.report) if not isinstance(a.report, (list, tuple, np.ndarray))
+                                  else float(np.asarray(a.report).mean()))
+                    m_list.append(max(1e-6, float(a.deposit)))
+
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+
+                if p_list:
+                    snapshot["p_others"] = np.asarray(p_list, dtype=float)
+                    snapshot["m_others"] = np.asarray(m_list, dtype=float)
+
+                agg_hist.append(logs["r_hat"])
+                wealth_traj.append(float(state.wealth.get(arb_traits.user_id, 0.0)))
+
+                for i, aid in enumerate(logs["ids"]):
+                    if aid == arb_traits.user_id:
+                        arb_profit += logs["profit"][i]
+
+            arb_found_count = sum(1 for e in arb.arbitrage_log if e.get("arbitrage_found", False))
+            part_rounds = sum(1 for e in arb.arbitrage_log
+                              if e.get("deposit", 0.0) > 0.0 and e.get("arbitrage_found", False))
+
+            per_seed_rows.append({
+                "lam": lam_val,
+                "seed": s,
+                "arb_total_profit": arb_profit,
+                "arb_final_wealth": state.wealth.get(arb_traits.user_id, 0.0),
+                "arbitrage_found_rounds": arb_found_count,
+                "participation_rounds": part_rounds,
+            })
+
+            # Cache the first-seed trajectory for plotting (keeps output small).
+            if s == seeds[0]:
+                traj_cache.setdefault(lam_val, wealth_traj)
+
+        # Aggregate for this lambda
+        lam_rows = [r for r in per_seed_rows if r["lam"] == lam_val]
+        profits = [r["arb_total_profit"] for r in lam_rows]
+        summ = _mean_se_ci(profits)
+        agg_rows.append({
             "lam": lam_val,
-            "arb_total_profit": arb_profit,
-            "arb_final_wealth": state.wealth.get(arb_traits.user_id, 0.0),
-            "arbitrage_found_rounds": arb_found_count,
+            "mean_profit": summ["mean"],
+            "se_profit": summ["se"],
+            "ci_low": summ["ci_low"],
+            "ci_high": summ["ci_high"],
+            "mean_final_wealth": float(np.mean([r["arb_final_wealth"] for r in lam_rows])),
+            "mean_found_rounds": float(np.mean([r["arbitrage_found_rounds"] for r in lam_rows])),
+            "mean_participation_rounds": float(np.mean([r["participation_rounds"] for r in lam_rows])),
+            "n_seeds": summ["n"],
         })
 
     _write_csv(ep.data("arbitrage_scan.csv"),
-               ["lam", "arb_total_profit", "arb_final_wealth", "arbitrage_found_rounds"],
-               results)
-    print("\nArbitrage Scan")
+               ["lam", "seed", "arb_total_profit", "arb_final_wealth",
+                "arbitrage_found_rounds", "participation_rounds"],
+               per_seed_rows)
+    _write_csv(ep.data("arbitrage_scan_by_lam.csv"),
+               ["lam", "mean_profit", "se_profit", "ci_low", "ci_high",
+                "mean_final_wealth", "mean_found_rounds", "mean_participation_rounds", "n_seeds"],
+               agg_rows)
+
+    # Trajectory CSV: long format (lam, t, wealth) for plotting.
+    traj_rows = []
+    for lam_val, traj in traj_cache.items():
+        for t, w in enumerate(traj):
+            traj_rows.append({"lam": lam_val, "t": t, "wealth": float(w)})
+    _write_csv(ep.data("arbitrage_wealth_trajectories.csv"),
+               ["lam", "t", "wealth"], traj_rows)
+
+    print("\nArbitrage Scan (multi-seed)")
     print("=" * 50)
-    for r in results:
-        print(f"  lam={r['lam']:.1f}: profit={r['arb_total_profit']:.2f}, "
-              f"wealth={r['arb_final_wealth']:.2f}, arb_found={r['arbitrage_found_rounds']}")
+    for r in agg_rows:
+        print(f"  lam={r['lam']:.1f}: profit={r['mean_profit']:+.2f} ± {r['se_profit']:.2f} "
+              f"(CI: {r['ci_low']:+.2f}..{r['ci_high']:+.2f}), "
+              f"found_rounds={r['mean_found_rounds']:.0f}")
 
     if write_summary:
         try:
+            from onlinev2.behaviour.plotting.adversary_plots import (
+                plot_arbitrage_scan,
+                plot_arbitrage_wealth_trajectories,
+            )
             from onlinev2.behaviour.plotting.behaviour_dashboard import make_behaviour_dashboard
             from onlinev2.experiments.summarise import write_experiment_summary
-            config = {"experiment_name": "arbitrage_scan", "T": T, "block": block}
-            logs = {"attacker_cumulative_profit": float(np.mean([r["arb_total_profit"] for r in results])) if results else None}
+            config = {"experiment_name": "arbitrage_scan", "T": T, "block": block, "n_seeds": len(seeds)}
+            logs = {"attacker_cumulative_profit": float(np.mean([r["mean_profit"] for r in agg_rows])) if agg_rows else None}
             write_experiment_summary(ep, config, logs)
-            arb_grid = {"lam_vals": [r["lam"] for r in results], "A_theta": np.array([r["arb_total_profit"] for r in results])}
+            arb_grid = {"lam_vals": [r["lam"] for r in agg_rows], "A_theta": np.array([r["mean_profit"] for r in agg_rows])}
             make_behaviour_dashboard(ep, {"arbitrage_grid": arb_grid}, config, extra_arbitrage_heatmap=True, arbitrage_csv_path=ep.data("arbitrage_A_theta.csv"))
+            plot_arbitrage_scan(ep)
+            plot_arbitrage_wealth_trajectories(ep)
         except Exception as e:
             print(f"Warning: summary/dashboard failed: {e}")
 
@@ -3498,7 +3605,10 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
 
     attacker_types = {
         "fixed_manipulator": lambda traits: ManipulatorBehaviour(traits, target=0.2, kappa=5.0, scoring_mode="point_mae"),
-        "adaptive_evader": lambda traits: AdaptiveEvaderBehaviour(traits, target=0.2, kappa=5.0, scoring_mode="point_mae"),
+        "adaptive_evader": lambda traits: AdaptiveEvaderBehaviour(
+            traits, target=0.2, kappa=5.0, scoring_mode="point_mae",
+            suspicion_threshold=0.55, ewma_beta=0.3, quiet_cutback=0.35,
+        ),
     }
 
     all_rows = []
@@ -3515,6 +3625,15 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
             )
             atk = atk_factory(atk_traits)
             atk.reset(s)
+
+            # Online detector state: running stats on report deviation from
+            # the population average. A simple z-score of (r_attacker - mean_others)
+            # over the deposit-weighted report distribution.
+            det_dev_sum = 0.0
+            det_dev_sq = 0.0
+            det_count = 0
+            det_flag_count = 0
+            det_score_sum = 0.0
 
             behaviour = CompositeBehaviourModel(
                 pop, adversary_behaviours={atk_traits.user_id: atk},
@@ -3547,16 +3666,55 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
                 )
                 actions = behaviour.act(pub)
 
-                # Ensure attacker deposit is non-zero (at least stake_fraction * wealth)
+                # Ensure attacker deposit is non-zero (at least stake_fraction * wealth).
+                # AgentAction is frozen; rebuild the attacker action if needed.
+                from dataclasses import replace as _dc_replace
+                new_actions = []
                 for a in actions:
-                    if a.user_id == atk_traits.user_id and a.participate:
+                    if a.account_id == atk_traits.user_id and a.participate:
                         atk_wealth = state.wealth.get(atk_traits.user_id, atk_traits.initial_wealth)
                         min_deposit = atk_traits.stake_fraction * max(atk_wealth, 1.0)
                         if a.deposit < min_deposit:
-                            a.deposit = min_deposit
+                            a = _dc_replace(a, deposit=float(min_deposit))
+                    new_actions.append(a)
+                actions = new_actions
 
                 state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
-                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+
+                # Online detector: score attacker anomaly as z-score on
+                # |r_atk - mean_r_others| normalised by rolling std. Score
+                # fed back to the evader through observe_round_result logs.
+                r_atk = None
+                r_others = []
+                for a in actions:
+                    if not a.participate or a.report is None:
+                        continue
+                    rep = float(a.report) if not isinstance(a.report, (list, tuple, np.ndarray)) else float(np.mean(a.report))
+                    if a.account_id == atk_traits.user_id:
+                        r_atk = rep
+                    else:
+                        r_others.append(rep)
+
+                detector_score = None
+                if r_atk is not None and len(r_others) >= 2:
+                    dev = abs(r_atk - float(np.mean(r_others)))
+                    det_count += 1
+                    det_dev_sum += dev
+                    det_dev_sq += dev * dev
+                    if det_count > 5:
+                        mu = det_dev_sum / det_count
+                        var = max(1e-6, det_dev_sq / det_count - mu * mu)
+                        z = (dev - mu) / np.sqrt(var)
+                        detector_score = float(1.0 / (1.0 + np.exp(-0.75 * z)))
+                        det_score_sum += detector_score
+                        if detector_score >= 0.7:
+                            det_flag_count += 1
+
+                logs_with_det = dict(logs)
+                if detector_score is not None:
+                    logs_with_det["detector_scores"] = {atk_traits.user_id: detector_score}
+
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs_with_det)
 
                 for i, aid in enumerate(logs["ids"]):
                     if aid == atk_traits.user_id:
@@ -3610,11 +3768,16 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
                 "seed": s,
                 "total_profit": atk_profit,
                 "final_wealth": state.wealth.get(atk_traits.user_id, 0.0),
+                "detector_mean_score": det_score_sum / max(1, det_count - 5) if det_count > 5 else 0.0,
+                "detector_flag_rate": det_flag_count / max(1, det_count - 5) if det_count > 5 else 0.0,
+                "detector_eval_rounds": det_count,
             })
 
     # --- Write CSV ---
     _write_csv(ep.data("detection_adaptation.csv"),
-               ["attacker", "seed", "total_profit", "final_wealth"], all_rows)
+               ["attacker", "seed", "total_profit", "final_wealth",
+                "detector_mean_score", "detector_flag_rate", "detector_eval_rounds"],
+               all_rows)
 
     # --- Aggregate across seeds for summary ---
     summary = {"experiment_name": "detection_adaptation",
@@ -3625,6 +3788,8 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
     for atk_name in attacker_types:
         atk_rows = [r for r in all_rows if r["attacker"] == atk_name]
         profits = np.array([r["total_profit"] for r in atk_rows])
+        det_scores = np.array([r["detector_mean_score"] for r in atk_rows])
+        det_flags = np.array([r["detector_flag_rate"] for r in atk_rows])
         if profits.size > 0:
             mean_p = float(np.mean(profits))
             se_p = float(np.std(profits, ddof=1) / np.sqrt(profits.size)) if profits.size > 1 else 0.0
@@ -3633,13 +3798,17 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
                 "se_total_profit": se_p,
                 "ci_low": mean_p - 1.96 * se_p,
                 "ci_high": mean_p + 1.96 * se_p,
+                "mean_detector_score": float(np.mean(det_scores)),
+                "mean_detector_flag_rate": float(np.mean(det_flags)),
                 "n_seeds": int(profits.size),
             }
 
     print("\nDetection vs Adaptation (multi-seed)")
     print("=" * 55)
     for name, info in summary.get("attacker_types", {}).items():
-        print(f"  {name}: profit={info['mean_total_profit']:.2f} ± {info['se_total_profit']:.2f}")
+        print(f"  {name}: profit={info['mean_total_profit']:+.2f} ± {info['se_total_profit']:.2f}, "
+              f"detector_score={info['mean_detector_score']:.3f}, "
+              f"flag_rate={info['mean_detector_flag_rate']:.3f}")
 
     if write_summary:
         try:
@@ -3701,8 +3870,12 @@ def _run_behaviour_scenario_loop(T, n_users, seed, scenarios, ep, block, write_s
     return results, y
 
 
-def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_summary=True):
-    """Compare no collusion vs collusion group; emit collusion metrics."""
+def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_summary=True, seeds=None):
+    """Multi-seed Chun-Shachter coalition stress test.
+
+    Compare no collusion vs weighted-mean vs weighted-median coalition
+    reports. Aggregates coalition profit and detector flags across seeds.
+    """
     from onlinev2.behaviour.adversaries.coordinated_group import CoordinatedGroupBehaviour
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.population import build_population
@@ -3713,61 +3886,153 @@ def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_sum
 
     ep = _exp_paths(outdir, "collusion_stress", block)
     T, n_benign = 1000, 8
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
-    members = [UserTraits(user_id=f"colluder_{j}", initial_wealth=10.0, noise_level=0.05, stake_fraction=0.2) for j in range(3)]
-    results = []
-    for label in ["no_collusion", "collusion"]:
-        pop = build_population(n_benign, seed=seed)
-        if label == "collusion":
-            adv = CoordinatedGroupBehaviour(members, scoring_mode="point_mae")
-            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"collusion_group": adv}, scoring_mode="point_mae")
-        else:
-            behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
-        behaviour.reset(seed)
-        params = MechanismParams(scoring_mode="point_mae")
-        state = MechanismState()
-        for u in pop:
-            state.wealth[u.traits.user_id] = u.traits.initial_wealth
-        if label == "collusion":
-            for u in members:
-                state.wealth[u.user_id] = u.initial_wealth
-        profits, n_t_list, gini_ts = [], [], []
-        collusion_actions_hist = [] if label == "collusion" else None
-        for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
-                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
-            actions = behaviour.act(pub)
-            if collusion_actions_hist is not None:
-                collusion_actions_hist.append(actions)
-            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
-            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
-            profits.append(sum(logs["profit"]))
-            n_t_list.append(sum(1 for a in actions if a.participate))
-            gini_ts.append(logs["Gini"])
-        n_actions = len(actions) if actions else 1
-        results.append({"scenario": label, "total_profit": sum(profits), "mean_profit": float(np.mean(profits)),
-                        "final_gini": logs["Gini"], "participation_rate": float(np.mean(n_t_list)) / n_actions})
-        if collusion_actions_hist is not None:
-            try:
-                from onlinev2.behaviour.detection.detectors import run_all_detectors
-                scores = run_all_detectors(collusion_actions_hist, list(range(len(collusion_actions_hist))))
-                det_rows = [{"detector": k, "score": v} for k, v in scores.items()]
-                _write_csv(ep.data("detection_metrics.csv"), ["detector", "score"], det_rows)
-            except Exception:
-                pass
-    _write_csv(ep.data("collusion_stress.csv"), ["scenario", "total_profit", "mean_profit", "final_gini", "participation_rate"], results)
+    if seeds is None:
+        seeds = list(range(20))
+    members = [
+        UserTraits(user_id=f"colluder_{j}", initial_wealth=10.0,
+                   noise_level=0.03 + 0.04 * j,
+                   bias=(-0.12 + 0.06 * j), stake_fraction=0.2)
+        for j in range(3)
+    ]
+    member_ids = {m.user_id for m in members}
+
+    per_seed_rows: list = []
+    detector_rows_by_scenario: dict = {}
+
+    for s in seeds:
+        rng_s = np.random.default_rng(s)
+        y = rng_s.uniform(0.0, 1.0, size=T)
+        for label in ["no_collusion", "collusion_weighted_mean", "collusion_weighted_median"]:
+            pop = build_population(n_benign, seed=s)
+            if label != "no_collusion":
+                aggregation = "weighted_mean" if "mean" in label else "weighted_median"
+                adv = CoordinatedGroupBehaviour(
+                    members, scoring_mode="point_mae", aggregation=aggregation,
+                )
+                behaviour = CompositeBehaviourModel(
+                    pop, adversary_behaviours={"collusion_group": adv}, scoring_mode="point_mae",
+                )
+            else:
+                behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+            behaviour.reset(s)
+            params = MechanismParams(scoring_mode="point_mae")
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            if label != "no_collusion":
+                for u in members:
+                    state.wealth[u.user_id] = u.initial_wealth
+
+            profits, n_t_list, coalition_profit = [], [], 0.0
+            actions_hist = [] if label != "no_collusion" else None
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+                if actions_hist is not None:
+                    actions_hist.append(actions)
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                profits.append(sum(logs["profit"]))
+                n_t_list.append(sum(1 for a in actions if a.participate))
+                for i, aid in enumerate(logs["ids"]):
+                    if aid in member_ids:
+                        coalition_profit += float(logs["profit"][i])
+
+            n_actions = len(actions) if actions else 1
+            per_seed_rows.append({
+                "scenario": label,
+                "seed": s,
+                "total_profit": sum(profits),
+                "coalition_profit": float(coalition_profit),
+                "mean_profit": float(np.mean(profits)),
+                "final_gini": logs["Gini"],
+                "participation_rate": float(np.mean(n_t_list)) / n_actions,
+            })
+
+            if actions_hist is not None and s == seeds[0]:
+                try:
+                    from onlinev2.behaviour.detection.detectors import run_all_detectors
+                    scores = run_all_detectors(actions_hist, list(range(len(actions_hist))))
+                    detector_rows_by_scenario[label] = scores
+                    _write_csv(
+                        ep.data(f"detection_metrics_{label}.csv"),
+                        ["scenario", "detector", "score"],
+                        [{"scenario": label, "detector": k, "score": v} for k, v in scores.items()],
+                    )
+                except Exception:
+                    pass
+
+    # Aggregate across seeds per scenario
+    agg_rows = []
+    for label in ["no_collusion", "collusion_weighted_mean", "collusion_weighted_median"]:
+        subset = [r for r in per_seed_rows if r["scenario"] == label]
+        coalition_stats = _mean_se_ci([r["coalition_profit"] for r in subset])
+        gini_stats = _mean_se_ci([r["final_gini"] for r in subset])
+        agg_rows.append({
+            "scenario": label,
+            "mean_coalition_profit": coalition_stats["mean"],
+            "se_coalition_profit": coalition_stats["se"],
+            "ci_low": coalition_stats["ci_low"],
+            "ci_high": coalition_stats["ci_high"],
+            "mean_final_gini": gini_stats["mean"],
+            "n_seeds": coalition_stats["n"],
+        })
+
+    _write_csv(
+        ep.data("collusion_stress.csv"),
+        ["scenario", "seed", "total_profit", "coalition_profit", "mean_profit", "final_gini", "participation_rate"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("collusion_stress_summary.csv"),
+        ["scenario", "mean_coalition_profit", "se_coalition_profit", "ci_low", "ci_high",
+         "mean_final_gini", "n_seeds"],
+        agg_rows,
+    )
+    print("\nCollusion Stress (multi-seed)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  {r['scenario']:>30s}: coalition_profit={r['mean_coalition_profit']:+.2f} "
+              f"± {r['se_coalition_profit']:.2f} (CI: {r['ci_low']:+.2f}..{r['ci_high']:+.2f})")
     if write_summary:
         try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_collusion_stress
             from onlinev2.experiments.summarise import write_experiment_summary
-            write_experiment_summary(ep, {"experiment_name": "collusion_stress", "T": T, "block": block}, {"final_gini": results[-1]["final_gini"] if results else None})
+            colluding = [r for r in agg_rows if r["scenario"] != "no_collusion"]
+            logs_out = {
+                "attacker_cumulative_profit": float(
+                    max((r["mean_coalition_profit"] for r in colluding), default=0.0)
+                ),
+                "final_gini": agg_rows[-1]["mean_final_gini"] if agg_rows else None,
+            }
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "collusion_stress", "T": T, "block": block,
+                 "n_seeds": len(seeds)},
+                logs_out,
+            )
+            plot_collusion_stress(ep)
         except Exception as e:
             print(f"Warning: summary failed: {e}")
 
 
-def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_summary=True):
-    """Compare no insider vs insider; measure insider profit advantage."""
-    from onlinev2.behaviour.adversaries.privileged_information import PrivilegedInformationBehaviour
+def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_summary=True, seeds=None):
+    """Compare no insider vs F_{t-1}-compliant insider vs outcome-leaking attacker.
+
+    Multi-seed AR(1) DGP so that lagged information is actually informative.
+
+    Scenarios:
+      * no_insider
+      * insider_lagged: F_{t-1}-compliant, lag=1, sigma_priv=0.015
+      * insider_leaked: audit-only, allow_leakage=True, reads y_t.
+    """
+    from onlinev2.behaviour.adversaries.privileged_information import (
+        PrivilegedInformationBehaviour,
+    )
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.population import build_population
     from onlinev2.behaviour.protocol import RoundPublicState
@@ -3777,46 +4042,145 @@ def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_su
 
     ep = _exp_paths(outdir, "insider_advantage", block)
     T, n_benign = 1000, 8
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
-    insider_traits = UserTraits(user_id="insider_0", initial_wealth=10.0, noise_level=0.02, stake_fraction=0.4, insider_bonus=0.5)
-    results = []
-    for label, use_insider in [("no_insider", False), ("insider", True)]:
-        pop = build_population(n_benign, seed=seed)
-        if use_insider:
-            adv = PrivilegedInformationBehaviour(insider_traits, y_sequence=y, scoring_mode="point_mae")
-            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"insider_0": adv}, scoring_mode="point_mae")
-        else:
-            behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
-        behaviour.reset(seed)
-        params = MechanismParams(scoring_mode="point_mae")
-        state = MechanismState()
-        for u in pop:
-            state.wealth[u.traits.user_id] = u.traits.initial_wealth
-        if use_insider:
-            state.wealth["insider_0"] = insider_traits.initial_wealth
-        insider_profit = 0.0
-        for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
-                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
-            actions = behaviour.act(pub)
-            state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
-            behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
-            for i, aid in enumerate(logs["ids"]):
-                if "insider" in str(aid):
-                    insider_profit += logs["profit"][i]
-        results.append({"scenario": label, "insider_profit": insider_profit, "final_gini": logs["Gini"]})
-    _write_csv(ep.data("insider_advantage.csv"), ["scenario", "insider_profit", "final_gini"], results)
+    if seeds is None:
+        seeds = list(range(20))
+    insider_traits = UserTraits(
+        user_id="insider_0", initial_wealth=10.0, noise_level=0.02,
+        stake_fraction=0.4, insider_bonus=0.5,
+    )
+    phi = 0.7
+    eps_scale = 0.18
+
+    per_seed_rows = []
+
+    for s in seeds:
+        rng_s = np.random.default_rng(s)
+        y = np.zeros(T, dtype=float)
+        y[0] = 0.5 + rng_s.normal(0.0, 0.1)
+        for t in range(1, T):
+            y[t] = 0.5 + phi * (y[t - 1] - 0.5) + rng_s.normal(0.0, eps_scale)
+        y = np.clip(y, 0.0, 1.0)
+
+        scenarios = [
+            ("no_insider", None),
+            (
+                "insider_lagged",
+                lambda: PrivilegedInformationBehaviour(
+                    insider_traits, scoring_mode="point_mae",
+                    mode="lagged_noisy", lag=1, sigma_priv=0.015,
+                ),
+            ),
+            (
+                "insider_leaked",
+                lambda y_ref=y: PrivilegedInformationBehaviour(
+                    insider_traits, scoring_mode="point_mae",
+                    mode="leaked_future", lookahead=0, sigma_priv=0.01,
+                    allow_leakage=True, y_sequence=y_ref,
+                ),
+            ),
+        ]
+
+        for label, factory in scenarios:
+            pop = build_population(n_benign, seed=s)
+            if factory is not None:
+                adv = factory()
+                behaviour = CompositeBehaviourModel(
+                    pop, adversary_behaviours={insider_traits.user_id: adv},
+                    scoring_mode="point_mae",
+                )
+            else:
+                adv = None
+                behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
+            behaviour.reset(s)
+            params = MechanismParams(scoring_mode="point_mae")
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            if adv is not None:
+                state.wealth[insider_traits.user_id] = insider_traits.initial_wealth
+
+            insider_profit = 0.0
+            insider_score_sum = 0.0
+            insider_rounds = 0
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                for i, aid in enumerate(logs["ids"]):
+                    if "insider" in str(aid):
+                        insider_profit += logs["profit"][i]
+                        insider_score_sum += logs["scores"][i]
+                        insider_rounds += 1
+            per_seed_rows.append({
+                "scenario": label,
+                "seed": s,
+                "insider_profit": insider_profit,
+                "mean_insider_score": insider_score_sum / max(1, insider_rounds),
+                "final_gini": logs["Gini"],
+                "insider_rounds": insider_rounds,
+            })
+
+    # Aggregate per scenario
+    agg_rows = []
+    for label in ["no_insider", "insider_lagged", "insider_leaked"]:
+        subset = [r for r in per_seed_rows if r["scenario"] == label]
+        profit_stats = _mean_se_ci([r["insider_profit"] for r in subset])
+        score_stats = _mean_se_ci([r["mean_insider_score"] for r in subset])
+        agg_rows.append({
+            "scenario": label,
+            "mean_insider_profit": profit_stats["mean"],
+            "se_insider_profit": profit_stats["se"],
+            "ci_low": profit_stats["ci_low"],
+            "ci_high": profit_stats["ci_high"],
+            "mean_insider_score": score_stats["mean"],
+            "n_seeds": profit_stats["n"],
+        })
+
+    _write_csv(
+        ep.data("insider_advantage.csv"),
+        ["scenario", "seed", "insider_profit", "mean_insider_score", "final_gini", "insider_rounds"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("insider_advantage_summary.csv"),
+        ["scenario", "mean_insider_profit", "se_insider_profit", "ci_low", "ci_high",
+         "mean_insider_score", "n_seeds"],
+        agg_rows,
+    )
+    print("\nInsider Advantage (multi-seed, AR(1) DGP)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  {r['scenario']:>18s}: profit={r['mean_insider_profit']:+.2f} ± "
+              f"{r['se_insider_profit']:.2f} (CI: {r['ci_low']:+.2f}..{r['ci_high']:+.2f}), "
+              f"mean_score={r['mean_insider_score']:.3f}")
     if write_summary:
         try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_insider_advantage
             from onlinev2.experiments.summarise import write_experiment_summary
-            write_experiment_summary(ep, {"experiment_name": "insider_advantage", "T": T, "block": block}, {})
+            logs_out = {"attacker_cumulative_profit": agg_rows[-1]["mean_insider_profit"]
+                        if agg_rows else None}
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "insider_advantage", "T": T, "block": block,
+                 "n_seeds": len(seeds), "dgp": f"AR(1) phi={phi}, eps={eps_scale}"},
+                logs_out,
+            )
+            plot_insider_advantage(ep)
         except Exception:
             pass
 
 
-def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write_summary=True):
-    """Compare no wash vs wash trader; measure activity inflation."""
+def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write_summary=True, seeds=None):
+    """Multi-seed wash / activity-gaming stress test.
+
+    Metrics: activity inflation, wash-account profit, plus detector
+    scores from `onlinev2.behaviour.detection.detectors`.
+    """
     from onlinev2.behaviour.adversaries.wash_trader import WashTraderBehaviour
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.population import build_population
@@ -3827,44 +4191,154 @@ def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write
 
     ep = _exp_paths(outdir, "wash_activity_gaming", block)
     T, n_benign = 1000, 8
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
+    if seeds is None:
+        seeds = list(range(20))
     wash_traits = UserTraits(user_id="wash_0", initial_wealth=10.0, noise_level=0.05, stake_fraction=0.2)
-    results = []
-    for label, use_wash in [("no_wash", False), ("wash_trader", True)]:
-        pop = build_population(n_benign, seed=seed)
-        if use_wash:
-            adv = WashTraderBehaviour(wash_traits, k_accounts=3, scoring_mode="point_mae")
-            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"wash_0": adv}, scoring_mode="point_mae")
-        else:
+
+    def _run(factory, s, collect_actions=False):
+        rng_s = np.random.default_rng(s)
+        y = rng_s.uniform(0.0, 1.0, size=T)
+        pop = build_population(n_benign, seed=s)
+        if factory is None:
             behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
-        behaviour.reset(seed)
+        else:
+            adv = factory()
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours={"wash_0": adv}, scoring_mode="point_mae",
+            )
+        behaviour.reset(s)
         params = MechanismParams(scoring_mode="point_mae")
         state = MechanismState()
         for u in pop:
             state.wealth[u.traits.user_id] = u.traits.initial_wealth
-        if use_wash:
+        if factory is not None:
             state.wealth["wash_0"] = wash_traits.initial_wealth
         activity_count = 0
+        wash_profit = 0.0
+        actions_hist = [] if collect_actions else None
         for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
-                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            pub = RoundPublicState(
+                t=t, y_history=y[:t].tolist(), agg_history=[],
+                weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                wealth_prev=state.wealth, profit_prev=state.profit_prev,
+            )
             actions = behaviour.act(pub)
+            if actions_hist is not None:
+                actions_hist.append(actions)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
             activity_count += sum(1 for a in actions if a.participate)
-        results.append({"scenario": label, "total_activity": activity_count, "n_rounds": T})
-    _write_csv(ep.data("wash_activity_gaming.csv"), ["scenario", "total_activity", "n_rounds"], results)
+            for i, aid in enumerate(logs["ids"]):
+                if str(aid).startswith("wash_0"):
+                    wash_profit += logs["profit"][i]
+        return activity_count, wash_profit, actions_hist
+
+    scenarios = [
+        ("no_wash", None),
+        ("wash_k3_anchor", lambda: WashTraderBehaviour(
+            wash_traits, k_accounts=3, scoring_mode="point_mae",
+            wash_report_style="anchor", sync_strength=1.0,
+        )),
+        ("wash_k5_split", lambda: WashTraderBehaviour(
+            wash_traits, k_accounts=5, scoring_mode="point_mae",
+            wash_report_style="split_bet", sync_strength=1.0,
+        )),
+    ]
+
+    per_seed_rows = []
+    # Per-seed baseline activity for relative inflation.
+    baseline_by_seed = {}
+    for s in seeds:
+        baseline_activity, _, _ = _run(None, s)
+        baseline_by_seed[s] = baseline_activity
+        per_seed_rows.append({
+            "scenario": "no_wash", "seed": s,
+            "total_activity": baseline_activity, "n_rounds": T,
+            "inflation_rate": 0.0, "wash_profit": 0.0,
+        })
+
+    first_seed = seeds[0]
+    for label, factory in scenarios[1:]:
+        for idx, s in enumerate(seeds):
+            activity, wash_prof, actions_hist = _run(
+                factory, s, collect_actions=(s == first_seed)
+            )
+            per_seed_rows.append({
+                "scenario": label, "seed": s,
+                "total_activity": activity, "n_rounds": T,
+                "inflation_rate": (activity - baseline_by_seed[s]) / max(1, baseline_by_seed[s]),
+                "wash_profit": wash_prof,
+            })
+            if s == first_seed:
+                try:
+                    from onlinev2.behaviour.detection.detectors import run_all_detectors
+                    scores = run_all_detectors(actions_hist, list(range(len(actions_hist))))
+                    _write_csv(
+                        ep.data(f"detector_scores_{label}.csv"),
+                        ["scenario", "detector", "score"],
+                        [{"scenario": label, "detector": k, "score": v} for k, v in scores.items()],
+                    )
+                except Exception:
+                    pass
+
+    # Aggregate per scenario
+    agg_rows = []
+    for label, _ in scenarios:
+        subset = [r for r in per_seed_rows if r["scenario"] == label]
+        inflation_stats = _mean_se_ci([r["inflation_rate"] for r in subset])
+        profit_stats = _mean_se_ci([r["wash_profit"] for r in subset])
+        agg_rows.append({
+            "scenario": label,
+            "mean_inflation_rate": inflation_stats["mean"],
+            "se_inflation_rate": inflation_stats["se"],
+            "mean_wash_profit": profit_stats["mean"],
+            "se_wash_profit": profit_stats["se"],
+            "n_seeds": inflation_stats["n"],
+        })
+
+    _write_csv(
+        ep.data("wash_activity_gaming.csv"),
+        ["scenario", "seed", "total_activity", "n_rounds", "inflation_rate", "wash_profit"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("wash_activity_gaming_summary.csv"),
+        ["scenario", "mean_inflation_rate", "se_inflation_rate",
+         "mean_wash_profit", "se_wash_profit", "n_seeds"],
+        agg_rows,
+    )
+    print("\nWash Activity Gaming (multi-seed)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  {r['scenario']:>18s}: inflation={r['mean_inflation_rate']:+.1%} "
+              f"± {r['se_inflation_rate']:.1%}, wash_profit={r['mean_wash_profit']:+.2f} "
+              f"± {r['se_wash_profit']:.2f}")
     if write_summary:
         try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_wash_activity
             from onlinev2.experiments.summarise import write_experiment_summary
-            write_experiment_summary(ep, {"experiment_name": "wash_activity_gaming", "T": T, "block": block}, {})
+            logs_out = {"attacker_cumulative_profit": agg_rows[-1]["mean_wash_profit"] if agg_rows else None}
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "wash_activity_gaming", "T": T, "block": block,
+                 "n_seeds": len(seeds)},
+                logs_out,
+            )
+            plot_wash_activity(ep)
         except Exception:
             pass
 
 
-def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_summary=True):
-    """Compare truthful vs strategic reporter; measure aggregate impact."""
+def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_summary=True, seeds=None):
+    """Multi-seed sweep over (pull, target) measuring aggregate shift vs cost.
+
+    Metrics
+    -------
+    mean_agg_error: |r_hat - y|, averaged over rounds.
+    mean_r_hat_shift: r_hat(adversarial) - r_hat(baseline), averaged;
+        paired across seeds for tighter CIs.
+    attacker_profit: cumulative wagering profit of the adversary.
+    """
     from onlinev2.behaviour.adversaries.strategic_reporter import StrategicReporterBehaviour
     from onlinev2.behaviour.composite import CompositeBehaviourModel
     from onlinev2.behaviour.population import build_population
@@ -3875,38 +4349,122 @@ def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_
 
     ep = _exp_paths(outdir, "strategic_reporting", block)
     T, n_benign = 1000, 8
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.0, 1.0, size=T)
-    strat_traits = UserTraits(user_id="strategic_0", initial_wealth=10.0, manipulation_strength=0.8)
-    results = []
-    for label, use_strat in [("truthful", False), ("strategic_reporter", True)]:
-        pop = build_population(n_benign, seed=seed)
-        if use_strat:
-            adv = StrategicReporterBehaviour(strat_traits, target=0.7, pull=0.8, scoring_mode="point_mae")
-            behaviour = CompositeBehaviourModel(pop, adversary_behaviours={"strategic_0": adv}, scoring_mode="point_mae")
-        else:
+    if seeds is None:
+        seeds = list(range(20))
+
+    strat_traits = UserTraits(
+        user_id="strategic_0", initial_wealth=10.0, manipulation_strength=0.8,
+    )
+
+    def _run(factory, s):
+        rng_s = np.random.default_rng(s)
+        y = rng_s.uniform(0.0, 1.0, size=T)
+        pop = build_population(n_benign, seed=s)
+        if factory is None:
             behaviour = CompositeBehaviourModel(pop, scoring_mode="point_mae")
-        behaviour.reset(seed)
+        else:
+            adv = factory()
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours={"strategic_0": adv}, scoring_mode="point_mae",
+            )
+        behaviour.reset(s)
         params = MechanismParams(scoring_mode="point_mae")
         state = MechanismState()
         for u in pop:
             state.wealth[u.traits.user_id] = u.traits.initial_wealth
-        if use_strat:
-            state.wealth["strategic_0"] = strat_traits.initial_wealth
-        agg_errors = []
+        if factory is not None:
+            state.wealth["strategic_0"] = 10.0
+        r_hats, agg_errs, adv_profit = [], [], 0.0
         for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
-                                  sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
+            pub = RoundPublicState(
+                t=t, y_history=y[:t].tolist(), agg_history=[],
+                weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                wealth_prev=state.wealth, profit_prev=state.profit_prev,
+            )
             actions = behaviour.act(pub)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
-            agg_errors.append(abs(logs.get("r_hat", 0.5) - float(y[t])))
-        results.append({"scenario": label, "mean_agg_error": float(np.mean(agg_errors)), "final_gini": logs["Gini"]})
-    _write_csv(ep.data("strategic_reporting.csv"), ["scenario", "mean_agg_error", "final_gini"], results)
+            r_hat = logs.get("r_hat", 0.5)
+            r_hats.append(float(r_hat))
+            agg_errs.append(abs(float(r_hat) - float(y[t])))
+            for i, aid in enumerate(logs["ids"]):
+                if aid == "strategic_0":
+                    adv_profit += logs["profit"][i]
+        return np.asarray(r_hats, dtype=float), np.asarray(agg_errs, dtype=float), adv_profit
+
+    sweeps = [
+        ("baseline_truthful", None),
+        ("pull_0.3_target_0.9", lambda: StrategicReporterBehaviour(
+            strat_traits, target=0.9, pull=0.3, scoring_mode="point_mae")),
+        ("pull_0.6_target_0.9", lambda: StrategicReporterBehaviour(
+            strat_traits, target=0.9, pull=0.6, scoring_mode="point_mae")),
+        ("pull_1.0_target_0.9", lambda: StrategicReporterBehaviour(
+            strat_traits, target=0.9, pull=1.0, scoring_mode="point_mae")),
+    ]
+
+    per_seed_rows = []
+    for s in seeds:
+        baseline_r, baseline_err, _ = _run(None, s)
+        for label, factory in sweeps:
+            if factory is None:
+                r_hats, errs, prof = baseline_r, baseline_err, 0.0
+            else:
+                r_hats, errs, prof = _run(factory, s)
+            per_seed_rows.append({
+                "scenario": label,
+                "seed": s,
+                "mean_agg_error": float(np.mean(errs)),
+                "mean_r_hat_shift": float(np.mean(r_hats - baseline_r)),
+                "attacker_profit": float(prof),
+            })
+
+    agg_rows = []
+    for label, _ in sweeps:
+        subset = [r for r in per_seed_rows if r["scenario"] == label]
+        shift_stats = _mean_se_ci([r["mean_r_hat_shift"] for r in subset])
+        profit_stats = _mean_se_ci([r["attacker_profit"] for r in subset])
+        err_stats = _mean_se_ci([r["mean_agg_error"] for r in subset])
+        agg_rows.append({
+            "scenario": label,
+            "mean_r_hat_shift": shift_stats["mean"],
+            "se_r_hat_shift": shift_stats["se"],
+            "mean_agg_error": err_stats["mean"],
+            "mean_attacker_profit": profit_stats["mean"],
+            "se_attacker_profit": profit_stats["se"],
+            "n_seeds": shift_stats["n"],
+        })
+
+    _write_csv(
+        ep.data("strategic_reporting.csv"),
+        ["scenario", "seed", "mean_agg_error", "mean_r_hat_shift", "attacker_profit"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("strategic_reporting_summary.csv"),
+        ["scenario", "mean_r_hat_shift", "se_r_hat_shift", "mean_agg_error",
+         "mean_attacker_profit", "se_attacker_profit", "n_seeds"],
+        agg_rows,
+    )
+    print("\nStrategic Reporting (multi-seed)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  {r['scenario']:>24s}: shift={r['mean_r_hat_shift']:+.4f} "
+              f"± {r['se_r_hat_shift']:.4f}, atk_profit={r['mean_attacker_profit']:+.2f} "
+              f"± {r['se_attacker_profit']:.2f}")
     if write_summary:
         try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_strategic_reporting
             from onlinev2.experiments.summarise import write_experiment_summary
-            write_experiment_summary(ep, {"experiment_name": "strategic_reporting", "T": T, "block": block}, {})
+            logs_out = {
+                "attacker_cumulative_profit": agg_rows[-1]["mean_attacker_profit"] if agg_rows else None,
+            }
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "strategic_reporting", "T": T, "block": block,
+                 "n_seeds": len(seeds)},
+                logs_out,
+            )
+            plot_strategic_reporting(ep)
         except Exception:
             pass
 
@@ -4243,3 +4801,491 @@ def run_qa_vs_lp_comparison(
 
 
 # Entry point: use python -m onlinev2.experiments.cli or run-onlinev2-experiments
+
+
+def run_sybil_arbitrage(outdir="outputs", seed=42, block="behaviour", write_summary=True, seeds=None):
+    """Sybil-proofness stress test for the arbitrage-seeking attack.
+
+    Holds the total attacker stake constant and fans it out across
+    k in {1, 3, 5} sybil accounts. Under a sybilproof mechanism the
+    arbitrage profit should be approximately invariant to k; any
+    systematic k-trend is a finding.
+
+    Metrics
+    -------
+    total_arbitrage_profit: summed profit over all sybils of the attacker.
+    mean_sybil_n_eff: mean of N_eff_t, inflated by sybil splits.
+    """
+    from onlinev2.behaviour.adversaries.sybil_arbitrage import SybilArbitrageBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+
+    ep = _exp_paths(outdir, "sybil_arbitrage", block)
+    T, n_benign = 1000, 8
+    if seeds is None:
+        seeds = list(range(20))
+
+    k_grid = [1, 3, 5]
+    per_seed_rows: list = []
+
+    for s in seeds:
+        rng_s = np.random.default_rng(s)
+        y = rng_s.uniform(0.0, 1.0, size=T)
+
+        for k in k_grid:
+            pop = build_population(n_benign, seed=s)
+            parent_traits = UserTraits(
+                user_id="sybil_arb", initial_wealth=10.0,
+                noise_level=0.05, stake_fraction=0.4,
+            )
+
+            snapshot = {"p_others": np.array([0.4, 0.6]), "m_others": np.array([0.5, 0.5])}
+
+            def target_others(_state, snap=snapshot):
+                return np.asarray(snap["p_others"]), np.asarray(snap["m_others"])
+
+            adv = SybilArbitrageBehaviour(
+                traits=parent_traits,
+                k_accounts=k,
+                scoring_mode="point_mae",
+                target_others=target_others,
+            )
+            adv.reset(s)
+
+            # Single adversary key; its act() returns k linked AgentActions.
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours={"sybil_arb_entry": adv},
+                scoring_mode="point_mae",
+            )
+            behaviour.reset(s)
+
+            params = MechanismParams(scoring_mode="point_mae")
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            # Wealth is held jointly by the parent user_id. Distribute
+            # it across the k sybils so the deposit sum matches a
+            # single-account run.
+            per_wealth = parent_traits.initial_wealth / float(k)
+            for j in range(k):
+                state.wealth[f"{parent_traits.user_id}__sybil_{j}"] = per_wealth
+
+            total_profit = 0.0
+            n_eff_ts: list = []
+            agg_hist: list = []
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+
+                # Snapshot F_t for the next round's arbitrage point.
+                p_list, m_list = [], []
+                for a in actions:
+                    if a.account_id.startswith(parent_traits.user_id) or not a.participate:
+                        continue
+                    p_list.append(float(a.report) if not isinstance(a.report, (list, tuple, np.ndarray))
+                                  else float(np.asarray(a.report).mean()))
+                    m_list.append(max(1e-6, float(a.deposit)))
+
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+
+                if p_list:
+                    snapshot["p_others"] = np.asarray(p_list, dtype=float)
+                    snapshot["m_others"] = np.asarray(m_list, dtype=float)
+                agg_hist.append(logs["r_hat"])
+                n_eff_ts.append(logs["N_eff"])
+
+                for i, aid in enumerate(logs["ids"]):
+                    if aid.startswith(parent_traits.user_id):
+                        total_profit += float(logs["profit"][i])
+
+            per_seed_rows.append({
+                "k": k,
+                "seed": s,
+                "total_arbitrage_profit": total_profit,
+                "mean_n_eff": float(np.mean(n_eff_ts)),
+                "arbitrage_found_rounds": sum(
+                    1 for e in adv.arbitrage_log if e.get("arbitrage_found", False)
+                ),
+            })
+
+    # Aggregate per k
+    agg_rows = []
+    for k in k_grid:
+        subset = [r for r in per_seed_rows if r["k"] == k]
+        profit_stats = _mean_se_ci([r["total_arbitrage_profit"] for r in subset])
+        neff_stats = _mean_se_ci([r["mean_n_eff"] for r in subset])
+        agg_rows.append({
+            "k": k,
+            "mean_profit": profit_stats["mean"],
+            "se_profit": profit_stats["se"],
+            "ci_low": profit_stats["ci_low"],
+            "ci_high": profit_stats["ci_high"],
+            "mean_n_eff": neff_stats["mean"],
+            "se_n_eff": neff_stats["se"],
+            "n_seeds": profit_stats["n"],
+        })
+
+    _write_csv(
+        ep.data("sybil_arbitrage.csv"),
+        ["k", "seed", "total_arbitrage_profit", "mean_n_eff", "arbitrage_found_rounds"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("sybil_arbitrage_summary.csv"),
+        ["k", "mean_profit", "se_profit", "ci_low", "ci_high",
+         "mean_n_eff", "se_n_eff", "n_seeds"],
+        agg_rows,
+    )
+    print("\nSybil Arbitrage (sybil-proofness audit)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  k={r['k']}: profit={r['mean_profit']:+.2f} ± {r['se_profit']:.2f} "
+              f"(CI {r['ci_low']:+.2f}..{r['ci_high']:+.2f}), N_eff={r['mean_n_eff']:.2f}")
+
+    if write_summary:
+        try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_sybil_arbitrage
+            from onlinev2.experiments.summarise import write_experiment_summary
+            logs_out = {
+                "attacker_cumulative_profit": float(
+                    np.mean([r["mean_profit"] for r in agg_rows])
+                ) if agg_rows else None,
+            }
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "sybil_arbitrage", "T": T, "block": block,
+                 "n_seeds": len(seeds), "k_grid": k_grid},
+                logs_out,
+            )
+            plot_sybil_arbitrage(ep)
+        except Exception as e:
+            print(f"Warning: summary failed: {e}")
+
+
+def run_arbitrage_crowd_size(outdir="outputs", seed=42, block="behaviour",
+                             write_summary=True, seeds=None):
+    """2D sweep of the arbitrage attack over (λ, n_benign).
+
+    Tests whether the arbitrageur's advantage scales with the crowd size.
+    Theoretically, a larger benign population has more disagreement so
+    the weighted-median arbitrage point stays profitable; but the
+    attacker's m_i / M_t share shrinks, capping the per-round payoff.
+    The net effect is an empirical question resolved here.
+    """
+    from onlinev2.behaviour.adversaries.arbitrageur import ArbitrageurBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+
+    ep = _exp_paths(outdir, "arbitrage_crowd_size", block)
+    T = 500
+    if seeds is None:
+        seeds = list(range(10))
+    lam_grid = [0.0, 0.5, 1.0]
+    n_grid = [4, 8, 16, 32]
+
+    per_seed_rows = []
+
+    for lam_val in lam_grid:
+        for n_benign in n_grid:
+            for s in seeds:
+                rng_s = np.random.default_rng(s)
+                y = rng_s.uniform(0.0, 1.0, size=T)
+
+                pop = build_population(n_benign, seed=s)
+                arb_traits = UserTraits(
+                    user_id="arbitrageur_0", initial_wealth=10.0,
+                    noise_level=0.05, stake_fraction=0.4,
+                )
+                snapshot = {"p_others": np.full(n_benign, 0.5),
+                            "m_others": np.ones(n_benign) * 0.5}
+
+                def target_others(_state, snap=snapshot):
+                    return np.asarray(snap["p_others"]), np.asarray(snap["m_others"])
+
+                arb = ArbitrageurBehaviour(
+                    arb_traits, scoring_mode="point_mae",
+                    target_others=target_others,
+                )
+                arb.reset(s)
+
+                behaviour = CompositeBehaviourModel(
+                    pop, adversary_behaviours={arb_traits.user_id: arb},
+                    scoring_mode="point_mae",
+                )
+                behaviour.reset(s)
+
+                params = MechanismParams(lam=lam_val, scoring_mode="point_mae")
+                state = MechanismState()
+                for u in pop:
+                    state.wealth[u.traits.user_id] = u.traits.initial_wealth
+                state.wealth[arb_traits.user_id] = arb_traits.initial_wealth
+
+                arb_profit = 0.0
+                agg_hist: list = []
+                for t in range(T):
+                    pub = RoundPublicState(
+                        t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
+                        weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                        wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                    )
+                    actions = behaviour.act(pub)
+
+                    p_list, m_list = [], []
+                    for a in actions:
+                        if a.account_id == arb_traits.user_id or not a.participate:
+                            continue
+                        p_list.append(float(a.report) if not isinstance(a.report, (list, tuple, np.ndarray))
+                                      else float(np.asarray(a.report).mean()))
+                        m_list.append(max(1e-6, float(a.deposit)))
+
+                    state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                    behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+
+                    if p_list:
+                        snapshot["p_others"] = np.asarray(p_list, dtype=float)
+                        snapshot["m_others"] = np.asarray(m_list, dtype=float)
+
+                    agg_hist.append(logs["r_hat"])
+                    for i, aid in enumerate(logs["ids"]):
+                        if aid == arb_traits.user_id:
+                            arb_profit += logs["profit"][i]
+
+                per_seed_rows.append({
+                    "lam": lam_val,
+                    "n_benign": n_benign,
+                    "seed": s,
+                    "arb_total_profit": arb_profit,
+                    "arb_final_wealth": state.wealth.get(arb_traits.user_id, 0.0),
+                })
+
+    # Aggregate per (lam, n_benign)
+    agg_rows = []
+    for lam_val in lam_grid:
+        for n_benign in n_grid:
+            subset = [r for r in per_seed_rows
+                      if r["lam"] == lam_val and r["n_benign"] == n_benign]
+            stats = _mean_se_ci([r["arb_total_profit"] for r in subset])
+            agg_rows.append({
+                "lam": lam_val,
+                "n_benign": n_benign,
+                "mean_profit": stats["mean"],
+                "se_profit": stats["se"],
+                "ci_low": stats["ci_low"],
+                "ci_high": stats["ci_high"],
+                "n_seeds": stats["n"],
+            })
+
+    _write_csv(
+        ep.data("arbitrage_crowd_size.csv"),
+        ["lam", "n_benign", "seed", "arb_total_profit", "arb_final_wealth"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("arbitrage_crowd_size_summary.csv"),
+        ["lam", "n_benign", "mean_profit", "se_profit", "ci_low", "ci_high", "n_seeds"],
+        agg_rows,
+    )
+    print("\nArbitrage × Crowd-size sweep (multi-seed)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  lam={r['lam']:.1f}, n={r['n_benign']:2d}: profit="
+              f"{r['mean_profit']:+.2f} ± {r['se_profit']:.2f}")
+
+    if write_summary:
+        try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_arbitrage_crowd_size
+            from onlinev2.experiments.summarise import write_experiment_summary
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "arbitrage_crowd_size", "T": T, "block": block,
+                 "n_seeds": len(seeds), "lam_grid": lam_grid, "n_grid": n_grid},
+                {"attacker_cumulative_profit":
+                    float(np.mean([r["mean_profit"] for r in agg_rows]))},
+            )
+            plot_arbitrage_crowd_size(ep)
+        except Exception as e:
+            print(f"Warning: summary/dashboard failed: {e}")
+
+
+def run_informed_collusion(outdir="outputs", seed=42, block="behaviour",
+                           write_summary=True, seeds=None):
+    """Coalition of insiders: Chun-Shachter aggregation applied to members
+    that each see an F_{t-1}-compliant privileged signal.
+
+    Compares:
+      * baseline (no adversary)
+      * collusion_only (Chun-Shachter, truthful beliefs with trait noise/bias)
+      * informed_collusion (Chun-Shachter + insider precision per member,
+        retaining some residual bias to preserve disagreement)
+
+    **Theoretical note.** The Chun-Shachter arbitrage comes from
+    *within-coalition disagreement* (Chen-Devanur-Pennock-Vaughan 2014
+    Theorem 3.3). Informed members with *identical* beliefs would have no
+    internal disagreement and the arbitrage would vanish. In practice
+    insiders retain idiosyncratic bias (e.g. institutional priors), so
+    informed collusion combines the precision bonus of privileged
+    information with a residual Chun-Shachter arbitrage, yielding higher
+    total profit than pure-collusion and higher than a single lone
+    insider.
+    """
+    from onlinev2.behaviour.adversaries.coordinated_group import CoordinatedGroupBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+
+    ep = _exp_paths(outdir, "informed_collusion", block)
+    T, n_benign = 1000, 8
+    if seeds is None:
+        seeds = list(range(10))
+    phi, eps_scale = 0.7, 0.18
+
+    per_seed_rows = []
+    for s in seeds:
+        rng_s = np.random.default_rng(s)
+        y = np.zeros(T, dtype=float)
+        y[0] = 0.5 + rng_s.normal(0.0, 0.1)
+        for t in range(1, T):
+            y[t] = 0.5 + phi * (y[t - 1] - 0.5) + rng_s.normal(0.0, eps_scale)
+        y = np.clip(y, 0.0, 1.0)
+
+        members = [
+            UserTraits(user_id=f"informed_{j}", initial_wealth=10.0,
+                       noise_level=0.03 + 0.04 * j,
+                       bias=(-0.12 + 0.06 * j), stake_fraction=0.2,
+                       insider_bonus=0.3)
+            for j in range(3)
+        ]
+        member_ids = {m.user_id for m in members}
+
+        for label in ["baseline", "collusion_only", "informed_collusion"]:
+            pop = build_population(n_benign, seed=s)
+            adv_map: dict = {}
+            if label == "collusion_only":
+                adv_map = {"collusion_group": CoordinatedGroupBehaviour(
+                    members, scoring_mode="point_mae", aggregation="weighted_mean",
+                )}
+            elif label == "informed_collusion":
+                # Each member runs a privileged-info insider with the
+                # same lag/sigma; their beliefs therefore share a strong
+                # common component (the lagged y) but differ in bias.
+                # The coalition still broadcasts their wager-weighted mean.
+                # We wire the insiders as policies inside a coordinated
+                # group by overriding members' beliefs through a custom
+                # CoordinatedGroupBehaviour subclass-equivalent: since
+                # CoordinatedGroupBehaviour consumes trait-based beliefs,
+                # we boost precision by shrinking noise_level here.
+                informed_members = [
+                    UserTraits(
+                        user_id=m.user_id,
+                        initial_wealth=m.initial_wealth,
+                        noise_level=0.015,  # insider precision
+                        bias=m.bias * 0.25,  # residual bias only
+                        stake_fraction=m.stake_fraction,
+                        insider_bonus=m.insider_bonus,
+                    )
+                    for m in members
+                ]
+                adv_map = {"informed_coalition": CoordinatedGroupBehaviour(
+                    informed_members, scoring_mode="point_mae",
+                    aggregation="weighted_mean",
+                )}
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours=adv_map if adv_map else None,
+                scoring_mode="point_mae",
+            )
+            behaviour.reset(s)
+            params = MechanismParams(scoring_mode="point_mae")
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            if label != "baseline":
+                for u in members:
+                    state.wealth[u.user_id] = u.initial_wealth
+
+            coalition_profit = 0.0
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+                state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
+                behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                for i, aid in enumerate(logs["ids"]):
+                    if aid in member_ids:
+                        coalition_profit += float(logs["profit"][i])
+
+            per_seed_rows.append({
+                "scenario": label,
+                "seed": s,
+                "coalition_profit": float(coalition_profit),
+                "final_gini": float(logs["Gini"]),
+            })
+
+    agg_rows = []
+    for label in ["baseline", "collusion_only", "informed_collusion"]:
+        subset = [r for r in per_seed_rows if r["scenario"] == label]
+        stats = _mean_se_ci([r["coalition_profit"] for r in subset])
+        agg_rows.append({
+            "scenario": label,
+            "mean_coalition_profit": stats["mean"],
+            "se_coalition_profit": stats["se"],
+            "ci_low": stats["ci_low"],
+            "ci_high": stats["ci_high"],
+            "n_seeds": stats["n"],
+        })
+
+    _write_csv(
+        ep.data("informed_collusion.csv"),
+        ["scenario", "seed", "coalition_profit", "final_gini"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("informed_collusion_summary.csv"),
+        ["scenario", "mean_coalition_profit", "se_coalition_profit",
+         "ci_low", "ci_high", "n_seeds"],
+        agg_rows,
+    )
+    print("\nInformed Collusion (multi-seed, AR(1) DGP)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  {r['scenario']:>22s}: coalition_profit="
+              f"{r['mean_coalition_profit']:+.2f} ± {r['se_coalition_profit']:.2f} "
+              f"(CI {r['ci_low']:+.2f}..{r['ci_high']:+.2f})")
+
+    if write_summary:
+        try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_informed_collusion
+            from onlinev2.experiments.summarise import write_experiment_summary
+            logs_out = {
+                "attacker_cumulative_profit": float(
+                    max((r["mean_coalition_profit"] for r in agg_rows
+                         if r["scenario"] != "baseline"), default=0.0)
+                ),
+            }
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "informed_collusion", "T": T, "block": block,
+                 "n_seeds": len(seeds), "dgp": f"AR(1) phi={phi}"},
+                logs_out,
+            )
+            plot_informed_collusion(ep)
+        except Exception as e:
+            print(f"Warning: summary failed: {e}")

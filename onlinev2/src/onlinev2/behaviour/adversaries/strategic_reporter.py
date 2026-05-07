@@ -1,7 +1,19 @@
 """
 Strategic reporter adversary.
 
-Focused on moving the aggregate forecast rather than maximising immediate score.
+Closely related to StrategicInfluenceBehaviour but models the agent as
+willing to pay *ongoing* score-rule losses in exchange for shifting the
+aggregate (e.g. a market maker with an off-mechanism payoff that depends
+on r_hat, such as a downstream decision-maker fee).
+
+Given target mu and a weighted-mean aggregate
+
+    r_hat = sum_i (m_i * r_i) / sum_i m_i,
+
+a single account shifts r_hat toward mu by reporting r_i closer to mu.
+The "pull" parameter mixes the truthful belief with mu. For mu = target
+and pull = 1 this reduces to strategic influence; intermediate pulls
+trade aggregate impact against score-rule loss.
 """
 from __future__ import annotations
 
@@ -17,8 +29,12 @@ from onlinev2.behaviour.traits import UserTraits
 @dataclass
 class StrategicReporterBehaviour:
     """
-    Strategic reporter: reports to push the aggregate toward a target,
-    accepting short-term score loss for aggregate influence.
+    Aggregate-shifting reporter. Reports
+
+        r_i = (1 - pull) * anchor + pull * target
+
+    where ``anchor`` is the most recent public aggregate (proxy for the
+    truthful belief on lagged information).
     """
     traits: UserTraits
     target: float = 0.5
@@ -26,6 +42,8 @@ class StrategicReporterBehaviour:
     scoring_mode: str = "point_mae"
     taus: Optional[Sequence[float]] = None
     b_max: float = 10.0
+    stake_boost: float = 0.2
+    base_stake_fraction: float = 0.1
 
     def reset(self, seed: int) -> None:
         self.rng = np.random.default_rng(seed)
@@ -42,21 +60,34 @@ class StrategicReporterBehaviour:
                     meta={"agent_type": "strategic_reporter"},
                 )
             ]
+
         anchor = 0.5
         if state.agg_history:
             try:
                 anchor = float(np.asarray(state.agg_history[-1]).mean())
             except Exception:
-                pass
-        report = clamp01((1.0 - self.pull) * anchor + self.pull * self.target)
-        deposit = float(np.clip(wealth * (0.1 + 0.2 * self.traits.manipulation_strength), 0.0, min(wealth, self.b_max)))
+                anchor = 0.5
+
+        pull = float(np.clip(self.pull, 0.0, 1.0))
+        report = clamp01((1.0 - pull) * anchor + pull * float(self.target))
+
+        frac = float(np.clip(
+            self.base_stake_fraction + self.stake_boost * self.traits.manipulation_strength,
+            0.0,
+            0.85,
+        ))
+        deposit = float(np.clip(frac * wealth, 0.0, min(wealth, self.b_max)))
         return [
             AgentAction(
                 account_id=self.traits.user_id,
                 participate=True,
                 report=report,
                 deposit=deposit,
-                meta={"agent_type": "strategic_reporter", "target": self.target},
+                meta={
+                    "agent_type": "strategic_reporter",
+                    "target": float(self.target),
+                    "pull": pull,
+                },
             )
         ]
 

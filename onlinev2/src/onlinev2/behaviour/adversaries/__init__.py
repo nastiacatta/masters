@@ -3,6 +3,7 @@ from onlinev2.behaviour.adversaries.coordinated_group import CoordinatedGroupBeh
 from onlinev2.behaviour.adversaries.detector_aware import DetectorAwareBehaviour
 from onlinev2.behaviour.adversaries.privileged_information import PrivilegedInformationBehaviour
 from onlinev2.behaviour.adversaries.strategic_influence import StrategicInfluenceBehaviour
+from onlinev2.behaviour.adversaries.sybil_arbitrage import SybilArbitrageBehaviour
 
 # Backwards-compatible aliases for existing experiments and tests.
 ArbitrageurBehaviour = ArbitrageSeekingBehaviour
@@ -17,6 +18,7 @@ __all__ = [
     "DetectorAwareBehaviour",
     "PrivilegedInformationBehaviour",
     "CoordinatedGroupBehaviour",
+    "SybilArbitrageBehaviour",
     "ArbitrageurBehaviour",
     "ManipulatorBehaviour",
     "AdaptiveEvaderBehaviour",

@@ -49,9 +49,12 @@ class BenchmarkConfig:
     def taus_fine(self):
         """Quantile levels for CRPS (fine 9-level equidistant grid).
 
-        Equidistant tau levels provide better CRPS approximation quality
-        than non-equidistant levels because the trapezoidal rule used in
-        CRPS_hat is exact for equidistant grids.
+        Equidistant tau levels make the trapezoidal rule in CRPS_hat exact
+        *over the covered interval* ``[0.1, 0.9]``, so on-grid approximation
+        error is lower than with the coarse non-equidistant grid. Neither
+        grid covers ``[0, 0.1) u (0.9, 1]``; that 20% of the classical CRPS
+        integration range is silently dropped by any finite grid of this
+        form. Report results as ``CRPS-hat``, not ``CRPS``.
         """
         return np.array(CANONICAL_TAUS_FINE, dtype=np.float64)
 

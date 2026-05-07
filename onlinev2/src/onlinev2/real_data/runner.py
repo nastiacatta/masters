@@ -235,6 +235,7 @@ def run_real_data_comparison(
     seed: int = 42,
     strict_no_fallback: bool = False,
     sweep_artefact: str | None = None,
+    normalize_mode: str = "static",
 ) -> dict:
     """Run all forecasters on a real time series and compare weighting rules.
 
@@ -267,6 +268,20 @@ def run_real_data_comparison(
             provided, ``optimal_improvement_pct`` in the emitted
             ``sensitivity`` block is read from that file rather than
             hardcoded. Bugfix clause 1.4 / 2.4.
+        normalize_mode: ``"static"`` (default) uses
+            :func:`causal_normalize` with ``(lo, hi)`` frozen to the
+            warmup-window range. This preserves bit-identity with the
+            main regenerated dashboard JSONs but clips evaluation-window
+            observations outside the warmup range (up to ~33% of the
+            Elia wind eval window gets clipped to 0 or 1). ``"expanding"``
+            uses :func:`causal_normalize_expanding` which refits
+            ``(lo_t, hi_t) = (min, max) of series[:t+1]`` for every
+            ``t >= warmup`` while keeping strict causality. Expanding
+            avoids clipping but the ``(lo, hi)`` used at round t depends
+            on the evaluation path seen up to t, so it is not strictly
+            equivalent across re-runs of different series prefixes.
+            Post-audit issue #1 (see
+            ``onlinev2/outputs/post_fix_deltas/SUMMARY.md``).
 
     Returns:
         dict with 'config', 'rows' (master_comparison format), 'per_round'
@@ -275,14 +290,27 @@ def run_real_data_comparison(
         taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     if forecasters is None:
         forecasters = get_all_forecasters()
+    if normalize_mode not in {"static", "expanding"}:
+        raise ValueError(
+            f"normalize_mode must be 'static' or 'expanding', got {normalize_mode!r}."
+        )
 
     n_forecasters = len(forecasters)
     T = len(series)
 
-    # Strictly-causal normalization using only series[:warmup] for (lo, hi).
-    # Replaces the legacy whole-series normalize_series (bugfix clause 1.1 /
-    # 2.1, .kiro/specs/model-training-testing-audit/).
-    norm_series, s_min, s_max = causal_normalize(series, warmup_len=warmup)
+    # Strictly-causal normalization. ``static`` (default) freezes (lo, hi)
+    # to the warmup window; ``expanding`` refits them over series[:t+1].
+    # Both variants preserve the Property-1 causal-dependence invariant
+    # (bugfix clause 1.1 / 2.1, .kiro/specs/model-training-testing-audit/).
+    # See post-audit issue #1 for the clipping tradeoff.
+    if normalize_mode == "expanding":
+        norm_series, lo_traj, hi_traj = causal_normalize_expanding(
+            series, warmup_len=warmup
+        )
+        s_min = float(lo_traj[-1])
+        s_max = float(hi_traj[-1])
+    else:
+        norm_series, s_min, s_max = causal_normalize(series, warmup_len=warmup)
 
     # Propagate deterministic seed to forecasters that support it
     # (bugfix clause 1.8 / 2.8). Currently MLPForecaster.seed.
@@ -291,7 +319,7 @@ def run_real_data_comparison(
             fc.seed = seed
 
     print(f"Running {n_forecasters} forecasters on {T} data points "
-          f"(warmup={warmup}, series={series_name})")
+          f"(warmup={warmup}, series={series_name}, normalize_mode={normalize_mode})")
 
     # Storage
     y_all = np.zeros(T)
@@ -440,8 +468,10 @@ def run_real_data_comparison(
         crps_per_rule["inverse_variance"].append(c_iv)
 
         # --- NEW: Trimmed mean (drop worst, average rest) ---
-        # Drop the forecaster with highest recent CRPS
-        if t - warmup >= 20:
+        # Drop the forecaster with highest recent CRPS. With n == 1
+        # there is nothing to trim to, and the empty-slice mean would
+        # be NaN — fall back to the uniform aggregate in that case.
+        if t - warmup >= 20 and n_forecasters >= 2:
             recent_means = [np.mean(agent_rolling_crps[i][-100:]) for i in range(n_forecasters)]
             worst_idx = int(np.argmax(recent_means))
             keep_mask = np.ones(n_forecasters, dtype=bool)
@@ -651,6 +681,7 @@ def run_real_data_comparison(
             "gamma": gamma,
             "rho": rho,
             "lam": lam,
+            "normalize_mode": normalize_mode,
         },
         "rows": rows,
         "per_round": per_round,
