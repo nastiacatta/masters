@@ -25,6 +25,8 @@ interface WhenDoesSkillHelpPanelProps {
   data: ConditionBreakdown[];
 }
 
+import PanelShell from './PanelShell';
+
 export default function WhenDoesSkillHelpPanel({ data }: WhenDoesSkillHelpPanelProps) {
   if (data.length === 0) {
     return (
@@ -44,100 +46,82 @@ export default function WhenDoesSkillHelpPanel({ data }: WhenDoesSkillHelpPanelP
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-        <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-teal-500" />
-        When Does Skill Help?
-      </h3>
-
+    <PanelShell title="When does skill help?" accent="var(--teal)">
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50/40">
-        <table className="w-full text-xs">
+      <div
+        className="overflow-x-auto"
+        style={{ border: '1px solid var(--border)', borderRadius: 4 }}
+      >
+        <table className="w-full" style={{ fontSize: 12.5 }}>
           <thead>
-            <tr className="border-b border-slate-200 bg-white">
-              <th className="text-left py-2 pl-3 pr-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Condition
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                N
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                T
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                τ spread
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                ΔCRPS
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                95% CI
-              </th>
-              <th className="text-center py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Sig.
-              </th>
+            <tr style={{ background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
+              <th className="text-left uppercase" style={{ padding: '10px 12px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>Condition</th>
+              <th className="text-right uppercase" style={{ padding: '10px 8px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>N</th>
+              <th className="text-right uppercase" style={{ padding: '10px 8px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>T</th>
+              <th className="text-right uppercase" style={{ padding: '10px 8px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>τ spread</th>
+              <th className="text-right uppercase" style={{ padding: '10px 8px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>ΔCRPS</th>
+              <th className="text-right uppercase" style={{ padding: '10px 8px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>95% CI</th>
+              <th className="text-center uppercase" style={{ padding: '10px 12px', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-soft)' }}>Sig.</th>
             </tr>
           </thead>
           <tbody>
-            {data.map((row, i) => (
-              <tr
-                key={i}
-                className="border-b border-slate-100 last:border-0 hover:bg-white transition-colors"
-              >
-                <td className="py-2 pl-3 pr-3 text-slate-700 font-medium">
-                  {row.condition}
-                </td>
-                <td className="text-right py-2 px-2 text-slate-600 font-mono tabular-nums">
-                  {row.n}
-                </td>
-                <td className="text-right py-2 px-2 text-slate-600 font-mono tabular-nums">
-                  {row.t}
-                </td>
-                <td className="text-right py-2 px-2 text-slate-600 font-mono tabular-nums">
-                  {row.tauSpread.toFixed(2)}
-                </td>
-                <td className="text-right py-2 px-2 font-mono tabular-nums">
-                  <span
-                    className={
-                      row.deltaCrps < 0
-                        ? 'text-emerald-700 font-semibold'
-                        : row.deltaCrps > 0
-                          ? 'text-red-700 font-semibold'
-                          : 'text-slate-600'
-                    }
-                  >
-                    {row.deltaCrps.toFixed(4)}
-                  </span>
-                </td>
-                <td className="text-right py-2 px-2 text-slate-600 font-mono tabular-nums whitespace-nowrap">
-                  [{row.ciLow.toFixed(4)}, {row.ciHigh.toFixed(4)}]
-                </td>
-                <td className="text-center py-2 px-3">
-                  {row.significant ? (
-                    <span
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 text-emerald-600"
-                      aria-label="Significant"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      n.s.
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {data.map((row, i) => {
+              const isLast = i === data.length - 1;
+              const sign =
+                row.deltaCrps < 0
+                  ? 'var(--teal-deep)'
+                  : row.deltaCrps > 0
+                  ? 'var(--crimson)'
+                  : 'var(--ink-muted)';
+              return (
+                <tr
+                  key={i}
+                  style={{ borderBottom: isLast ? 'none' : '1px solid var(--border)' }}
+                >
+                  <td style={{ padding: '8px 12px', color: 'var(--ink)', fontWeight: 500 }}>{row.condition}</td>
+                  <td className="text-right font-mono tabular-nums" style={{ padding: '8px', color: 'var(--ink-muted)' }}>{row.n}</td>
+                  <td className="text-right font-mono tabular-nums" style={{ padding: '8px', color: 'var(--ink-muted)' }}>{row.t}</td>
+                  <td className="text-right font-mono tabular-nums" style={{ padding: '8px', color: 'var(--ink-muted)' }}>{row.tauSpread.toFixed(2)}</td>
+                  <td className="text-right font-mono tabular-nums" style={{ padding: '8px', color: sign, fontWeight: 600 }}>{row.deltaCrps.toFixed(4)}</td>
+                  <td className="text-right font-mono tabular-nums whitespace-nowrap" style={{ padding: '8px', color: 'var(--ink-muted)' }}>
+                    [{row.ciLow.toFixed(4)}, {row.ciHigh.toFixed(4)}]
+                  </td>
+                  <td className="text-center" style={{ padding: '8px 12px' }}>
+                    {row.significant ? (
+                      <span
+                        className="inline-flex items-center justify-center"
+                        style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--teal-tint)', color: 'var(--teal-deep)' }}
+                        aria-label="Significant"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 10.5, color: 'var(--ink-faint)', fontWeight: 500 }}>
+                        n.s.
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       {/* Summary */}
-      <p className="mt-3 text-xs text-slate-600 border-t border-slate-100 pt-3 leading-relaxed">
+      <p
+        className="mt-4 pt-4"
+        style={{
+          fontSize: 13,
+          color: 'var(--ink-muted)',
+          lineHeight: 1.6,
+          borderTop: '1px solid var(--border)',
+        }}
+      >
         {summaryStatement}
       </p>
-    </div>
+    </PanelShell>
   );
 }

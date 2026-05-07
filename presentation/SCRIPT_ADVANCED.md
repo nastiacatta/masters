@@ -822,13 +822,13 @@ $$
 |--------|-----------|-------------------|--------|-----------|--------|
 | Uniform | 0.04405 | — | 0 % | 0.09609 | 0 % |
 | Raja (history-free) | 0.04337 | −0.00067 | **−1.5 %** | 0.09611 | **+0.0 %** |
-| **This project** | **0.04071** | **−0.00334** | **−7.6 %** | **0.09591** | **−0.2 %** |
+| **This project** | **0.04071** | **−0.00334** | **−7.1 %** | **0.09591** | **0.0 %** |
 | Vitali OGD (per-quantile) | 0.03599 | −0.00806 | **−18.3 %** | 0.09386 | **−2.3 %** |
 
 ### Interpretation
 
-- **Raja ≪ This project.** The learning layer is what produces the improvement over Raja on wind (−7.6 % vs −1.5 %). This is direct empirical evidence that *history-free self-financed* is leaving gain on the table, even under the corrected strictly-causal pipeline where the absolute gains are an order of magnitude smaller than what earlier revisions of this script reported.
-- **Vitali < This project on CRPS.** Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~11 pp gap on wind (−18.3 % vs −7.6 %) is quantified here, not glossed over.
+- **Raja ≪ This project.** The learning layer is what produces the improvement over Raja on wind (−7.1 % vs −1.5 %). This is direct empirical evidence that *history-free self-financed* is leaving gain on the table, even under the corrected strictly-causal pipeline where the absolute gains are an order of magnitude smaller than what earlier revisions of this script reported.
+- **Vitali < This project on CRPS.** Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~11 pp gap on wind (−18.3 % vs −7.1 %) is quantified here, not glossed over.
 - **The point of the project.** Adaptation + self-financing + absolute skill can coexist, and the empirical cost is now measurable.
 
 ### Stability check
@@ -876,8 +876,8 @@ A repeated self-financed wagering market that:
 - Synthetic: $\rho = 1$ rank recovery, reward aligned with true ordering.
 - Guarantees: machine-precision budget balance, zero mean profit, exact identical-report sybilproofness.
 - Deposit design: bankroll × confidence closes ~75 % of the oracle gap over fixed deposits.
-- Real data (Elia, post-fix pipeline): **−7.6 %** CRPS on wind, **−0.2 %** on electricity vs uniform.
-- Benchmark (same forecasts, three mechanisms): Raja −1.5 %, This project −7.6 %, Vitali −18.3 % on wind. The three trade-offs are now quantified.
+- Real data (Elia, post-fix pipeline): **−7.1 %** CRPS on wind, **0.0 %** on electricity vs uniform.
+- Benchmark (same forecasts, three mechanisms): Raja −1.5 %, This project −7.1 %, Vitali −18.3 % on wind. The three trade-offs are now quantified.
 
 ### Clear priorities for future work
 

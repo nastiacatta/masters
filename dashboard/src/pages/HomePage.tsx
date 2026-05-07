@@ -44,7 +44,7 @@ const FINDINGS = [
     kicker: 'Real data',
     title: 'Modest CRPS reduction on Elia wind; essentially flat on electricity',
     body:
-      'Across 17,544 hourly points on Elia offshore wind with seven forecasting models (Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble), the skill \u00D7 stake aggregate cuts mean CRPS by 7.6% relative to equal weighting under strictly-causal normalisation. On Elia electricity prices (10,000 points) the mechanism improvement is under 1%. best_single (the per-round oracle-of-best-forecaster) still beats the mechanism on wind (\u221224%), which is the forecast-combination puzzle surfacing honestly.',
+      'Across 17,344 evaluation rounds on Elia offshore wind with seven forecasting models (Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble), the skill \u00D7 stake aggregate reduces mean CRPS by about 7% relative to equal weighting under strictly-causal expanding normalisation (Diebold\u2013Mariano t = 40.77, p < 0.001). On Elia electricity imbalance prices (10,000 rounds) the mechanism is statistically indistinguishable from equal weighting (t = 0.008, p = 0.99) \u2014 an honest null that reflects the near-identical quality of the forecaster panel on that series. best_single (the per-round oracle of the best forecaster) still outperforms the mechanism by roughly 16 percentage points on wind; the contribution is economic structure preserved, not universal accuracy dominance.',
     accent: '#0f766e',
   },
   {
@@ -195,13 +195,17 @@ export default function HomePage() {
             </p>
             <p>
               <span style={{ color: 'var(--teal-deep)', fontWeight: 600 }}>The answer:</span>{' '}
-              conditionally yes. On Elia Belgian offshore wind data, under strictly-causal normalisation,
-              the mechanism reduces mean CRPS by{' '}
-              <span style={{ color: 'var(--teal-deep)', fontWeight: 700 }}>7.6%</span>{' '}
-              relative to equal weighting. The improvement is real but modest: inverse-variance weighting
-              gets a similar gain, and the per-round oracle of best forecasters still outperforms the
-              mechanism by a large margin. The contribution is <em>conditional</em> forecasting improvement
-              with preserved economic structure (budget balance, sybil resistance), not universal dominance.
+              conditionally yes. On Elia Belgian offshore wind data (17,344 evaluation rounds,
+              seven forecasting models, strictly-causal expanding normalisation) the mechanism
+              reduces mean CRPS by about{' '}
+              <span style={{ color: 'var(--teal-deep)', fontWeight: 700 }}>7%</span>{' '}
+              relative to equal weighting, significant at any conventional level
+              (Diebold&ndash;Mariano t = 40.77, p &lt; 0.001). The improvement is real but modest:
+              inverse-variance weighting gets an almost identical gain (\u22127.0%), and the
+              per-round oracle of best forecasters still outperforms the mechanism by roughly
+              16 percentage points. The contribution is <em>conditional</em> forecasting
+              improvement with preserved economic structure (budget balance, sybil resistance),
+              not universal dominance.
             </p>
           </div>
         </section>

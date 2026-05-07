@@ -20,7 +20,7 @@ const QA_ITEMS: QAItem[] = [
     question:
       'Why does the best single forecaster (Naive) still beat the aggregate?',
     answer:
-      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate modestly (−7.6 % relative to equal weights) but the ceiling is set by the best individual (−24 %). This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
+      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate modestly (−7.1 % relative to equal weights) but the ceiling is set by the best individual (−23 %). This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
   },
   {
     question:

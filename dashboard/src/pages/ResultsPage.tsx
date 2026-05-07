@@ -220,9 +220,9 @@ function seFinite(values: Array<number | undefined | null>): number | null {
 }
 
 const EXPERIMENT_CARDS = [
-  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 7 forecasting models', key: 'Mechanism reduces mean CRPS by ~7.6% vs equal weights (post-audit)' },
-  { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-minute clearing prices, volatile', key: 'Generalisation test on a second real series' },
-  { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill gate', key: 'Correct ranking, modest separation' },
+  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,344 evaluation rounds, 7 forecasting models', key: 'Mechanism reduces mean CRPS by about 7% vs equal weighting' },
+  { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-minute clearing prices, 10,000 rounds', key: 'Null result: mechanism tied with equal weighting (t = 0.008)' },
+  { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill layer', key: 'Correct ranking, modest separation' },
   { title: 'Method Race', tab: 'Accuracy', color: '#6366f1', desc: '6 agents, 200 rounds, 4 weighting rules', key: 'Skill \u00d7 stake wins after \u224850 rounds' },
   { title: 'Skill Recognition', tab: 'Accuracy', color: '#f59e0b', desc: '3 agents with known quality', key: 'Good \u2192 high \u03c3, bad \u2192 low \u03c3' },
   { title: 'Concentration', tab: 'Concentration', color: '#ef4444', desc: 'Gini and effective-N by method', key: 'Accuracy\u2013fairness trade-off' },

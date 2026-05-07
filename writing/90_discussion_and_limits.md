@@ -89,11 +89,27 @@ the easiest way to lose a reviewer.
   attendance inflates aggregate CRPS by ~10×. Staleness decay makes
   strategic absence costly for the absent agent's future earnings
   but does not help the current round.
-- **Arbitrage is theoretically still possible.** Chen et al. 2014
-  showed a single-round arbitrage interval. Our repeated-setting
-  scan shows zero sustained arbitrage profit, but the single-round
-  vulnerability is not removed; it is empirically dominated by the
-  wealth and skill dynamics.
+- **Arbitrage is empirically profitable, as predicted by theory.**
+  The Chen-Devanur-Pennock-Vaughan (2014) arbitrage interval applies
+  to every WSWM, including ours. Post-revamp experiments confirm a
+  theory-grounded arbitrage seeker earns +11 to +24 cumulative profit
+  over 1000 rounds across the λ grid, and the profit scales roughly
+  linearly with crowd size (see §8.3–8.4). The mechanism is still
+  budget-balanced — the attacker's gains come from other
+  participants, not from the mechanism's reserves. Fully removing the
+  arbitrage requires moving to the no-arbitrage wagering family
+  (Chen et al. 2014 §4–5), which is outside this thesis's scope.
+- **Chun-Shachter coalitions are profitable.** A 3-member coalition
+  broadcasting the wager-weighted mean of its members' beliefs earns
+  +18 to +21 over 1000 rounds (§8.6). Combining coalition with
+  privileged lagged information (§8.7) compounds the two channels
+  and extracts ≈ 40% more than pure collusion.
+- **Sybil-proofness holds in the Lambert narrow sense.** The
+  `sybil_arbitrage` audit (§8.5) shows arbitrage profit is invariant
+  to k ∈ {1, 3, 5} to within Monte-Carlo error, empirically
+  validating the Lambert invariance on top of an actively exploited
+  attack. The narrow sense is the only one the theorem covers;
+  diversified-report sybils remain a real open vulnerability.
 - **Collusion equilibria not formally analysed.** We test a collusion
   preset but we do not characterise the best-response space.
 - **Electricity data gives a clean null.** On the 10 000-round

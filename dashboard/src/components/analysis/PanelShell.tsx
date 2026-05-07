@@ -13,7 +13,8 @@ export interface PanelShellProps {
   accent?: string;
   /** Optional extra element rendered at the top-right of the header. */
   right?: ReactNode;
-  children: ReactNode;
+  /** Panel body. Not required when `emptyState` is supplied. */
+  children?: ReactNode;
   /** Override card padding (default: 18). */
   padding?: number;
   /** When provided, renders an empty-state message instead of children. */

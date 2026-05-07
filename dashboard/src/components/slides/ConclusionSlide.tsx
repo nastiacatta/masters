@@ -27,8 +27,8 @@ const comparisons = [
     label: 'This project',
     tag: 'Skill + Lambert',
     tagColour: PALETTE.teal,
-    wind: '−7.6 %',
-    elec: '−0.2 %',
+    wind: '−7.1 %',
+    elec: '0.0 %',
     note: 'Adaptive and self-financed, with an absolute skill signal',
   },
 ] as const;

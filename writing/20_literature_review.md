@@ -51,21 +51,62 @@ is the online skill layer that accumulates state across rounds.
 Source: `theory/Pierre_wagering.md`,
 [doi:10.1016/j.ijforecast.2023.01.007](https://doi.org/10.1016/j.ijforecast.2023.01.007).
 
-### A3. Chen, Dimitrov, Sami, Reeves, Pennock, Hanson, Fortnow, Gonen (2014)
+### A3. Chen, Devanur, Pennock, Vaughan (2014)
 
-*Gaming prediction markets: Equilibrium strategies with a market maker*
-(cited by our robustness analysis).
+*Removing arbitrage from wagering mechanisms*, EC '14.
+[doi:10.1145/2600057.2602876](https://doi.org/10.1145/2600057.2602876).
 
-Shows that weighted-score wagering mechanisms admit an arbitrage interval
-— a range of predictions that guarantee positive payoff when participants
-disagree. The single-round theoretical vulnerability.
+Shows that weighted-score wagering mechanisms admit an **arbitrage
+interval**: for any differentiable, strictly proper scoring rule $s$,
+participant $i$ can choose
 
-**What we take:** the result motivates our empirical arbitrage scan; in
-the repeated setting with wealth dynamics and the skill gate, the
-arbitrageur extracts no sustained profit across the (γ, λ) grid we
-tested. The single-round vulnerability remains theoretically.
+$$
+p_i \in [\|p_{-i}\|_{s_1,\mu}, \|p_{-i}\|_{s_0,\mu}], \quad
+\mu_j = w_j / W_{N\setminus\{i\}},
+$$
 
-[PENDING] Add precise doi / arXiv link — check theory/ folder.
+and receive a non-negative payoff under every outcome, strictly
+positive whenever participants disagree (Thm 3.3). The paper then
+constructs no-arbitrage wagering mechanisms (NAWMs, §4) that retain
+anonymity, individual rationality, incentive compatibility, weak
+budget balance, and — for the $f$-NAWM subclass — sybilproofness
+(Thm 5.8). Primary source: `theory/arbitrage.md`.
+
+**What we take:**
+
+- Thm 3.3 directly: our `ArbitrageSeekingBehaviour` implements the
+  MAE analogue of the arbitrage point (the wager-weighted median of
+  other reports) and participates only when expected profit under
+  uniform $y$ is strictly positive. Empirically this extracts
+  +11 to +24 cumulative profit across our λ grid (§8.3), confirming
+  the theory.
+- Corollary: attacker profit scales with crowd size because larger
+  crowds have more within-crowd disagreement (§8.4).
+- Motivation for not building a NAWM here: our contribution is the
+  composition of budget balance + skill gate + wealth dynamics + a
+  recalibration layer, not arbitrage prevention. The arbitrage
+  attack is documented as an honest limitation (§8.13, §9.2).
+
+### A4. Chun and Shachter (2011)
+
+*Strictly proper mechanisms with cooperating players*,
+arXiv:1202.3710.
+
+Shows that a coalition $C$ of participants with immutable beliefs who
+all report a common value
+
+$$
+p_C = \sum_{i \in C} (w_i / W_C) \cdot p_i
+$$
+
+earns strictly higher total payoff than if every member reported
+truthfully, whenever members disagree.
+
+**What we take:** the coalition formula directly — implemented as
+`CoordinatedGroupBehaviour` in `weighted_mean` mode. Empirically this
+extracts +18 to +21 profit over 1000 rounds for a 3-member coalition
+(§8.6), and compounds with privileged-information precision under an
+AR(1) DGP to reach +33.84 (§8.7).
 
 ## B. Online learning for forecast combination
 

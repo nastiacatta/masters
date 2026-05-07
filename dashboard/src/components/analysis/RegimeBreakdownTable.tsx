@@ -1,13 +1,11 @@
 /**
  * Regime breakdown table — compact display of per-regime statistics.
  *
- * Shows regime name, n_rounds, mean ΔCRPS (4 decimal places), SE, and 95% CI.
- * Both favourable and unfavourable regimes get equal visual prominence.
- *
  * Requirements: 5.3, 5.4, 5.5
  */
 
 import type { RegimeStats } from '../../lib/analysis/types';
+import PanelShell from './PanelShell';
 
 interface RegimeBreakdownTableProps {
   regimes: RegimeStats[];
@@ -16,75 +14,96 @@ interface RegimeBreakdownTableProps {
 export default function RegimeBreakdownTable({ regimes }: RegimeBreakdownTableProps) {
   if (regimes.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-3">
-        <p className="text-xs text-slate-400">No regime data available.</p>
-      </div>
+      <PanelShell
+        title="Regime breakdown"
+        accent="var(--teal)"
+        padding={14}
+        emptyState="No regime data available."
+      />
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <h4 className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-2">
-        <span aria-hidden="true" className="inline-block w-1 h-3.5 rounded bg-teal-500" />
-        Regime Breakdown
-      </h4>
-      <div className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50/40">
-        <table className="w-full text-xs">
+    <PanelShell title="Regime breakdown" accent="var(--teal)">
+      <div
+        className="overflow-x-auto"
+        style={{ border: '1px solid var(--border)', borderRadius: 4 }}
+      >
+        <table className="w-full" style={{ fontSize: 12.5 }}>
           <thead>
-            <tr className="border-b border-slate-200 bg-white">
-              <th className="text-left py-2 pl-3 pr-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Regime
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                n
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Mean ΔCRPS
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                SE
-              </th>
-              <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                95% CI
-              </th>
+            <tr style={{ background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
+              {[
+                ['Regime',     'left',  '10px 12px'],
+                ['n',          'right', '10px 8px'],
+                ['Mean ΔCRPS', 'right', '10px 8px'],
+                ['SE',         'right', '10px 8px'],
+                ['95% CI',     'right', '10px 12px'],
+              ].map(([label, align, pad]) => (
+                <th
+                  key={label}
+                  className={`uppercase text-${align}`}
+                  style={{
+                    padding: pad,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    color: 'var(--ink-soft)',
+                  }}
+                >
+                  {label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {regimes.map((regime) => (
-              <tr
-                key={regime.regimeName}
-                className="border-b border-slate-100 last:border-0 hover:bg-white transition-colors"
-              >
-                <td className="py-2 pl-3 pr-3 text-slate-700 font-medium">
-                  {regime.regimeName}
-                </td>
-                <td className="text-right py-2 px-2 text-slate-600 font-mono tabular-nums">
-                  {regime.nRounds}
-                </td>
-                <td className="text-right py-2 px-2 font-mono tabular-nums">
-                  <span
-                    className={
-                      regime.meanDeltaCrps < 0
-                        ? 'text-emerald-700 font-semibold'
-                        : regime.meanDeltaCrps > 0
-                          ? 'text-red-700 font-semibold'
-                          : 'text-slate-600'
-                    }
+            {regimes.map((regime, i) => {
+              const isLast = i === regimes.length - 1;
+              const sign =
+                regime.meanDeltaCrps < 0
+                  ? 'var(--teal-deep)'
+                  : regime.meanDeltaCrps > 0
+                  ? 'var(--crimson)'
+                  : 'var(--ink-muted)';
+              return (
+                <tr
+                  key={regime.regimeName}
+                  style={{ borderBottom: isLast ? 'none' : '1px solid var(--border)' }}
+                >
+                  <td
+                    style={{ padding: '8px 12px', color: 'var(--ink)', fontWeight: 500 }}
+                  >
+                    {regime.regimeName}
+                  </td>
+                  <td
+                    className="text-right font-mono tabular-nums"
+                    style={{ padding: '8px', color: 'var(--ink-muted)' }}
+                  >
+                    {regime.nRounds}
+                  </td>
+                  <td
+                    className="text-right font-mono tabular-nums"
+                    style={{ padding: '8px', color: sign, fontWeight: 600 }}
                   >
                     {regime.meanDeltaCrps.toFixed(4)}
-                  </span>
-                </td>
-                <td className="text-right py-2 px-2 text-slate-600 font-mono tabular-nums">
-                  {regime.se.toFixed(4)}
-                </td>
-                <td className="text-right py-2 px-3 text-slate-600 font-mono tabular-nums whitespace-nowrap">
-                  [{regime.ciLow.toFixed(4)}, {regime.ciHigh.toFixed(4)}]
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td
+                    className="text-right font-mono tabular-nums"
+                    style={{ padding: '8px', color: 'var(--ink-muted)' }}
+                  >
+                    {regime.se.toFixed(4)}
+                  </td>
+                  <td
+                    className="text-right font-mono tabular-nums whitespace-nowrap"
+                    style={{ padding: '8px 12px', color: 'var(--ink-muted)' }}
+                  >
+                    [{regime.ciLow.toFixed(4)}, {regime.ciHigh.toFixed(4)}]
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-    </div>
+    </PanelShell>
   );
 }

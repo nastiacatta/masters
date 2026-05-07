@@ -55,7 +55,7 @@ of their Julia `michael/main_rewards.jl`.
   `dashboard/public/data/real_data/elia_wind/data/comparison.json`].
 - In the `baselines.json` head-to-head (static-mode, pending
   expanding refresh), Vitali's true per-τ OGD reaches −18.3% vs
-  uniform compared to our −7.6%, a ~11 pp gap [source:
+  uniform compared to our −7.1%, a ~11 pp gap [source:
   `dashboard/public/data/real_data/elia_wind/data/baselines.json`].
 
 The audit-slice parity is real; the full-length gaps are the CRPS
