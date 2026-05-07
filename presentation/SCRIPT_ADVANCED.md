@@ -771,17 +771,17 @@ Key lesson: skill **is not point accuracy**. It is a calibrated probabilistic sc
 
 ### Calibration
 
-`comparison.json` contains the empirical PIT per quantile:
+`comparison.json` contains the empirical PIT per quantile (on the 3000-point audit slice; full numbers in `onlinev2/outputs/audit_per_quantile/coverage.json`):
 
 | $\tau$ | empirical $\hat F$ (wind) | gap |
 |--------|--------------------------|-----|
-| 0.10 | ~0.08 | 0.02 |
-| 0.25 | ~0.22 | 0.03 |
-| 0.50 | ~0.48 | 0.02 |
-| 0.75 | ~0.72 | 0.03 |
-| 0.90 | ~0.85 | **0.05** |
+| 0.10 | 0.087 | −0.013 |
+| 0.20 | 0.179 | −0.021 |
+| 0.50 | 0.521 | +0.021 |
+| 0.70 | 0.734 | +0.034 |
+| 0.90 | 0.912 | **+0.012** |
 
-So the aggregate is slightly **under-dispersed** (tail events happen more often than the 0.9 quantile admits). This is flagged in future work.
+So the aggregate shows the Ranjan–Gneiting linear-pool miscalibration pattern: under-coverage in the lower tail, over-coverage in the mid-upper range. Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) is 0.017. Closed by the recalibration layer (Chapter 5.3).
 
 ---
 
@@ -888,7 +888,7 @@ A repeated self-financed wagering market that:
 ### Clear priorities for future work
 
 1. **Close the Vitali gap without losing self-financing.** This likely requires richer scoring rules (non-linear opinion pools, quantile-specific scores) or richer aggregation primitives — *not* dropping the Lambert framework.
-2. **Tail calibration.** The aggregate is under-dispersed by ~5 percentage points at $\tau = 0.9$.
+2. **Tail calibration.** The aggregate is miscalibrated by the Ranjan–Gneiting linear-pool bound: mean tail deviation ≈ 1.7 pp on the audit slice. The rolling isotonic recalibration layer (Chapter 5.3) closes 59% of this at a 1.3% CRPS cost and 11% sharpness cost.
 3. **Adaptive adversaries.** Behaviour presets are useful but limited; sophisticated co-adaptive adversaries remain open.
 
 ---

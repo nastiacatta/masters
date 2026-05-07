@@ -18,14 +18,14 @@ import ObjectivesTab from '@/components/behaviour/tabs/ObjectivesTab';
 import IdentityTab from '@/components/behaviour/tabs/IdentityTab';
 import LearningTab from '@/components/behaviour/tabs/LearningTab';
 import OperationalTab from '@/components/behaviour/tabs/OperationalTab';
+import PageShell from '@/components/dashboard/PageShell';
+import PageHeader from '@/components/dashboard/PageHeader';
 
 // ── 11-tab structure ───────────────────────────────────────────────────────
 
-const TABS = [
-  'Overview', 'Participation', 'Information', 'Reporting', 'Staking',
-  'Objectives', 'Identity', 'Learning', 'Adversarial', 'Operational', 'Sensitivity',
-] as const;
-type Tab = (typeof TABS)[number];
+type Tab =
+  | 'Overview' | 'Participation' | 'Information' | 'Reporting' | 'Staking'
+  | 'Objectives' | 'Identity' | 'Learning' | 'Adversarial' | 'Operational' | 'Sensitivity';
 
 /** Core tabs with experiment-backed content. */
 const CORE_TABS: Tab[] = ['Overview', 'Participation', 'Information', 'Reporting', 'Adversarial', 'Sensitivity'];
@@ -59,40 +59,13 @@ export default function BehaviourPage() {
   return (
     <FigureProvider>
     <EquationProvider>
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
-        <header>
-          <p
-            className="eyebrow mb-3"
-            style={{ color: 'var(--navy)' }}
-          >
-            Step 3 &middot; Stress tests
-          </p>
-          <h1
-            className="font-serif tracking-tight"
-            style={{
-              fontSize: 'clamp(32px, 4vw, 42px)',
-              lineHeight: 1.15,
-              fontWeight: 600,
-              color: 'var(--ink)',
-            }}
-          >
-            Robustness
-          </h1>
-          <p
-            className="font-serif mt-4"
-            style={{
-              fontSize: 18,
-              lineHeight: 1.55,
-              color: 'var(--ink-muted)',
-              maxWidth: 820,
-            }}
-          >
-            Stress-tests of the mechanism under diverse agent behaviours, strategic attacks, and parameter
-            shifts. Eighteen behaviour presets are compared against a truthful baseline using paired runs,
-            same underlying outcomes and seeds, so every reported difference comes from the behaviour alone.
-          </p>
-        </header>
+    <PageShell width="wide">
+        <PageHeader
+          hero
+          eyebrow="Step 3 · Stress tests"
+          title="Robustness"
+          subtitle="Stress-tests of the mechanism under diverse agent behaviours, strategic attacks, and parameter shifts. Eighteen behaviour presets are compared against a truthful baseline using paired runs, same underlying outcomes and seeds, so every reported difference comes from the behaviour alone."
+        />
 
         {/* ── Tab bar with experiment/taxonomy indicators ─────────────── */}
         <TabBar
@@ -119,8 +92,7 @@ export default function BehaviourPage() {
             {tab === 'Operational' && <OperationalTab latencyExploiter={pipelines.latency_exploiter} baseline={baseline} />}
           </motion.div>
         </AnimatePresence>
-      </div>
-    </div>
+    </PageShell>
     </EquationProvider>
     </FigureProvider>
   );

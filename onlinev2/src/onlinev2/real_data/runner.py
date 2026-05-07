@@ -343,8 +343,16 @@ def run_real_data_comparison(
         # Causality invariant: predict() and predict_quantiles() use data up to t-1.
         # update_residuals() incorporates the round-t outcome AFTER predictions are made.
         for i, fc in enumerate(forecasters):
-            # Retrain if needed
-            if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+            # Retrain policy:
+            # - Always fit at t=0 if history is non-empty (but since history=[]
+            #   at t=0, this branch is never taken in the main runner loop).
+            # - Otherwise fit every `retrain_every` rounds, and only once
+            #   enough history exists (min 20 points).
+            # This prevents a spurious fallback-counter bump at t=0 where an
+            # empty history is passed to fit() for no informational gain.
+            # Forecasters individually decide whether they have enough data
+            # (XGBoost / MLP / ARIMA each impose their own thresholds).
+            if t % fc.retrain_every == 0 and len(history) > 20:
                 fc.fit(history)
 
             # Predict

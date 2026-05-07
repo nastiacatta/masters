@@ -70,6 +70,8 @@ import Breadcrumb from '@/components/dashboard/Breadcrumb';
 import TabBar from '@/components/dashboard/TabBar';
 import MathBlock from '@/components/dashboard/MathBlock';
 import Skeleton from '@/components/dashboard/Skeleton';
+import PageShell from '@/components/dashboard/PageShell';
+import PageHeader from '@/components/dashboard/PageHeader';
 import { FigureProvider } from '@/contexts/FigureContext';
 import { EquationProvider } from '@/contexts/EquationContext';
 
@@ -810,41 +812,20 @@ export default function ResultsPage() {
   if (!tabs.includes(activeTab as never)) setActiveTab(tabs[0]);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <FigureProvider>
-      <EquationProvider>
-      <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
+    <FigureProvider>
+    <EquationProvider>
+    <PageShell width="wide">
         <Breadcrumb activeTab={activeTab} />
 
         {/* ── Header ── */}
-        <header>
-          <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
-            Step 2 &middot; Empirical results
-          </p>
-          <h1
-            className="font-serif tracking-tight"
-            style={{
-              fontSize: 'clamp(32px, 4vw, 42px)',
-              lineHeight: 1.15,
-              fontWeight: 600,
-              color: 'var(--ink)',
-            }}
-          >
-            Results
-          </h1>
-          <p
-            style={{
-              fontSize: 15,
-              lineHeight: 1.6,
-              color: 'var(--ink-soft)',
-              marginTop: 10,
-            }}
-          >
-            {useExp
-              ? `${expSeedCount} scenarios, paired comparison across all methods.`
-              : `Seed ${DEMO_SEED} · ${DEMO_N} agents · ${DEMO_T} rounds`}
-          </p>
-        </header>
+        <PageHeader
+          hero
+          eyebrow="Step 2 · Empirical results"
+          title="Results"
+          description={useExp
+            ? `${expSeedCount} scenarios, paired comparison across all methods.`
+            : `Seed ${DEMO_SEED} · ${DEMO_N} agents · ${DEMO_T} rounds`}
+        />
 
         {/* ── Experiment guide (collapsible) ── */}
         <ExperimentGuide />
@@ -2293,9 +2274,8 @@ export default function ResultsPage() {
           </ChartLinkingProvider>
         </section>
 
-      </div>
-      </EquationProvider>
-      </FigureProvider>
-    </div>
+    </PageShell>
+    </EquationProvider>
+    </FigureProvider>
   );
 }

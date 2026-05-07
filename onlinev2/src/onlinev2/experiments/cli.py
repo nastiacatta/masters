@@ -61,6 +61,7 @@ def main() -> None:
             "wash_activity_gaming",
             "strategic_reporting",
             "sybil_arbitrage",
+            "reputation_reset",
             "identity_attack_matrix",
             "drift_adaptation",
             "stake_policy_matrix",

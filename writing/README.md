@@ -59,7 +59,7 @@ supported by committed outputs and should be treated as stable.
 - `dashboard/docs/MECHANISM_ANALYSIS.md` is the narrative companion for the
   interactive dashboard and uses a looser register. We can reuse wording
   but tighten it for print.
-- `presentation/script-2026-04-20.md` and the three `script_part*.md` files
+- `presentation/script-defence.md` and the three `script_part*.md` files
   are the oral-defence register. Good source for intuition paragraphs; not
   suitable verbatim for the written thesis.
 - `theory/` holds the PDFs of the primary sources and their OCR-to-markdown

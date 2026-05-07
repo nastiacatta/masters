@@ -3009,15 +3009,17 @@ def run_behaviour_matrix(outdir="outputs", seed=42, block="behaviour", write_sum
         participation_by_round = []
         top1_ts = []
         top5_ts = []
+        agg_hist: list = []
         for t in range(T):
             pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
+                t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                 weights_prev=state.weights_prev, sigma_prev=state.sigma,
                 wealth_prev=state.wealth, profit_prev=state.profit_prev,
             )
             actions = behaviour.act(pub)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            agg_hist.append(logs["r_hat"])
             profits.append(sum(logs["profit"]))
             n_t_list.append(sum(1 for a in actions if a.participate))
             participation_by_round.append([1 if a.participate else 0 for a in actions])
@@ -3658,9 +3660,10 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
             top1_ts = []
             top5_ts = []
             wealth_by_t = []
+            agg_hist: list = []
             for t in range(T):
                 pub = RoundPublicState(
-                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                     weights_prev=state.weights_prev, sigma_prev=state.sigma,
                     wealth_prev=state.wealth, profit_prev=state.profit_prev,
                 )
@@ -3715,6 +3718,8 @@ def run_detection_adaptation(outdir="outputs", seed=42, block="behaviour", write
                     logs_with_det["detector_scores"] = {atk_traits.user_id: detector_score}
 
                 behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs_with_det)
+
+                agg_hist.append(logs["r_hat"])
 
                 for i, aid in enumerate(logs["ids"]):
                     if aid == atk_traits.user_id:
@@ -3925,9 +3930,10 @@ def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_sum
 
             profits, n_t_list, coalition_profit = [], [], 0.0
             actions_hist = [] if label != "no_collusion" else None
+            agg_hist: list = []
             for t in range(T):
                 pub = RoundPublicState(
-                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                     weights_prev=state.weights_prev, sigma_prev=state.sigma,
                     wealth_prev=state.wealth, profit_prev=state.profit_prev,
                 )
@@ -3936,6 +3942,7 @@ def run_collusion_stress(outdir="outputs", seed=42, block="behaviour", write_sum
                     actions_hist.append(actions)
                 state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
                 behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                agg_hist.append(logs["r_hat"])
                 profits.append(sum(logs["profit"]))
                 n_t_list.append(sum(1 for a in actions if a.participate))
                 for i, aid in enumerate(logs["ids"]):
@@ -4102,15 +4109,17 @@ def run_insider_advantage(outdir="outputs", seed=42, block="behaviour", write_su
             insider_profit = 0.0
             insider_score_sum = 0.0
             insider_rounds = 0
+            agg_hist: list = []
             for t in range(T):
                 pub = RoundPublicState(
-                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                     weights_prev=state.weights_prev, sigma_prev=state.sigma,
                     wealth_prev=state.wealth, profit_prev=state.profit_prev,
                 )
                 actions = behaviour.act(pub)
                 state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
                 behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                agg_hist.append(logs["r_hat"])
                 for i, aid in enumerate(logs["ids"]):
                     if "insider" in str(aid):
                         insider_profit += logs["profit"][i]
@@ -4216,9 +4225,10 @@ def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write
         activity_count = 0
         wash_profit = 0.0
         actions_hist = [] if collect_actions else None
+        agg_hist: list = []
         for t in range(T):
             pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
+                t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                 weights_prev=state.weights_prev, sigma_prev=state.sigma,
                 wealth_prev=state.wealth, profit_prev=state.profit_prev,
             )
@@ -4227,6 +4237,7 @@ def run_wash_activity_gaming(outdir="outputs", seed=42, block="behaviour", write
                 actions_hist.append(actions)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+            agg_hist.append(logs["r_hat"])
             activity_count += sum(1 for a in actions if a.participate)
             for i, aid in enumerate(logs["ids"]):
                 if str(aid).startswith("wash_0"):
@@ -4375,9 +4386,10 @@ def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_
         if factory is not None:
             state.wealth["strategic_0"] = 10.0
         r_hats, agg_errs, adv_profit = [], [], 0.0
+        agg_hist: list = []
         for t in range(T):
             pub = RoundPublicState(
-                t=t, y_history=y[:t].tolist(), agg_history=[],
+                t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                 weights_prev=state.weights_prev, sigma_prev=state.sigma,
                 wealth_prev=state.wealth, profit_prev=state.profit_prev,
             )
@@ -4386,6 +4398,7 @@ def run_strategic_reporting(outdir="outputs", seed=42, block="behaviour", write_
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
             r_hat = logs.get("r_hat", 0.5)
             r_hats.append(float(r_hat))
+            agg_hist.append(r_hat)
             agg_errs.append(abs(float(r_hat) - float(y[t])))
             for i, aid in enumerate(logs["ids"]):
                 if aid == "strategic_0":
@@ -5219,15 +5232,17 @@ def run_informed_collusion(outdir="outputs", seed=42, block="behaviour",
                     state.wealth[u.user_id] = u.initial_wealth
 
             coalition_profit = 0.0
+            agg_hist: list = []
             for t in range(T):
                 pub = RoundPublicState(
-                    t=t, y_history=y[:t].tolist(), agg_history=[],
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
                     weights_prev=state.weights_prev, sigma_prev=state.sigma,
                     wealth_prev=state.wealth, profit_prev=state.profit_prev,
                 )
                 actions = behaviour.act(pub)
                 state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
                 behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
+                agg_hist.append(logs["r_hat"])
                 for i, aid in enumerate(logs["ids"]):
                     if aid in member_ids:
                         coalition_profit += float(logs["profit"][i])
@@ -5287,5 +5302,176 @@ def run_informed_collusion(outdir="outputs", seed=42, block="behaviour",
                 logs_out,
             )
             plot_informed_collusion(ep)
+        except Exception as e:
+            print(f"Warning: summary failed: {e}")
+
+
+def run_reputation_reset(outdir="outputs", seed=42, block="behaviour",
+                         write_summary=True, seeds=None):
+    """Whitewashing attacker: resets identity when reputation stock falls.
+
+    Compares three scenarios across multiple seeds:
+
+      * baseline: no attacker.
+      * manipulator_no_reset: fixed identity, aggressive target=0.9
+        manipulation. Expected to go bankrupt / accumulate large losses.
+      * reputation_reset: same manipulation but the attacker resets
+        identity when cumulative profit drops below a threshold.
+
+    Reports cumulative profit across *all* identities under the attacker's
+    control plus the number of resets. A successful mechanism should
+    keep the reset-attacker's total profit bounded (not unboundedly
+    positive) even though it can reset. The κ > 0 staleness decay and
+    newcomer prior L0 are the mechanism's levers; this experiment
+    measures their residual effect.
+    """
+    from onlinev2.behaviour.adversaries.reputation_reset import ReputationResetBehaviour
+    from onlinev2.behaviour.adversaries.strategic_influence import StrategicInfluenceBehaviour
+    from onlinev2.behaviour.composite import CompositeBehaviourModel
+    from onlinev2.behaviour.population import build_population
+    from onlinev2.behaviour.protocol import RoundPublicState
+    from onlinev2.behaviour.traits import UserTraits
+    from onlinev2.mechanism.models import MechanismParams, MechanismState
+    from onlinev2.mechanism.runner import run_round
+
+    ep = _exp_paths(outdir, "reputation_reset", block)
+    T, n_benign = 1000, 8
+    if seeds is None:
+        seeds = list(range(10))
+
+    attacker_traits = UserTraits(
+        user_id="reset_attacker",
+        initial_wealth=20.0,  # Enough to fund multiple resets
+        manipulation_strength=0.8,
+        noise_level=0.03,
+    )
+
+    scenarios = [
+        ("baseline", None),
+        (
+            "manipulator_no_reset",
+            lambda: StrategicInfluenceBehaviour(
+                attacker_traits, target=0.9, scoring_mode="point_mae",
+                aggressiveness=1.0,
+            ),
+        ),
+        (
+            "reputation_reset",
+            lambda: ReputationResetBehaviour(
+                attacker_traits, target=0.9, scoring_mode="point_mae",
+                reset_threshold=-3.0, cooldown=50, warmup=20,
+            ),
+        ),
+    ]
+
+    per_seed_rows: list = []
+    for s in seeds:
+        rng_s = np.random.default_rng(s)
+        y = rng_s.uniform(0.0, 1.0, size=T)
+        for label, factory in scenarios:
+            pop = build_population(n_benign, seed=s)
+            adv_map: dict = {}
+            adv_ref = None
+            if factory is not None:
+                adv_ref = factory()
+                adv_map = {"attacker_entry": adv_ref}
+            behaviour = CompositeBehaviourModel(
+                pop, adversary_behaviours=adv_map if adv_map else None,
+                scoring_mode="point_mae",
+            )
+            # Use κ > 0 so the staleness decay actually penalises newcomers.
+            params = MechanismParams(
+                scoring_mode="point_mae", kappa=0.05, sigma_init=0.2,
+            )
+            behaviour.reset(s)
+            state = MechanismState()
+            for u in pop:
+                state.wealth[u.traits.user_id] = u.traits.initial_wealth
+            if factory is not None:
+                state.wealth[attacker_traits.user_id] = attacker_traits.initial_wealth
+
+            total_attacker_profit = 0.0
+            agg_hist: list = []
+            for t in range(T):
+                pub = RoundPublicState(
+                    t=t, y_history=y[:t].tolist(), agg_history=agg_hist,
+                    weights_prev=state.weights_prev, sigma_prev=state.sigma,
+                    wealth_prev=state.wealth, profit_prev=state.profit_prev,
+                )
+                actions = behaviour.act(pub)
+                state, logs = run_round(
+                    state=state, params=params, actions=actions, y_t=float(y[t]),
+                )
+                # Enrich logs with profit_by_account so reputation_reset
+                # adversary's observe_round_result can track its own PnL.
+                pba = dict(zip(logs["ids"], logs["profit"]))
+                logs_enriched = {**logs, "profit_by_account": pba}
+                behaviour.observe_round_result(
+                    t=t, y_t=float(y[t]), logs_t=logs_enriched,
+                )
+                agg_hist.append(logs["r_hat"])
+                for aid, profit in pba.items():
+                    if str(aid).startswith(attacker_traits.user_id):
+                        total_attacker_profit += float(profit)
+
+            n_resets = getattr(adv_ref, "num_resets", 0) if adv_ref else 0
+            per_seed_rows.append({
+                "scenario": label,
+                "seed": s,
+                "attacker_profit": total_attacker_profit,
+                "n_resets": int(n_resets),
+            })
+
+    # Aggregate per scenario
+    agg_rows = []
+    for label, _ in scenarios:
+        subset = [r for r in per_seed_rows if r["scenario"] == label]
+        profit_stats = _mean_se_ci([r["attacker_profit"] for r in subset])
+        resets_stats = _mean_se_ci([r["n_resets"] for r in subset])
+        agg_rows.append({
+            "scenario": label,
+            "mean_attacker_profit": profit_stats["mean"],
+            "se_attacker_profit": profit_stats["se"],
+            "ci_low": profit_stats["ci_low"],
+            "ci_high": profit_stats["ci_high"],
+            "mean_n_resets": resets_stats["mean"],
+            "n_seeds": profit_stats["n"],
+        })
+
+    _write_csv(
+        ep.data("reputation_reset.csv"),
+        ["scenario", "seed", "attacker_profit", "n_resets"],
+        per_seed_rows,
+    )
+    _write_csv(
+        ep.data("reputation_reset_summary.csv"),
+        ["scenario", "mean_attacker_profit", "se_attacker_profit",
+         "ci_low", "ci_high", "mean_n_resets", "n_seeds"],
+        agg_rows,
+    )
+    print("\nReputation Reset / Whitewashing (multi-seed)")
+    print("=" * 50)
+    for r in agg_rows:
+        print(f"  {r['scenario']:>22s}: profit="
+              f"{r['mean_attacker_profit']:+.2f} ± {r['se_attacker_profit']:.2f} "
+              f"(CI {r['ci_low']:+.2f}..{r['ci_high']:+.2f}), "
+              f"resets={r['mean_n_resets']:.1f}")
+
+    if write_summary:
+        try:
+            from onlinev2.behaviour.plotting.adversary_plots import plot_reputation_reset
+            from onlinev2.experiments.summarise import write_experiment_summary
+            logs_out = {
+                "attacker_cumulative_profit": agg_rows[-1]["mean_attacker_profit"]
+                if agg_rows else None,
+            }
+            write_experiment_summary(
+                ep,
+                {"experiment_name": "reputation_reset", "T": T, "block": block,
+                 "n_seeds": len(seeds), "kappa": 0.05, "warmup": 20,
+                 "cooldown": 50, "reset_threshold": -3.0},
+                logs_out,
+            )
+            plot_reputation_reset(ep)
         except Exception as e:
             print(f"Warning: summary failed: {e}")

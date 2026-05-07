@@ -23,9 +23,8 @@ vi.mock('@/hooks/useAuditData', () => ({
 // ── Mock Recharts ──────────────────────────────────────────────────────────
 
 vi.mock('recharts', () => {
-  const React = require('react');
   const Wrap = ({ children }: { children?: React.ReactNode }) =>
-    React.createElement('div', null, children);
+    createElement('div', null, children);
   return {
     ResponsiveContainer: Wrap,
     LineChart: Wrap,

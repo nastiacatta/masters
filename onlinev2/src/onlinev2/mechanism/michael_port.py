@@ -61,6 +61,10 @@ def _project_to_simplex(v: np.ndarray) -> np.ndarray:
     """
     v = np.asarray(v, dtype=np.float64).ravel()
     n = v.size
+    if n == 0:
+        # Empty input: nothing to project. Julia's project_to_simplex
+        # returns an empty array; do the same instead of dividing by zero.
+        return v
     u = np.sort(v)[::-1]
     cssv = np.cumsum(u) - 1.0
     k_arr = np.arange(1, n + 1, dtype=np.float64)

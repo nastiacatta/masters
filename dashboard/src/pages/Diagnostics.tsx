@@ -108,7 +108,7 @@ export default function Diagnostics() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <CalibrationChart data={calibrationData} />
 
-            <ChartCard title="PIT Histogram" subtitle="Probability Integral Transform: uniform is ideal">
+            <ChartCard title="Calibration deviation by quantile" subtitle="|p̂ − τ| per nominal quantile: 0 is perfectly calibrated">
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart
                   data={calibrationData.map(d => ({ tau: d.tau.toFixed(2), deviation: Math.abs(d.pHat - d.tau) }))}

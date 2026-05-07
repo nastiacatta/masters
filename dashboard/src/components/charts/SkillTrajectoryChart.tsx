@@ -58,12 +58,21 @@ export default function SkillTrajectoryChart({
         <LineChart
           data={chartData}
           syncId="round-window"
-          margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+          margin={{ top: 10, right: 24, bottom: 10, left: 28 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="t" tick={{ fontSize: 12 }} stroke="#94a3b8" />
-          <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" label={{ value: yLabel, angle: -90, position: 'insideLeft', fontSize: 12 }} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" strokeOpacity={0.8} />
+          <XAxis dataKey="t" tick={{ fontSize: 12, fill: '#5a6175' }} stroke="#8c92a3" />
+          <YAxis
+            tick={{ fontSize: 12, fill: '#5a6175' }}
+            stroke="#8c92a3"
+            label={{ value: yLabel, angle: -90, position: 'insideLeft', offset: 8, fontSize: 12, fill: '#5a6175' }}
+          />
+          <Tooltip contentStyle={{
+            fontSize: 12, borderRadius: 6,
+            border: '1px solid #d1d5db',
+            background: 'rgba(255, 253, 248, 0.98)',
+            boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18)',
+          }} />
           <Legend
             wrapperStyle={{ fontSize: 11, cursor: 'pointer' }}
             onClick={(e) => {

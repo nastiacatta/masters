@@ -55,8 +55,8 @@ export default function ModelAuditPanel() {
     [comparison],
   );
 
-  const perAgentCrps = comparison?.per_agent_crps ?? [];
-  const perRound = comparison?.per_round ?? [];
+  const perAgentCrps = useMemo(() => comparison?.per_agent_crps ?? [], [comparison]);
+  const perRound = useMemo(() => comparison?.per_round ?? [], [comparison]);
   const nRounds = perRound.length;
 
   // ── Derived metrics ────────────────────────────────────────────────

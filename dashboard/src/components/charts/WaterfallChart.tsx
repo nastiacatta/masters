@@ -110,7 +110,7 @@ export default function WaterfallChart({
       <ResponsiveContainer width="100%" height={400}>
         <BarChart
           data={chartData}
-          margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+          margin={{ top: 16, right: 28, bottom: 16, left: 32 }}
         >
           <CartesianGrid {...GRID_PROPS} vertical={false} />
           <XAxis
@@ -118,7 +118,7 @@ export default function WaterfallChart({
             tick={{ ...AXIS_TICK, fontSize: 10 }}
             stroke={AXIS_STROKE}
             interval={0}
-            height={60}
+            height={68}
             angle={-30}
             textAnchor="end"
           />
@@ -129,9 +129,9 @@ export default function WaterfallChart({
               value: metricLabel,
               angle: -90,
               position: 'insideLeft',
-              offset: 4,
+              offset: 8,
               fontSize: 11,
-              fill: '#94a3b8',
+              fill: '#5a6175',
             }}
           />
           <ReferenceLine y={0} stroke={AXIS_STROKE} strokeDasharray="4 4" />

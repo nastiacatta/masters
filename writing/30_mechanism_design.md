@@ -34,14 +34,20 @@ information they encode:
 
 - **Fixed (b_i = 1):** isolates the skill signal; no wealth feedback.
 - **Bankroll-fraction:** b_i = min(W_i, b_max, f · W_i · c_i) where
-  c_i ∈ [c_min, c_max] is a confidence proxy derived from the
-  forecast's own spread (narrower forecast → higher c_i). Uses only
-  lagged information. *This is a heuristic design choice — it is the
+  c_i = clip(exp(−β_c · Δ_i), c_min, c_max) and Δ_i = q_i(0.9) −
+  q_i(0.1) is the 80%-interval width of the forecast on the observed
+  [0, 1] scale (Masters notes §Step 1; implementation
+  `confidence_from_quantiles` in `onlinev2/src/onlinev2/core/
+  staking.py`). Narrower forecast → smaller Δ_i → larger c_i. For
+  theorem-safe use, c_i is computed from lagged reports (`staking.py`
+  documents this as a prerequisite for the Lambert-style truthfulness
+  argument). *This is a heuristic design choice — it is the
   deterministic analogue of fractional-Kelly betting (Kelly 1956;
-  Thorp 2006), replacing the log-optimal growth rate with the
-  probit-space forecast spread as a proxy for precision. It is not
-  incentive-compatible in the Lambert sense, but the experiments in
-  §5 use the `fixed` policy as the theorem-safe baseline.*
+  Thorp 2006), replacing the log-optimal growth rate with a bounded
+  monotone function of the forecast spread as a proxy for precision.
+  It is not itself induced by a proper scoring rule; the real-data
+  runner uses `deposit_mode="fixed"` as the theorem-safe baseline and
+  `deposit_mode="bankroll"` only with lagged confidence.*
 - **Oracle-precision:** b_i ∝ true signal precision. Not implementable
   in practice; used as the ceiling.
 
@@ -156,10 +162,15 @@ Parameters and what they do:
 |---|---:|---:|---|
 | ρ | 0.1 | 0.5 | Learning rate (EWMA half-life ≈ log 2 / ρ) |
 | γ | 4 | 16 | Loss-to-skill sensitivity |
-| λ | 0.05 | 0.05 | Skill-gate floor |
+| λ | 0.3 | 0.05 | Skill-gate floor |
 | η | 1 | 2 | Skill-gate nonlinearity (hardcoded `eta=2.0` in `runner.py`) |
 | σ_min | 0.1 | 0.1 | Skill floor (keeps market access) |
-| κ | 0 or 0.02 | 0.02 | Staleness decay toward L_0 |
+| κ | 0.0 | 0.0 | Staleness decay toward L_0 (unused in wind run) |
+
+Source: defaults in `onlinev2/src/onlinev2/core/types.py` §`MechanismParams`;
+tuned values in `scripts/audit_fresh_run.py` and
+`dashboard/public/data/real_data/elia_wind/data/comparison.json` config
+block.
 
 The staleness decay addresses intermittency: an absent participant's
 skill reverts toward a neutral prior rather than freezing, so strategic
@@ -266,6 +277,24 @@ which is exactly the truthfulness condition. ∎
 **Scope.** The lemma carries over the Lambert assumption of strict
 risk neutrality (expected-utility maximisation with linear utility).
 The same caveat applies to our mechanism as to Lambert 2008.
+
+**Multi-round scope.** The lemma is per-round: conditional on the
+history, the round-t best response is truthful. Over multiple rounds
+a participant may in principle have an incentive to distort round t's
+report in order to shape competitors' future σ values (those σ values
+depend on this round's loss, and the competitors' future gating
+depends on their σ). This "EWMA-shaping" incentive is second-order
+under risk neutrality: round t's certain loss from distortion is
+linear in the distortion magnitude, while the expected-future-profit
+gain from a competitor's lower future σ is at most linear in
+(1-σ_{other,t+1})·γ·ρ and only realises if (i) the competitor's σ
+is still in the non-saturated region of the exp(-γ L) map and (ii)
+the distorter remains in the market long enough. Under the tuned Elia
+parameters (γ = 16, ρ = 0.5), σ saturates near 1 after ~20 losses
+below ℓ ≈ 0.05, so the shaping incentive is effectively zero in
+steady state. We note this as a scope limit; a formal multi-round
+truthfulness proof under risk-neutral, discounted expected profit is
+an open question.
 
 ## 3.4 Why EWMA, specifically
 

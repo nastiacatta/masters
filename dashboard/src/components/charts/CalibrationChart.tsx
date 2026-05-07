@@ -95,34 +95,40 @@ export default function CalibrationChart({ data }: Props) {
       }}
     >
       <div className="cursor-crosshair">
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={300}>
         <ScatterChart
-          margin={{ top: 10, right: 20, bottom: 20, left: 10 }}
+          margin={{ top: 12, right: 24, bottom: 28, left: 32 }}
           onMouseDown={zoom.onMouseDown}
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" />
           <XAxis
             dataKey="tau"
             type="number"
             domain={zoom.state.isZoomed ? [zoom.state.left, zoom.state.right] : [0, 1]}
-            tick={{ fontSize: 11 }}
-            stroke="#94a3b8"
-            label={{ value: 'Nominal τ', position: 'insideBottom', offset: -5, fontSize: 11 }}
+            tick={{ fontSize: 11, fill: '#5a6175' }}
+            stroke="#8c92a3"
+            label={{ value: 'Nominal τ', position: 'insideBottom', offset: -12, fontSize: 11, fill: '#5a6175' }}
           />
           <YAxis
             dataKey="pHat"
             type="number"
             domain={[0, 1]}
-            tick={{ fontSize: 11 }}
-            stroke="#94a3b8"
-            label={{ value: 'Observed p̂', angle: -90, position: 'insideLeft', fontSize: 11 }}
+            tick={{ fontSize: 11, fill: '#5a6175' }}
+            stroke="#8c92a3"
+            label={{ value: 'Observed p̂', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: '#5a6175' }}
           />
           <Customized component={CalibrationBand} />
-          <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#94a3b8" strokeDasharray="4 4" />
+          <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#8c92a3" strokeDasharray="4 4" />
           <Tooltip
-            contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+            contentStyle={{
+              fontSize: 12,
+              borderRadius: 6,
+              border: '1px solid #d1d5db',
+              background: 'rgba(255, 253, 248, 0.98)',
+              boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18)',
+            }}
             formatter={(value: unknown) => typeof value === 'number' ? value.toFixed(3) : String(value ?? '')}
           />
           <Scatter
@@ -133,7 +139,7 @@ export default function CalibrationChart({ data }: Props) {
             animationDuration={300}
           />
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#1d3461" fillOpacity={0.1} />
           )}
         </ScatterChart>
       </ResponsiveContainer>

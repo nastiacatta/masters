@@ -78,11 +78,11 @@ export default function TornadoChart({
       }}
       chartType="Bar chart"
     >
-      <ResponsiveContainer width="100%" height={Math.max(280, sorted.length * 48 + 40)}>
+      <ResponsiveContainer width="100%" height={Math.max(280, sorted.length * 48 + 48)}>
         <BarChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 8, right: 48, bottom: 8, left: 8 }}
+          margin={{ top: 16, right: 52, bottom: 28, left: 12 }}
         >
           <CartesianGrid {...GRID_PROPS} horizontal={false} />
           <XAxis
@@ -92,9 +92,9 @@ export default function TornadoChart({
             label={{
               value: metricLabel,
               position: 'insideBottom',
-              offset: -2,
+              offset: -6,
               fontSize: 11,
-              fill: '#94a3b8',
+              fill: '#5a6175',
             }}
           />
           <YAxis
@@ -106,13 +106,13 @@ export default function TornadoChart({
           />
           <ReferenceLine
             x={0}
-            stroke="#94a3b8"
+            stroke="#8c92a3"
             strokeDasharray="4 4"
             label={{
               value: baselineLabel,
               position: 'top',
               fontSize: 11,
-              fill: '#94a3b8',
+              fill: '#5a6175',
             }}
           />
           <Tooltip

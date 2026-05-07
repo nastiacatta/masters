@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
+import PageShell from '@/components/dashboard/PageShell';
 
 /* ────────────────────────────────────────────────────────────────
    HomePage — academic redesign.
@@ -99,9 +100,7 @@ function ArrowFlow() {
 
 export default function HomePage() {
   return (
-    <div className="flex-1 overflow-y-auto" style={{ background: 'var(--paper)' }}>
-      <div className="max-w-[960px] mx-auto px-6 sm:px-10 pt-16 pb-24 space-y-16">
-
+    <PageShell width="narrow">
         {/* ─── Masthead ───────────────────────────────────────── */}
         <header>
           <p
@@ -409,8 +408,6 @@ export default function HomePage() {
             Anastasia Cattaneo &middot; Imperial College London &middot; &copy; 2026
           </p>
         </footer>
-
-      </div>
-    </div>
+    </PageShell>
   );
 }

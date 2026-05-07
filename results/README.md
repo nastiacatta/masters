@@ -32,19 +32,24 @@ OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE python scripts/audit_recalibration_e
 OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE python -m pytest -m audit tests/audit/
 
 # Regenerate slide figures (after numeric changes)
-cd ../presentation/R
-Rscript plot_baseline_comparison.R
-Rscript plot_real_data.R
-Rscript plot_skill_signal.R
-Rscript plot_skill_recovery.R
-Rscript plot_sybil.R
-Rscript plot_forecast_aggregation.R
-Rscript plot_settlement_sanity.R
-Rscript plot_deposit_policy.R
-Rscript plot_positioning_matrix.R
-```
+Rscript presentation/R/run_all.R     # or any individual plot_*.R
 
----
+# Individual scripts (each fail-isolated, fast):
+#   Rscript presentation/R/plot_baseline_comparison.R
+#   Rscript presentation/R/plot_real_data.R
+#   Rscript presentation/R/plot_skill_signal.R
+#   Rscript presentation/R/plot_skill_recovery.R
+#   Rscript presentation/R/plot_skill_trajectory.R
+#   Rscript presentation/R/plot_forecast_aggregation.R
+#   Rscript presentation/R/plot_settlement_sanity.R
+#   Rscript presentation/R/plot_deposit_policy.R
+#   Rscript presentation/R/plot_positioning_matrix.R
+#   Rscript presentation/R/plot_sybil.R
+#   Rscript presentation/R/plot_parameter_sweep.R
+#   Rscript presentation/R/plot_calibration_reliability.R
+#   Rscript presentation/R/plot_behaviour_concentration.R
+#   Rscript presentation/R/plot_weight_rule_comparison.R
+```---
 
 ## Claim-to-artifact map
 
@@ -211,11 +216,25 @@ The slide deck also uses a handful of composite figures
 `mechanism_steps.png`, `scoring_validation.png`,
 `selective_participation.png`,
 `fixed_deposit.png`, `arbitrage_heatmap.png`, `title_background.png`)
-that are produced by ad-hoc Python scripts under `onlinev2/scripts/`;
-see each script's header docstring for the exact entry point.
+that come out of the experiment runners in
+`onlinev2/src/onlinev2/experiments/runners/runner_module.py` and the
+behaviour plotters in `onlinev2/src/onlinev2/behaviour/plotting/`.
+Their matplotlib palette lives in
+[`onlinev2/src/onlinev2/plotting/style.py`](../onlinev2/src/onlinev2/plotting/style.py)
+and is aligned with `theme_thesis.R` so colours match end-to-end.
+
+The following legacy generators are **deprecated** and now raise an
+error if invoked — they used a mismatched palette and (in several
+cases) hardcoded illustrative numbers:
+
+- `onlinev2/scripts/generate_presentation_plots.py`
+- `onlinev2/scripts/gen_slides_plots.py`
+- `onlinev2/scripts/gen_slides_r.R`
+- `onlinev2/scripts/gen_final_plots.R`
+- `scripts/plot_all_slides.R`
 
 ---
 
 _Last updated: 2026-05-07. When the current experiment run finishes,
-re-run the generators listed above — the paths in this file will pick
-up the new artifacts automatically._
+re-run `Rscript presentation/R/run_all.R` — paths in this file will
+pick up the new artifacts automatically._

@@ -180,11 +180,11 @@ export default function DeltaBarChart({
         axes: { x: metricLabel, y: 'Method (ranked)' },
       }}
     >
-      <ResponsiveContainer width="100%" height={Math.max(280, sorted.length * 56 + 40)}>
+      <ResponsiveContainer width="100%" height={Math.max(280, sorted.length * 56 + 48)}>
         <BarChart
           data={displayData}
           layout="vertical"
-          margin={{ top: 8, right: 52, bottom: 8, left: 8 }}
+          margin={{ top: 16, right: 56, bottom: 32, left: 12 }}
         >
           <CartesianGrid {...GRID_PROPS} horizontal={false} />
           <XAxis
@@ -194,9 +194,9 @@ export default function DeltaBarChart({
             label={{
               value: metricLabel,
               position: 'insideBottom',
-              offset: -2,
+              offset: -8,
               fontSize: 13,
-              fill: '#94a3b8',
+              fill: '#5a6175',
             }}
           />
           <YAxis
@@ -204,17 +204,17 @@ export default function DeltaBarChart({
             dataKey="displayName"
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
-            width={140}
+            width={148}
           />
           <ReferenceLine
             x={0}
-            stroke="#94a3b8"
+            stroke="#8c92a3"
             strokeDasharray="4 4"
             label={{
               value: baselineLabel,
               position: 'top',
               fontSize: 12,
-              fill: '#94a3b8',
+              fill: '#5a6175',
             }}
           />
           <Tooltip

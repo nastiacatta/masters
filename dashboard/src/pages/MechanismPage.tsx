@@ -22,6 +22,8 @@ import {
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import SmallMultiplesGrid from '@/components/charts/SmallMultiplesGrid';
 import ChartCard from '@/components/dashboard/ChartCard';
+import PageShell from '@/components/dashboard/PageShell';
+import PageHeader from '@/components/dashboard/PageHeader';
 import { ChartLinkingProvider } from '@/contexts/ChartLinkingContext';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
@@ -134,39 +136,14 @@ export default function MechanismPage() {
   }, [maxRound, setSelectedRound]);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
+    <PageShell width="wide">
         {/* ── Header ── */}
-        <div>
-          <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
-            Interactive mechanism
-          </p>
-          <h1
-            className="font-serif tracking-tight"
-            style={{
-              fontSize: 'clamp(32px, 4vw, 42px)',
-              lineHeight: 1.15,
-              fontWeight: 600,
-              color: 'var(--ink)',
-            }}
-          >
-            Explorer
-          </h1>
-          <p
-            className="font-serif mt-4"
-            style={{
-              fontSize: 18,
-              lineHeight: 1.55,
-              color: 'var(--ink-muted)',
-              maxWidth: 820,
-            }}
-          >
-            Interactive sandbox for exploring the mechanism. Change parameters, step through rounds, and
-            inspect per-agent state. Each forecaster submits quantile forecasts at &tau; = (0.1, 0.25, 0.5,
-            0.75, 0.9); the mechanism scores them with the pinball loss, a per-quantile surrogate for CRPS
-            that is fast to compute and sensitive to both bias and sharpness.
-          </p>
-        </div>
+        <PageHeader
+          hero
+          eyebrow="Interactive mechanism"
+          title="Explorer"
+          subtitle="Interactive sandbox for exploring the mechanism. Change parameters, step through rounds, and inspect per-agent state. Each forecaster submits quantile forecasts at τ = (0.1, 0.25, 0.5, 0.75, 0.9); the mechanism scores them with the pinball loss, a per-quantile surrogate for CRPS that is fast to compute and sensitive to both bias and sharpness."
+        />
 
         {/* ── Step 1: Understand the system ── */}
         <section className="space-y-5">
@@ -676,8 +653,7 @@ export default function MechanismPage() {
             </section>
           </div>
         </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
 

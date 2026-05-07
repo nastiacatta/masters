@@ -216,7 +216,7 @@ Invariants the adversary suite is expected to satisfy:
 - `informed_collusion`: `informed_collusion` > `collusion_only` > 0
   under AR(1). ✓ (33.84 > 24.12 > 0).
 - `insider_advantage`: `insider_leaked` > `insider_lagged` > 0 under
-  AR(1). ✓ (61.43 > 54.53 > 0).
+  AR(1). ✓ (63.98 > 57.14 > 0).
 - `wash_activity_gaming`: inflation > 60% anchor, > 100% split; wash
   profit ≈ 0 anchor, strongly negative split. ✓
 - `sybil_arbitrage`: profit invariant across k. ✓

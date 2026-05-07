@@ -10,20 +10,27 @@ rest of the thesis would be moot. All three pass.
 
 ## 5.1.1 Mechanism correctness (Rung 1)
 
-All 13 Lambert combinatorial payoff invariants pass on current code
-(Bug Condition clauses 1.24–1.34, 1.36, 1.37), with 60 golden-value
-snapshots across 12 payoff-module functions × 5 seeds acting as a
-regression guard. Thirty-five `simulation.py` unit tests are green.
+All 13 active Lambert combinatorial payoff invariants pass on current
+code (clauses 1.24, 1.25, 1.26, 1.27, 1.28, 1.29, 1.30, 1.31, 1.32,
+1.33, 1.34, 1.36, 1.37; clause 1.35 `michael_split` is skipped pending
+Julia fixtures, see
+`onlinev2/tests/audit/test_bug_condition_e_payoff.py`). Eighty
+golden-value snapshots across sixteen payoff-module functions × five
+seeds act as a regression guard
+[source: `onlinev2/tests/audit/snapshots/`]. Thirty-five
+`simulation.py` unit tests are green.
 
 Headline checks (1000 rounds, 20 seeds)
-[source: `onlinev2/tests/audit/fixtures/counterexamples/SUMMARY.md` +
+[source: `onlinev2/outputs/core/experiments/settlement_sanity/data/summary.csv` +
+`onlinev2/tests/audit/test_bug_condition_e_payoff.py` +
+`onlinev2/tests/audit/test_bug_condition_d_skill.py` +
 `THESIS_CLAIMS.md` Claim 1]:
 
 | Invariant | Result |
 |---|---|
 | Max absolute budget gap | 2.84 × 10⁻¹⁴ |
 | Mean profit | 3.01 × 10⁻¹⁷ |
-| Equal-score zero profit | True |
+| Equal-score zero profit | True (`equal_scores_ok = 1` in summary.csv) |
 | Sybil profit ratio (identical reports, conserved total wager) | 1.000000 |
 | Sybil max \|Δ\| | 2.07 × 10⁻¹⁷ |
 | Pinball ≥ 0, CRPS ≥ 0, CRPS bounded | True |
@@ -99,20 +106,12 @@ fallback_summary = {name: 0 for name in forecasters}   # verified
 ## 5.1.4 Deposit policy ablation
 
 Four deposit regimes, same weight rule (`mechanism`), twenty seeds
-[source: `presentation/script_part3_validation.md` Slide 10; original
-run via `experiments.py --exp deposit_policies`]:
-
-| Deposit policy | Mean CRPS | vs Fixed |
-|---|---:|---:|
-| IID exponential (random) | 0.0456 ± 0.0003 | — |
-| Fixed unit (b = 1) | 0.0423 ± 0.0002 | baseline |
-| Bankroll + confidence | 0.0375 ± 0.0001 | −11.3% |
-| Oracle precision (true τ) | 0.0227 ± 0.0001 | −46.3% |
-
-Post-audit fresh means from 20 seeds
 [source: `onlinev2/outputs/core/experiments/deposit_policy_comparison/
 data/deposit_policy_comparison.csv`, `mean_crps_all` column with
-pooled SE]:
+pooled SE; runner in
+`onlinev2/src/onlinev2/experiments/runners/runner_module.py`
+§`run_deposit_policy_comparison`, T = 1000, 6 forecasters,
+scoring_mode = quantiles_crps]:
 
 | Deposit policy | Mean CRPS | SE | Δ% vs fixed_unit |
 |---|---:|---:|---:|

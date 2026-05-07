@@ -243,8 +243,10 @@ export default function WindExtendedSlide() {
         Wind — Extended Analysis
       </h3>
       <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-        Additional wind experiments exploring forecast horizon, deposit policy
-        sensitivity, and regime-shift robustness.
+        Additional wind experiments: forecast horizon (day-ahead, 4h-ahead),
+        deposit policy sensitivity, and within-run seasonal slice (a
+        single-pass evaluation bucketed by month; a true restart-per-season
+        regime-shift test is follow-up work).
       </p>
 
       {/* Loading spinner */}

@@ -56,27 +56,26 @@ export default function ArbitrageScanRenderer({ data, header }: RendererProps) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rows}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="lam" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="lam" label={{ value: 'λ', position: 'insideBottom', offset: -4, fontSize: 12 }} />
+                <YAxis label={{ value: 'Total profit', angle: -90, position: 'insideLeft', fontSize: 12 }} />
+                <Tooltip formatter={(v: unknown) => typeof v === 'number' ? fmtNum(v, 3) : String(v ?? '')} />
                 <Legend />
-                <Line type="monotone" dataKey="arbTotalProfit" stroke={PALETTE[4]} strokeWidth={2} dot />
+                <Line type="monotone" dataKey="arbTotalProfit" name="Attacker total profit" stroke={PALETTE[4]} strokeWidth={2} dot />
+                <Line type="monotone" dataKey="arbFinalWealth" name="Attacker final wealth" stroke={PALETTE[0]} strokeWidth={2} dot />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>
 
-        <ChartCard title="Arbitrage rounds found" subtitle="Frequency of profitable opportunities">
+        <ChartCard title="Arbitrage rounds found" subtitle="Count of rounds with a detectable arbitrage opportunity">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rows}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="lam" />
-                <YAxis />
+                <XAxis dataKey="lam" label={{ value: 'λ', position: 'insideBottom', offset: -4, fontSize: 12 }} />
+                <YAxis label={{ value: 'Arbitrage rounds (count)', angle: -90, position: 'insideLeft', fontSize: 12 }} />
                 <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="arbitrageFoundRounds" stroke={PALETTE[1]} strokeWidth={2} dot />
-                <Line type="monotone" dataKey="arbFinalWealth" stroke={PALETTE[0]} strokeWidth={2} dot />
+                <Line type="monotone" dataKey="arbitrageFoundRounds" name="Arbitrage rounds" stroke={PALETTE[1]} strokeWidth={2} dot />
               </LineChart>
             </ResponsiveContainer>
           </div>

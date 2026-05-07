@@ -142,6 +142,24 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); font-weight: 600; }
   box-shadow: var(--shadow-sm);
 }
 
+/* Panel / card primitive for analysis content blocks.
+   Replaces ad-hoc `rounded-xl border border-slate-200 bg-white p-5`
+   patterns scattered across pages. */
+.panel-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+}
+.panel-card + .panel-card { margin-top: 16px; }
+
+/* Inline stat / metric group spacing */
+.panel-grid {
+  display: grid;
+  gap: 12px;
+}
+
 /* Subtle prose flow for reading blocks */
 .prose-academic p {
   font-family: var(--font-serif);
@@ -362,8 +380,26 @@ main kbd {
 /* Body copy inside main gets a slightly larger default */
 main .text-sm    { font-size: 14px; }
 main .text-xs    { font-size: 12.5px; }
-main .text-\[11px\] { font-size: 12px !important; }
-main .text-\[10px\] { font-size: 11px !important; }
+main .text-\[11px\] { font-size: 12.5px !important; }
+main .text-\[10px\] { font-size: 12px !important; }
+main .text-\[9px\]  { font-size: 11px !important; }
+
+/* Readability floor for body text (not SVG).
+   Any inline font-size below 12px on regular DOM text gets nudged up. */
+main p[style*="fontSize: 10"],
+main p[style*="fontSize: 11"],
+main span[style*="fontSize: 10"],
+main span[style*="fontSize: 11"],
+main div[style*="fontSize: 10"],
+main div[style*="fontSize: 11"],
+main th[style*="fontSize: 10"],
+main th[style*="fontSize: 11"],
+main td[style*="fontSize: 10"],
+main td[style*="fontSize: 11"],
+main label[style*="fontSize: 10"],
+main label[style*="fontSize: 11"] {
+  font-size: 12px !important;
+}
 
 /* Specific extra harmonisation — rounded pills/buttons look mechanical at 999 */
 main button.rounded-full,

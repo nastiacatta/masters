@@ -2,6 +2,7 @@ from onlinev2.behaviour.adversaries.arbitrage_seeking import ArbitrageSeekingBeh
 from onlinev2.behaviour.adversaries.coordinated_group import CoordinatedGroupBehaviour
 from onlinev2.behaviour.adversaries.detector_aware import DetectorAwareBehaviour
 from onlinev2.behaviour.adversaries.privileged_information import PrivilegedInformationBehaviour
+from onlinev2.behaviour.adversaries.reputation_reset import ReputationResetBehaviour
 from onlinev2.behaviour.adversaries.strategic_influence import StrategicInfluenceBehaviour
 from onlinev2.behaviour.adversaries.sybil_arbitrage import SybilArbitrageBehaviour
 
@@ -18,6 +19,7 @@ __all__ = [
     "DetectorAwareBehaviour",
     "PrivilegedInformationBehaviour",
     "CoordinatedGroupBehaviour",
+    "ReputationResetBehaviour",
     "SybilArbitrageBehaviour",
     "ArbitrageurBehaviour",
     "ManipulatorBehaviour",

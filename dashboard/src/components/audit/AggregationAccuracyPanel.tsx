@@ -66,9 +66,9 @@ const METHOD_LABELS: Record<string, string> = {
 export default function AggregationAccuracyPanel() {
   const { comparison, baselines } = useAuditData();
 
-  const comparisonRows = comparison?.rows ?? [];
-  const calibration = comparison?.calibration ?? [];
-  const baselineSummary = baselines?.summary ?? [];
+  const comparisonRows = useMemo(() => comparison?.rows ?? [], [comparison]);
+  const calibration = useMemo(() => comparison?.calibration ?? [], [comparison]);
+  const baselineSummary = useMemo(() => baselines?.summary ?? [], [baselines]);
 
   // ── Method comparison table (8 methods) ────────────────────────
   const methodTable = useMemo(() => {

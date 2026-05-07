@@ -302,6 +302,9 @@ Already assembled in `docs/references_sources.md`:
 - Tashman (2000) — rolling-origin evaluation.
 - Gama, Sebastião, Rodrigues (2013) — prequential error in streams.
 - Cerqueira, Torgo, Soares (2020) — empirical comparison of eval methods.
+- Bergmeir, Hyndman and Koo (2018) — validity of expanding-window
+  cross-validation for autoregressive time-series models; justifies
+  our XGBoost/MLP training protocol in §4.3.
 - Diebold and Mariano (1995) — forecast comparison test we use for
   mechanism vs uniform (DM = +15.92, p < 1e-6 on the 3000-point slice).
 

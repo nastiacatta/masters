@@ -224,6 +224,24 @@ coverage].
 Closed by the recalibration layer; see Chapter 5.3 /
 `writing/70_recalibration_layer.md`.
 
+### 6.3.4 Mechanism vs Vitali per-τ OGD on the audit slice
+
+The same per-τ coverage file stores a Vitali per-τ OGD baseline
+[source: `onlinev2/outputs/audit_per_quantile/coverage.json`]:
+
+| Metric | Mechanism | Vitali per-τ OGD | Δ |
+|---|---:|---:|---:|
+| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0171 | 0.0105 | −0.0066 |
+| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0187 | 0.0154 | −0.0034 |
+| Mean CRPS-hat | 0.01874 | 0.01651 | −0.00223 |
+
+Vitali's aggregator is both better-calibrated (tail gap 0.0105 vs
+0.0171) and lower-CRPS (0.01651 vs 0.01874) on this slice — it
+relaxes the Lambert budget-balance constraint and learns per-τ
+weights directly, which pays off. The thesis's recalibration layer
+closes most of the calibration gap (Chapter 5.3) without relaxing
+budget balance, at a small CRPS cost relative to Vitali.
+
 ### 6.2.4 Skill trajectory figure
 
 Rendered in `dashboard/public/presentation-plots/skill_wager.png` and
@@ -291,7 +309,7 @@ reflect the static warmup-window pipeline; expanding-mode refresh
 | **mechanism** | **0.19220** | **−0.08%** |
 | best_single | 0.18866 | −1.92% |
 
-### 6.4.2 4h-ahead (h = 4, T = 20 000)
+### 6.4.2 4h-ahead (h = 16 steps on 15-minute series, T = 20 000)
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|

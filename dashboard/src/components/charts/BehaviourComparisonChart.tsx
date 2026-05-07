@@ -74,27 +74,32 @@ export default function BehaviourComparisonChart({ data }: Props) {
         <BarChart
           data={visibleData}
           layout="vertical"
-          margin={{ top: 5, right: 24, bottom: 5, left: 110 }}
+          margin={{ top: 10, right: 28, bottom: 10, left: 120 }}
           onMouseDown={zoom.onMouseDown}
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" strokeOpacity={0.8} />
           <XAxis
             type="number"
-            tick={{ fontSize: 11 }}
-            stroke="#94a3b8"
+            tick={{ fontSize: 11, fill: '#5a6175' }}
+            stroke="#8c92a3"
             domain={zoom.state.isZoomed ? [zoom.state.left, zoom.state.right] : undefined}
           />
-          <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#94a3b8" width={105} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }} />
+          <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#5a6175' }} stroke="#8c92a3" width={115} />
+          <Tooltip contentStyle={{
+            fontSize: 12, borderRadius: 6,
+            border: '1px solid #d1d5db',
+            background: 'rgba(255, 253, 248, 0.98)',
+            boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18)',
+          }} />
           <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28} isAnimationActive={true} animationDuration={300}>
             {visibleData.map((d) => (
               <Cell key={d.idx} fill={COLORS[d.idx % COLORS.length]} />
             ))}
           </Bar>
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#1d3461" fillOpacity={0.1} />
           )}
         </BarChart>
       </ResponsiveContainer>

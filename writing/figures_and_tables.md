@@ -12,7 +12,7 @@ Every figure and table that will appear in the thesis. Each entry has:
 
 | ID | Title | Source | Chapter | Status |
 |---|---|---|---|:---:|
-| T1 | Mechanism correctness invariants (1000 rounds × 20 seeds) | `onlinev2/tests/audit/fixtures/counterexamples/SUMMARY.md` | 50_results_synthetic | LOCKED |
+| T1 | Mechanism correctness invariants (1000 rounds × 20 seeds) | `onlinev2/outputs/core/experiments/settlement_sanity/data/summary.csv` + `onlinev2/tests/audit/test_bug_condition_e_payoff.py` | 50_results_synthetic | LOCKED |
 | T2 | Skill recovery on known-noise panel | `experiments.py --exp skill_recovery` output | 50_results_synthetic | LOCKED |
 | T3 | Deposit policy ablation | `experiments.py --exp deposit_policies` output | 50_results_synthetic | LOCKED |
 | T4 | Weight rule comparison (fixed vs bankroll deposits) | `experiments.py --exp weight_rules` output | 50_results_synthetic | LOCKED |

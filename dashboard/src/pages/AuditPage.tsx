@@ -7,6 +7,8 @@ import WagerAllocationPanel from '@/components/audit/WagerAllocationPanel';
 import AggregationAccuracyPanel from '@/components/audit/AggregationAccuracyPanel';
 import ImprovementPanel from '@/components/audit/ImprovementPanel';
 import TabBar from '@/components/dashboard/TabBar';
+import PageShell from '@/components/dashboard/PageShell';
+import PageHeader from '@/components/dashboard/PageHeader';
 
 // ── Tab configuration ──────────────────────────────────────────────────────
 
@@ -29,37 +31,13 @@ export default function AuditPage() {
   const data = useAuditData();
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
-        <header>
-          <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
-            Performance review
-          </p>
-          <h1
-            className="font-serif tracking-tight"
-            style={{
-              fontSize: 'clamp(32px, 4vw, 42px)',
-              lineHeight: 1.15,
-              fontWeight: 600,
-              color: 'var(--ink)',
-            }}
-          >
-            Performance audit
-          </h1>
-          <p
-            className="font-serif mt-4"
-            style={{
-              fontSize: 18,
-              lineHeight: 1.55,
-              color: 'var(--ink-muted)',
-              maxWidth: 820,
-            }}
-          >
-            Theory-grounded review of the mechanism&apos;s empirical performance: model quality,
-            how skill is allocated across forecasters, how wagers are distributed, aggregation
-            accuracy versus baselines, and recommended improvements.
-          </p>
-        </header>
+    <PageShell width="wide">
+        <PageHeader
+          hero
+          eyebrow="Performance review"
+          title="Performance audit"
+          subtitle="Theory-grounded review of the mechanism’s empirical performance: model quality, how skill is allocated across forecasters, how wagers are distributed, aggregation accuracy versus baselines, and recommended improvements."
+        />
 
         {/* ── Tab bar ──────────────────────────────────────────────── */}
         <TabBar
@@ -126,8 +104,7 @@ export default function AuditPage() {
             {tab === 'Improvements' && <ImprovementPanel />}
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }
 

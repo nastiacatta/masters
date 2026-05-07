@@ -121,7 +121,7 @@ every 200 steps (electricity).
 | Naive | ŷ = y_{t−1} | Residual bootstrap with isotonic monotonicity |
 | EWMA(5) | Exponential smoothing, span 5 | Residual bootstrap |
 | ARIMA(2,1,1) | Classical linear time-series model | Residual bootstrap; `is_persistence` flag surfaces fallback |
-| XGBoost | Gradient-boosted trees with lag features; expanding-window CV with `val_gap = 24` | Residual bootstrap |
+| XGBoost | Gradient-boosted trees with lag features; expanding-window CV with `val_gap = 24` (Bergmeir, Hyndman and Koo 2018) | Residual bootstrap |
 | MLP | Two-layer neural net with lag features; deterministic seed (B6 fix) | Residual bootstrap |
 | Theta | Theta decomposition (Assimakopoulos and Nikolopoulos 2000) | Residual bootstrap |
 | Ensemble | Equal-weighted mean of Naive and EWMA(5) | Residual bootstrap |
@@ -140,9 +140,11 @@ Post-audit training protocol (bugfix spec
 - `strict_no_fallback` runner flag raises on any forecaster-level
   fallback, so a clean comparison run is impossible to confuse with a
   run where one model quietly reduced to persistence.
-- XGBoost validation uses expanding-window CV with a 24-step gap;
-  XGBoost `random_state` is propagated from the runner's `seed` kwarg
-  (post-audit #A4 fix).
+- XGBoost validation uses expanding-window CV with a 24-step gap
+  between train and validation (Bergmeir, Hyndman and Koo 2018 show
+  this is the safe default when autocorrelated residuals cannot be
+  ruled out); XGBoost `random_state` is propagated from the runner's
+  `seed` kwarg (post-audit #A4 fix).
 - MLP uses `torch.manual_seed(self.seed)` for cross-warmup
   reproducibility, z-score feature standardization on the training
   window, expanding-window validation split with gap = 24, early
@@ -170,10 +172,11 @@ must pass before the next is treated as meaningful.
 - Mechanism invariants: budget balance, non-negative payouts, equal-
   score zero profit, score bounds, permutation invariance, score-shift
   invariance.
-- 13/13 Lambert combinatorial invariants pass
-  [source: `onlinev2/tests/audit/fixtures/counterexamples/SUMMARY.md`].
-- 60 golden-value snapshots across 12 payoff-module functions × 5
-  seeds.
+- 13/13 active Lambert combinatorial invariants pass (clause 1.35
+  skipped pending Julia fixtures) [source:
+  `onlinev2/tests/audit/test_bug_condition_e_payoff.py`].
+- 80 golden-value snapshots across 16 payoff-module functions × 5
+  seeds [source: `onlinev2/tests/audit/snapshots/`].
 
 ### Rung 2 — Pure forecasting gain (Chapter 5.2–5.3)
 

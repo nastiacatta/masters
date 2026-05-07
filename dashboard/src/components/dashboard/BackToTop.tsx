@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import clsx from 'clsx';
 
 /**
@@ -8,12 +8,12 @@ import clsx from 'clsx';
  */
 export default function BackToTop() {
   const [visible, setVisible] = useState(false);
-  const [container, setContainer] = useState<HTMLElement | Window>(window);
+  const containerRef = useRef<HTMLElement | Window>(window);
 
   useEffect(() => {
     const candidates = Array.from(document.querySelectorAll<HTMLElement>('main .overflow-y-auto'));
     const target = candidates.find((el) => el.scrollHeight > el.clientHeight) ?? window;
-    setContainer(target);
+    containerRef.current = target;
 
     const handler = () => {
       const scrollTop =
@@ -28,12 +28,13 @@ export default function BackToTop() {
   }, []);
 
   const scrollToTop = useCallback(() => {
+    const container = containerRef.current;
     if (container === window) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       (container as HTMLElement).scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [container]);
+  }, []);
 
   return (
     <button

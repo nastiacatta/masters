@@ -219,7 +219,7 @@ As the previous slide showed, the mechanism jointly provides adaptation across r
 
 The mechanism also satisfies its formal guarantees to machine precision: budget balance and mean profit are zero to numerical tolerance, sybil invariance holds exactly for identical reports, and synthetic validation recovers the true skill ranking with Spearman ρ = 1.0.
 
-Future work has a clear priority: close the CRPS gap to Vitali **without** giving up self-financing. That likely means richer score functions or richer aggregation primitives, not abandoning the Lambert framework. Beyond that: improve tail calibration, which is currently under-dispersed by about five percentage points, and test against adaptive strategic adversaries rather than only fixed behaviour presets.
+Future work has a clear priority: close the CRPS gap to Vitali **without** giving up self-financing. That likely means richer score functions or richer aggregation primitives, not abandoning the Lambert framework. Beyond that: improve tail calibration, which shows the Ranjan–Gneiting linear-pool pattern — mean tail deviation about 1.7 percentage points on the audit slice, of which the rolling isotonic recalibration layer closes 59 per cent — and test against adaptive strategic adversaries rather than only fixed behaviour presets.
 
 This project asked whether a prediction market can learn how much each contribution should matter, while keeping a disciplined reward mechanism. The answer is yes — the gains are real on real energy data, the mechanism satisfies its formal guarantees, and it occupies a position in the design space that no prior work has reached.
 

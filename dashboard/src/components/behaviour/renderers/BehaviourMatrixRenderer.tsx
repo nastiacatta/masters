@@ -59,29 +59,71 @@ export default function BehaviourMatrixRenderer({ data, header }: RendererProps)
       </CardGrid>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <ChartCard title="Total profit by scenario" subtitle="Skill × stake fixed, behaviour varied">
+        <ChartCard title="Total profit by scenario" subtitle="Skill × stake fixed, behaviour varied — values at machine precision confirm budget balance">
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={rows}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" angle={-20} textAnchor="end" height={90} interval={0} />
-                <YAxis />
-                <Tooltip />
+                <YAxis tickFormatter={(v: number) => v.toExponential(1)} />
+                <Tooltip formatter={(v: unknown) => typeof v === 'number' ? v.toExponential(3) : String(v ?? '')} />
                 <Bar dataKey="totalProfit" fill={PALETTE[0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>
 
-        <ChartCard title="Concentration versus effective participation" subtitle="Lower Gini and higher N_eff are preferable">
+        <ChartCard title="Concentration versus effective participation" subtitle="Lower Gini and higher N_eff are preferable; label = scenario">
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart>
+              <ScatterChart margin={{ top: 20, right: 40, bottom: 40, left: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="finalGini" name="Final Gini" />
-                <YAxis type="number" dataKey="finalNEff" name="Final N_eff" />
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter data={rows} fill={PALETTE[1]} />
+                <XAxis
+                  type="number"
+                  dataKey="finalGini"
+                  name="Final Gini"
+                  domain={[0, 'dataMax + 0.05']}
+                  label={{ value: 'Final Gini', position: 'insideBottom', offset: -10, fontSize: 12 }}
+                />
+                <YAxis
+                  type="number"
+                  dataKey="finalNEff"
+                  name="Final N_eff"
+                  label={{ value: 'Final N_eff', angle: -90, position: 'insideLeft', fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={{ strokeDasharray: '3 3' }}
+                  formatter={(v: unknown, _name, entry) => {
+                    const n = typeof v === 'number' ? fmtNum(v, 3) : String(v ?? '');
+                    return [n, ((entry as { payload?: { label?: string } })?.payload?.label) ?? _name];
+                  }}
+                />
+                <Scatter
+                  data={rows}
+                  fill={PALETTE[1]}
+                  shape={(p: unknown) => {
+                    const { cx, cy, payload } = p as {
+                      cx: number;
+                      cy: number;
+                      payload: { label: string };
+                    };
+                    if (cx == null || cy == null) return <g />;
+                    return (
+                      <g>
+                        <circle cx={cx} cy={cy} r={6} fill={PALETTE[1]} fillOpacity={0.75} stroke="#fff" strokeWidth={1.5} />
+                        <text
+                          x={cx + 9}
+                          y={cy - 2}
+                          fontSize={10}
+                          fontWeight={600}
+                          fill="#334155"
+                        >
+                          {payload.label}
+                        </text>
+                      </g>
+                    );
+                  }}
+                />
               </ScatterChart>
             </ResponsiveContainer>
           </div>

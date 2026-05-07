@@ -251,6 +251,29 @@ Convention for every entry:
   settlement could be made adversarially robust by a peer-prediction
   verifier.
 
+### Johnstone 2007
+
+```bibtex
+@article{johnstone2007economic,
+  title   = {Economic Darwinism: Who has the Best Probabilities?},
+  author  = {Johnstone, David},
+  journal = {Theory and Decision},
+  volume  = {62},
+  number  = {1},
+  pages   = {47--96},
+  year    = {2007},
+  doi     = {10.1007/s11238-006-9013-3}
+}
+```
+
+- Used in: Chapter 8.5 (insider-advantage threat model).
+- What we take: the framing that under a repeated wagering setting,
+  a forecaster with superior information accumulates wealth at a
+  predictable rate determined by Kullback–Leibler divergence between
+  her belief and the market's belief. Motivates our
+  `privileged_information` behaviour, where the "private edge" is a
+  low-variance lagged signal rather than a hard leak.
+
 ## B. Online learning for forecast combination
 
 ### Vitali, Pinson 2025
@@ -503,6 +526,28 @@ Convention for every entry:
 - What we take: the isotonic post-processor. Our recalibration layer is
   a rolling-buffer version of the method in §3.1 of the paper.
 
+### Deshpande, Kuleshov 2023/2025
+
+```bibtex
+@inproceedings{deshpande2023calibrated,
+  title     = {Calibrated Regression Against An Adversary Without
+               Regret},
+  author    = {Deshpande, Shachi and Kuleshov, Volodymyr},
+  year      = {2023},
+  note      = {arXiv:2302.12196; published in Proceedings of the
+               Conference on Uncertainty in Artificial Intelligence
+               (UAI), PMLR v286, 2025},
+  url       = {https://arxiv.org/abs/2302.12196}
+}
+```
+
+- Used in: Chapter 5.3 / §7.6 (why rolling buffer over fixed held-out
+  fit).
+- What we take: the adversarial/online-regret extension of the KFE
+  procedure. It motivates why a rolling-buffer design is safer than a
+  fixed held-out fit under potential non-stationarity, at the cost of
+  finite-horizon rather than asymptotic calibration guarantees.
+
 ### Dawid 1984
 
 ```bibtex
@@ -605,6 +650,30 @@ Convention for every entry:
 }
 ```
 
+### Bergmeir, Hyndman, Koo 2018
+
+```bibtex
+@article{bergmeir2018note,
+  title   = {A note on the validity of cross-validation for
+             evaluating autoregressive time series prediction},
+  author  = {Bergmeir, Christoph and Hyndman, Rob J. and Koo, Bonsoo},
+  journal = {Computational Statistics \& Data Analysis},
+  volume  = {120},
+  pages   = {70--83},
+  year    = {2018},
+  doi     = {10.1016/j.csda.2017.11.003}
+}
+```
+
+- Used in: Chapter 4.3 (forecaster training protocol).
+- What we take: justification for using expanding-window
+  cross-validation with an embargo / gap between train and
+  validation for hyperparameter tuning on autoregressive time-series
+  models (XGBoost, MLP). The paper shows that standard k-fold CV can
+  be valid for purely autoregressive forecasting models, and that
+  expanding-window CV with a gap is the safe default when
+  autocorrelation in residuals is suspected.
+
 ## E. Forecasters used in the panel
 
 ### Assimakopoulos, Nikolopoulos 2000 (Theta method)
@@ -663,12 +732,9 @@ committed as `data/elia_offshore_wind_2024_2025.csv`.
 
 ## Still to add (placeholders)
 
-- Bergmeir, Hyndman, Koo 2018 — time-series CV validity.
 - Bergmeir, Benítez 2012 — blocked CV for stationary TS.
 - Mashlakov et al. 2021 — deep learning probabilistic energy
   forecasting.
-- Johnstone 2007 — asymmetric Kilgour–Gerchak (background for
-  Lambert).
 - Kilgour, Gerchak 2004 — KG scoring rules (background for Lambert).
 - Savage 1971 — strict propriety characterisation (background).
 - Gneiting, Katzfuss 2014 — probabilistic forecasting review.

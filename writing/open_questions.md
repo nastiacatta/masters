@@ -24,6 +24,12 @@ checklist so nothing slips between the results and the manuscript.
   audit slice (static-mode), which is fine for the current write-up
   but worth re-running on the full-length expanding slice to confirm
   the 59% tail reduction transfers.
+- [ ] **Quantile-forecast-quality spec** (`.kiro/specs/
+  quantile-forecast-quality/`). Not yet implemented; once landed,
+  add monotonicity enforcement, ARIMA native prediction intervals,
+  XGBoost quantile regression, and early-round degeneration handling
+  to Chapter 4 methodology and re-run the wind / electricity
+  comparisons. Expected to improve mechanism CRPS on both series.
 
 ## Numbers to double-check against sources
 
@@ -60,8 +66,8 @@ checklist so nothing slips between the results and the manuscript.
 - [x] `best_single` semantics — it is a 100-step rolling CRPS
   selector, not a per-round oracle. Fixed throughout.
 - [x] Elia operational forecast MW-eq numbers — match
-  `onlinev2/outputs/elia_forecast_baseline.json` (best_single 62.6,
-  mechanism 76.2, Elia real-time 74.0).
+  `onlinev2/outputs/elia_forecast_baseline.json` (best_single 69.5,
+  mechanism 83.7, Elia real-time 74.0).
 
 ## Conceptual points still to nail down
 
@@ -80,28 +86,40 @@ checklist so nothing slips between the results and the manuscript.
   equilibrium leakage or just what the current preset produces? An
   attacker who diversifies optimally might extract more. Worth
   stating as a hard scope limit.
-- [ ] **Scope of "online" in the truthfulness argument.** Lambert's
-  proof is per-round. Does adding a multi-round EWMA change the
-  truthfulness argument? Not in the per-round sense (the EWMA is
-  frozen for round t), but over multiple rounds there is a lagged
-  incentive: distorting round t's report to hurt a competitor's
-  future σ. This is typically second-order but worth acknowledging.
-- [ ] **Confidence proxy specification.** Right now c_i is described
-  generically as "a function of quantile width". Write the exact
-  formula (`core/staking.py`), including the c_min / c_max clipping
-  and the lag.
+- [x] **Scope of "online" in the truthfulness argument.** Lambert's
+  proof is per-round. Adding a multi-round EWMA does not change the
+  per-round sense (σ is frozen for round t), but introduces a
+  second-order "EWMA-shaping" incentive across rounds: distorting
+  round t's report to lower a competitor's future σ. Addressed in
+  §3.3.1 "Multi-round scope" paragraph: the incentive is at most
+  linear in γ·ρ·(1−σ_{other}) and effectively zero once competitor
+  σ saturates near 1 (which under the tuned γ = 16, ρ = 0.5 happens
+  after ~20 rounds with ℓ ≲ 0.05). A formal multi-round truthfulness
+  proof under discounted expected profit is flagged as an open
+  theoretical question.
+- [x] **Confidence proxy specification.** c_i =
+  clip(exp(−β_c · Δ_i), c_min, c_max) with Δ_i = q_i(0.9) − q_i(0.1)
+  the 80%-interval width on the observed [0, 1] scale, defaults
+  β_c = 1.0, c_min = 0.8, c_max = 1.0. Implementation
+  `confidence_from_quantiles` in
+  `onlinev2/src/onlinev2/core/staking.py`. Now written out
+  explicitly in `30_mechanism_design.md` §3.1 Step 1 with lag
+  prerequisite for the Lambert argument.
 
 ## Bibliography entries to verify
 
-- [ ] Chen et al. 2014 — need to confirm the exact venue from
-  `research/arbitrage copy.pdf`. The paper title in our references is
-  "Gaming Prediction Markets" and the current entry in
-  `bibliography.md` §A says EC '13 — verify.
-- [ ] Lambert et al. 2008 two entries: the EC '08 paper is
-  `lambert2008selffinanced`; the elicitability paper is
-  `lambert2008eliciting`. DOIs: `10.1145/1386790.1386820` and
-  `10.1145/1386790.1386813`. Confirm the elicitability paper is
-  actually the EC '08 companion (it is on the same EC '08 programme).
+- [x] Chen et al. 2014 — venue confirmed as EC '14 (DOI
+  `10.1145/2600057.2602876`); bibliography `chen2014arbitrage` entry
+  is correct. The `theory_notes/chen_2014_gaming_prediction_markets.md`
+  note was rewritten to cite the correct paper authorship
+  (Chen, Devanur, Pennock, Vaughan — not the 2007 Chen-Dimitrov-Sami
+  "Gaming prediction markets" paper which is a different work).
+- [x] Lambert et al. 2008 two entries: the EC '08 paper is
+  `lambert2008selffinanced` (DOI `10.1145/1386790.1386820`,
+  pp. 170–179); the elicitability paper is `lambert2008eliciting`
+  (DOI `10.1145/1386790.1386813`, pp. 129–138). Both confirmed to be
+  on the EC '08 programme [verified via ACM digital library abstract
+  page].
 
 ## Final-sweep checks
 

@@ -19,5 +19,24 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Allow underscore-prefixed args/vars/catch params for intentional ignores.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
+      // Allow files that export both a component and helpers (tested in the
+      // same file or co-located by design). Fast Refresh still works because
+      // Vite only needs the file to have at least one component export.
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true, allowExportNames: ['groupAndFilterRows', 'deriveThreatTiers', 'FORECASTER_META', 'getLineOpacity', 'getLineStrokeWidth'] },
+      ],
+    },
   },
 ])

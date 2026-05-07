@@ -288,6 +288,39 @@ def plot_informed_collusion(ep) -> Optional[str]:
     return out
 
 
+def plot_reputation_reset(ep) -> Optional[str]:
+    """Grouped bars: attacker profit and number of identity resets per scenario."""
+    rows = _read_csv(ep.data("reputation_reset_summary.csv"))
+    if not rows:
+        return None
+    labels = [r["scenario"] for r in rows]
+    profits = [float(r["mean_attacker_profit"]) for r in rows]
+    lows = [float(r["ci_low"]) for r in rows]
+    highs = [float(r["ci_high"]) for r in rows]
+    resets = [float(r["mean_n_resets"]) for r in rows]
+    yerr = np.array([
+        [p - lo for p, lo in zip(profits, lows)],
+        [hi - p for p, hi in zip(profits, highs)],
+    ])
+    fig, ax = new_figure(figsize=(7.5, 4.2))
+    ax2 = ax.twinx()
+    x = np.arange(len(labels))
+    bars = ax.bar(x - 0.2, profits, width=0.4, color=COLORS["pink"],
+                  yerr=yerr, capsize=4, label="attacker profit")
+    ax2.bar(x + 0.2, resets, width=0.4, color=COLORS["teal"],
+            label="mean resets")
+    ax.axhline(0, color=COLORS["reference"], lw=0.8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=9)
+    ax.set_ylabel("Attacker profit (mean ± 95% CI)", color=COLORS["pink"])
+    ax2.set_ylabel("Mean number of resets", color=COLORS["teal"])
+    ax.set_title("Whitewashing / reputation-reset attack profile")
+    ax.grid(True, alpha=0.3, axis="y")
+    out = ep.plot("reputation_reset.png")
+    save_fig(fig, out)
+    return out
+
+
 def make_all_adversary_plots(ep) -> Dict[str, Optional[str]]:
     """Attempt each plot; return the paths of those successfully written."""
     out: Dict[str, Optional[str]] = {}
@@ -298,6 +331,7 @@ def make_all_adversary_plots(ep) -> Dict[str, Optional[str]]:
         ("collusion_stress", plot_collusion_stress),
         ("informed_collusion", plot_informed_collusion),
         ("insider_advantage", plot_insider_advantage),
+        ("reputation_reset", plot_reputation_reset),
         ("wash_activity_gaming", plot_wash_activity),
         ("strategic_reporting", plot_strategic_reporting),
         ("sybil_arbitrage", plot_sybil_arbitrage),

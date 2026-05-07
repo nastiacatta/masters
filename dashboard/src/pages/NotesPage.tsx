@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import PageShell from '@/components/dashboard/PageShell';
 
 const EXPERIMENTS = [
   {
@@ -150,8 +151,7 @@ export default function NotesPage() {
   const partialCount = EXPERIMENTS.filter((e) => e.status === 'partial').length;
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[960px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
+    <PageShell width="narrow">
 
         <header>
           <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
@@ -533,7 +533,6 @@ export default function NotesPage() {
             Back to main results
           </Link>
         </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }

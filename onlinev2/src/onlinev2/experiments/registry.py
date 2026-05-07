@@ -64,6 +64,7 @@ def get_behaviour_experiments(runner_module, write_summary: bool = None) -> List
         ("wash_activity_gaming", lambda: runner_module.run_wash_activity_gaming(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("strategic_reporting", lambda: runner_module.run_strategic_reporting(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("sybil_arbitrage", lambda: runner_module.run_sybil_arbitrage(outdir=_outdir(), block="behaviour", write_summary=ws)),
+        ("reputation_reset", lambda: runner_module.run_reputation_reset(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("identity_attack_matrix", lambda: runner_module.run_identity_attack_matrix(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("drift_adaptation", lambda: runner_module.run_drift_adaptation(outdir=_outdir(), block="behaviour", write_summary=ws)),
         ("stake_policy_matrix", lambda: runner_module.run_stake_policy_matrix(outdir=_outdir(), block="behaviour", write_summary=ws)),

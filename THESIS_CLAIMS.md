@@ -18,10 +18,11 @@ all Lambert-style combinatorial invariants hold on current code.
 
 ### Evidence
 
-- 13 of 13 combinatorial payoff invariants pass on current code
-  (`isBugCondition_Payoff` clauses 1.24–1.34, 1.36, 1.37).
-- 60 golden-value snapshots across 12 payoff-module functions × 5 seeds
-  prevent silent regression.
+- 13 of 13 active combinatorial payoff invariants pass on current
+  code (clauses 1.24–1.34, 1.36, 1.37; clause 1.35 michael_split
+  skipped pending Julia fixtures).
+- 80 golden-value snapshots across 16 payoff-module functions × 5
+  seeds prevent silent regression.
 - 35 `simulation.py` unit tests green; includes
   `unit_two_player_closed_form`, `unit_permutation_invariance`,
   `unit_zero_wager_dummy`, `unit_equal_score_zero_profit`,
@@ -95,6 +96,12 @@ On identical forecaster panels, the wager-weighted linear pool matches
 Michael's Vitali-style pinball-OGD reference within 0.3% CRPS on a
 stationary Elia wind slice.
 
+**Scope note.** This claim is explicitly on the 3000-point audit slice.
+On the full-length 17 344-hour run (Claim 9 below), the renamed
+`michael_ogd_centered_median_fan` baseline beats the mechanism by ~7.4
+pp CRPS (0.0349 vs 0.0379). The gap is real; it is the CRPS cost of
+keeping the Lambert budget-balance constraint on the long horizon.
+
 ### Evidence (3000-point Elia wind slice)
 
 | Rule | Mean CRPS | vs uniform |
@@ -125,6 +132,15 @@ Ratio mechanism / michael_ogd = 1.003×.
 
 On the same slice, XGBoost dominates the seven-forecaster panel and is
 correctly identified as top-skill by the mechanism's EWMA layer.
+
+**Scope note.** On the full-length expanding-mode run the XGBoost
+dominance is larger in absolute terms (XGBoost CRPS 0.0310 on
+`per_agent_crps` vs 0.0353 for ARIMA), and the σ ranking still
+reproduces the CRPS ranking exactly (Spearman = 1.0, verified via
+`scripts/verify_t6_spearman.py`). Absolute σ levels are lower on the
+full-length run than on the audit slice (XGBoost 0.808 vs 0.910) because
+expanding normalisation produces larger normalised losses than
+warmup-window normalisation on a 3000-point slice.
 
 ### Evidence (3000-point Elia wind slice)
 
@@ -460,3 +476,62 @@ all blocks; every other forecaster = 0.
 
 _Claim 9 added after the model-training-testing-audit spec landed and
 the dashboard JSONs were regenerated under the full fixed pipeline._
+
+---
+
+## Claim 10 — External validation against Elia's operational forecast
+
+A simple online XGBoost trained only on the observed wind series beats
+Elia's own published real-time operational forecast (which uses weather
+inputs) by ~6% in CRPS-MW-equivalent. The mechanism's aggregate of
+seven forecasters is ~13% worse than Elia's operational forecast
+because the panel mixes XGBoost with weaker models.
+
+### Evidence (full 17 344-hour Elia wind series, 2024–2025)
+
+CRPS-MW-equivalent scale (normalised CRPS × (series_max − series_min)
+with series_max = 2208.7 MW, series_min = 0 MW):
+
+| Forecast source | CRPS (MW-equiv) | Source |
+|---|---:|---|
+| Elia `mostrecentforecast` (real-time, NWP) | 74.0 | Elia public data |
+| Elia `dayaheadforecast` (day-ahead, NWP) | 98.6 | Elia public data |
+| Elia `dayahead11hforecast` | 102.7 | Elia public data |
+| Elia `weekaheadforecast` | 372.4 | Elia public data |
+| **our best_single (online XGBoost)** | **69.5** | This thesis |
+| our per_round_inv_crps_hindsight (oracle) | 70.1 | This thesis |
+| our median | 81.7 | This thesis |
+| our mechanism | 83.7 | This thesis |
+| our uniform | 90.1 | This thesis |
+
+### Interpretation
+
+- **XGBoost on observed series beats Elia's NWP-driven real-time
+  forecast by ~6%.** The online model uses only lag features of the
+  measured wind power; Elia's operational forecast uses weather
+  inputs and a physical model. This is a meaningful baseline for
+  anyone building wind-forecasting systems from scratch.
+- **Mechanism is ~13% worse than Elia's real-time forecast.** When
+  aggregating the seven-forecaster panel, the mechanism averages
+  XGBoost (83.7 MW) with weaker models (Theta at ~149 MW, EWMA at
+  ~139 MW), giving a composite that trails Elia's single-best
+  operational forecast.
+- **Elia's interval forecasts are systematically miscalibrated.**
+  τ = 0.10 nominal gives 19.1% empirical coverage (should be 10%),
+  τ = 0.90 gives 94.6% (should be 90%). This is a known property of
+  operational NWP forecasts and motivates the recalibration layer
+  (Claim 7).
+
+### Sources
+
+- Output JSON: [`onlinev2/outputs/elia_forecast_baseline.json`](onlinev2/outputs/elia_forecast_baseline.json)
+- Script: [`scripts/compute_elia_forecast_baseline.py`](scripts/compute_elia_forecast_baseline.py)
+- Data: [`data/elia_offshore_wind_2024_2025.csv`](data/elia_offshore_wind_2024_2025.csv)
+  (columns `measured`, `mostrecentforecast`, `dayaheadforecast`,
+  `dayahead11hforecast`, `weekaheadforecast`,
+  `mostrecentconfidence10`, `mostrecentconfidence90`).
+
+---
+
+_Claim 10 added as the Elia operational-forecast comparison result
+from the training-audit spec, May 2026._

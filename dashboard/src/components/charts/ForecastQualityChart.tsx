@@ -53,26 +53,35 @@ export default function ForecastQualityChart({ data }: Props) {
         <LineChart
           data={data}
           syncId="round-window"
-          margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
+          margin={{ top: 12, right: 28, bottom: 32, left: 44 }}
           onMouseDown={zoom.onMouseDown}
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" strokeOpacity={0.8} />
           <XAxis
             dataKey="t"
-            tick={{ fontSize: 14 }}
-            stroke="#94a3b8"
+            tick={{ fontSize: 12, fill: '#5a6175' }}
+            stroke="#8c92a3"
             domain={[zoom.state.left, zoom.state.right]}
-            label={{ value: 'Round', position: 'insideBottom', offset: -2, fontSize: 14 }}
+            label={{ value: 'Round', position: 'insideBottom', offset: -8, fontSize: 12, fill: '#5a6175' }}
           />
-          <YAxis tick={{ fontSize: 14 }} stroke="#94a3b8" label={{ value: 'CRPS', angle: -90, position: 'insideLeft', fontSize: 13, fill: '#64748b' }} />
+          <YAxis
+            tick={{ fontSize: 12, fill: '#5a6175' }}
+            stroke="#8c92a3"
+            label={{ value: 'CRPS', angle: -90, position: 'insideLeft', offset: 4, fontSize: 12, fill: '#5a6175' }}
+          />
           <Tooltip
-            contentStyle={{ fontSize: 13, borderRadius: 8, border: '1px solid #e2e8f0' }}
+            contentStyle={{
+              fontSize: 12, borderRadius: 6,
+              border: '1px solid #d1d5db',
+              background: 'rgba(255, 253, 248, 0.98)',
+              boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18)',
+            }}
             formatter={(value: unknown, name: unknown) => [typeof value === 'number' ? value.toFixed(5) : String(value ?? ''), metricLabel(String(name ?? ''))]}
           />
           <Legend
-            wrapperStyle={{ fontSize: 13, cursor: 'pointer' }}
+            wrapperStyle={{ fontSize: 12, cursor: 'pointer', paddingTop: 8 }}
             formatter={(v: string) => metricLabel(v)}
             onClick={(e) => {
               if (e?.dataKey) toggleSeries(String(e.dataKey));
@@ -93,7 +102,7 @@ export default function ForecastQualityChart({ data }: Props) {
             />
           ))}
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#6366f1" fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#1d3461" fillOpacity={0.1} />
           )}
         </LineChart>
       </ResponsiveContainer>

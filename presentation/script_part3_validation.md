@@ -149,7 +149,7 @@ The overall picture: the mechanism resists the standard attacks. Sybil splitting
   5. Real data validation: −7.1% CRPS on Elia wind with 7 forecasters under strictly-causal normalisation (pre-audit deck cited −34%)
   6. Modular simulation platform (onlinev2) with test suite and dashboard
 - Limitations:
-  - Tail calibration: under-dispersion ~5 pp in tails (inherent to quantile averaging)
+  - Tail calibration: Ranjan–Gneiting linear-pool pattern, mean tail deviation ~1.7 pp (59% closed by rolling isotonic recalibration)
   - Equal weights competitive on electricity dataset (gains conditional on heterogeneity)
   - Truthfulness holds under risk neutrality only (Lambert assumption)
 - Closing: "Can aggregate forecasts improve when influence depends on learned skill? Conditionally yes. The strongest lever is deposit design."
@@ -162,7 +162,7 @@ The strongest empirical finding is that deposit design matters more than the wei
 
 Critically, this is not just synthetic. On real Elia wind power data — seventeen thousand five hundred and forty-four hourly observations, seven real forecasters including ARIMA, XGBoost, and a neural network — the mechanism achieves a seven-point-one per cent CRPS improvement over equal weights under strictly-causal normalisation. On electricity data the improvement is essentially zero, confirming that gains are conditional on forecaster heterogeneity.
 
-The main limitations: tail calibration shows under-dispersion of about five percentage points, equal weights remain competitive when forecasters are similar in quality, and truthfulness holds only under risk neutrality.
+The main limitations: tail calibration shows the Ranjan–Gneiting linear-pool pattern with a mean tail deviation of about 1.7 percentage points on the audit slice, of which the rolling isotonic recalibration layer closes 59 per cent; equal weights remain competitive when forecasters are similar in quality; and truthfulness holds only under risk neutrality.
 
 This thesis asked whether aggregate forecasts improve when influence depends not only on stake but also on learned skill. The answer is conditionally yes. The mechanism is correct, the skill signal is meaningful, and the gains are real — both on synthetic benchmarks and on real energy data.
 

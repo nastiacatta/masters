@@ -6,7 +6,7 @@ import { EMPHASIS, PALETTE } from './presentationConstants';
  */
 
 const METHOD_NAMES = /\b(WSWM|EWMA|CRPS|sybilproofness|budget balance|sybilproof)\b/g;
-const NUMERIC_PATTERNS = /([−\-]?\d+\.?\d*%|[−\-]?\d+\.\d{4,}|\d+\s*[×x]\s*10[⁻\-]?\d+)/g;
+const NUMERIC_PATTERNS = /([−-]?\d+\.?\d*%|[−-]?\d+\.\d{4,}|\d+\s*[×x]\s*10[⁻-]?\d+)/g;
 
 export function formatBulletText(text: string): React.ReactNode {
   // Lines starting with [!] get full warning styling — don't do inline numeric detection

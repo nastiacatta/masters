@@ -149,8 +149,8 @@ export default function TradeOffScatter({
       }}
       chartType="Scatter chart"
     >
-      <ResponsiveContainer width="100%" height={400}>
-        <ScatterChart margin={{ top: 24, right: 100, bottom: 24, left: 16 }}>
+      <ResponsiveContainer width="100%" height={420}>
+        <ScatterChart margin={{ top: 28, right: 96, bottom: 36, left: 32 }}>
           <CartesianGrid {...GRID_PROPS} />
           <XAxis
             type="number"

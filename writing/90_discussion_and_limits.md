@@ -28,8 +28,9 @@
   inside any Bonferroni-adjusted threshold.
 - **Competitive with Elia's operational forecast.** Best_single
   (XGBoost on observed series only) beats Elia's real-time forecast
-  by ~15% CRPS-MW-eq; the mechanism ends up roughly on par. No
-  external weather inputs are used.
+  by ~6% CRPS-MW-eq (69.5 vs 74.0 MW); the mechanism ends up ~13%
+  worse than Elia's operational forecast because it averages in
+  weaker models. No external weather inputs are used.
 
 ## 9.2 What the mechanism does not do
 
@@ -64,8 +65,8 @@ the easiest way to lose a reviewer.
   by 16.9% CRPS because wind power is highly autocorrelated and the
   single best model captures most of the structure. This is an honest
   ceiling on what any aggregator can achieve. In CRPS-MW-equivalent
-  terms, best_single reaches 62.6 MW while the mechanism averages to
-  76.2 MW.
+  terms, best_single reaches 69.5 MW while the mechanism averages to
+  83.7 MW.
 - **Linear-pool tail miscalibration is inevitable.** Ranjan and
   Gneiting 2010: any non-trivial weighted average of distinct
   calibrated forecasts is necessarily uncalibrated. The mechanism's
@@ -214,8 +215,9 @@ hold on Elia electricity imbalance prices, where the mechanism is
 statistically indistinguishable from uniform. Under both conditions
 the economic structure of Lambert's framework survives the addition
 of online learning. A simple online XGBoost beats Elia's operational
-real-time forecast by 15% CRPS-MW-eq, and the mechanism ends up
-roughly on par with Elia's forecast without using any weather inputs.
+real-time forecast by ~6% CRPS-MW-eq (69.5 vs 74.0 MW), and the
+mechanism lands ~13% worse than Elia's forecast without using any
+weather inputs.
 The CRPS-only picture is not a win; the combination-puzzle regime is
 real. The contribution is the preserved economic structure and the
 online adaptivity, both demonstrated on real grid data.

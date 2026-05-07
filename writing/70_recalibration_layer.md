@@ -138,10 +138,10 @@ the base forecast's miscalibration pattern is stationary.
 We operate in an online setting with potential non-stationarity
 (regime shifts in wind-power seasonality, intraday cycle changes in
 electricity). The adversarial/online-regret version of the KFE
-procedure is Kuleshov and Deshpande 2022 (ICML; arXiv:2302.12196)
-*Calibrated Regression Against An Adversary Without Regret*, which
-relaxes the IID assumption at the cost of finite-horizon calibration
-guarantees rather than asymptotic ones. A rolling buffer of size 500 is
+procedure is Deshpande and Kuleshov 2023/2025 (arXiv:2302.12196,
+published PMLR v286, 2025) *Calibrated Regression Against An Adversary
+Without Regret*, which relaxes the IID assumption at the cost of
+finite-horizon calibration guarantees rather than asymptotic ones. A rolling buffer of size 500 is
 an intermediate design choice between the two: it keeps the simple IID
 KFE estimator but bounds the influence of any one regime. This trades
 a small amount of steady-state calibration accuracy for the ability to
