@@ -151,7 +151,7 @@ export default function NotesPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[900px] mx-auto px-8 pt-14 pb-20 space-y-12">
+      <div className="max-w-[960px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
 
         <header>
           <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
@@ -174,7 +174,7 @@ export default function NotesPage() {
               fontSize: 18,
               lineHeight: 1.55,
               color: 'var(--ink-muted)',
-              maxWidth: 680,
+              maxWidth: 820,
             }}
           >
             Experiments probing extensions and variants of the skill &times; stake mechanism. Each synthetic
@@ -245,16 +245,33 @@ export default function NotesPage() {
           </div>
         </nav>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {EXPERIMENTS.map((exp, i) => (
             <section
               key={exp.id}
               id={exp.id}
-              className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150"
+              className="scroll-mt-24 space-y-4"
+              style={{
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+                padding: 22,
+                boxShadow: 'var(--shadow-sm)',
+              }}
             >
               <div className="flex items-start gap-4">
                 <span
-                  className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-[11px] font-mono font-bold text-slate-500 shrink-0"
+                  className="mt-0.5 flex items-center justify-center shrink-0 font-mono"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 4,
+                    background: 'var(--cream)',
+                    border: '1px solid var(--border)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'var(--ink-soft)',
+                  }}
                   aria-hidden="true"
                 >
                   {String(i + 1).padStart(2, '0')}
@@ -263,64 +280,207 @@ export default function NotesPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <StatusPill status={exp.status} />
                   </div>
-                  <h2 className="text-[15px] font-semibold text-slate-900 mt-2 tracking-tight">{exp.title}</h2>
-                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">{exp.finding}</p>
+                  <h2
+                    className="font-serif tracking-tight mt-2"
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {exp.title}
+                  </h2>
+                  <p
+                    className="mt-2"
+                    style={{ fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.6 }}
+                  >
+                    {exp.finding}
+                  </p>
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50/50">
-                <table className="w-full text-xs">
+              <div
+                className="overflow-x-auto"
+                style={{ border: '1px solid var(--border)', borderRadius: 4 }}
+              >
+                <table className="w-full" style={{ fontSize: 12.5 }}>
                   <thead>
-                    <tr className="border-b border-slate-200 bg-white">
-                      <th className="text-left py-2 pl-4 pr-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Variant</th>
-                      <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Δ CRPS</th>
-                      <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">% vs equal</th>
-                      <th className="text-center py-2 pl-3 pr-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Sig.</th>
+                    <tr
+                      style={{
+                        background: 'var(--cream)',
+                        borderBottom: '1px solid var(--border)',
+                      }}
+                    >
+                      <th
+                        className="text-left uppercase"
+                        style={{
+                          padding: '10px 16px',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          letterSpacing: '0.12em',
+                          color: 'var(--ink-soft)',
+                        }}
+                      >
+                        Variant
+                      </th>
+                      <th
+                        className="text-right uppercase"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          letterSpacing: '0.12em',
+                          color: 'var(--ink-soft)',
+                        }}
+                      >
+                        Δ CRPS
+                      </th>
+                      <th
+                        className="text-right uppercase"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          letterSpacing: '0.12em',
+                          color: 'var(--ink-soft)',
+                        }}
+                      >
+                        % vs equal
+                      </th>
+                      <th
+                        className="text-center uppercase"
+                        style={{
+                          padding: '10px 16px',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          letterSpacing: '0.12em',
+                          color: 'var(--ink-soft)',
+                        }}
+                      >
+                        Sig.
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {exp.data.map((row) => (
-                      <tr key={row.label} className="border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
-                        <td className="py-2 pl-4 pr-4 text-slate-700 font-medium">{row.label}</td>
-                        <td className={`text-right py-2 px-3 font-mono tabular-nums ${row.delta.startsWith('-') ? 'text-emerald-600 font-semibold' : 'text-slate-500'}`}>
-                          {row.delta}
-                        </td>
-                        <td className={`text-right py-2 px-3 font-mono tabular-nums ${row.pct.startsWith('+') && row.sig ? 'text-emerald-600 font-semibold' : 'text-slate-500'}`}>
-                          {row.pct}
-                        </td>
-                        <td className="text-center py-2 pl-3 pr-4">
-                          {row.sig ? (
-                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 text-emerald-600" aria-label="Significant">
-                              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </span>
-                          ) : (
-                            <span className="text-slate-300" aria-label="Not significant">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {exp.data.map((row, rowIdx, arr) => {
+                      const isLast = rowIdx === arr.length - 1;
+                      const deltaNeg = row.delta.startsWith('-');
+                      const pctPos = row.pct.startsWith('+') && row.sig;
+                      return (
+                        <tr
+                          key={row.label}
+                          style={{
+                            borderBottom: isLast ? 'none' : '1px solid var(--border)',
+                          }}
+                        >
+                          <td
+                            style={{
+                              padding: '8px 16px',
+                              color: 'var(--ink)',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {row.label}
+                          </td>
+                          <td
+                            className="text-right font-mono tabular-nums"
+                            style={{
+                              padding: '8px 12px',
+                              color: deltaNeg ? 'var(--teal-deep)' : 'var(--ink-soft)',
+                              fontWeight: deltaNeg ? 600 : 400,
+                            }}
+                          >
+                            {row.delta}
+                          </td>
+                          <td
+                            className="text-right font-mono tabular-nums"
+                            style={{
+                              padding: '8px 12px',
+                              color: pctPos ? 'var(--teal-deep)' : 'var(--ink-soft)',
+                              fontWeight: pctPos ? 600 : 400,
+                            }}
+                          >
+                            {row.pct}
+                          </td>
+                          <td
+                            className="text-center"
+                            style={{ padding: '8px 16px' }}
+                          >
+                            {row.sig ? (
+                              <span
+                                className="inline-flex items-center justify-center"
+                                style={{
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: '50%',
+                                  background: 'var(--teal-tint)',
+                                  color: 'var(--teal-deep)',
+                                }}
+                                aria-label="Significant"
+                              >
+                                <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                  <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--ink-faint)' }} aria-label="Not significant">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
-              <div className="flex gap-2 items-start rounded-lg bg-indigo-50/60 border-l-2 border-indigo-300 px-3 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 mt-0.5 shrink-0">
+              <div
+                className="flex gap-3 items-start px-4 py-3"
+                style={{
+                  background: 'var(--navy-tint)',
+                  borderLeft: '3px solid var(--navy)',
+                  borderRadius: 4,
+                }}
+              >
+                <span
+                  className="uppercase shrink-0 mt-0.5"
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.14em',
+                    color: 'var(--navy)',
+                  }}
+                >
                   Implication
                 </span>
-                <p className="text-xs text-indigo-900/80 leading-relaxed">{exp.implication}</p>
+                <p style={{ fontSize: 13, color: 'var(--navy-ink)', lineHeight: 1.55 }}>
+                  {exp.implication}
+                </p>
               </div>
             </section>
           ))}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-            <span className="w-1 h-4 rounded bg-teal-500" />
+        <div
+          className="p-6"
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <h3
+            className="font-serif mb-3 tracking-tight flex items-center gap-2.5"
+            style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}
+          >
+            <span
+              className="inline-block"
+              style={{ width: 3, height: 16, background: 'var(--teal)', borderRadius: 2 }}
+            />
             Methodology
           </h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.65 }}>
             Synthetic experiments use the latent-fixed data-generating process with 10 heterogeneous
             forecasters (noise levels &tau; &isin; [0.15, 1.0]), T = 500 rounds, 20% missingness, and CRPS
             scoring. Each seed generates the same ground truth, reports, and missingness pattern; only the

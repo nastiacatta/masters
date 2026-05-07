@@ -103,17 +103,17 @@ export default function SensitivityPanel({ summary }: SensitivityPanelProps) {
                   data={paramPoints}
                   margin={{ top: 8, right: 12, left: 10, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" strokeOpacity={0.7} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.7} />
                   <XAxis
                     dataKey="paramValue"
                     tick={{ fontSize: 10, fill: '#5a6175' }}
                     tickLine={false}
-                    axisLine={{ stroke: '#d3ccb9' }}
+                    axisLine={{ stroke: '#d1d5db' }}
                   />
                   <YAxis
                     tick={{ fontSize: 10, fill: '#5a6175' }}
                     tickLine={false}
-                    axisLine={{ stroke: '#d3ccb9' }}
+                    axisLine={{ stroke: '#d1d5db' }}
                     tickFormatter={(v: number) => v.toFixed(3)}
                   />
                   <Tooltip

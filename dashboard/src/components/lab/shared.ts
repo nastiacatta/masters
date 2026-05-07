@@ -14,11 +14,11 @@ export const CHART_MARGIN_LABELED = { top: 16, right: 24, bottom: 28, left: 52 }
 export const AXIS_TICK = { fontSize: 13, fill: '#5a6175' };
 export const AXIS_STROKE = '#8c92a3';
 
-export const GRID_PROPS = { strokeDasharray: '3 3', stroke: '#e4dfd3', strokeOpacity: 0.7 } as const;
+export const GRID_PROPS = { strokeDasharray: '3 3', stroke: '#e5e7eb', strokeOpacity: 0.7 } as const;
 
 export const TOOLTIP_STYLE: CSSProperties = {
   borderRadius: 6,
-  border: '1px solid #d3ccb9',
+  border: '1px solid #d1d5db',
   boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 12px -4px rgba(15, 23, 42, 0.08)',
   fontSize: 13,
   padding: '10px 14px',

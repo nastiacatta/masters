@@ -12,6 +12,10 @@ interface StepCardProps {
   isActive?: boolean;
 }
 
+/**
+ * Academic step card — navy filled step badge with a serif numeral,
+ * warm paper surface, and a subtle expand-details affordance.
+ */
 export default function StepCard({
   stepNumber,
   title,
@@ -24,44 +28,68 @@ export default function StepCard({
 
   return (
     <section
-      className={clsx(
-        'rounded-xl border bg-white transition-all duration-150',
-        isActive
-          ? 'border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-slate-300'
-          : 'border-slate-100 bg-slate-50/40',
-      )}
+      className="transition-all duration-150"
+      style={{
+        background: isActive ? 'var(--card)' : 'var(--cream)',
+        border: `1px solid ${isActive ? 'var(--border)' : 'var(--border)'}`,
+        borderRadius: 6,
+        boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+      }}
       aria-labelledby={`step-${stepNumber}-title`}
     >
-      <div className="p-4 sm:p-5">
-        <div className="flex items-start gap-3">
+      <div className="p-5 sm:p-6">
+        <div className="flex items-start gap-4">
           <div
-            className={clsx(
-              'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold shadow-sm',
-            )}
+            className="flex shrink-0 items-center justify-center rounded-full"
             style={{
+              width: 34,
+              height: 34,
+              fontSize: 15,
+              fontWeight: 600,
               background: isActive ? 'var(--navy)' : 'var(--cream)',
               color: isActive ? '#fbf9f4' : 'var(--ink-soft)',
               fontFamily: 'var(--font-serif)',
               border: isActive ? 'none' : '1px solid var(--border-strong)',
+              boxShadow: isActive ? '0 1px 2px rgba(29, 52, 97, 0.2)' : 'none',
             }}
           >
             {stepNumber}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 id={`step-${stepNumber}-title`} className="text-base font-semibold text-slate-800 tracking-tight">
+            <h2
+              id={`step-${stepNumber}-title`}
+              className="font-serif tracking-tight"
+              style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.3 }}
+            >
               {title}
             </h2>
             {description && (
-              <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{description}</p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: 'var(--ink-soft)',
+                  lineHeight: 1.55,
+                  marginTop: 4,
+                }}
+              >
+                {description}
+              </p>
             )}
-            <div className="mt-3">{children}</div>
+            <div className="mt-4">{children}</div>
             {expandable && (
-              <div className="mt-3">
+              <div className="mt-4">
                 <button
                   type="button"
                   onClick={() => setExpanded((e) => !e)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-800 transition-colors"
+                  className="inline-flex items-center gap-1 transition-colors"
                   aria-expanded={expanded}
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: 'var(--navy)',
+                  }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--navy-ink)'; }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--navy)'; }}
                 >
                   <svg
                     width="12"
@@ -71,12 +99,29 @@ export default function StepCard({
                     aria-hidden="true"
                     className={clsx('transition-transform duration-150', expanded && 'rotate-90')}
                   >
-                    <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M6 4l4 4-4 4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   {expanded ? 'Hide details' : 'Show sub-components'}
                 </button>
                 {expanded && (
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/80 p-3 text-xs text-slate-600 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div
+                    className="mt-3 animate-in fade-in slide-in-from-top-1 duration-150"
+                    style={{
+                      background: 'var(--cream)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 4,
+                      padding: 12,
+                      fontSize: 13,
+                      color: 'var(--ink-soft)',
+                      lineHeight: 1.55,
+                    }}
+                  >
                     {expandable}
                   </div>
                 )}

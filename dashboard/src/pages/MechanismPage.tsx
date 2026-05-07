@@ -135,7 +135,7 @@ export default function MechanismPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[1100px] mx-auto px-8 pt-14 pb-20 space-y-12">
+      <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
         {/* ── Header ── */}
         <div>
           <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
@@ -158,7 +158,7 @@ export default function MechanismPage() {
               fontSize: 18,
               lineHeight: 1.55,
               color: 'var(--ink-muted)',
-              maxWidth: 680,
+              maxWidth: 820,
             }}
           >
             Interactive sandbox for exploring the mechanism. Change parameters, step through rounds, and

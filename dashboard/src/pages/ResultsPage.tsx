@@ -137,33 +137,41 @@ const METHOD_CHART_LABELS: Record<string, string> = {
 type Verdict = 'good' | 'neutral' | 'bad';
 
 
-const VERDICT_BORDER: Record<Verdict, string> = {
-  good: 'border-l-emerald-500',
-  neutral: 'border-l-amber-400',
-  bad: 'border-l-red-400',
-};
-const VERDICT_TEXT: Record<Verdict, string> = {
-  good: 'text-emerald-600',
-  neutral: 'text-amber-600',
-  bad: 'text-red-600',
-};
-const VERDICT_BG: Record<Verdict, string> = {
-  good: 'bg-gradient-to-br from-emerald-50 to-emerald-50/30',
-  neutral: 'bg-gradient-to-br from-amber-50 to-amber-50/30',
-  bad: 'bg-gradient-to-br from-red-50 to-red-50/30',
-};
-const VERDICT_ICON: Record<Verdict, { bg: string; path: ReactNode }> = {
+const VERDICT_CONFIG: Record<Verdict, {
+  border: string;
+  tint: string;
+  fg: string;
+  iconBg: string;
+  title: string;
+  body: string;
+  path: ReactNode;
+}> = {
   good: {
-    bg: 'bg-emerald-500',
-    path: <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />,
+    border: 'var(--teal)',
+    tint:   'var(--teal-tint)',
+    fg:     'var(--teal-deep)',
+    iconBg: 'var(--teal)',
+    title:  '#134f48',
+    body:   '#1e5c55',
+    path:   <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />,
   },
   neutral: {
-    bg: 'bg-amber-500',
-    path: <path d="M4 8H12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />,
+    border: 'var(--amber)',
+    tint:   'var(--amber-tint)',
+    fg:     '#78350f',
+    iconBg: 'var(--amber)',
+    title:  '#78350f',
+    body:   '#5c2a07',
+    path:   <path d="M4 8H12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />,
   },
   bad: {
-    bg: 'bg-red-500',
-    path: <><path d="M4 4L12 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /><path d="M12 4L4 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /></>,
+    border: 'var(--crimson)',
+    tint:   'var(--crimson-tint)',
+    fg:     'var(--crimson)',
+    iconBg: 'var(--crimson)',
+    title:  '#6a1221',
+    body:   '#7a1628',
+    path:   <><path d="M4 4L12 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /><path d="M12 4L4 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /></>,
   },
 };
 
@@ -172,27 +180,57 @@ function AnswerCard({
 }: {
   question: string; answer: string; detail: string; verdict: Verdict; explanation: string;
 }) {
-  const icon = VERDICT_ICON[verdict];
+  const cfg = VERDICT_CONFIG[verdict];
   return (
     <div
-      className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-5 space-y-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-shadow duration-150`}
+      className="p-5 space-y-3 transition-colors"
+      style={{
+        background: cfg.tint,
+        border: '1px solid var(--border)',
+        borderLeft: `3px solid ${cfg.border}`,
+        borderRadius: 4,
+        boxShadow: 'var(--shadow-sm)',
+      }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="text-xs font-semibold text-slate-700 leading-relaxed">{question}</div>
+        <div
+          className="font-serif"
+          style={{ fontSize: 13.5, fontWeight: 600, color: cfg.title, lineHeight: 1.55 }}
+        >
+          {question}
+        </div>
         <span
-          className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${icon.bg} text-white shadow-sm shrink-0`}
+          className="inline-flex items-center justify-center shrink-0"
           aria-hidden="true"
+          style={{
+            width: 24, height: 24,
+            borderRadius: '50%',
+            background: cfg.iconBg,
+            color: '#fff',
+          }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            {icon.path}
+            {cfg.path}
           </svg>
         </span>
       </div>
       <div className="flex items-baseline gap-3 flex-wrap">
-        <span className={`text-2xl font-bold font-mono tabular-nums ${VERDICT_TEXT[verdict]}`}>{answer}</span>
-        <span className="text-xs text-slate-500 font-mono">{detail}</span>
+        <span
+          className="font-serif font-mono tabular-nums"
+          style={{ fontSize: 28, fontWeight: 700, color: cfg.fg, lineHeight: 1.1 }}
+        >
+          {answer}
+        </span>
+        <span
+          className="font-mono"
+          style={{ fontSize: 12, color: cfg.body, opacity: 0.8 }}
+        >
+          {detail}
+        </span>
       </div>
-      <p className="text-xs text-slate-600 leading-relaxed">{explanation}</p>
+      <p style={{ fontSize: 13, color: cfg.body, lineHeight: 1.6 }}>
+        {explanation}
+      </p>
     </div>
   );
 }
@@ -775,7 +813,7 @@ export default function ResultsPage() {
     <div className="flex-1 overflow-y-auto">
       <FigureProvider>
       <EquationProvider>
-      <div className="max-w-[1100px] mx-auto px-8 pt-14 pb-20 space-y-12">
+      <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
         <Breadcrumb activeTab={activeTab} />
 
         {/* ── Header ── */}

@@ -35,16 +35,35 @@ const COMPONENTS = [
 
 export default function CoreSubComponents() {
   return (
-    <ul className="space-y-3">
-      {COMPONENTS.map((c) => (
-        <li key={c.id} className="border-b border-slate-200 pb-3 last:border-0 last:pb-0">
-          <p className="font-medium text-slate-700">{c.name}</p>
-          <p className="mt-1">
-            <MathBlock inline latex={c.formula} />
-          </p>
-          <p className="mt-1 text-slate-500">{c.desc}</p>
-        </li>
-      ))}
+    <ul className="space-y-0">
+      {COMPONENTS.map((c, i) => {
+        const isLast = i === COMPONENTS.length - 1;
+        return (
+          <li
+            key={c.id}
+            style={{
+              padding: '14px 0',
+              borderBottom: isLast ? 'none' : '1px solid var(--border)',
+            }}
+          >
+            <p
+              className="font-serif tracking-tight"
+              style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+            >
+              {c.name}
+            </p>
+            <p className="mt-2">
+              <MathBlock inline latex={c.formula} />
+            </p>
+            <p
+              className="mt-2"
+              style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ink-soft)' }}
+            >
+              {c.desc}
+            </p>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -7,6 +7,9 @@ interface SkeletonProps {
   variant?: 'rect' | 'circle' | 'text';
 }
 
+/**
+ * Warm skeleton loader — matches the paper palette.
+ */
 export default function Skeleton({
   width,
   height,
@@ -16,13 +19,17 @@ export default function Skeleton({
   return (
     <div
       className={clsx(
-        'animate-pulse bg-slate-200',
+        'animate-pulse',
         variant === 'circle' && 'rounded-full',
         variant === 'text' && 'rounded h-3',
-        variant === 'rect' && 'rounded-xl',
+        variant === 'rect' && 'rounded-md',
         className,
       )}
-      style={{ width, height }}
+      style={{
+        width,
+        height,
+        background: 'var(--border)',
+      }}
       aria-hidden="true"
     />
   );

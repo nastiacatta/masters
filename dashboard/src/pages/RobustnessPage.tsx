@@ -82,7 +82,7 @@ export default function RobustnessPage() {
     <div className="flex-1 overflow-y-auto">
     <FigureProvider>
     <EquationProvider>
-    <div className="max-w-[1100px] mx-auto px-8 pt-14 pb-20 space-y-12">
+    <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
       <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
       <div>
         <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
@@ -105,13 +105,13 @@ export default function RobustnessPage() {
             fontSize: 18,
             lineHeight: 1.55,
             color: 'var(--ink-muted)',
-            maxWidth: 680,
+            maxWidth: 820,
           }}
         >
           Does the mechanism hold up under missingness, identity splitting, and parameter variation?
         </p>
         <div
-          className="mt-5 flex items-start gap-2.5 px-4 py-3 max-w-2xl"
+          className="mt-5 flex items-start gap-2.5 px-4 py-3 max-w-3xl"
           style={{
             background: 'var(--amber-tint)',
             border: '1px solid rgba(180, 83, 9, 0.22)',
@@ -135,7 +135,7 @@ export default function RobustnessPage() {
 
       <RobustnessVerdictStrip bursty={burstyPipeline} baseline={baselinePipeline} sybil={sybilPipeline} sweep={sweepData} nAgents={N_AGENTS} />
 
-      <p className="text-sm text-slate-600 mb-6 max-w-2xl leading-relaxed">
+      <p className="text-sm text-slate-600 mb-6 max-w-3xl leading-relaxed">
         The following sections examine three dimensions of robustness: tolerance to intermittent participation, resistance to identity splitting (Sybil attacks), and sensitivity to key mechanism parameters.
       </p>
 

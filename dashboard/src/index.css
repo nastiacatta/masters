@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 /* ──────────────────────────────────────────────────────────────
-   Academic palette — restrained but colourful
+   Academic palette — clean white with restrained accents
    ──────────────────────────────────────────────────────────────
    ink        #0b1220   near-black, for display type
-   paper      #fbf9f4   warm off-white background
-   cream      #f5f1e8   sidebar / alt surface
-   border     #e4dfd3   warm, low-contrast rule
+   paper      #ffffff   clean white background
+   cream      #f7f7f8   sidebar / alt surface (very light neutral)
+   border     #e5e7eb   neutral low-contrast rule
    rule       #2c3347   dark keyline for accents
 
    navy       #1d3461   primary accent, headings
@@ -19,12 +19,12 @@
    ────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Surfaces */
-  --paper: #fbf9f4;
-  --cream: #f5f1e8;
+  /* Surfaces — clean white with neutral greys */
+  --paper: #ffffff;
+  --cream: #f7f7f8;
   --card:  #ffffff;
-  --border:     #e8e2d2;
-  --border-strong: #d3ccb9;
+  --border:        #e5e7eb;
+  --border-strong: #d1d5db;
 
   /* Ink */
   --ink:        #0b1220;
@@ -68,9 +68,9 @@
   --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px -6px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 2px 4px rgba(15, 23, 42, 0.04), 0 16px 40px -12px rgba(15, 23, 42, 0.12);
 
-  /* Font stacks */
-  --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Source Serif 4', 'Charter', 'Iowan Old Style', Georgia, serif;
+  /* Font stacks — Avenir (sans) + Latin Modern Roman (serif display) */
+  --font-sans:  'Avenir Next', 'Avenir', 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Latin Modern Roman', 'Computer Modern', 'Latin Modern', 'Iowan Old Style', 'Charter', Georgia, serif;
   --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Legacy aliases used by existing code */
@@ -93,7 +93,6 @@ body {
   font-family: var(--font-sans);
   font-size: var(--fs-md);
   line-height: var(--lh-normal);
-  font-feature-settings: 'cv11', 'ss01', 'ss03';
   background: var(--paper);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -168,10 +167,10 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); font-weight: 600; }
   border: 2px solid transparent;
 }
 
-/* Recharts tune — slightly warmer grid lines */
+/* Recharts tune — neutral grid lines */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: #e4dfd3;
+  stroke: #e5e7eb;
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -355,6 +354,49 @@ main .text-xs    { font-size: 12.5px; }
 main .text-\[11px\] { font-size: 12px !important; }
 main .text-\[10px\] { font-size: 11px !important; }
 
+/* Specific extra harmonisation — rounded pills/buttons look mechanical at 999 */
+main button.rounded-full,
+main span.rounded-full,
+main a.rounded-full { border-radius: 999px !important; }
+
+/* Make the sky / fuchsia / pink accent chips behave */
+main .text-sky-600,
+main .text-sky-700 { color: var(--navy) !important; }
+main .bg-sky-50    { background-color: var(--navy-tint) !important; }
+main .border-sky-200 { border-color: rgba(29, 52, 97, 0.22) !important; }
+
+main .text-blue-600,
+main .text-blue-700 { color: var(--navy) !important; }
+main .bg-blue-50    { background-color: var(--navy-tint) !important; }
+main .border-blue-200 { border-color: rgba(29, 52, 97, 0.22) !important; }
+
+/* Tighter radius on modal/overlay that still use rounded-2xl */
+main .rounded-2xl > div.p-5,
+main .rounded-2xl > div.p-6 { border-radius: inherit; }
+
+/* Any stray text-emerald-* or bg-emerald-* 500/600 for iconography */
+main .bg-emerald-400, main .bg-emerald-500, main .bg-emerald-600 {
+  background-color: var(--teal) !important;
+}
+main .text-emerald-500, main .text-emerald-600 { color: var(--teal) !important; }
+
+main .bg-amber-400, main .bg-amber-500 { background-color: var(--amber) !important; }
+main .bg-red-400,  main .bg-red-500   { background-color: var(--crimson) !important; }
+
+/* Give the charts a quiet gridlines even when sub-components override */
+main .recharts-cartesian-grid-horizontal line,
+main .recharts-cartesian-grid-vertical line {
+  stroke: var(--border) !important;
+  stroke-opacity: 0.8 !important;
+}
+
+/* Uniform axis label colour */
+main .recharts-cartesian-axis-tick-value,
+main .recharts-label,
+main .recharts-legend-item-text {
+  fill: var(--ink-soft) !important;
+}
+
 .recharts-tooltip-wrapper {
   transition: transform 80ms ease-out !important;
 }
@@ -373,7 +415,7 @@ main .text-\[10px\] { font-size: 11px !important; }
 /* Range inputs */
 input[type="range"] {
   -webkit-appearance: none; appearance: none;
-  height: 4px; background: #d3ccb9; border-radius: 4px; outline: none;
+  height: 4px; background: #d1d5db; border-radius: 4px; outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
@@ -388,7 +430,7 @@ input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.25); }
 
 .bg-white input[type="range"],
 .bg-slate-50 input[type="range"],
-.bg-slate-100 input[type="range"] { background: #e4dfd3; }
+.bg-slate-100 input[type="range"] { background: #e5e7eb; }
 
 /* Animation primitives kept for existing pages */
 @keyframes fadeSlideIn {
