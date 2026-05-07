@@ -68,8 +68,8 @@
   --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px -6px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 2px 4px rgba(15, 23, 42, 0.04), 0 16px 40px -12px rgba(15, 23, 42, 0.12);
 
-  /* Font stacks — Avenir on Mac, Nunito Sans everywhere else; Source Serif 4 for display */
-  --font-sans:  'Avenir Next', 'Avenir', 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Font stacks — Nunito Sans as primary (consistent everywhere); Source Serif 4 for display */
+  --font-sans:  'Nunito Sans', 'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-serif: 'Source Serif 4', 'Charter', 'Iowan Old Style', Georgia, serif;
   --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
