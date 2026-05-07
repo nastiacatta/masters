@@ -174,6 +174,122 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); font-weight: 600; }
   stroke: #e4dfd3;
 }
 
+/* ──────────────────────────────────────────────────────────────
+   Global surface recoloring for the main app (not presentation).
+   These rules turn the SaaS-looking slate/white cards that still
+   litter analysis panels into warm paper cards without having to
+   restyle each component individually.
+   ────────────────────────────────────────────────────────────── */
+
+main .bg-white,
+main .bg-white\/95,
+main .bg-white\/90,
+main .bg-white\/60 {
+  background-color: var(--card) !important;
+}
+
+main .bg-slate-50,
+main .bg-slate-50\/40,
+main .bg-slate-50\/60,
+main .bg-slate-50\/70,
+main .bg-slate-50\/80,
+main .bg-slate-100 {
+  background-color: var(--cream) !important;
+}
+
+main .border-slate-200,
+main .border-slate-100,
+main .border-slate-200\/70,
+main .border-slate-200\/80 {
+  border-color: var(--border) !important;
+}
+
+main .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+main .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border) !important;
+}
+
+/* Text colour heuristics — keep tailwind slate-* but shift to warm ink */
+main .text-slate-900 { color: var(--ink) !important; }
+main .text-slate-800 { color: var(--ink) !important; }
+main .text-slate-700 { color: var(--ink-muted) !important; }
+main .text-slate-600 { color: var(--ink-muted) !important; }
+main .text-slate-500 { color: var(--ink-soft) !important; }
+main .text-slate-400 { color: var(--ink-faint) !important; }
+main .text-slate-300 { color: var(--border-strong) !important; }
+
+/* Tailwind's default teal focuses/accents should use the academic teal */
+main .text-teal-600,
+main .text-teal-700 { color: var(--teal) !important; }
+main .text-teal-800 { color: var(--teal-deep) !important; }
+main .bg-teal-50    { background-color: var(--teal-tint) !important; }
+main .border-teal-200 { border-color: rgba(15, 118, 110, 0.22) !important; }
+
+/* Emerald → academic teal */
+main .text-emerald-600,
+main .text-emerald-700 { color: var(--teal-deep) !important; }
+main .bg-emerald-50    { background-color: var(--teal-tint) !important; }
+main .border-emerald-200 { border-color: rgba(15, 118, 110, 0.22) !important; }
+main .bg-emerald-500     { background-color: var(--teal) !important; }
+
+/* Indigo (often used as a "skill" accent) → navy */
+main .text-indigo-500,
+main .text-indigo-600,
+main .text-indigo-700 { color: var(--navy) !important; }
+main .bg-indigo-50    { background-color: var(--navy-tint) !important; }
+main .border-indigo-200,
+main .border-indigo-100 { border-color: rgba(29, 52, 97, 0.22) !important; }
+
+/* Amber stays as amber but pulls from academic tokens */
+main .text-amber-600,
+main .text-amber-700 { color: var(--amber) !important; }
+main .bg-amber-50    { background-color: var(--amber-tint) !important; }
+main .border-amber-200 { border-color: rgba(180, 83, 9, 0.22) !important; }
+
+/* Red / crimson */
+main .text-red-600,
+main .text-red-700 { color: var(--crimson) !important; }
+main .bg-red-50    { background-color: var(--crimson-tint) !important; }
+main .border-red-200 { border-color: rgba(154, 26, 47, 0.22) !important; }
+
+/* Violet → plum */
+main .text-violet-600,
+main .text-violet-700 { color: var(--plum) !important; }
+main .bg-violet-50    { background-color: var(--plum-tint) !important; }
+main .border-violet-200 { border-color: rgba(91, 33, 182, 0.22) !important; }
+
+/* Soften the radical rounded-xl used in many analysis panels */
+main .rounded-xl,
+main .rounded-2xl {
+  border-radius: 6px !important;
+}
+
+/* Replace the bright ring-on-focus teal glow with a warm navy outline */
+main .focus\:ring-teal-500\/20:focus,
+main .focus\:ring-teal-500\/30:focus,
+main .focus\:ring-teal-500\/40:focus {
+  --tw-ring-color: rgba(29, 52, 97, 0.25) !important;
+}
+
+main .focus\:border-teal-400:focus { border-color: var(--navy) !important; }
+
+/* Neutralise hard white gradients sometimes used in insight callouts */
+main .bg-gradient-to-br.from-slate-50.to-slate-50\/40,
+main .bg-gradient-to-br.from-slate-50.to-white,
+main .bg-gradient-to-b.from-slate-50.to-white,
+main .bg-gradient-to-b.from-slate-50\/80.to-transparent {
+  background: var(--cream) !important;
+}
+
+/* Heading text in h2/h3 should use serif when default Tailwind sizing is used */
+main h2.text-2xl,
+main h2.text-3xl,
+main h2.text-xl {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
 .recharts-tooltip-wrapper {
   transition: transform 80ms ease-out !important;
 }

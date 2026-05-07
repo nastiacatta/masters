@@ -16,12 +16,21 @@ interface CoverageAuditProps {
   onNavigate?: (tab: string) => void;
 }
 
-const STATUS_DOT: Record<string, string> = {
-  experiment: 'bg-emerald-400',
-  'taxonomy-only': 'bg-amber-400',
-  'not-covered': 'bg-slate-300',
+const DOT_COLORS: Record<string, string> = {
+  experiment:      'var(--teal)',
+  'taxonomy-only': 'var(--amber)',
+  'not-covered':   'var(--ink-faint)',
 };
 
+const BAR_COLORS: Record<string, string> = {
+  experiment:      'var(--teal)',
+  'taxonomy-only': 'var(--amber)',
+  'not-covered':   'var(--border-strong)',
+};
+
+/**
+ * Academic coverage audit — warm card, coloured bar per family, pill chips.
+ */
 export default function CoverageAudit({ families, onNavigate }: CoverageAuditProps) {
   const stats = useMemo(() => {
     const all = families.flatMap((f) => f.items);
@@ -34,27 +43,52 @@ export default function CoverageAudit({ families, onNavigate }: CoverageAuditPro
   }, [families]);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div
+      className="p-5"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        borderRadius: 6,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <h3
+        className="font-serif tracking-tight mb-3 flex items-center gap-2.5"
+        style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+      >
+        <span
+          aria-hidden="true"
+          className="inline-block"
+          style={{ width: 3, height: 16, background: 'var(--navy)', borderRadius: 2 }}
+        />
+        Coverage audit
+      </h3>
+
       {/* Aggregate stats */}
-      <div className="flex flex-wrap items-center gap-4 text-xs mb-4">
-        <span className="font-semibold text-slate-700">{stats.total} items</span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+      <div className="flex flex-wrap items-center gap-4 mb-5" style={{ fontSize: 12.5 }}>
+        <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{stats.total} items</span>
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--teal)' }} />
           {stats.experiment} experiment
         </span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-amber-400" />
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--amber)' }} />
           {stats.taxonomyOnly} taxonomy-only
         </span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-slate-300" />
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--ink-faint)' }} />
           {stats.notCovered} not covered
         </span>
-        <span className="ml-auto font-mono font-semibold text-slate-800">{stats.pct}% coverage</span>
+        <span
+          className="ml-auto font-mono tabular-nums"
+          style={{ color: 'var(--ink)', fontWeight: 600 }}
+        >
+          {stats.pct}% coverage
+        </span>
       </div>
 
       {/* Per-family sections */}
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {families.map((fam) => {
           const exp = fam.items.filter((i) => i.status === 'experiment').length;
           const tax = fam.items.filter((i) => i.status === 'taxonomy-only').length;
@@ -63,23 +97,25 @@ export default function CoverageAudit({ families, onNavigate }: CoverageAuditPro
 
           return (
             <div key={fam.family}>
-              <p className="text-[11px] font-semibold capitalize text-slate-600 mb-1">{fam.family}</p>
+              <p
+                className="capitalize mb-1.5 font-serif"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}
+              >
+                {fam.family}
+              </p>
 
               {/* Coverage bar */}
-              <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                {exp > 0 && (
-                  <div className="bg-emerald-400" style={{ width: `${(exp / total) * 100}%` }} />
-                )}
-                {tax > 0 && (
-                  <div className="bg-amber-400" style={{ width: `${(tax / total) * 100}%` }} />
-                )}
-                {nc > 0 && (
-                  <div className="bg-slate-300" style={{ width: `${(nc / total) * 100}%` }} />
-                )}
+              <div
+                className="flex w-full overflow-hidden"
+                style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}
+              >
+                {exp > 0 && <div style={{ width: `${(exp / total) * 100}%`, background: BAR_COLORS.experiment }} />}
+                {tax > 0 && <div style={{ width: `${(tax / total) * 100}%`, background: BAR_COLORS['taxonomy-only'] }} />}
+                {nc > 0 && <div style={{ width: `${(nc / total) * 100}%`, background: BAR_COLORS['not-covered'] }} />}
               </div>
 
               {/* Item list */}
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {fam.items.map((item) => {
                   const clickable = item.status === 'experiment' && item.experimentTab;
                   return (
@@ -88,13 +124,23 @@ export default function CoverageAudit({ families, onNavigate }: CoverageAuditPro
                       type="button"
                       disabled={!clickable}
                       onClick={() => clickable && onNavigate?.(item.experimentTab!)}
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border border-slate-200 ${
-                        clickable
-                          ? 'cursor-pointer hover:border-slate-400 hover:bg-slate-50'
-                          : 'cursor-default opacity-70'
-                      }`}
+                      className="inline-flex items-center gap-1.5"
+                      style={{
+                        background: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--ink-muted)',
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 500,
+                        cursor: clickable ? 'pointer' : 'default',
+                        opacity: clickable ? 1 : 0.7,
+                      }}
                     >
-                      <span className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[item.status]}`} />
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ background: DOT_COLORS[item.status] }}
+                      />
                       {item.name}
                     </button>
                   );
