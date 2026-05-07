@@ -140,20 +140,36 @@ export default function RobustnessPage() {
       </p>
 
       <SectionHeader label="" title="Robustness tests" description="Intermittency, Sybil, or parameter sensitivity.">
-      <div className="flex gap-1 mb-4 pb-6">
-        {SECTIONS.map(s => (
-          <button
-            key={s.id}
-            onClick={() => setActiveSection(s.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeSection === s.id
-                ? 'bg-slate-800 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+      <div
+        className="flex gap-1 mb-5 p-1"
+        style={{
+          background: 'var(--cream)',
+          border: '1px solid var(--border)',
+          borderRadius: 6,
+          width: 'fit-content',
+        }}
+      >
+        {SECTIONS.map(s => {
+          const active = activeSection === s.id;
+          return (
+            <button
+              key={s.id}
+              onClick={() => setActiveSection(s.id)}
+              className="transition-colors"
+              style={{
+                fontSize: 13.5,
+                fontWeight: active ? 600 : 500,
+                padding: '6px 14px',
+                borderRadius: 4,
+                background: active ? 'var(--card)' : 'transparent',
+                color:      active ? 'var(--ink)' : 'var(--ink-soft)',
+                boxShadow:  active ? 'var(--shadow-sm)' : 'none',
+              }}
+            >
+              {s.label}
+            </button>
+          );
+        })}
       </div>
       </SectionHeader>
 

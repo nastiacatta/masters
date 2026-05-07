@@ -83,11 +83,11 @@ the easiest way to lose a reviewer.
 - **Quantile-level attacks are harder to contain than point-level
   ones.** On the current adversary suite, Chen et al. 2014 arbitrage
   extracts +12 to +24 profit per 1000 rounds as λ rises from 0 to 1,
-  Chun–Shachter coalition extracts +21 (weighted-mean) or +18
+  Chun–Shachter coalition extracts +19.9 (weighted-mean) or +16.9
   (weighted-median), and a legitimate lagged insider under AR(1)
-  extracts +54. The skill gate does not eliminate any of these; it
-  only modestly constrains arbitrage. See Chapter 6 §8.2–8.5 for the
-  full tables.
+  extracts +57.1. The skill gate does not eliminate any of these;
+  it only modestly constrains arbitrage. See Chapter 6 §8.2–8.5 for
+  the full tables.
 - **Participation is expected to be a vulnerability, but the specific
   "+934% bursty" number from the earlier draft is from a legacy
   preset and is not present in the current adversary suite.** Re-run
@@ -104,9 +104,9 @@ the easiest way to lose a reviewer.
   (Chen et al. 2014 §4–5), which is outside this thesis's scope.
 - **Chun-Shachter coalitions are profitable.** A 3-member coalition
   broadcasting the wager-weighted mean of its members' beliefs earns
-  +18 to +21 over 1000 rounds (§8.6). Combining coalition with
+  +16.9 to +19.9 over 1000 rounds (§8.6). Combining coalition with
   privileged lagged information (§8.7) compounds the two channels
-  and extracts ≈ 40% more than pure collusion.
+  and extracts ≈ 40% more than pure collusion (+33.84 vs +24.12).
 - **Sybil-proofness holds in the Lambert narrow sense.** The
   `sybil_arbitrage` audit (§8.5) shows arbitrage profit is invariant
   to k ∈ {1, 3, 5} to within Monte-Carlo error, empirically
@@ -116,9 +116,9 @@ the easiest way to lose a reviewer.
 - **Collusion equilibria not formally analysed; named strategies
   extract substantial profit.** We test `coordinated_group` (Chun–
   Shachter 2011) and `informed_collusion` (coalition + AR(1)
-  insiders). Three-member coalition extracts +21; informed collusion
-  extracts +34. Neither is contained by the skill gate. The full
-  best-response space is not characterised.
+  insiders). Three-member coalition extracts +19.9 (weighted-mean);
+  informed collusion extracts +33.8. Neither is contained by the
+  skill gate. The full best-response space is not characterised.
 - **Electricity data gives a clean null.** On the 10 000-round
   electricity imbalance slice the mechanism's Δ vs uniform is
   statistically zero (t = 0.008, p = 0.994). Seven forecasters within

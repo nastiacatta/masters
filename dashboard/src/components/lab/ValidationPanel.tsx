@@ -205,95 +205,195 @@ export default function ValidationPanel({ pipeline }: Props) {
   }, [pipeline.traces]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Summary bar */}
-      <div className={`rounded-xl border-2 p-5 ${allPass ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${allPass ? 'bg-emerald-100' : 'bg-red-100'}`}>
-            {allPass ? '✓' : '✗'}
-          </div>
-          <div>
-            <h3 className={`text-lg font-bold ${allPass ? 'text-emerald-800' : 'text-red-800'}`}>
-              {allPass ? 'All invariants pass' : `${totalChecks - passCount} invariant${totalChecks - passCount > 1 ? 's' : ''} failed`}
-            </h3>
-            <p className="text-sm text-slate-600">
-              {passCount} / {totalChecks} checks passed across {pipeline.traces.length} rounds
-            </p>
-          </div>
+      <div
+        className="p-5 flex items-center gap-4"
+        style={{
+          background: allPass ? 'var(--teal-tint)' : 'var(--crimson-tint)',
+          border: `1px solid ${allPass ? 'rgba(15,118,110,0.22)' : 'rgba(154,26,47,0.22)'}`,
+          borderLeft: `3px solid ${allPass ? 'var(--teal)' : 'var(--crimson)'}`,
+          borderRadius: 6,
+        }}
+      >
+        <div
+          className="flex items-center justify-center"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: '#fff',
+            border: `1.5px solid ${allPass ? 'var(--teal)' : 'var(--crimson)'}`,
+            color: allPass ? 'var(--teal-deep)' : 'var(--crimson)',
+            fontSize: 18,
+          }}
+        >
+          {allPass ? '✓' : '✗'}
+        </div>
+        <div>
+          <h3
+            className="font-serif tracking-tight"
+            style={{
+              fontSize: 18,
+              fontWeight: 600,
+              color: allPass ? 'var(--teal-deep)' : '#6a1221',
+            }}
+          >
+            {allPass ? 'All invariants pass' : `${totalChecks - passCount} invariant${totalChecks - passCount > 1 ? 's' : ''} failed`}
+          </h3>
+          <p
+            style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 2 }}
+          >
+            {passCount} / {totalChecks} checks passed across {pipeline.traces.length} rounds
+          </p>
         </div>
       </div>
 
       {/* Invariant check cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {checks.map((check, idx) => (
-          <motion.div
-            key={check.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className={`rounded-xl border p-4 ${
-              check.pass
-                ? 'bg-white border-emerald-200'
-                : check.severity === 'critical'
-                  ? 'bg-red-50 border-red-200'
-                  : 'bg-amber-50 border-amber-200'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 mt-0.5 ${
-                check.pass ? 'bg-emerald-100 text-emerald-700' : check.severity === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-              }`}>
-                {check.pass ? '✓' : '✗'}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-semibold text-slate-800">{check.label}</h4>
-                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
-                    check.severity === 'critical' ? 'bg-red-100 text-red-600' : check.severity === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {check.severity}
-                  </span>
+        {checks.map((check, idx) => {
+          const borderColor = check.pass
+            ? 'var(--teal)'
+            : check.severity === 'critical'
+            ? 'var(--crimson)'
+            : 'var(--amber)';
+          const tint = check.pass
+            ? 'var(--card)'
+            : check.severity === 'critical'
+            ? 'var(--crimson-tint)'
+            : 'var(--amber-tint)';
+          const badgeBg = check.severity === 'critical'
+            ? 'var(--crimson-tint)'
+            : check.severity === 'warning'
+            ? 'var(--amber-tint)'
+            : 'var(--cream)';
+          const badgeColor = check.severity === 'critical'
+            ? 'var(--crimson)'
+            : check.severity === 'warning'
+            ? 'var(--amber)'
+            : 'var(--ink-soft)';
+
+          return (
+            <motion.div
+              key={check.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.04 }}
+              className="p-4"
+              style={{
+                background: tint,
+                border: '1px solid var(--border)',
+                borderLeft: `3px solid ${borderColor}`,
+                borderRadius: 4,
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex items-center justify-center shrink-0 mt-0.5"
+                  style={{
+                    width: 26, height: 26,
+                    borderRadius: '50%',
+                    background: '#fff',
+                    border: `1.5px solid ${borderColor}`,
+                    color: borderColor,
+                    fontSize: 13,
+                  }}
+                >
+                  {check.pass ? '✓' : '✗'}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">{check.description}</p>
-                <p className={`text-xs font-medium mt-1.5 ${check.pass ? 'text-emerald-700' : 'text-red-700'}`}>
-                  {check.detail}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4
+                      className="font-serif tracking-tight"
+                      style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}
+                    >
+                      {check.label}
+                    </h4>
+                    <span
+                      className="uppercase"
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 700,
+                        letterSpacing: '0.12em',
+                        padding: '2px 7px',
+                        borderRadius: 3,
+                        background: badgeBg,
+                        color: badgeColor,
+                      }}
+                    >
+                      {check.severity}
+                    </span>
+                  </div>
+                  <p
+                    style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2, lineHeight: 1.5 }}
+                  >
+                    {check.description}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      color: check.pass ? 'var(--teal-deep)' : 'var(--crimson)',
+                      marginTop: 6,
+                    }}
+                  >
+                    {check.detail}
+                  </p>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Budget balance chart */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <h4 className="text-sm font-semibold text-slate-800">Budget balance over time</h4>
-        <p className="text-[11px] text-slate-400 mt-0.5 mb-3">
+      <div
+        className="p-5"
+        style={{
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          borderRadius: 6,
+          boxShadow: 'var(--shadow-sm)',
+        }}
+      >
+        <h4
+          className="font-serif tracking-tight"
+          style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          Budget balance over time
+        </h4>
+        <p
+          style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 3, marginBottom: 14 }}
+        >
           Gap = total payout − total influence per round (should be near 0). Hover for values.
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={budgetData} margin={CHART_MARGIN_LABELED}>
             <defs>
               <linearGradient id="budgetGradPos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="budgetGradNeg" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                <stop offset="0%" stopColor="#0f766e" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-            <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-              label={{ value: 'Budget gap', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+            <XAxis
+              dataKey="round"
+              tick={AXIS_TICK}
+              stroke={AXIS_STROKE}
+              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#5a6175' }}
+            />
+            <YAxis
+              tick={AXIS_TICK}
+              stroke={AXIS_STROKE}
+              label={{ value: 'Budget gap', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#5a6175' }}
+            />
             <Tooltip content={<SmartTooltip />} />
-            <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} />
+            <ReferenceLine y={0} stroke="#8c92a3" strokeWidth={1.5} />
             <Area
               type="monotone"
               dataKey="gap"
               name="Budget gap"
-              stroke="#6366f1"
+              stroke="#1d3461"
               fill="url(#budgetGradPos)"
               strokeWidth={1.5}
               dot={false}

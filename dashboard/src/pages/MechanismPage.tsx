@@ -169,15 +169,41 @@ export default function MechanismPage() {
         </div>
 
         {/* ── Step 1: Understand the system ── */}
-        <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-slate-800">System architecture</h3>
-          <div className="space-y-4 pb-6">
+        <section className="space-y-5">
+          <h3
+            className="font-serif tracking-tight"
+            style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
+          >
+            System architecture
+          </h3>
+          <div className="space-y-5 pb-4">
             <SystemArchitecture />
 
             <div className="flex flex-wrap gap-2">
               {INVARIANTS.map(({ label, color }) => (
-                <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium" style={{ background: color + '12', color }}>
-                  <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style={{ background: color }}>✓</span>
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-2 px-3 py-1.5"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    background: `${color}12`,
+                    color: color,
+                    border: `1px solid ${color}30`,
+                    borderRadius: 999,
+                  }}
+                >
+                  <span
+                    className="flex items-center justify-center text-white"
+                    style={{
+                      width: 14, height: 14,
+                      borderRadius: '50%',
+                      background: color,
+                      fontSize: 8, fontWeight: 700,
+                    }}
+                  >
+                    ✓
+                  </span>
                   {label}
                 </span>
               ))}
@@ -187,32 +213,59 @@ export default function MechanismPage() {
 
         {/* ── Step 2: Set inputs ── */}
         <section>
-          <h3 className="text-sm font-semibold text-slate-800 mb-2">Configuration</h3>
-          <div className="flex items-center gap-2 mb-4 flex-wrap pb-6">
-          <button
-            onClick={() => setControlsOpen(!controlsOpen)}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              controlsOpen ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+          <h3
+            className="font-serif tracking-tight mb-3"
+            style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
           >
-            {controlsOpen ? '✕ Hide inputs' : '⚙ Inputs'}
-          </button>
+            Configuration
+          </h3>
+          <div className="flex items-center gap-2 mb-4 flex-wrap pb-4">
+            <button
+              onClick={() => setControlsOpen(!controlsOpen)}
+              className="transition-colors"
+              style={{
+                fontSize: 13.5,
+                fontWeight: 600,
+                padding: '8px 16px',
+                borderRadius: 4,
+                background: controlsOpen ? 'var(--navy)' : 'var(--cream)',
+                color:      controlsOpen ? '#fff' : 'var(--ink-muted)',
+                border: `1px solid ${controlsOpen ? 'var(--navy)' : 'var(--border)'}`,
+              }}
+            >
+              {controlsOpen ? '✕ Hide inputs' : '⚙ Inputs'}
+            </button>
 
-          <div className="flex rounded-lg border border-slate-200 overflow-hidden ml-auto">
-            {(['timeline', 'inspect', 'validation'] as ViewMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  viewMode === mode
-                    ? 'bg-slate-800 text-white'
-                    : 'text-slate-500 hover:bg-slate-50'
-                }`}
-              >
-                {mode === 'timeline' ? 'Timeline' : mode === 'inspect' ? 'Round detail' : 'Invariants'}
-              </button>
-            ))}
-          </div>
+            <div
+              className="flex overflow-hidden ml-auto p-1"
+              style={{
+                background: 'var(--cream)',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+              }}
+            >
+              {(['timeline', 'inspect', 'validation'] as ViewMode[]).map(mode => {
+                const active = viewMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className="transition-colors"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: active ? 600 : 500,
+                      padding: '5px 12px',
+                      borderRadius: 4,
+                      background: active ? 'var(--card)' : 'transparent',
+                      color:      active ? 'var(--ink)' : 'var(--ink-soft)',
+                      boxShadow:  active ? 'var(--shadow-sm)' : 'none',
+                    }}
+                  >
+                    {mode === 'timeline' ? 'Timeline' : mode === 'inspect' ? 'Round detail' : 'Invariants'}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 

@@ -108,9 +108,9 @@ Source: `writing/70_recalibration_layer.md`.
   sybil_arbitrage.
 - Arbitrage scan (Chen et al. 2014): profit +12 to +24 over 1000
   rounds as λ rises 0 → 1.
-- Collusion (Chun & Shachter 2011): +21 weighted-mean, +18
-  weighted-median; informed collusion +34 under AR(1).
-- Insider advantage (Lambert 2008; Johnstone 2007): +54 with
+- Collusion (Chun & Shachter 2011): +19.9 weighted-mean, +16.9
+  weighted-median; informed collusion +33.8 under AR(1).
+- Insider advantage (Lambert 2008; Johnstone 2007): +57.1 with
   legitimate lagged signal under AR(1).
 - Sybil-proofness: narrow (identical reports) ratio = 1.000000;
   diversified-report breaks invariance by ~6.5%; sybil-arbitrage

@@ -104,9 +104,9 @@ truthfully, whenever members disagree.
 
 **What we take:** the coalition formula directly — implemented as
 `CoordinatedGroupBehaviour` in `weighted_mean` mode. Empirically this
-extracts +18 to +21 profit over 1000 rounds for a 3-member coalition
-(§8.6), and compounds with privileged-information precision under an
-AR(1) DGP to reach +33.84 (§8.7).
+extracts +16.9 to +19.9 profit over 1000 rounds for a 3-member
+coalition (§8.6), and compounds with privileged-information precision
+under an AR(1) DGP to reach +33.84 (§8.7).
 
 ## B. Online learning for forecast combination
 

@@ -148,7 +148,7 @@ class CoordinatedGroupBehaviour:
                 AgentAction(
                     account_id=tr.user_id,
                     participate=True,
-                    report=float(report),
+                    report=report,
                     deposit=float(b_i),
                     meta={
                         "agent_type": "coordinated_group",

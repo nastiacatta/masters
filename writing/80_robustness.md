@@ -64,7 +64,7 @@ weighted-median arbitrage point with an F_{t−1} snapshot and fires on
 |---|---:|---:|---:|---:|
 | 0.0 | +2.50 ± 0.46 | +6.13 ± 0.82 | +13.51 ± 1.22 | +23.49 ± 1.71 |
 | 0.5 | +4.89 ± 0.93 | +10.46 ± 1.09 | +22.49 ± 2.05 | +38.27 ± 2.63 |
-| 1.0 | +7.20 ± 1.42 | +14.10 ± 1.68 | +28.67 ± 2.99 | +49.79 ± 3.52 |
+| 1.0 | +7.20 ± 1.42 | (see CSV) | (see CSV) | (see CSV) |
 
 Profit scales roughly linearly with crowd size. A lone arbitrageur in
 32 benign agents extracts ~4× the profit of one in 4 benign agents at
@@ -172,15 +172,15 @@ score-rule cost — attackers are usually bankrupt by T = 1000.
 
 ## 8.8 Strategic reporting frontier
 
-Pull sweep towards target = 0.9, 10 seeds [source:
+Pull sweep towards target = 0.9, 20 seeds [source:
 `strategic_reporting/data/strategic_reporting_summary.csv`]:
 
 | Scenario | Δ r̂ vs baseline | Attacker profit ± SE |
 |---|---:|---:|
 | baseline_truthful | 0.000 ± 0.000 | 0.00 ± 0.00 |
-| pull = 0.3 | +0.067 ± 0.006 | **+11.98 ± 2.97** |
-| pull = 0.6 | +0.034 ± 0.006 | −9.77 ± 0.12 |
-| pull = 1.0 | +0.013 ± 0.002 | −10.00 ± 0.00 |
+| pull = 0.3 | +0.056 ± 0.004 | **+10.49 ± 2.29** |
+| pull = 0.6 | +0.027 ± 0.003 | −9.81 ± 0.07 |
+| pull = 1.0 | +0.011 ± 0.001 | −10.00 ± 1e-7 |
 
 **Non-monotone frontier.** Gentle nudges (pull = 0.3) are *both*
 profitable *and* most effective at shifting the aggregate report.
@@ -192,12 +192,12 @@ automatically punishes extreme strategic reporting.
 
 20 seeds, online z-score detector, target μ = 0.2 against uniform-y
 DGP [source:
-`detection_adaptation/data/detection_adaptation_summary.csv`]:
+`detection_adaptation/data/summary.json`]:
 
 | Attacker | Mean profit ± SE | Detector score | Flag rate |
 |---|---:|---:|---:|
-| fixed_manipulator | −50.02 ± 0.00 | 0.490 | 0.111 |
-| adaptive_evader | −49.78 ± 0.13 | 0.478 | 0.116 |
+| fixed_manipulator | −50.02 ± 0.003 | 0.490 | 0.111 |
+| adaptive_evader | −49.78 ± 0.129 | 0.478 | 0.116 |
 
 Both manipulators are **bankrupted** by the skill-weighting
 mechanism. The adaptive evader's quiet-mode hedging marginally reduces
@@ -233,19 +233,19 @@ What the mechanism does **well**:
   are self-defeating because σ collapses.
 - Fixed manipulators against a no-information DGP are bankrupted.
 - Narrow strategic reporting (pull = 0.3) gives the attacker
-  +11.98 profit — the only profitable small-perturbation attack — but
-  only on 10 seeds at T = 1000.
+  +10.49 profit (20 seeds, T = 1000) — the only profitable small-
+  perturbation attack in the suite.
 
 What the mechanism is **vulnerable to**:
 
 - **Arbitrage.** Chen et al. 2014 arbitrage extracts +12 to +24 profit
   per 1000 rounds as λ scales. The skill gate does not eliminate
   arbitrage; it modestly constrains it.
-- **Collusion.** Three-member coalition extracts +21 profit; informed
-  collusion (AR(1) DGP) extracts +34. Neither is contained by the
-  skill gate.
-- **Insiders** with legitimate lagged signals under AR(1) extract +54
-  profit, about 89% of what a full leakage adversary gets.
+- **Collusion.** Three-member coalition extracts +19.9 weighted-mean
+  profit; informed collusion (AR(1) DGP) extracts +33.8. Neither is
+  contained by the skill gate.
+- **Insiders** with legitimate lagged signals under AR(1) extract
+  +57.1 profit, about 89% of what a full leakage adversary gets.
 - **Sybil splitting with diversified reports** breaks the Lambert
   narrow invariance by ~6.5%.
 - **Wash trading (anchor style)** inflates activity and extracts small
