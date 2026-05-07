@@ -34,7 +34,7 @@ Every figure and table that will appear in the thesis. Each entry has:
 | T15 | Attacker profit vs crowd size (λ × n_benign) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv` | 80_robustness | LOCKED |
 | T16 | Sybil regimes (identical vs diversified) | `experiments.py --exp sybil` output | 80_robustness | LOCKED |
 | T16a | Sybil-arbitrage profit invariance (k ∈ {1,3,5}) | `onlinev2/outputs/behaviour/experiments/sybil_arbitrage/data/sybil_arbitrage_summary.csv` | 80_robustness | LOCKED |
-| T17 | Full 18-preset table (Appendix C) | `dashboard/docs/BEHAVIOUR_COVERAGE.md` | 80_robustness | LOCKED |
+| T17 | Detection-adaptation (fixed vs adaptive manipulator) | `onlinev2/outputs/behaviour/experiments/detection_adaptation/data/detection_adaptation_summary.csv` | 80_robustness | LOCKED |
 | T17a | Chun-Shachter coalition profit (weighted_mean vs weighted_median) | `onlinev2/outputs/behaviour/experiments/collusion_stress/data/collusion_stress_summary.csv` | 80_robustness | LOCKED |
 | T17b | Informed collusion (coalition × privileged information) | `onlinev2/outputs/behaviour/experiments/informed_collusion/data/informed_collusion_summary.csv` | 80_robustness | LOCKED |
 | T17c | Insider advantage (lagged vs leaked, AR(1) DGP) | `onlinev2/outputs/behaviour/experiments/insider_advantage/data/insider_advantage_summary.csv` | 80_robustness | LOCKED |

@@ -1,389 +1,277 @@
 # Results — robustness
 
-Status: **[UPDATED]** after the behaviour-block revamp (Nov 2026). All
-adversaries are now grounded in a specific threat model from the
-wagering-mechanism literature and run across 10–20 seeds with 95% CIs.
-The older heuristic adversaries (see §8.10 for a diff summary) are
-preserved as backwards-compatible aliases.
+Status: **[LOCKED]**. All numbers in this chapter come from
+`onlinev2/outputs/behaviour/experiments/ANALYSIS.md` and the per-
+experiment summary CSVs under `onlinev2/outputs/behaviour/experiments/
+*/data/`. The earlier "18-preset" narrative from
+`dashboard/docs/MECHANISM_ANALYSIS.md` §7 used a legacy behaviour
+catalogue that has been superseded by the adversary-focused rebuild
+(ANALYSIS.md §4 explains the changes). All numbers below are from the
+current committed run unless flagged.
 
-## 8.1 Attack-gain frame
+## 8.1 Adversary-focused framing
 
-Every adversary is evaluated along two axes:
+The behaviour suite has been rebuilt around named threat models from
+the wagering-mechanism literature. Every adversary has a cited
+theoretical basis, runs across ≥ 10 seeds, and emits a paired
+`*_summary.csv` plus a plot.
 
-1. **Attacker profit** — the cumulative wagering profit of the attack
-   accounts. This is the attacker's private utility and must be small
-   (ideally ≤ 0) for the mechanism to be robust in the Lambert sense.
-2. **Aggregate impact** — the effect on the forecast quality and the
-   benign participants (Δ CRPS, Δ Gini, participation inflation).
+Adversary archetypes in the current catalogue [source:
+`onlinev2/outputs/behaviour/experiments/ANALYSIS.md` §1]:
 
-Each experiment reports both a per-seed flat file and a
-`*_summary.csv` with mean, SE, and 95% CI. We paired seeds across
-scenarios wherever possible so that scenario differences are reported
-with tighter variance.
+| Archetype | Theory basis |
+|---|---|
+| arbitrage_seeking | Chen et al. 2014 Thm 3.3 (MAE analogue); Chun & Shachter 2011 |
+| coordinated_group | Chun & Shachter 2011 coalition; Chen et al. 2014 §3 |
+| strategic_influence | Corner solution of manipulation utility |
+| strategic_reporter | Soft manipulator that mixes anchor + target |
+| privileged_information | Lambert et al. 2008; Johnstone 2007 (insiders) |
+| detector_aware | Adaptive evader tracking detector scores |
+| wash_trader | Parimutuel wash / multi-account activity gaming |
+| sybil_arbitrage | Sybilproofness audit combining split + arbitrage |
 
-## 8.2 Adversary archetypes
+Every F_{t−1}-compliant attacker uses only `RoundPublicState`. The only
+boundary-violating attacker is `privileged_information` in
+`leaked_future` mode, which requires an explicit `allow_leakage=True`
+and is treated as an audit check rather than a realistic adversary.
 
-Every attack is grounded in a cited threat model. Code lives in
-`onlinev2/src/onlinev2/behaviour/adversaries/`; matching experiment
-runners in `onlinev2/src/onlinev2/experiments/runners/runner_module.py`.
+## 8.2 Arbitrage scan (Chen et al. 2014)
 
-| Attack | Theory basis | File |
-|--------|--------------|------|
-| Arbitrage seeker | Chen, Devanur, Pennock & Vaughan EC'14 Thm 3.3 (MAE analogue of the `f`-norm arbitrage interval); Chun & Shachter 2011 | `arbitrage_seeking.py` |
-| Coordinated coalition | Chun-Shachter 2011 wager-weighted-mean coalition; Chen et al. 2014 §3 | `coordinated_group.py` |
-| Informed coalition | Coalition × privileged-info composite | `coordinated_group` × `privileged_information` |
-| Sybil arbitrageur | Lambert et al. 2008 sybilproof property; Chen et al. 2014 arbitrage | `sybil_arbitrage.py` |
-| Strategic influence | Aggregate manipulation; corner-solution of `max m·(r-r*)/M − E[m·Δs]` | `strategic_influence.py` |
-| Strategic reporter | Soft version: `r = (1-pull)·anchor + pull·target` | `strategic_reporter.py` |
-| Privileged information | Lambert et al. 2008; Johnstone 2007. F_{t-1}-compliant by default; `allow_leakage` flag for boundary-violation audits | `privileged_information.py` |
-| Detector-aware evader | Adaptive evader, EWMA of detector scores | `detector_aware.py` |
-| Wash / activity gaming | Parimutuel wash analogue; two styles (`anchor`, `split_bet`) | `wash_trader.py` |
+Arbitrageur profit over 10 seeds, T = 1000, versus floor parameter λ
+[source: `onlinev2/outputs/behaviour/experiments/arbitrage_scan/
+data/arbitrage_scan_summary.csv`]:
 
-All F_{t-1}-compliant attackers use only `RoundPublicState`; the only
-adversary that can violate the information boundary is
-`PrivilegedInformationBehaviour` in `leaked_future` mode, which
-requires an explicit `allow_leakage=True` and emits a runtime warning
-otherwise.
+| λ | Mean profit ± SE | 95% CI | Mean found-rounds |
+|---:|---:|---|---:|
+| 0.0 | +11.68 ± 1.14 | [+9.46, +13.91] | 774 |
+| 0.1 | +13.40 ± 1.24 | [+10.97, +15.82] | 773 |
+| 0.3 | +16.22 ± 1.40 | [+13.49, +18.96] | 770 |
+| 0.5 | +19.07 ± 1.50 | [+16.13, +22.00] | 765 |
+| 0.8 | +22.46 ± 1.77 | [+18.99, +25.93] | 758 |
+| 1.0 | +24.22 ± 1.97 | [+20.36, +28.08] | 753 |
 
-## 8.3 Arbitrage-seeking attack (Chen-Devanur-Pennock-Vaughan)
+**Finding.** Arbitrage profit increases monotonically with λ, as Chen
+et al. 2014 predict for the MAE analogue. The earlier write-up (based
+on a broken arbitrageur implementation that never triggered) reported
+zero profit; the fixed `arbitrage_seeking` behaviour uses the actual
+weighted-median arbitrage point with an F_{t−1} snapshot and fires on
+~77% of rounds.
 
-**Theory.** In a weighted-score wagering mechanism with strictly
-proper scoring rule $s$, the arbitrage interval for participant $i$ is
+**Crowd-size scaling (new experiment, T = 500, 10 seeds)** [source:
+`arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv`]:
 
-$$
-p_i \in \big[\|p_{-i}\|_{s_1, \mu},\; \|p_{-i}\|_{s_0, \mu}\big],
-$$
-
-with $\mu_j = w_j / W_{N\setminus\{i\}}$. Reports inside this interval
-give a non-negative payoff under every outcome, strictly positive when
-other participants disagree (Chen et al. 2014, Thm 3.3). For the
-MAE-WSWM used in this thesis, $s(y, r) = 1 - |y-r|$ is only weakly
-convex; the strict arbitrage interval collapses to the wager-weighted
-median of the other reports, and the correct participation test is
-$\mathbb{E}_{y \sim \text{Unif}[0,1]}[\pi_i] > 0$.
-
-**Implementation.** `ArbitrageSeekingBehaviour` computes the weighted
-median of other reports from an F_{t-1} snapshot (fed by the runner)
-and participates only when the expected profit under uniform $y$ is
-strictly positive. It scales stake with observed disagreement (more
-spread = more to extract).
-
-**Result (10 seeds, T=1000)** [source:
-`outputs/behaviour/experiments/arbitrage_scan/data/arbitrage_scan_by_lam.csv`]:
-
-| $\lambda$ | Mean attacker profit ± SE | 95% CI |
-|-----------|--------------------------:|--------:|
-| 0.0 | +11.68 ± 1.14 | [+9.46, +13.91] |
-| 0.1 | +13.40 ± 1.24 | [+10.97, +15.82] |
-| 0.3 | +16.22 ± 1.40 | [+13.49, +18.96] |
-| 0.5 | +19.07 ± 1.50 | [+16.13, +22.00] |
-| 0.8 | +22.46 ± 1.77 | [+18.99, +25.93] |
-| 1.0 | +24.22 ± 1.97 | [+20.36, +28.08] |
-
-**Interpretation.** The attack is profitable at every λ, and the
-profit rises monotonically with λ. When λ is large the skill gate
-dominates the effective wager; the weighted-median arbitrage point
-dominates the benign skill-weighted reports and the attacker's stake
-earns positive expected return across the uniform outcome space.
-
-This is a real empirical finding — the thesis's previous claim that
-"the arbitrageur extracts zero sustained profit" was an artefact of an
-ad-hoc participation test and has been superseded. The mechanism is
-still budget-balanced (§5.1.1) — the attacker's gains come from the
-losses of other participants, not from the mechanism's reserves.
-
-The companion plot `arbitrage_wealth_trajectories.png` shows the
-attacker's wealth climbing steadily across all six λ settings, with
-higher λ paths accelerating faster.
-
-## 8.4 Arbitrage × crowd size
-
-Does the attack scale with the number of benign participants?
-
-**Result (10 seeds, T=500, grid λ ∈ {0.0, 0.5, 1.0}, n ∈ {4, 8, 16, 32})**
-[source:
-`outputs/behaviour/experiments/arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv`]:
-
-| λ | n=4 | n=8 | n=16 | n=32 |
-|---|----:|----:|-----:|-----:|
+| λ | n = 4 | n = 8 | n = 16 | n = 32 |
+|---|---:|---:|---:|---:|
 | 0.0 | +2.50 ± 0.46 | +6.13 ± 0.82 | +13.51 ± 1.22 | +23.49 ± 1.71 |
 | 0.5 | +4.89 ± 0.93 | +10.46 ± 1.09 | +22.49 ± 2.05 | +38.27 ± 2.63 |
 | 1.0 | +7.20 ± 1.42 | +14.10 ± 1.68 | +28.67 ± 2.99 | +49.79 ± 3.52 |
 
-**Interpretation.** Attacker profit scales roughly linearly with
-crowd size. More benign participants produce more pairwise
-disagreement, which widens the arbitrage-profitable range of the
-weighted-median point. A lone arbitrageur in 32 benign agents extracts
-≈ 4× the profit of the same attacker in 4 benign agents at the same λ.
+Profit scales roughly linearly with crowd size. A lone arbitrageur in
+32 benign agents extracts ~4× the profit of one in 4 benign agents at
+the same λ — more disagreement means more wager pool to access.
 
-This is theoretically consistent with the Chen-Devanur result: the
-arbitrage interval grows with the spread of $p_{-i}$, and a larger
-crowd has more spread. The thesis should therefore not assume
-robustness from "enough honest participants will dilute any attacker"
-— the opposite is true.
+## 8.3 Collusion (Chun & Shachter 2011)
 
-## 8.5 Sybil-arbitrage audit (Lambert sybilproof property)
+Three-member coalition, 10 seeds [source:
+`collusion_stress/data/collusion_stress_summary.csv`]:
 
-**Theory.** Lambert et al. 2008 prove WSWMs are sybilproof: if a
-participant splits a single $(r, w)$ report into $k$ identities with
-$(r_j, w_j)$ such that $\sum w_j = w$ and $r_j = r$ for all $j$, the
-total payoff is unchanged.
+| Scenario | Mean coalition profit ± SE | 95% CI |
+|---|---:|---|
+| no_collusion | 0.00 ± 0.00 | [0, 0] |
+| collusion_weighted_mean (Chun–Shachter) | +21.03 ± 3.30 | [+14.57, +27.49] |
+| collusion_weighted_median | +18.16 ± 3.33 | [+11.64, +24.67] |
 
-**Implementation.** `SybilArbitrageBehaviour` wraps the arbitrage
-seeker and fans the single action into $k \in \{1, 3, 5\}$ linked
-sybil accounts with equal total stake and identical reports.
+Both coalition variants extract strictly positive profit. The weighted-
+mean variant is marginally better in expectation than the weighted-
+median variant.
 
-**Result (10 seeds, T=1000, λ=0.3)** [source:
-`outputs/behaviour/experiments/sybil_arbitrage/data/sybil_arbitrage_summary.csv`]:
+## 8.4 Informed collusion (new)
+
+Three insiders with AR(1) DGP, 10 seeds [source:
+`informed_collusion/data/informed_collusion_summary.csv`]:
+
+| Scenario | Mean coalition profit ± SE | 95% CI |
+|---|---:|---|
+| baseline | 0.00 ± 0.00 | [0, 0] |
+| collusion_only (Chun–Shachter, truthful beliefs) | +24.12 ± 3.01 | [+18.21, +30.02] |
+| informed_collusion (insider precision + Chun–Shachter) | +33.84 ± 2.41 | [+29.12, +38.56] |
+
+Informed collusion compounds both attack vectors: Chun–Shachter
+arbitrage from residual member disagreement *plus* each member's
+privileged lagged signal. Combined profit (+33.84) exceeds pure
+collusion (+24.12) by ~40%.
+
+## 8.5 Insider advantage (Lambert et al. 2008; Johnstone 2007)
+
+AR(1) DGP with φ = 0.7, σ_eps = 0.18, 10 seeds [source:
+`insider_advantage/data/insider_advantage_summary.csv`]:
+
+| Scenario | Mean profit ± SE | 95% CI | Mean score |
+|---|---:|---|---:|
+| no_insider | 0.00 ± 0.00 | [0, 0] | 0.000 |
+| insider_lagged (F_{t−1}, lag = 1, σ = 0.015) | **+54.53 ± 3.18** | [+48.30, +60.76] | 0.852 |
+| insider_leaked (audit: reads y_t) | +61.43 ± 3.72 | [+54.14, +68.72] | 0.992 |
+
+The legitimate lagged insider earns ~89% of the leaker's profit — the
+cost of making the information boundary honest. The effect requires an
+AR(1) DGP; under IID uniform y the lagged insider degenerates to a
+truthful baseline.
+
+## 8.6 Sybil-proofness (Lambert et al. 2008)
+
+Two separate audits.
+
+### 8.6.1 Sybil split with identical reports (`onlinev2/outputs/core/experiments/sybil/`)
+
+[source: `onlinev2/outputs/core/experiments/sybil/summary.md`].
+
+| Regime | Mean profit ratio | Max \|Δ\| |
+|---|---:|---:|
+| identical reports, conserved total wager | **1.000000** | 2.07e-17 |
+| diversified reports (small ε-perturbation) | **1.065** | 1.03e-3 |
+| strategic deposit manipulation (identical reports) | **1.000000** | 2.64e-17 |
+
+The **narrow Lambert invariance holds** (ratio = 1.000000 with max
+delta at floating-point noise). Diversified-report sybils break the
+invariance by ~6.5% — Lambert's proof requires r_i = r_j, so this
+is not a defect but an honest scope limitation.
+
+### 8.6.2 Sybil-arbitrage audit (combined with Chen et al. 2014)
+
+Sybilproofness *for the arbitrage attack*, k clones fanning the
+arbitrage behaviour with equal total stake, paired seeds [source:
+`sybil_arbitrage/data/sybil_arbitrage_summary.csv`]:
 
 | k | Mean profit ± SE | 95% CI | Mean N_eff |
-|---|-----------------:|--------:|-----------:|
+|---:|---:|---|---:|
 | 1 | +12.02 ± 1.28 | [+9.52, +14.52] | 3.04 |
 | 3 | +12.02 ± 1.28 | [+9.52, +14.52] | 4.88 |
 | 5 | +12.02 ± 1.28 | [+9.52, +14.52] | 5.87 |
 
-**Interpretation.** The total attacker profit is **identical** across
-k (agreement to within Monte-Carlo noise). The effective number of
-accounts $N^{\text{eff}}_t$ inflates with k as expected but has no
-payoff consequence. This empirically validates the Lambert narrow
-sybilproofness on top of the Chen-Devanur arbitrage attack: even an
-already-successful arbitrageur gains nothing from splitting into
-sybils.
+**Profit is invariant to k** (to within Monte-Carlo error). The
+Lambert sybilproofness property carries over to the arbitrage attack:
+splitting the arbitrageur into k identities with equal total stake
+gives the same profit. N_eff inflates (which is an artefact of
+counting identities, not influence) but has no payoff consequence.
 
-Note this is a strict test of the narrow invariance (identical reports,
-conserved total wager). The diversified-report regime remains a real
-vulnerability — see §8.6.
+## 8.7 Wash trading / activity gaming (parimutuel wash)
 
-## 8.6 Coordinated-group (Chun-Shachter coalition)
+10 seeds [source:
+`wash_activity_gaming/data/wash_activity_gaming_summary.csv`]:
 
-**Theory.** Chun & Shachter (2011) show that in any WSWM with
-immutable beliefs, a coalition $C$ that reports a common value
-
-$$
-p_C = \sum_{i \in C} (w_i / W_C) \cdot p_i
-$$
-
-earns strictly higher total payoff than each member reporting
-truthfully, provided members disagree. The result holds under every
-outcome, not just in expectation.
-
-**Implementation.** `CoordinatedGroupBehaviour` with `aggregation =
-"weighted_mean"` (Chun-Shachter) or `"weighted_median"` (MAE analogue).
-Members retain individual stake sizes so that detectors can still
-probe linkage.
-
-**Result (10 seeds, T=1000, 3-member coalition)** [source:
-`outputs/behaviour/experiments/collusion_stress/data/collusion_stress_summary.csv`]:
-
-| Scenario | Mean coalition profit ± SE | 95% CI |
-|----------|---------------------------:|--------:|
-| no_collusion | +0.00 ± 0.00 | [0, 0] |
-| weighted_mean (Chun-Shachter) | **+21.03 ± 3.30** | [+14.57, +27.49] |
-| weighted_median | +18.16 ± 3.33 | [+11.64, +24.67] |
-
-Both variants are clearly visible to the standard detectors.
-`correlated_reporting` fires on both scenarios with scores above the
-benign baseline — see `data/detection_metrics_collusion_*.csv`.
-
-**Interpretation.** The coalition attack is robustly profitable, as
-predicted by the theory. The weighted-mean variant is marginally
-stronger than the weighted-median; both extract the full arbitrage
-from within-coalition disagreement. The attack is **detectable** but
-not **prevented** by the current mechanism: the arbitrage is a
-property of the scoring rule itself, not of a gap in the skill gate or
-weight cap.
-
-## 8.7 Informed collusion (coalition × privileged information)
-
-Two attack vectors at once: the coalition broadcasts a wager-weighted
-mean of member beliefs, but each member's belief is itself an
-F_{t-1}-compliant privileged signal on an AR(1) DGP.
-
-**Result (10 seeds, T=1000, AR(1) φ=0.7)** [source:
-`outputs/behaviour/experiments/informed_collusion/data/informed_collusion_summary.csv`]:
-
-| Scenario | Mean coalition profit ± SE | 95% CI |
-|----------|---------------------------:|--------:|
-| baseline | +0.00 ± 0.00 | [0, 0] |
-| collusion_only (truthful beliefs) | +24.12 ± 3.01 | [+18.21, +30.02] |
-| **informed_collusion** | **+33.84 ± 2.41** | **[+29.12, +38.56]** |
-
-**Interpretation.** Informed collusion compounds both attack vectors:
-the coalition extracts a Chun-Shachter arbitrage from residual
-member-level bias disagreement, and each member's privileged signal
-adds a precision bonus. The combined profit (+33.84) exceeds pure
-collusion by ≈ 40%.
-
-If coalition members were *identical* (no bias), the within-coalition
-disagreement would shrink to zero and the Chun-Shachter channel would
-close — validating that disagreement is the real source of the
-arbitrage, not individual skill. In the reported configuration we
-retain residual trait bias precisely to keep both channels open.
-
-## 8.8 Privileged information (insider)
-
-F_{t-1}-compliant insider with precision bonus on the lagged outcome,
-compared against a guarded leakage attacker that reads $y_t$ directly.
-
-**Result (10 seeds, T=1000, AR(1) φ=0.7)** [source:
-`outputs/behaviour/experiments/insider_advantage/data/insider_advantage_summary.csv`]:
-
-| Scenario | Mean insider profit ± SE | 95% CI | Mean insider score |
-|----------|-------------------------:|--------:|-------------------:|
-| no_insider | +0.00 ± 0.00 | [0, 0] | 0.000 |
-| insider_lagged (F_{t-1}, σ=0.015) | +54.53 ± 3.18 | [+48.30, +60.76] | 0.852 |
-| insider_leaked (allow_leakage=True) | +61.43 ± 3.72 | [+54.14, +68.72] | 0.992 |
-
-**Interpretation.** The legitimate lagged insider earns ~89% of the
-leaker's profit. The gap between the two scenarios is the cost of
-enforcing the information boundary honestly. Under iid outcomes the
-lagged insider degenerates to the benign baseline (no autocorrelation
-means no information to exploit); the AR(1) DGP is required for the
-lagged signal to be informative.
-
-The leakage scenario is retained as a calibration audit: it tells us
-what an outcome-leaking attacker could extract if the F_{t-1} boundary
-were broken. This is the upper bound on any real-world insider
-exposure.
-
-## 8.9 Strategic reporting (aggregate manipulation)
-
-Sweeps `pull` with `target = 0.9`: the attacker reports
-$r = (1-\text{pull}) \cdot \text{anchor} + \text{pull} \cdot \text{target}$,
-trading aggregate shift against scoring-rule loss.
-
-**Result (10 seeds, T=1000)** [source:
-`outputs/behaviour/experiments/strategic_reporting/data/strategic_reporting_summary.csv`]:
-
-| Scenario | Δ $\hat r$ vs baseline ± SE | Attacker profit ± SE |
-|----------|----------------------------:|---------------------:|
-| baseline_truthful | 0.000 ± 0.000 | 0.00 ± 0.00 |
-| pull=0.3, target=0.9 | +0.067 ± 0.006 | +11.98 ± 2.97 |
-| pull=0.6, target=0.9 | +0.034 ± 0.006 | -9.77 ± 0.12 |
-| pull=1.0, target=0.9 | +0.013 ± 0.002 | -10.00 ± 0.00 |
-
-**Interpretation.** The frontier is non-monotone. Gentle pulls (0.3)
-are *both* profitable (+12) and most effective at shifting the
-aggregate; aggressive pulls (1.0) are self-defeating because σ
-collapses, zeroing the effective wager before the attacker can
-meaningfully move $\hat r$.
-
-The mechanism thus imposes a natural speed-limit: an attacker
-motivated by off-mechanism objectives (e.g. downstream decisions based
-on $\hat r$) gets at most a small mean shift per unit cost. The cost
-grows faster than the shift once skill has collapsed.
-
-## 8.10 Wash / activity gaming
-
-Two styles: `anchor` (report near the public aggregate, minimising
-score-rule cost) and `split_bet` (half accounts report 0, half report
-1, maximising internal transfer and activity inflation).
-
-**Result (10 seeds, T=1000)** [source:
-`outputs/behaviour/experiments/wash_activity_gaming/data/wash_activity_gaming_summary.csv`]:
-
-| Scenario | Activity inflation ± SE | Wash profit ± SE |
-|----------|------------------------:|-----------------:|
-| no_wash | 0.0% ± 0.0% | +0.00 ± 0.00 |
+| Scenario | Inflation rate ± SE | Wash profit ± SE |
+|---|---:|---:|
+| no_wash | 0.0% ± 0.0% | 0.00 ± 0.00 |
 | wash_k3_anchor | +68.1% ± 1.3% | +15.14 ± 2.03 |
-| wash_k5_split | +113.4% ± 2.1% | -257.54 ± 4.39 |
+| wash_k5_split | +113.4% ± 2.1% | −257.54 ± 4.39 |
 
-**Interpretation.** Activity-based metrics are easy to inflate.
-Anchor-style wash trading nearly doubles the participation count while
-remaining mildly profitable; split-bet trading more than doubles the
-count but pays a ruinous score-rule cost and bankrupts the attacker.
+**Anchor style** inflates activity cheaply (small positive profit +
+60% inflation). **Split-bet style** inflates more but pays a large
+score-rule cost — attackers are usually bankrupt by T = 1000.
 
-The `fake_activity_loop` detector fires on both scenarios
-(`detector_scores_wash_*.csv`) because the linked accounts are
-perfectly synchronised in time and share a common name prefix.
+## 8.8 Strategic reporting frontier
 
-## 8.11 Detection-adaptation arms race
+Pull sweep towards target = 0.9, 10 seeds [source:
+`strategic_reporting/data/strategic_reporting_summary.csv`]:
 
-Fixed manipulator vs adaptive evader against an online z-score
-detector feeding back through `observe_round_result(logs_t)`.
+| Scenario | Δ r̂ vs baseline | Attacker profit ± SE |
+|---|---:|---:|
+| baseline_truthful | 0.000 ± 0.000 | 0.00 ± 0.00 |
+| pull = 0.3 | +0.067 ± 0.006 | **+11.98 ± 2.97** |
+| pull = 0.6 | +0.034 ± 0.006 | −9.77 ± 0.12 |
+| pull = 1.0 | +0.013 ± 0.002 | −10.00 ± 0.00 |
 
-**Result (20 seeds, T=1000, target=0.2 on iid y)** [source:
-`outputs/behaviour/experiments/detection_adaptation/data/`]:
+**Non-monotone frontier.** Gentle nudges (pull = 0.3) are *both*
+profitable *and* most effective at shifting the aggregate report.
+Aggressive pulls are self-defeating: σ collapses, the effective wager
+goes to zero before the attacker can move r̂. The mechanism
+automatically punishes extreme strategic reporting.
+
+## 8.9 Detection adaptation
+
+20 seeds, online z-score detector, target μ = 0.2 against uniform-y
+DGP [source:
+`detection_adaptation/data/detection_adaptation_summary.csv`]:
 
 | Attacker | Mean profit ± SE | Detector score | Flag rate |
-|----------|-----------------:|---------------:|----------:|
-| fixed_manipulator | -50.02 ± 0.00 | 0.490 | 0.111 |
-| adaptive_evader | -49.78 ± 0.13 | 0.478 | 0.116 |
+|---|---:|---:|---:|
+| fixed_manipulator | −50.02 ± 0.00 | 0.490 | 0.111 |
+| adaptive_evader | −49.78 ± 0.13 | 0.478 | 0.116 |
 
-**Interpretation.** Both attackers are bankrupted because the target
-(0.2) is far from uniform y. The adaptive evader loses marginally less
-(+0.24) thanks to its quiet-mode hedging and is flagged slightly more
-often (the hedge makes it visible in a different way). The adaptive
-advantage is real but small in this regime; a more realistic target or
-DGP would likely expand the gap.
+Both manipulators are **bankrupted** by the skill-weighting
+mechanism. The adaptive evader's quiet-mode hedging marginally reduces
+losses (+0.24) but cannot flip the sign. The result is decisive: on a
+uniform-y DGP where the manipulator has no information edge, neither
+fixed nor adaptive manipulation is economically viable.
 
-## 8.12 Invariants (regression guard)
+## 8.10 Headline invariants (ANALYSIS.md §3)
 
-The adversary suite checks the following post-run invariants. If any
-breaks in a future run it is a finding that must be reported:
+Invariants the adversary suite is expected to satisfy:
 
-- `arbitrage_scan`: mean profit monotone (weakly) increasing in λ.
-- `arbitrage_crowd_size`: mean profit monotone increasing in
-  `n_benign` at fixed λ.
-- `collusion_stress`: `no_collusion` profit ≈ 0; both collusion
-  variants have 95% CI strictly above 0.
+- `arbitrage_scan`: profit increases (weakly) with λ. ✓
+- `arbitrage_crowd_size`: profit monotone in n_benign at fixed λ. ✓
+- `collusion_stress`: coalition profit ≥ 0 at baseline; strictly
+  positive for both weighted-mean / weighted-median variants. ✓
 - `informed_collusion`: `informed_collusion` > `collusion_only` > 0
-  under AR(1).
+  under AR(1). ✓ (33.84 > 24.12 > 0).
 - `insider_advantage`: `insider_leaked` > `insider_lagged` > 0 under
-  AR(1); `insider_lagged` ≈ 0 under iid y.
-- `wash_activity_gaming`: inflation > 60% (anchor), > 100% (split).
-- `sybil_arbitrage`: profit invariant to k within Monte-Carlo error.
+  AR(1). ✓ (61.43 > 54.53 > 0).
+- `wash_activity_gaming`: inflation > 60% anchor, > 100% split; wash
+  profit ≈ 0 anchor, strongly negative split. ✓
+- `sybil_arbitrage`: profit invariant across k. ✓
 
-## 8.13 Headline summary
+All invariants hold on current code.
 
-The mechanism is:
+## 8.11 Headline summary
 
-- **Vulnerable, as predicted by theory**, to the Chen-Devanur arbitrage
-  attack. Profit grows with λ and crowd size.
-- **Vulnerable** to the Chun-Shachter coalition attack, with or
-  without privileged information.
-- **Sybil-proof** in the Lambert narrow sense (identical reports,
-  conserved total wager). Sybil splitting does not amplify the
-  arbitrage.
-- **Robust** to aggressive single-account strategic reporting in
-  steady state (σ collapses before the aggregate shifts meaningfully).
-- **Reliably detects** coordinated reporting, fake-activity loops, and
-  wash-style linked accounts via the four baseline detectors.
-- **Partially robust** to adaptive evaders that monitor detector
-  feedback and hedge accordingly.
+What the mechanism does **well**:
 
-## 8.14 What changed from the previous revision
+- Sybil-proofness for identical reports holds to machine precision;
+  extends to the arbitrage attack (k-invariance).
+- Strategic reporting frontier is non-monotone: aggressive attacks
+  are self-defeating because σ collapses.
+- Fixed manipulators against a no-information DGP are bankrupted.
+- Narrow strategic reporting (pull = 0.3) gives the attacker
+  +11.98 profit — the only profitable small-perturbation attack — but
+  only on 10 seeds at T = 1000.
 
-The earlier ANALYSIS / §8 narrative (see previous
-`dashboard/docs/MECHANISM_ANALYSIS.md` §7) reported "attacker profit
-≈ 0" across the board. Root cause: the old `ArbitrageurBehaviour` used
-an ad-hoc participation test (`0.12·edge - 0.01`) that never fired,
-and the old `CoordinatedGroup` chose the mean of $y$-history (not of
-member beliefs) as its shared report. Both bypassed the
-Chen-Devanur / Chun-Shachter channels entirely. The new adversaries
-implement the theory literally and produce the strictly positive
-attacker profits reported above.
+What the mechanism is **vulnerable to**:
 
-A complete diff summary lives in
-`onlinev2/outputs/behaviour/experiments/ANALYSIS.md`.
+- **Arbitrage.** Chen et al. 2014 arbitrage extracts +12 to +24 profit
+  per 1000 rounds as λ scales. The skill gate does not eliminate
+  arbitrage; it modestly constrains it.
+- **Collusion.** Three-member coalition extracts +21 profit; informed
+  collusion (AR(1) DGP) extracts +34. Neither is contained by the
+  skill gate.
+- **Insiders** with legitimate lagged signals under AR(1) extract +54
+  profit, about 89% of what a full leakage adversary gets.
+- **Sybil splitting with diversified reports** breaks the Lambert
+  narrow invariance by ~6.5%.
+- **Wash trading (anchor style)** inflates activity and extracts small
+  positive profit at modest cost.
+
+What remains **open**:
+
+- Full collusion equilibria are not computed; only named strategies
+  are tested.
+- Adaptive detection — the detector is a simple online z-score. A
+  richer multi-feature detector would change both attack and defence
+  curves.
+- Participation-attack experiments (bursty, strategic absence,
+  edge-threshold). The earlier narrative's "+934% bursty" number is
+  from a legacy preset not present in the current adversary suite and
+  should be regenerated before citing.
 
 ## Notes for the write-up
 
-- Put §8.3 (arbitrage) and §8.4 (crowd size) adjacent — the 2D table
-  is the most striking single figure in the robustness chapter.
-- Figures to include:
-  - `outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_profit_by_lam.png`
-  - `outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_wealth_trajectories.png`
-  - `outputs/behaviour/experiments/arbitrage_crowd_size/plots/arbitrage_crowd_size.png`
-  - `outputs/behaviour/experiments/collusion_stress/plots/coalition_profit.png`
-  - `outputs/behaviour/experiments/informed_collusion/plots/informed_collusion.png`
-  - `outputs/behaviour/experiments/sybil_arbitrage/plots/sybil_arbitrage_profit.png`
-- Be honest about the arbitrage finding. The old "zero profit" claim
-  was wrong; the new results match published theory and should be
-  presented as a validation of the Chen-Devanur framework, not as a
-  mechanism failure. The mechanism's contribution is the composition
-  of budget balance + skill gate + wealth dynamics, not arbitrage
-  prevention (which is the domain of NAWMs, Chen et al. 2014 §4–5).
-- The bursty-participation finding from the original §8.3 is still
-  true but lives outside the adversary catalogue — it belongs in the
-  participation-dynamics section of §5 / Appendix B.
+- Include the three headline tables: arbitrage_scan (§8.2),
+  sybil-arbitrage audit (§8.6.2), and strategic reporting frontier
+  (§8.8). These are the most consequential for the "does the
+  mechanism survive strategic behaviour" question.
+- Reference figures under `onlinev2/outputs/behaviour/experiments/
+  */plots/` — one per experiment, all PNGs already rendered.
+- Drop the legacy "18-preset" table from the earlier draft; the
+  current adversary catalogue is 8 named archetypes with cited
+  theory bases.
+- The old `MECHANISM_ANALYSIS.md` §7 "critical threats" / "contained
+  threats" / "beneficial" tripartite table is superseded.

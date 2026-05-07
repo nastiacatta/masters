@@ -83,5 +83,7 @@ cost of the Lambert budget-balance constraint.
   to the wind slice, or does it transfer to other data? Electricity
   comparison will test this once the refresh lands.
 - Their robust regression is more aggressive on missingness than our
-  staleness decay. Worth running their imputation on our bursty
-  preset to see how much of the +934% vulnerability it would cut.
+  staleness decay. Worth running their imputation head-to-head on a
+  fresh participation-stress preset once we have one (the legacy
+  bursty 934% number is retired and not in the current adversary
+  suite).

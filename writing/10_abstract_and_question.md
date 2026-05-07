@@ -49,10 +49,12 @@ scope limitations documented in `writing/90_discussion_and_limits.md`.
 > Ranjan–Gneiting tail-calibration gap at a ~1.3% CRPS cost and ~9%
 > sharpness cost, without modifying any of the economic layers. The
 > dominant empirical lever is the deposit policy, not the weighting rule.
-> The main limitations are a systematic tail under-dispersion inherent
-> to linear opinion pools, a participation-based vulnerability (bursty
-> absence inflates aggregate error by ~10×), and the standard risk-
-> neutrality assumption from Lambert's framework.
+> The main limitations are (i) a systematic tail under-dispersion
+> inherent to linear opinion pools, (ii) the economically active Chen
+> et al. 2014 arbitrage vulnerability that applies to every weighted-
+> score mechanism — our multi-seed scan shows arbitrageur profit of +12
+> to +24 over 1000 rounds as λ rises from 0 to 1 — and (iii) the
+> standard risk-neutrality assumption from Lambert's framework.
 
 Targets to tighten in the final version:
 
@@ -63,9 +65,11 @@ Targets to tighten in the final version:
   2026-05-07. The old audit-slice DM (+15.92) is preserved in
   `THESIS_CLAIMS.md` Claim 4 and Chapter 5.2 §6.2.1 but is no longer
   the headline.
-- The behaviour number for bursty (+934%) uses the earlier preset; if
-  the final regression pass changes it, update Chapter 6 and the
-  abstract together.
+- The behaviour catalogue has been rebuilt around named theory-grounded
+  adversaries (Chen et al. 2014, Chun & Shachter 2011, Johnstone 2007).
+  The legacy "+934% bursty" and the "18-preset" table are retired. The
+  current robustness numbers (arbitrage, collusion, insider, sybil)
+  come from `onlinev2/outputs/behaviour/experiments/ANALYSIS.md`.
 - The electricity null result is important framing. Say it in the
   abstract and do not paper over it.
 

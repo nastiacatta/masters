@@ -244,9 +244,14 @@ export default function ChartCard({
       >
         {/* Header area */}
         <div className="mb-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {provenance && <ProvenanceBadge type={provenance.type} label={provenance.label} />}
-            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+            <h3
+              className="font-serif tracking-tight"
+              style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+            >
+              {title}
+            </h3>
             {help && <InfoToggle {...help} />}
 
             {/* CSV download button */}
@@ -254,10 +259,32 @@ export default function ChartCard({
               type="button"
               onClick={handleDownloadCSV}
               disabled={!hasCsvData}
-              className="ml-auto text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors rounded-md border border-slate-200 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              className="ml-auto transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Download CSV"
               title={hasCsvData ? 'Download CSV' : 'No data available'}
-              style={{ minWidth: '28px', minHeight: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                minWidth: 28,
+                minHeight: 28,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid var(--border)',
+                borderRadius: 4,
+                background: 'var(--card)',
+                color: 'var(--ink-soft)',
+              }}
+              onMouseOver={(e) => {
+                if (hasCsvData) {
+                  (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--paper)';
+                }
+              }}
+              onMouseOut={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--ink-soft)';
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--card)';
+              }}
             >
               <DownloadIcon />
             </button>
@@ -266,15 +293,39 @@ export default function ChartCard({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors rounded-md border border-slate-200 hover:border-slate-300"
+              className="transition-colors"
               aria-label="Expand chart to fullscreen"
               title="Expand to fullscreen"
-              style={{ minWidth: '28px', minHeight: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                minWidth: 28,
+                minHeight: 28,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid var(--border)',
+                borderRadius: 4,
+                background: 'var(--card)',
+                color: 'var(--ink-soft)',
+              }}
+              onMouseOver={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--paper)';
+              }}
+              onMouseOut={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--ink-soft)';
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--card)';
+              }}
             >
               <ExpandIcon />
             </button>
           </div>
-          {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+          {subtitle && (
+            <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 4 }}>
+              {subtitle}
+            </p>
+          )}
         </div>
 
         {/* Chart content area — with optional insight 70/30 split */}

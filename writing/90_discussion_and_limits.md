@@ -81,14 +81,17 @@ the easiest way to lose a reviewer.
   linear-utility assumption. For large stakes or risk-averse agents
   the truthfulness argument does not go through.
 - **Quantile-level attacks are harder to contain than point-level
-  ones.** Bias, noise, reputation gaming distort the full quantile
-  vector and hide in the CRPS-averaged σ signal. Δ CRPS for these
-  attacks lands in the 13–28% range (see Chapter 6.3). No defence
-  is currently in the mechanism for this family.
-- **Participation is the dominant vulnerability.** Bursty 54%
-  attendance inflates aggregate CRPS by ~10×. Staleness decay makes
-  strategic absence costly for the absent agent's future earnings
-  but does not help the current round.
+  ones.** On the current adversary suite, Chen et al. 2014 arbitrage
+  extracts +12 to +24 profit per 1000 rounds as λ rises from 0 to 1,
+  Chun–Shachter coalition extracts +21 (weighted-mean) or +18
+  (weighted-median), and a legitimate lagged insider under AR(1)
+  extracts +54. The skill gate does not eliminate any of these; it
+  only modestly constrains arbitrage. See Chapter 6 §8.2–8.5 for the
+  full tables.
+- **Participation is expected to be a vulnerability, but the specific
+  "+934% bursty" number from the earlier draft is from a legacy
+  preset and is not present in the current adversary suite.** Re-run
+  the participation-specific experiments before citing a number.
 - **Arbitrage is empirically profitable, as predicted by theory.**
   The Chen-Devanur-Pennock-Vaughan (2014) arbitrage interval applies
   to every WSWM, including ours. Post-revamp experiments confirm a
@@ -110,8 +113,12 @@ the easiest way to lose a reviewer.
   validating the Lambert invariance on top of an actively exploited
   attack. The narrow sense is the only one the theorem covers;
   diversified-report sybils remain a real open vulnerability.
-- **Collusion equilibria not formally analysed.** We test a collusion
-  preset but we do not characterise the best-response space.
+- **Collusion equilibria not formally analysed; named strategies
+  extract substantial profit.** We test `coordinated_group` (Chun–
+  Shachter 2011) and `informed_collusion` (coalition + AR(1)
+  insiders). Three-member coalition extracts +21; informed collusion
+  extracts +34. Neither is contained by the skill gate. The full
+  best-response space is not characterised.
 - **Electricity data gives a clean null.** On the 10 000-round
   electricity imbalance slice the mechanism's Δ vs uniform is
   statistically zero (t = 0.008, p = 0.994). Seven forecasters within

@@ -197,7 +197,8 @@ a stale figure can be regenerated in one command.
 | `real_data_validation.png` | `presentation/R/plot_real_data.R` |
 | `settlement_sanity.png` | `presentation/R/plot_settlement_sanity.R` |
 | `skill_recovery` figures — `quantiles_crps_recovery.png`, `point_mae_recovery.png` | `presentation/R/plot_skill_recovery.R` |
-| `skill_signal_clean.png`, `skill_wager.png` | `presentation/R/plot_skill_signal.R` |
+| `skill_signal_clean.png` | `presentation/R/plot_skill_signal.R` |
+| `skill_wager.png` — σ trajectory on known-noise panel (Figure F4) | `presentation/R/plot_skill_trajectory.R` |
 | `sybil.png` | `presentation/R/plot_sybil.R` |
 | `weight_rule_comparison.png` | `presentation/R/plot_weight_rule_comparison.R` |
 

@@ -13,29 +13,42 @@ export function LoadingState({ message = 'Loading…' }: DataStatesProps) {
       aria-live="polite"
     >
       <div className="relative w-8 h-8 mb-3">
-        <div className="absolute inset-0 rounded-full border-2 border-slate-200" />
-        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-teal-500 animate-spin" />
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ border: '2px solid var(--border)' }}
+        />
+        <div
+          className="absolute inset-0 rounded-full animate-spin"
+          style={{ border: '2px solid transparent', borderTopColor: 'var(--navy)' }}
+        />
       </div>
-      <p className="text-sm text-slate-500">{message}</p>
+      <p style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>{message}</p>
     </div>
   );
 }
 
 export function EmptyState({ message = 'No data available.', children }: DataStatesProps) {
   return (
-    <div className="p-8 bg-white border border-dashed border-slate-300 rounded-xl text-center min-h-[140px] flex flex-col items-center justify-center gap-2">
+    <div
+      className="p-8 text-center min-h-[140px] flex flex-col items-center justify-center gap-2"
+      style={{
+        background: 'var(--card)',
+        border: '1px dashed var(--border-strong)',
+        borderRadius: 6,
+      }}
+    >
       <svg
         width="28"
         height="28"
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
-        className="text-slate-300"
+        style={{ color: 'var(--ink-faint)', opacity: 0.55 }}
       >
         <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
         <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
-      <p className="text-sm text-slate-500">{message}</p>
+      <p style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>{message}</p>
       {children}
     </div>
   );
@@ -48,31 +61,82 @@ export function ErrorState({
   children,
 }: DataStatesProps & { error?: Error | null; onRetry?: () => void }) {
   return (
-    <div className="p-4 mb-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/40">
+    <div
+      className="p-4 mb-4"
+      style={{
+        background: 'var(--amber-tint)',
+        border: '1px solid rgba(180, 83, 9, 0.25)',
+        borderRadius: 6,
+      }}
+    >
       <div className="flex items-start gap-3">
         <span
           aria-hidden="true"
-          className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-500 text-white shadow-sm mt-0.5"
+          className="shrink-0 inline-flex items-center justify-center rounded-full mt-0.5"
+          style={{
+            width: 28,
+            height: 28,
+            background: 'var(--amber)',
+            color: '#fff',
+            boxShadow: '0 1px 2px rgba(180, 83, 9, 0.25)',
+          }}
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2L1.5 13.5H14.5L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            <path
+              d="M8 2L1.5 13.5H14.5L8 2Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
             <path d="M8 7V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             <circle cx="8" cy="12" r="0.75" fill="currentColor" />
           </svg>
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-amber-900">{message}</p>
+          <p style={{ fontSize: 13.5, fontWeight: 600, color: '#78350f' }}>{message}</p>
           {error?.message && (
-            <p className="text-xs text-amber-800/80 mt-1 font-mono break-words">{error.message}</p>
+            <p
+              className="mt-1 font-mono break-words"
+              style={{ fontSize: 11.5, color: 'rgba(120, 53, 15, 0.8)' }}
+            >
+              {error.message}
+            </p>
           )}
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-900 text-white text-xs font-medium hover:bg-amber-800 transition-colors shadow-sm"
+              className="mt-3 inline-flex items-center gap-1.5 transition-colors"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 5,
+                background: '#78350f',
+                color: '#fbf9f4',
+                fontSize: 12,
+                fontWeight: 600,
+                boxShadow: '0 1px 2px rgba(120, 53, 15, 0.25)',
+              }}
+              onMouseOver={(e) => {
+                (e.currentTarget as HTMLElement).style.background = '#92400e';
+              }}
+              onMouseOut={(e) => {
+                (e.currentTarget as HTMLElement).style.background = '#78350f';
+              }}
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 8a6 6 0 1011-3.5L14 4M14 4V1M14 4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 8a6 6 0 1011-3.5L14 4M14 4V1M14 4H11"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               Retry
             </button>

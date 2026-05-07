@@ -193,9 +193,14 @@ must pass before the next is treated as meaningful.
 
 ### Rung 4 — Strategic robustness (Chapter 6)
 
-- 18 behaviour presets (`dashboard/docs/BEHAVIOUR_COVERAGE.md`).
-- Attack-gain frame: Δ CRPS vs benign baseline; collateral cost of
-  defences; attacker weight share.
+- Theory-grounded adversary suite (`onlinev2/outputs/behaviour/
+  experiments/ANALYSIS.md`): arbitrage_seeking (Chen et al. 2014),
+  coordinated_group (Chun & Shachter 2011), privileged_information
+  (Lambert 2008; Johnstone 2007), wash_trader, strategic_reporter,
+  detector_aware, sybil_arbitrage.
+- Attack-gain frame: attacker profit ± SE and 95% CI, scaled per
+  1000 rounds; attacker weight share where relevant.
+- Multi-seed aggregation (≥ 10 seeds per experiment).
 
 ## 4.5 Standard output format
 

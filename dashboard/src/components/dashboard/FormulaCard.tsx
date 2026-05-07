@@ -11,6 +11,10 @@ interface FormulaCardProps {
   caption: string;
 }
 
+/**
+ * Academic formula card — warm paper surface, serif title with navy
+ * accent rule, cream-tinted formula panel.
+ */
 export default function FormulaCard({ title, latex, formula, caption }: FormulaCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -27,27 +31,62 @@ export default function FormulaCard({ title, latex, formula, caption }: FormulaC
   const hasLatex = latex != null && latex !== '';
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150">
-      <div className="flex items-center gap-2 mb-2">
-        <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-teal-500" />
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+    <div
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        borderRadius: 6,
+        padding: 18,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <div className="flex items-center gap-2.5 mb-3">
+        <span
+          aria-hidden="true"
+          className="inline-block"
+          style={{ width: 3, height: 16, background: 'var(--navy)', borderRadius: 2 }}
+        />
+        <h3
+          className="font-serif tracking-tight"
+          style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          {title}
+        </h3>
       </div>
-      <div
-        className={
-          hasLatex
-            ? 'rounded-lg bg-gradient-to-br from-slate-50 to-slate-50/40 border border-slate-200 px-4 py-4 overflow-x-auto text-center min-h-[2.75rem] flex items-center justify-center'
-            : ''
-        }
+      {hasLatex ? (
+        <div
+          className="overflow-x-auto text-center flex items-center justify-center"
+          style={{
+            background: 'var(--cream)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            padding: '16px 18px',
+            minHeight: '2.75rem',
+          }}
+        >
+          <div ref={containerRef} className="katex-block" style={{ fontSize: 15 }} />
+        </div>
+      ) : (
+        <code
+          className="block overflow-x-auto font-mono"
+          style={{
+            background: 'var(--cream)',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            padding: '12px 16px',
+            fontSize: 13.5,
+            color: 'var(--ink-muted)',
+          }}
+        >
+          {formula ?? ''}
+        </code>
+      )}
+      <p
+        className="leading-relaxed"
+        style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10, lineHeight: 1.55 }}
       >
-        {hasLatex ? (
-          <div ref={containerRef} className="katex-block text-sm" />
-        ) : (
-          <code className="block rounded-lg bg-gradient-to-br from-slate-50 to-slate-50/40 border border-slate-200 px-4 py-3 font-mono text-sm overflow-x-auto">
-            {formula ?? ''}
-          </code>
-        )}
-      </div>
-      <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">{caption}</p>
+        {caption}
+      </p>
     </div>
   );
 }

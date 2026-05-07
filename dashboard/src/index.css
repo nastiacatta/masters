@@ -290,6 +290,71 @@ main h2.text-xl {
   color: var(--ink);
 }
 
+/* Active-button / pill pattern used across many pages.
+   Route "solid dark" slate buttons to navy and round corners. */
+main .bg-slate-800,
+main .bg-slate-900,
+main .bg-slate-950 {
+  background-color: var(--navy) !important;
+}
+
+main .hover\:bg-slate-700:hover {
+  background-color: var(--navy-ink) !important;
+}
+
+/* Backdrop for modal/lightbox overlays */
+main .bg-slate-950\/40 {
+  background-color: rgba(11, 18, 32, 0.4) !important;
+}
+
+/* Hover states for pill buttons */
+main .hover\:bg-slate-200:hover {
+  background-color: var(--border-strong) !important;
+}
+main .hover\:bg-slate-50:hover,
+main .hover\:bg-slate-100:hover {
+  background-color: rgba(15, 23, 42, 0.035) !important;
+}
+
+/* Fuchsia / bright pink accents rarely used in the main app — neutralise */
+main .text-fuchsia-600,
+main .text-fuchsia-500 { color: var(--plum) !important; }
+
+/* Tables generated with default tailwind — give a restful header row */
+main thead tr.bg-slate-50,
+main thead tr.bg-white {
+  background: var(--cream) !important;
+}
+
+/* Prevent double borders where a rounded card contains a bordered table */
+main .rounded-xl > table,
+main .rounded-2xl > table {
+  border-collapse: collapse;
+}
+
+/* Soft shadow consolidation — replace the dozen custom shadow-[...] values */
+main [class*="shadow-[0_1px_2px_rgba(15,23,42,0.03)]"] {
+  box-shadow: var(--shadow-sm) !important;
+}
+main [class*="shadow-[0_2px_8px_rgba(15,23,42,0.06)]"],
+main [class*="shadow-[0_4px_12px_rgba(15,23,42,0.08)]"] {
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* KBD tags: unify as warm card pills */
+main kbd {
+  font-family: var(--font-mono);
+  background: var(--cream) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--ink-muted);
+}
+
+/* Body copy inside main gets a slightly larger default */
+main .text-sm    { font-size: 14px; }
+main .text-xs    { font-size: 12.5px; }
+main .text-\[11px\] { font-size: 12px !important; }
+main .text-\[10px\] { font-size: 11px !important; }
+
 .recharts-tooltip-wrapper {
   transition: transform 80ms ease-out !important;
 }

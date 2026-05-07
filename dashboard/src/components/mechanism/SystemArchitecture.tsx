@@ -145,16 +145,28 @@ function LayerBand({ layer, hovered, selected, onHover, onSelect, adjacency }: {
   return (
     <div className="relative">
       {/* Layer header */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-baseline gap-2.5 mb-3">
         <span
-          className="flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold text-white shrink-0"
-          style={{ background: layer.accent }}
+          className="flex items-center justify-center shrink-0 font-mono"
+          style={{
+            width: 20, height: 20, borderRadius: '50%',
+            background: layer.accent,
+            color: '#fff',
+            fontSize: 10, fontWeight: 700,
+          }}
         >
           {layer.step}
         </span>
-        <div>
-          <span className="text-xs font-bold text-slate-700">{layer.title}</span>
-          <span className="text-[10px] text-slate-400 ml-2">{layer.subtitle}</span>
+        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+          <span
+            className="font-serif"
+            style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}
+          >
+            {layer.title}
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+            {layer.subtitle}
+          </span>
         </div>
       </div>
 
@@ -170,19 +182,34 @@ function LayerBand({ layer, hovered, selected, onHover, onSelect, adjacency }: {
               onMouseEnter={() => onHover(node.id)}
               onMouseLeave={() => onHover(null)}
               onClick={() => onSelect(node.id)}
-              className="relative rounded-xl border-2 px-3 py-2 text-center min-w-[72px] cursor-pointer transition-all duration-150"
+              className="relative text-center cursor-pointer transition-all duration-150"
               style={{
-                borderColor: isSelected ? node.color : node.color + '50',
+                minWidth: 72,
+                padding: '8px 12px',
+                borderRadius: 4,
+                border: `1.5px solid ${isSelected ? node.color : node.color + '40'}`,
                 background: node.bg,
                 opacity: dimmed ? 0.25 : 1,
-                transform: isSelected ? 'scale(1.05)' : undefined,
-                boxShadow: isSelected ? `0 0 0 3px ${node.color}30` : undefined,
+                transform: isSelected ? 'scale(1.04)' : undefined,
+                boxShadow: isSelected ? `0 0 0 3px ${node.color}25` : undefined,
               }}
             >
-              <div className="text-[9px] font-bold uppercase tracking-wider" style={{ color: node.color + 'bb' }}>
+              <div
+                className="uppercase"
+                style={{
+                  fontSize: 9.5,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  color: node.color,
+                  opacity: 0.75,
+                }}
+              >
                 {node.label}
               </div>
-              <div className="text-sm font-mono font-semibold mt-0.5" style={{ color: node.color }}>
+              <div
+                className="font-mono mt-0.5"
+                style={{ fontSize: 13, fontWeight: 600, color: node.color }}
+              >
                 {node.sym}
               </div>
             </button>
@@ -206,19 +233,47 @@ function DownArrows({ accent }: { accent: string }) {
 
 function NodeDetail({ node, onClose }: { node: ArchNode; onClose: () => void }) {
   return (
-    <div className="rounded-xl border-2 p-4 mt-3 relative animate-in fade-in duration-200" style={{ borderColor: node.color + '40', background: node.bg + 'aa' }}>
+    <div
+      className="relative animate-in fade-in duration-200 mt-3"
+      style={{
+        border: `1px solid ${node.color}40`,
+        borderLeft: `3px solid ${node.color}`,
+        background: node.bg,
+        borderRadius: 4,
+        padding: 16,
+      }}
+    >
       <button
-        type="button" onClick={onClose}
-        className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/60"
+        type="button"
+        onClick={onClose}
+        className="absolute top-2 right-2 transition-colors flex items-center justify-center"
+        style={{
+          width: 22, height: 22,
+          borderRadius: '50%',
+          color: 'var(--ink-faint)',
+          fontSize: 12,
+        }}
       >
         ✕
       </button>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="w-3 h-3 rounded-full" style={{ background: node.color }} />
-        <span className="text-sm font-bold" style={{ color: node.color }}>{node.label}</span>
-        <span className="font-mono text-sm text-slate-600">{node.sym}</span>
+      <div className="flex items-baseline gap-2 mb-1.5">
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: node.color }} />
+        <span
+          className="font-serif"
+          style={{ fontSize: 14, fontWeight: 600, color: node.color }}
+        >
+          {node.label}
+        </span>
+        <span
+          className="font-mono"
+          style={{ fontSize: 13, color: 'var(--ink-muted)' }}
+        >
+          {node.sym}
+        </span>
       </div>
-      <p className="text-xs text-slate-600 leading-relaxed">{node.desc}</p>
+      <p style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.55 }}>
+        {node.desc}
+      </p>
       {node.formula && (
         <div className="mt-3">
           <MathBlock latex={node.formula} />
@@ -230,14 +285,26 @@ function NodeDetail({ node, onClose }: { node: ArchNode; onClose: () => void }) 
 
 function FeedbackLoop() {
   return (
-    <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 px-4 py-3 flex items-center gap-3">
-      <svg width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+    <div
+      className="flex items-center gap-3 px-4 py-3"
+      style={{
+        background: 'var(--cream)',
+        border: '1px dashed var(--border-strong)',
+        borderRadius: 4,
+      }}
+    >
+      <svg width="28" height="28" viewBox="0 0 32 32" className="shrink-0">
         <path d="M16 28A12 12 0 1 1 28 16" stroke={SEM.wealth.main} strokeWidth="2" fill="none" strokeDasharray="4 3" />
         <path d="M24 16l4 0 0-4" stroke={SEM.wealth.main} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
       <div>
-        <div className="text-xs font-bold text-slate-700">Feedback to next round</div>
-        <div className="text-[11px] text-slate-500">
+        <div
+          className="font-serif"
+          style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          Feedback to next round
+        </div>
+        <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>
           <span className="font-mono" style={{ color: SEM.wealth.main }}>Wᵢ,ₜ₊₁</span> and{' '}
           <span className="font-mono" style={{ color: SEM.skill.main }}>σᵢ,ₜ₊₁</span>{' '}
           become the starting state at <span className="font-mono">t+1</span>, closing the loop.
@@ -254,7 +321,7 @@ function TimelineView({ selected, onSelect }: { selected: string | null; onSelec
 
   return (
     <div>
-      <p className="text-[11px] text-slate-500 mb-3">
+      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 14 }}>
         Chronology within a single round. Click any step for details.
       </p>
 
@@ -268,27 +335,45 @@ function TimelineView({ selected, onSelect }: { selected: string | null; onSelec
                 <button
                   type="button"
                   onClick={() => onSelect(step.id)}
-                  className="relative rounded-xl border-2 px-3 py-3 text-center min-w-[90px] transition-all duration-150 cursor-pointer"
+                  className="relative text-center transition-all duration-150 cursor-pointer"
                   style={{
-                    borderColor: isSelected ? step.color : step.color + '40',
+                    minWidth: 96,
+                    padding: '10px 12px',
+                    borderRadius: 4,
+                    border: `1.5px solid ${isSelected ? step.color : step.color + '35'}`,
                     background: step.bg,
-                    transform: isSelected ? 'scale(1.05)' : undefined,
-                    boxShadow: isSelected ? `0 0 0 3px ${step.color}30` : undefined,
+                    transform: isSelected ? 'scale(1.04)' : undefined,
+                    boxShadow: isSelected ? `0 0 0 3px ${step.color}25` : undefined,
                     zIndex: isSelected ? 10 : 1,
                   }}
                 >
-                  <div className="text-[8px] font-bold text-slate-400 mb-0.5">{i + 1}</div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: step.color + 'cc' }}>
+                  <div
+                    className="font-mono"
+                    style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--ink-faint)', marginBottom: 2 }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div
+                    className="uppercase"
+                    style={{
+                      fontSize: 9.5, fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      color: step.color, opacity: 0.8,
+                    }}
+                  >
                     {step.label}
                   </div>
-                  <div className="text-sm font-mono font-semibold mt-1" style={{ color: step.color }}>
+                  <div
+                    className="font-mono mt-1.5"
+                    style={{ fontSize: 13, fontWeight: 600, color: step.color }}
+                  >
                     {step.sym}
                   </div>
                 </button>
                 {i < TIMELINE_STEPS.length - 1 && (
-                  <div className="flex items-center px-0.5 shrink-0">
+                  <div className="flex items-center px-1 shrink-0">
                     <svg width="24" height="16" viewBox="0 0 24 16">
-                      <path d="M2 8h16M14 4l4 4-4 4" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      <path d="M2 8h16M14 4l4 4-4 4" stroke="var(--border-strong)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                     </svg>
                   </div>
                 )}
@@ -298,12 +383,24 @@ function TimelineView({ selected, onSelect }: { selected: string | null; onSelec
 
           {/* Feedback arrow wrapping back */}
           <div className="flex items-center pl-2 shrink-0">
-            <div className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-2.5 py-1.5 bg-slate-50/80">
-              <svg width="20" height="20" viewBox="0 0 20 20">
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1.5"
+              style={{
+                background: 'var(--cream)',
+                border: '1px dashed var(--border-strong)',
+                borderRadius: 4,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20">
                 <path d="M10 16A6 6 0 1 1 16 10" stroke={SEM.wealth.main} strokeWidth="1.5" fill="none" strokeDasharray="3 2" />
                 <path d="M14 10l2 0 0-2" stroke={SEM.wealth.main} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
               </svg>
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">t+1</span>
+              <span
+                className="uppercase"
+                style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-soft)' }}
+              >
+                t+1
+              </span>
             </div>
           </div>
         </div>
@@ -313,7 +410,10 @@ function TimelineView({ selected, onSelect }: { selected: string | null; onSelec
         <NodeDetail node={selectedNode} onClose={() => onSelect('')} />
       )}
 
-      <p className="text-[10px] text-slate-400 mt-3 italic">
+      <p
+        className="mt-3 italic"
+        style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.55 }}
+      >
         The outcome node sits <em>before</em> scoring and payoff — the mechanism cannot score before it observes yₜ.
       </p>
     </div>
@@ -350,25 +450,41 @@ export default function SystemArchitecture() {
   return (
     <div className="space-y-4">
       {/* View tabs */}
-      <div className="flex items-center gap-2">
-        <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div
+          className="flex p-1"
+          style={{
+            background: 'var(--cream)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+          }}
+        >
           {([
             { id: 'architecture' as DiagramView, label: 'System architecture' },
             { id: 'timeline' as DiagramView, label: 'Within-round timing' },
-          ]).map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => { setView(tab.id); setSelected(null); setHovered(null); }}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                view === tab.id ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ]).map(tab => {
+            const active = view === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => { setView(tab.id); setSelected(null); setHovered(null); }}
+                className="px-3 py-1.5 transition-colors"
+                style={{
+                  fontSize: 13,
+                  fontWeight: active ? 600 : 500,
+                  borderRadius: 4,
+                  background: active ? 'var(--card)' : 'transparent',
+                  color:      active ? 'var(--ink)' : 'var(--ink-soft)',
+                  boxShadow:  active ? 'var(--shadow-sm)' : 'none',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
-        <span className="text-[10px] text-slate-400">
+        <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
           {view === 'architecture'
             ? 'Hover to trace connections. Click a node for its definition.'
             : 'Click a step for details.'}
@@ -377,7 +493,16 @@ export default function SystemArchitecture() {
 
       {/* Architecture view */}
       {view === 'architecture' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-1">
+        <div
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            padding: 20,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+          className="space-y-1"
+        >
           {LAYERS.map((layer, i) => (
             <div key={layer.id}>
               <LayerBand
@@ -394,18 +519,19 @@ export default function SystemArchitecture() {
             </div>
           ))}
 
-          {/* Feedback loop */}
-          <div className="mt-3">
+          <div className="mt-4">
             <FeedbackLoop />
           </div>
 
-          {/* Selected node detail */}
           {selectedArchNode && (
             <NodeDetail node={selectedArchNode} onClose={() => setSelected(null)} />
           )}
 
-          <p className="text-[10px] text-slate-400 pt-2 leading-relaxed">
-            <strong>Reading guide:</strong> mᵢ is <em>not</em> an agent input — it is produced by the mechanism from bᵢ and σᵢ.
+          <p
+            className="pt-3"
+            style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.6 }}
+          >
+            <strong style={{ color: 'var(--ink)' }}>Reading guide.</strong> mᵢ is <em>not</em> an agent input — it is produced by the mechanism from bᵢ and σᵢ.
             The outcome yₜ arrives <em>after</em> aggregation, so scoring and settlement depend on it.
             Updated wealth and skill feed back into the next round, making the system dynamic, not one-shot.
           </p>
@@ -414,7 +540,15 @@ export default function SystemArchitecture() {
 
       {/* Timeline view */}
       {view === 'timeline' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            padding: 20,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
           <TimelineView selected={selected} onSelect={handleSelect} />
         </div>
       )}

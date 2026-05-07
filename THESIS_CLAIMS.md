@@ -439,7 +439,7 @@ significant but small in magnitude. Fallback summary: XGBoost = 2 or
    Tests: `onlinev2/tests/test_normalize_mode.py`.
 2. **Presentation copy aligned with post-fix numbers (May 2026).** The
    dashboard slides, speaker scripts, and `THESIS_CLAIMS.md` now cite
-   −7.6% / −0.2% (wind / electricity) under the strictly-causal
+   −7.1% / 0.0% (wind / electricity) under the strictly-causal
    pipeline; earlier −44% / −8% figures have been superseded.
 3. **Dashboard adapters verified clean.** No adapter or audit panel
    keys off the renamed blocks (`rep_holdout` / `prequential_blocks` /

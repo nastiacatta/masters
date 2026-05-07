@@ -94,13 +94,44 @@ function heatOpacity(value: number, min: number, max: number): number {
 
 function FormulaPanel({ col, onClose }: { col: Column; onClose: () => void }) {
   return (
-    <div className="absolute z-30 top-full mt-1 left-0 w-64 rounded-xl border border-slate-200 bg-white shadow-lg p-4 text-sm">
-      <button onClick={onClose} className="absolute top-2 right-3 text-slate-400 hover:text-slate-600">✕</button>
-      <p className="font-semibold text-slate-800 mb-1">{col.label}</p>
-      <code className="block text-xs bg-slate-50 rounded px-2 py-1.5 mb-2 font-mono" style={{ color: col.color }}>
+    <div
+      className="absolute z-30 top-full mt-1 left-0 w-64"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 6,
+        padding: 14,
+        boxShadow: 'var(--shadow-lg)',
+      }}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-3"
+        style={{ color: 'var(--ink-faint)', fontSize: 12 }}
+      >
+        ✕
+      </button>
+      <p
+        className="font-serif mb-2"
+        style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}
+      >
+        {col.label}
+      </p>
+      <code
+        className="block font-mono mb-2"
+        style={{
+          fontSize: 12,
+          background: 'var(--cream)',
+          borderRadius: 4,
+          padding: '6px 10px',
+          color: col.color,
+        }}
+      >
         {col.formula}
       </code>
-      <p className="text-xs text-slate-500 leading-relaxed">{col.desc}</p>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.55 }}>
+        {col.desc}
+      </p>
     </div>
   );
 }

@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -85,11 +86,14 @@ class DetectorAwareBehaviour:
             # Hedge toward the public aggregate to blend with the benign
             # population; minor jitter keeps reports from being constant.
             base = 0.7 * anchor + 0.3 * target
-            report = clamp01(base + self.rng.normal(0.0, self.jitter))
+            scalar = clamp01(base + self.rng.normal(0.0, self.jitter))
             cutback = float(self.quiet_cutback)
         else:
-            report = clamp01(target + self.rng.normal(0.0, self.jitter))
+            scalar = clamp01(target + self.rng.normal(0.0, self.jitter))
             cutback = 1.0
+
+        report = make_report(scalar, self.scoring_mode, taus=self.taus,
+                             sigma_q=max(0.03, self.jitter))
 
         frac = min(
             0.75,

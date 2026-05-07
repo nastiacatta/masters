@@ -1,9 +1,9 @@
 series,method,mean_crps,delta_vs_uniform,pct_vs_uniform
-elia_wind,uniform,0.044048,0.0,0.0
-elia_wind,raja_history_free,0.043373,-0.000674,-1.53
-elia_wind,vitali_ogd_per_quantile,0.035992,-0.008055,-18.29
-elia_wind,mechanism,0.040709,-0.003339,-7.58
-elia_electricity,uniform,0.096086,0.0,0.0
-elia_electricity,raja_history_free,0.096107,2.1e-05,0.02
-elia_electricity,vitali_ogd_per_quantile,0.093862,-0.002224,-2.31
-elia_electricity,mechanism,0.095906,-0.000181,-0.19
+elia_wind,uniform,0.041979,0.0,0.0
+elia_wind,raja_history_free,0.041339,-0.00064,-1.53
+elia_wind,vitali_ogd_per_quantile,0.034417,-0.007562,-18.01
+elia_wind,mechanism,0.039046,-0.002934,-6.99
+elia_electricity,uniform,0.09308,0.0,0.0
+elia_electricity,raja_history_free,0.093115,3.5e-05,0.04
+elia_electricity,vitali_ogd_per_quantile,0.091192,-0.001889,-2.03
+elia_electricity,mechanism,0.093129,4.9e-05,0.05

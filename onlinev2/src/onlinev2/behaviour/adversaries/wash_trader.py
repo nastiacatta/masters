@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -101,7 +102,9 @@ class WashTraderBehaviour:
                 jitter = self.rng.normal(0.0, 0.05)
             else:
                 jitter = 0.0
-            report = clamp01(float(base_reports[j]) + jitter)
+            scalar = clamp01(float(base_reports[j]) + jitter)
+            report = make_report(scalar, self.scoring_mode, taus=self.taus,
+                                 sigma_q=max(0.03, self.anchor_noise * 2))
             out.append(
                 AgentAction(
                     account_id=f"{self.traits.user_id}__wash_{j}",

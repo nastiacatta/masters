@@ -36,6 +36,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -110,7 +111,12 @@ class PrivilegedInformationBehaviour:
                 )
             ]
 
-        report = self._signal(state)
+        report = make_report(
+            self._signal(state),
+            self.scoring_mode,
+            taus=self.taus,
+            sigma_q=max(0.02, self.sigma_priv * 2),
+        )
 
         # Insider stakes at a higher fraction reflecting elevated precision.
         frac = min(0.85, self.traits.stake_fraction + self.traits.insider_bonus)

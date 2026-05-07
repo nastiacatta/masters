@@ -102,11 +102,25 @@ Source: `writing/70_recalibration_layer.md`.
 
 ## Chapter 6 — Robustness (≈2500 words)
 
-- Eighteen behaviour presets. Attack-gain-vs-benign frame.
-- Participation as the dominant vulnerability (bursty +934%).
-- Sybil narrow invariance vs diversified-report leakage.
-- Arbitrage scan over γ × λ; no sustained profit in the repeated setting.
-- Detection-adaptation: collateral cost of defences.
+- Adversary catalogue from ANALYSIS.md §1: arbitrage_seeking,
+  coordinated_group, strategic_influence, strategic_reporter,
+  privileged_information, detector_aware, wash_trader,
+  sybil_arbitrage.
+- Arbitrage scan (Chen et al. 2014): profit +12 to +24 over 1000
+  rounds as λ rises 0 → 1.
+- Collusion (Chun & Shachter 2011): +21 weighted-mean, +18
+  weighted-median; informed collusion +34 under AR(1).
+- Insider advantage (Lambert 2008; Johnstone 2007): +54 with
+  legitimate lagged signal under AR(1).
+- Sybil-proofness: narrow (identical reports) ratio = 1.000000;
+  diversified-report breaks invariance by ~6.5%; sybil-arbitrage
+  k-invariance = 1.000 to within Monte-Carlo error.
+- Wash trading: anchor +15 profit at +68% inflation;
+  split-bet −258 profit at +113% inflation.
+- Strategic reporting: non-monotone frontier, only small-pull
+  attacks (pull = 0.3) are profitable.
+- Detection-adaptation: both fixed and adaptive manipulators
+  bankrupted.
 
 Source: `writing/80_robustness.md`.
 

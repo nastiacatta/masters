@@ -111,17 +111,15 @@ brackets.
 > efficient aggregation is the only goal and budget balance is not
 > required, inverse-variance or a per-τ OGD is the right answer.
 
-### Bursty participation as dominant vulnerability [robustness]
+### Bursty participation retired [robustness, superseded]
 
-> The dominant empirical vulnerability is participation-based. At 54%
-> attendance, aggregate CRPS inflates by ~10×. Missing forecasters
-> directly reduce aggregate quality; no weighting rule can recover
-> information that is not present. Staleness decay (κ > 0) makes
-> strategic absence costly for the absent agent's future earnings but
-> does not help the current round. A full defence would require
-> second-order missing-data methods (robust regression, online
-> imputation) of the kind Vitali and Pinson 2025 employ; that is
-> listed as future work.
+> The earlier draft's "+934% bursty" preset is not part of the
+> current adversary catalogue. It lived in the legacy 18-preset
+> table that has been replaced by the theory-grounded adversary
+> rebuild in `onlinev2/outputs/behaviour/experiments/ANALYSIS.md`.
+> Any participation-based attack numbers in the final thesis need
+> to be regenerated from a new experiment (proposed in §6.11 of the
+> robustness chapter) before citing.
 
 ## Reading guides for the reviewers
 

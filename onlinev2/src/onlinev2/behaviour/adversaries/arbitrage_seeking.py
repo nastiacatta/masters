@@ -46,6 +46,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -287,7 +288,8 @@ class ArbitrageSeekingBehaviour:
             AgentAction(
                 account_id=self.traits.user_id,
                 participate=True,
-                report=float(p_hat),
+                report=make_report(float(p_hat), self.scoring_mode,
+                                   taus=self.taus, sigma_q=max(0.03, spread)),
                 deposit=float(deposit),
                 meta={
                     "agent_type": "arbitrage_seeking",

@@ -150,6 +150,22 @@ class BaseForecaster(ABC):
         else:
             raw = self._generate_quantiles(taus)
 
+        # Step 1.5: Guard against non-finite values from model failures.
+        # A forecaster whose predict() returned NaN/Inf would otherwise
+        # produce a NaN/Inf quantile vector, violating Property 1 of
+        # .kiro/specs/quantile-forecast-quality/ and poisoning the
+        # downstream CRPS scoring. Substitute a point-centred fan at
+        # the array-wide median tau so at least the median quantile is
+        # well-defined and monotonicity is trivially satisfied.
+        if not np.all(np.isfinite(raw)):
+            self.fallback_counter += 1
+            raw = self._fallback_quantiles(np.asarray(taus))
+            if not np.all(np.isfinite(raw)):
+                # predict() itself is returning NaN — emit a flat 0.5 fan
+                # as a last resort; the runner's fallback_counter audit
+                # will surface the failure.
+                raw = np.full(len(taus), 0.5, dtype=np.float64)
+
         # Step 2: Clip to [0, 1]
         clipped = np.clip(raw, 0.0, 1.0)
 

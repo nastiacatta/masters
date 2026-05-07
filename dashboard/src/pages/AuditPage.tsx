@@ -72,23 +72,42 @@ export default function AuditPage() {
         {/* ── Loading state ────────────────────────────────────────── */}
         {data.loading && (
           <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3 text-sm text-slate-500">
+            <div
+              className="flex items-center gap-3"
+              style={{ fontSize: 14, color: 'var(--ink-soft)' }}
+            >
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75 animate-ping" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
+                <span
+                  className="absolute inline-flex h-full w-full rounded-full animate-ping"
+                  style={{ background: 'var(--navy)', opacity: 0.6 }}
+                />
+                <span
+                  className="relative inline-flex h-2 w-2 rounded-full"
+                  style={{ background: 'var(--navy)' }}
+                />
               </span>
-              Loading audit data…
+              Loading audit data&hellip;
             </div>
           </div>
         )}
 
         {/* ── Error banner ─────────────────────────────────────────── */}
         {data.errors.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-xs font-medium text-amber-800">
+          <div
+            className="px-4 py-3"
+            style={{
+              background: 'var(--amber-tint)',
+              border: '1px solid rgba(180, 83, 9, 0.25)',
+              borderRadius: 6,
+            }}
+          >
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#78350f' }}>
               Some data files could not be loaded:
             </p>
-            <ul className="mt-1 list-disc list-inside text-xs text-amber-700">
+            <ul
+              className="mt-1 list-disc list-inside"
+              style={{ fontSize: 12, color: '#78350f', lineHeight: 1.6 }}
+            >
               {data.errors.map((err, i) => (
                 <li key={i}>{err}</li>
               ))}

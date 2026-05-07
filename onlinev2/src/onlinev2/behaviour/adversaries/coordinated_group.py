@@ -29,6 +29,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -115,14 +116,16 @@ class CoordinatedGroupBehaviour:
             self.members, state, self.rng, self.belief_history_window
         )
 
-        report = self._aggregate_report(beliefs, intended_b)
+        scalar_report = self._aggregate_report(beliefs, intended_b)
         if self.camouflage > 0.0:
-            report = clamp01(report + self.rng.normal(0.0, self.camouflage))
-        report = clamp01(report)
+            scalar_report = clamp01(scalar_report + self.rng.normal(0.0, self.camouflage))
+        scalar_report = clamp01(scalar_report)
+        report = make_report(scalar_report, self.scoring_mode, taus=self.taus,
+                             sigma_q=max(0.03, float(np.std(beliefs)) if beliefs.size else 0.05))
 
         self.coalition_log.append({
             "t": int(state.t),
-            "report": float(report),
+            "report": float(scalar_report),
             "beliefs": beliefs.tolist(),
             "wagers": intended_b.tolist(),
             "spread": float(np.max(beliefs) - np.min(beliefs)) if beliefs.size else 0.0,

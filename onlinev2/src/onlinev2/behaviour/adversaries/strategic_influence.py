@@ -30,6 +30,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -89,7 +90,8 @@ class StrategicInfluenceBehaviour:
                     ref = 0.5
             target = 0.0 if target < ref else 1.0
 
-        report = clamp01(target)
+        report = make_report(target, self.scoring_mode, taus=self.taus,
+                             sigma_q=0.04)
 
         strength = float(np.clip(
             self.aggressiveness * self.traits.manipulation_strength, 0.0, 1.5

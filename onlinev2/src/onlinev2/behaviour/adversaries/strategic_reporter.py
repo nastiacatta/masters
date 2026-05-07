@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from onlinev2.behaviour.adversaries._utils import make_report
 from onlinev2.behaviour.protocol import AgentAction, RoundPublicState, clamp01
 from onlinev2.behaviour.traits import UserTraits
 
@@ -69,7 +70,9 @@ class StrategicReporterBehaviour:
                 anchor = 0.5
 
         pull = float(np.clip(self.pull, 0.0, 1.0))
-        report = clamp01((1.0 - pull) * anchor + pull * float(self.target))
+        scalar = clamp01((1.0 - pull) * anchor + pull * float(self.target))
+        report = make_report(scalar, self.scoring_mode, taus=self.taus,
+                             sigma_q=0.05)
 
         frac = float(np.clip(
             self.base_stake_fraction + self.stake_boost * self.traits.manipulation_strength,
