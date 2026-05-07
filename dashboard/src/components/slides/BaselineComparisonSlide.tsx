@@ -122,7 +122,7 @@ export default function BaselineComparisonSlide() {
               This project (skill + self-financed)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              −7.1% wind, 0.0% electricity. Retains Lambert&apos;s properties; absolute skill.
+              −7.0% wind, 0.0% electricity. Retains Lambert&apos;s properties; absolute skill.
             </div>
           </div>
         </div>

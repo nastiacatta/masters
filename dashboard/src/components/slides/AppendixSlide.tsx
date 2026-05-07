@@ -20,7 +20,7 @@ const QA_ITEMS: QAItem[] = [
     question:
       'Why does the best single forecaster (Naive) still beat the aggregate?',
     answer:
-      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate modestly (−7.1 % relative to equal weights) but the ceiling is set by the best individual (−23 %). This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
+      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate modestly (−7.0% relative to equal weights) but the ceiling is set by the best individual (−23%). This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
   },
   {
     question:
@@ -768,15 +768,15 @@ export default function AppendixSlide(_props: {
               <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Equal weights CRPS</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>0.04265</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>0.04198</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Mechanism CRPS</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>0.03930</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>0.03905</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Relative change</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.03930 − 0.04265) / 0.04265 ≈ −7.9%</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.03905 − 0.04198) / 0.04198 ≈ −6.99%</div>
                 </div>
               </div>
               <p style={{ margin: '12px 0 0', fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>

@@ -18,9 +18,9 @@ interface MatrixNode {
 }
 
 const NODES: MatrixNode[] = [
-  { id: 'lambert', label: 'Lambert et al. (2008)', citation: 'Self-financed wager-based settlement', detail: '7 formal properties, uniqueness theorem', x: 25, y: 28 },
-  { id: 'raja', label: 'Raja et al. (2024)', citation: 'Prediction-market architecture', detail: 'Client reward, payoff allocation', x: 25, y: 50 },
-  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Repeated adaptation, intermittent', detail: 'Online regression, Shapley payoff', x: 75, y: 75 },
+  { id: 'lambert', label: 'Lambert et al. (2008)', citation: 'Self-financed wager-based settlement', detail: '7 formal properties, uniqueness theorem', x: 25, y: 15 },
+  { id: 'raja', label: 'Raja et al. (2024)', citation: 'Prediction-market architecture', detail: 'Client reward, payoff allocation', x: 25, y: 38 },
+  { id: 'vitali', label: 'Vitali & Pinson (2025)', citation: 'Repeated adaptation, intermittent', detail: 'Online regression, Shapley payoff', x: 75, y: 72 },
   { id: 'thesis', label: 'THIS PROJECT', citation: 'Adaptive + self-financed', detail: 'Skill learning + Lambert properties', x: 75, y: 25, isThesis: true },
 ];
 
@@ -104,25 +104,41 @@ export default function PositioningMatrixSlide() {
         <line x1={midX} y1={chartY} x2={midX} y2={chartY + chartH} stroke={PALETTE.border} strokeWidth={2} strokeDasharray="8 6" />
         <line x1={chartX} y1={midY} x2={chartX + chartW} y2={midY} stroke={PALETTE.border} strokeWidth={2} strokeDasharray="8 6" />
 
-        {/* X-axis label */}
-        <text x={chartX + 20} y={chartY + chartH + 40} fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate}>
+        {/* X-axis labels: endpoints + axis title on a separate line */}
+        <text x={chartX + 20} y={chartY + chartH + 34} fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}>
           Static (no learning)
         </text>
-        <text x={chartX + chartW - 20} y={chartY + chartH + 40} textAnchor="end" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate}>
+        <text x={chartX + chartW - 20} y={chartY + chartH + 34} textAnchor="end" fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}>
           Adaptive (learns over time)
         </text>
-        <text x={chartX + chartW / 2} y={chartY + chartH + 40} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate} fontWeight={600}>
+        <text x={chartX + chartW / 2} y={chartY + chartH + 64} textAnchor="middle" fontFamily={TYPOGRAPHY.fontFamily} fontSize="19" fill={PALETTE.navy} fontWeight={600}>
           Adaptiveness →
         </text>
 
-        {/* Y-axis label */}
+        {/* Y-axis endpoints + axis title */}
         <text
-          x={chartX - 40} y={chartY + chartH / 2}
-          fontFamily={TYPOGRAPHY.fontFamily} fontSize="20" fill={PALETTE.slate} fontWeight={600}
-          transform={`rotate(-90, ${chartX - 40}, ${chartY + chartH / 2})`}
+          x={chartX - 22} y={chartY + chartH - 8}
+          fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}
+          transform={`rotate(-90, ${chartX - 22}, ${chartY + chartH - 8})`}
+          textAnchor="start"
+        >
+          Not self-financed
+        </text>
+        <text
+          x={chartX - 22} y={chartY + 8}
+          fontFamily={TYPOGRAPHY.fontFamily} fontSize="18" fill={PALETTE.slate}
+          transform={`rotate(-90, ${chartX - 22}, ${chartY + 8})`}
+          textAnchor="end"
+        >
+          Self-financed
+        </text>
+        <text
+          x={chartX - 52} y={chartY + chartH / 2}
+          fontFamily={TYPOGRAPHY.fontFamily} fontSize="19" fill={PALETTE.navy} fontWeight={600}
+          transform={`rotate(-90, ${chartX - 52}, ${chartY + chartH / 2})`}
           textAnchor="middle"
         >
-          Self-financed →
+          Financing →
         </text>
 
         {/* Dashed connection lines from existing work to project — start/end at card edges */}

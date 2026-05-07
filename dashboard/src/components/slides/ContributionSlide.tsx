@@ -108,7 +108,7 @@ export default function ContributionSlide() {
             color: PALETTE.darkText,
           }}
         >
-          effective wager = deposit x learned skill
+          effective wager = deposit × learned skill
         </p>
       </div>
 

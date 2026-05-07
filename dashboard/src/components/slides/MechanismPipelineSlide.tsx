@@ -77,35 +77,36 @@ function StepBox({ step }: { step: StepConfig }) {
       }}
       data-testid={`step-${step.id}`}
     >
-      {/* Plain-English description ABOVE */}
+      {/* Label (title) */}
       <div
         style={{
-          fontSize: '0.95rem',
-          color: PALETTE.slate,
-          fontStyle: 'italic',
-          fontFamily: FONT_FAMILY,
-          marginBottom: 8,
-          lineHeight: 1.3,
-        }}
-      >
-        {step.description}
-      </div>
-      <div
-        style={{
-          fontSize: '1.6rem',
+          fontSize: '1.45rem',
           fontWeight: 700,
           color: PALETTE.navy,
-          marginBottom: 8,
+          marginBottom: 10,
           fontFamily: FONT_FAMILY,
           lineHeight: 1.2,
         }}
       >
         {step.label}
       </div>
+      {/* Formula */}
       <div
-        style={{ fontSize: '1.1rem', lineHeight: 1.4 }}
+        style={{ fontSize: '1.05rem', lineHeight: 1.4, marginBottom: 10 }}
         dangerouslySetInnerHTML={{ __html: renderLatex(step.latex) }}
       />
+      {/* Plain-English description */}
+      <div
+        style={{
+          fontSize: '0.92rem',
+          color: PALETTE.slate,
+          fontStyle: 'italic',
+          fontFamily: FONT_FAMILY,
+          lineHeight: 1.35,
+        }}
+      >
+        {step.description}
+      </div>
     </div>
   );
 }

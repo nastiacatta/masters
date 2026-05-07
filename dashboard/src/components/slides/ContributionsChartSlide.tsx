@@ -54,7 +54,7 @@ const DATASETS: DatasetConfig[] = [
     rounds: '17,544 rounds',
     url: `${BASE}data/real_data/elia_wind/data/comparison.json`,
     colour: PALETTE.teal,
-    improvement: 'Mechanism 7.1% better than equal weights (post-audit)',
+    improvement: 'Mechanism 7.0% better than equal weights (post-audit)',
   },
   {
     key: 'electricity',
@@ -312,7 +312,7 @@ export default function ContributionsChartSlide() {
           }}
         >
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Wind: −7.1% vs uniform — skill recovers ordering; best_single still wins
+            Wind: −7.0% vs uniform — skill recovers ordering; best_single still wins
           </span>
         </div>
         <div

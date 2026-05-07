@@ -45,9 +45,9 @@ interface WaterfallChartProps {
 
 /* ── Colours ───────────────────────────────────────────────────────── */
 
-const COLOUR_IMPROVE = '#10b981'; // green — improvement (negative delta)
-const COLOUR_DEGRADE = '#ef4444'; // red — degradation (positive delta)
-const COLOUR_TOTAL = '#6366f1';   // indigo — total bar
+const COLOUR_IMPROVE = '#0072B2'; // Wong blue — improvement (negative delta, colour-blind safe)
+const COLOUR_DEGRADE = '#D55E00'; // Wong vermillion — degradation (positive delta, colour-blind safe)
+const COLOUR_TOTAL = '#1B2A4A';   // navy — total bar
 
 /* ── Component ─────────────────────────────────────────────────────── */
 
@@ -95,14 +95,14 @@ export default function WaterfallChart({
   return (
     <ChartCard
       title={title}
-      subtitle="Each step turns on one component of the mechanism. Green bars show the change in mean CRPS at that step (shorter bars = closer to the oracle)."
+      subtitle="Each step turns on one component of the mechanism. Blue bars show the change in mean CRPS at that step (shorter bars = closer to the oracle)."
       provenance={provenance}
       help={{
         term: 'Waterfall chart',
         definition:
           'Shows how an initial value is successively moved up or down by a sequence of factors.',
         interpretation:
-          'Green bars indicate improvements (negative Δ, lower CRPS). Red bars indicate degradations (positive Δ, higher CRPS). Indigo bars are absolute totals at that stage.',
+          'Blue bars indicate improvements (negative Δ, lower CRPS). Orange bars indicate degradations (positive Δ, higher CRPS). Navy bars are absolute totals at that stage. Colours follow the Wong (2011) palette, which remains distinguishable under protanopia and deuteranopia.',
         axes: { x: 'Step', y: metricLabel },
       }}
       chartType="Bar chart"
