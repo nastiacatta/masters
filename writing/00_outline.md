@@ -83,8 +83,9 @@ Source: `writing/50_results_synthetic.md`.
   forecasters indistinguishable.
 - Elia operational-forecast external validation: our best_single
   (online XGBoost, no weather) beats Elia's `mostrecentforecast` by
-  ~15% CRPS-MW-eq; our mechanism roughly on par with Elia's
-  operational forecast.
+  ~6% CRPS-MW-eq (69.5 vs 74.0); our 7-forecaster mechanism averages
+  down to 83.7 MW, ~13% worse than Elia's real-time forecast because
+  the panel mixes XGBoost with weaker models.
 - Horizon blocks (day-ahead, 4h-ahead, seasonal slice) still in
   static-mode; refresh pending.
 
@@ -94,7 +95,7 @@ Source: `writing/60_results_real_data.md`.
 
 - Rolling isotonic post-processing (Kuleshov–Fenner–Ermon).
 - Tail deviation −59%, centre deviation −79%.
-- CRPS +1.3%, sharpness −9% (calibration-sharpness floor).
+- CRPS +1.3%, sharpness −11% (calibration-sharpness floor).
 - Orthogonality: economic structure preserved, byte-identical at
   `recalibrate=False`.
 

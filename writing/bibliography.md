@@ -307,6 +307,86 @@ Convention for every entry:
   `inverse_variance` method is exactly this rule with rolling variance
   estimates.
 
+### Robbins, Monro 1951
+
+```bibtex
+@article{robbins1951stochastic,
+  title   = {A stochastic approximation method},
+  author  = {Robbins, Herbert and Monro, Sutton},
+  journal = {Annals of Mathematical Statistics},
+  volume  = {22},
+  number  = {3},
+  pages   = {400--407},
+  year    = {1951},
+  doi     = {10.1214/aoms/1177729586}
+}
+```
+
+- Used in: Chapter 3.4 (EWMA consistency).
+- What we take: the foundational stochastic-approximation result
+  underpinning our claim that σ_i is a consistent estimator of an
+  agent's long-run reliability under stationary losses.
+
+### Benveniste, Métivier, Priouret 1990
+
+```bibtex
+@book{benveniste1990adaptive,
+  title     = {Adaptive Algorithms and Stochastic Approximations},
+  author    = {Benveniste, Albert and M{\'e}tivier, Michel and Priouret,
+               Pierre},
+  publisher = {Springer-Verlag},
+  year      = {1990}
+}
+```
+
+- Used in: Chapter 3.4.
+- What we take: the tracking-error bound for EWMA-style recursive
+  estimators under non-stationarity (O(ρ · drift) tracking error at
+  learning rate ρ).
+
+### Kelly 1956
+
+```bibtex
+@article{kelly1956new,
+  title   = {A New Interpretation of Information Rate},
+  author  = {Kelly, J. L.},
+  journal = {Bell System Technical Journal},
+  volume  = {35},
+  number  = {4},
+  pages   = {917--926},
+  year    = {1956},
+  doi     = {10.1002/j.1538-7305.1956.tb03809.x}
+}
+```
+
+- Used in: Chapter 3.1 (bankroll-fraction deposit policy).
+- What we take: the log-optimal growth criterion that motivates a
+  confidence-scaled fractional-stake policy. Our bankroll policy with
+  `f_stake · W · c_i` is a heuristic deterministic analogue in
+  probit-space of precision.
+
+### Steinwart, Christmann 2011
+
+```bibtex
+@article{steinwart2011estimating,
+  title   = {Estimating conditional quantiles with the help of the
+             pinball loss},
+  author  = {Steinwart, Ingo and Christmann, Andreas},
+  journal = {Bernoulli},
+  volume  = {17},
+  number  = {1},
+  pages   = {211--225},
+  year    = {2011},
+  url     = {https://arxiv.org/abs/1102.2101}
+}
+```
+
+- Used in: Chapter 3.1 (pinball loss consistency), Chapter 4.
+- What we take: the formal statement that pinball loss is strictly
+  consistent for the τ-quantile functional under mild conditions,
+  which is the elicitability result underlying our per-round
+  truthfulness argument when forecasters report quantile grids.
+
 ### Timmermann 2006
 
 ```bibtex
@@ -365,8 +445,8 @@ Convention for every entry:
 
 - Used in: Chapter 5.3 (recalibration).
 - What we take: calibration-sharpness principle. Recalibration must
-  trade sharpness for calibration; our 9% sharpness cost is on the
-  theoretical floor.
+  trade sharpness for calibration; our 11% sharpness cost is just past
+  the theoretical floor (ratio 0.891 < 0.9 bound).
 
 ### Ranjan, Gneiting 2010
 

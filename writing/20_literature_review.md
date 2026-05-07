@@ -168,6 +168,22 @@ The per-round hindsight row is `oracle`.
 
 Source: `docs/references_sources.md`, textbook.
 
+### B2a. Robbins and Monro (1951); Benveniste, Métivier and Priouret (1990)
+
+*A stochastic approximation method*, Annals of Math. Statistics 22,
+and *Adaptive Algorithms and Stochastic Approximations*, Springer 1990.
+
+Foundational stochastic approximation: if ℓ_t is a stationary loss
+sequence and L_t = (1-ρ) L_{t-1} + ρ ℓ_t, then L_t → E[ℓ] as t → ∞
+under mild conditions.
+
+**What we take:** the consistency justification for the σ_i estimator
+in §3.4. Our EWMA on loss is consistent for the long-run expected
+loss under stationarity, with tracking error O(ρ · drift) under
+non-stationarity.
+
+Sources: `docs/references_sources.md`.
+
 ### B3. Bates and Granger (1969); Timmermann (2006)
 
 Bates and Granger: seminal forecast-combination paper; inverse-variance
@@ -214,7 +230,7 @@ forecast alone; calibration is joint with the observations.
 
 **What we take:** the calibration-sharpness tradeoff. Our recalibration
 layer lands exactly on this tradeoff: tail deviation drops 59%,
-sharpness drops 9%, CRPS rises 1.3%. The spec thresholds were set near
+sharpness drops 11%, CRPS rises 1.3%. The spec thresholds were set near
 the theoretical floor, so two of the three checks narrowly fail — not a
 defect, a design choice to stay close to the floor.
 

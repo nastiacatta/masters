@@ -65,7 +65,7 @@ on the same seed and pipeline [source:
 | Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0171 | 0.0070 | −0.0101 | **−59%** |
 | Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0187 | 0.0039 | −0.0148 | **−79%** |
 | Mean CRPS-hat (on [0, 2] scale) | 0.01874 | 0.01899 | +0.00024 | +1.3% |
-| Mean sharpness (q(0.9) − q(0.1)) | 0.0782 | 0.0697 | −0.0085 | −9% |
+| Mean sharpness (q(0.9) − q(0.1)) | 0.0782 | 0.0697 | −0.0085 | −11% |
 
 Spec-assertion outcomes (from
 `.kiro/specs/mechanism-recalibration-layer/`):
@@ -89,9 +89,9 @@ calibration-sharpness tradeoff showing up literally on the numbers. The
 impossibility side of Ranjan–Gneiting 2010 says a linear pool of
 calibrated CDFs cannot be simultaneously calibrated and sharp unless the
 base forecasts are identical, so *any* calibration fix must concede some
-sharpness. Ours concedes 9% (vs the 10% spec bound) and pays 1.3% in
-CRPS (vs the ~1% spec bound). The spec thresholds were set right at the
-theoretical floor rather than comfortably inside it.
+sharpness. Ours concedes 11% (failing the 10% spec bound by 1 pp) and
+pays 1.3% in CRPS (vs the ~1% spec bound). The spec thresholds were set
+right at the theoretical floor rather than comfortably inside it.
 
 Centre deviation (0.4 ≤ τ ≤ 0.6) dropping 79% is worth flagging: the
 KFE projection restores joint calibration across the τ grid, not just
@@ -128,17 +128,26 @@ All green.
 
 ## 7.6 Why a rolling buffer (and not a fixed held-out fit)
 
-Kuleshov, Fenner and Ermon 2018 prove convergence of the isotonic
-post-processor as the calibration sample grows. A fixed held-out fit
-is asymptotically correct and sharper (each CRPS round-trip is cheaper)
-but assumes the base forecast's miscalibration pattern is stationary.
+Kuleshov, Fenner and Ermon 2018 establish **consistency under IID**:
+given a large enough i.i.d. calibration sample, isotonic post-processing
+produces asymptotically calibrated forecasts. The IID assumption is
+explicit in their Theorem 1. A fixed held-out fit inherits that result
+and is sharper per round (each CRPS round-trip is cheaper) but assumes
+the base forecast's miscalibration pattern is stationary.
 
 We operate in an online setting with potential non-stationarity
 (regime shifts in wind-power seasonality, intraday cycle changes in
-electricity). A rolling buffer of size 500 trades a small amount of
-steady-state calibration accuracy for the ability to adapt when the
-base mechanism's miscalibration pattern drifts. This is the Dawid 1984
-prequential tradeoff.
+electricity). The adversarial/online-regret version of the KFE
+procedure is Kuleshov and Deshpande 2022 (ICML; arXiv:2302.12196)
+*Calibrated Regression Against An Adversary Without Regret*, which
+relaxes the IID assumption at the cost of finite-horizon calibration
+guarantees rather than asymptotic ones. A rolling buffer of size 500 is
+an intermediate design choice between the two: it keeps the simple IID
+KFE estimator but bounds the influence of any one regime. This trades
+a small amount of steady-state calibration accuracy for the ability to
+adapt when the base mechanism's miscalibration pattern drifts. In the
+language of Dawid 1984, the scoring is prequential; the calibration
+fitter is not, and that is the compromise.
 
 In practice on the 3000-point wind slice the tradeoff is effectively
 zero: both fixed and rolling versions give similar numbers after the

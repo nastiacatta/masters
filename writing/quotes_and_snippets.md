@@ -78,7 +78,7 @@ brackets.
 > probabilistic forecast should be as sharp as possible subject to
 > calibration. The recalibration layer restores calibration by
 > transforming the CDF; the transformation widens the interior
-> quantiles slightly (sharpness −9%) and pays a modest CRPS cost
+> quantiles slightly (sharpness −11%) and pays a modest CRPS cost
 > (+1.3%). These are precisely the currencies the tradeoff is
 > denominated in. Setting the spec thresholds right at the theoretical
 > floor is why two of the three specification checks narrowly fail.

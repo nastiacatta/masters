@@ -315,8 +315,9 @@ Claim 7 lands._
 ## Claim 9 — Training-testing audit: 14 methodological defects surfaced and fixed
 
 All 14 B1–B14 defects from the `model-training-testing-audit` spec are
-fixed in source. After regeneration under the post-fix pipeline, the
-headline mechanism-vs-uniform number on Elia wind is **−7.86%** (not
+fixed in source. After regeneration under the post-fix pipeline
+(`normalize_mode="expanding"`, 9-level equidistant τ-grid), the
+headline mechanism-vs-uniform number on Elia wind is **−7.1%** (not
 −44.1%); the pre-fix 44% figure was largely an artefact of B1
 (whole-series min/max normalization leaking evaluation-window extremes
 into every training round).
@@ -367,32 +368,38 @@ into every training round).
 
 ### Post-fix headline numbers (regenerated under the full fixed pipeline)
 
-Main runner, `comparison.json`, γ=16, ρ=0.5, λ=0.05 (current, T=17,544):
+Main runner, `comparison.json`, γ=16, ρ=0.5, λ=0.05 (T=17,544 raw
+hourly points, T_eval=17,344 scored rounds after the 200-round warmup):
 
 | Series | Method | Mean CRPS | Δ% vs uniform |
 | --- | --- | ---: | ---: |
-| Elia wind (T=17,544) | uniform | 0.04079 | — |
-| Elia wind (T=17,544) | skill | 0.03869 | −5.2% |
-| Elia wind (T=17,544) | **mechanism** | **0.03788** | **−7.1%** |
-| Elia wind (T=17,544) | best_single | 0.03145 | −22.9% |
-| Elia wind (T=17,544) | per_round_inv_crps_hindsight | 0.03175 | −22.2% |
-| Elia wind (T=17,544) | michael_ogd_centered_median_fan | 0.03487 | −14.5% |
-| Elia wind (T=17,544) | oracle (per-round) | 0.02176 | −46.7% |
-| Elia electricity (T=10,000) | uniform | 0.09052 | — |
-| Elia electricity (T=10,000) | **mechanism** | **0.09052** | **0.0%** |
-| Elia electricity (T=10,000) | best_single | 0.08606 | −4.9% |
-| Elia electricity (T=10,000) | per_round_inv_crps_hindsight | 0.08026 | −11.3% |
+| Elia wind (T_eval=17,344) | uniform | 0.04079 | — |
+| Elia wind (T_eval=17,344) | skill | 0.03869 | −5.2% |
+| Elia wind (T_eval=17,344) | **mechanism** | **0.03788** | **−7.1%** |
+| Elia wind (T_eval=17,344) | best_single | 0.03145 | −22.9% |
+| Elia wind (T_eval=17,344) | per_round_inv_crps_hindsight | 0.03175 | −22.2% |
+| Elia wind (T_eval=17,344) | michael_ogd_centered_median_fan | 0.03487 | −14.5% |
+| Elia wind (T_eval=17,344) | oracle (per-round) | 0.02176 | −46.7% |
+| Elia electricity (T_eval=9,800) | uniform | 0.09052 | — |
+| Elia electricity (T_eval=9,800) | **mechanism** | **0.09052** | **0.0%** |
+| Elia electricity (T_eval=9,800) | best_single | 0.08606 | −4.9% |
+| Elia electricity (T_eval=9,800) | per_round_inv_crps_hindsight | 0.08026 | −11.3% |
 
-Baseline head-to-head (`baselines.json`):
+Baseline head-to-head (`baselines.json`, dated 2026-05-07; source files:
+`dashboard/public/data/real_data/{elia_wind,elia_electricity}/data/
+baselines.json`; these are still static-mode normalisation, re-run
+under expanding mode is [PENDING]):
 
 | Series | Method | Mean CRPS | Δ% vs uniform |
 | --- | --- | ---: | ---: |
+| Elia wind | uniform | 0.04198 | — |
 | Elia wind | raja_history_free | 0.04134 | −1.53% |
 | Elia wind | **mechanism** | **0.03905** | **−6.99%** |
 | Elia wind | vitali_ogd_per_quantile | 0.03442 | −18.01% |
-| Elia electricity | raja_history_free | 0.09611 | +0.02% |
-| Elia electricity | **mechanism** | **0.09591** | **−0.19%** |
-| Elia electricity | vitali_ogd_per_quantile | 0.09386 | −2.31% |
+| Elia electricity | uniform | 0.09308 | — |
+| Elia electricity | raja_history_free | 0.09312 | +0.04% |
+| Elia electricity | **mechanism** | **0.09313** | **+0.05%** |
+| Elia electricity | vitali_ogd_per_quantile | 0.09119 | −2.03% |
 
 Horizon experiments (wind only):
 
@@ -403,9 +410,11 @@ Horizon experiments (wind only):
 | regime_shift (within-run slice) | 0.066457 | 0.067163 | −1.05% |
 
 Diebold–Mariano (uniform vs mechanism) on the wind `comparison.json`
-row: DM = +13.95, p < 1e-6 — mechanism advantage is statistically
-significant but small in magnitude. Fallback summary: XGBoost = 2 or
-3, MLP = 1 or 2 across all blocks; every other forecaster = 0.
+row: DM = +40.77, p ≈ 0 (source: `dm_test.statistic = 40.769` in
+`dashboard/public/data/real_data/elia_wind/data/comparison.json`).
+Mechanism advantage is highly statistically significant, small in
+magnitude. Fallback summary: XGBoost = 2 or 3, MLP = 1 or 2 across
+all blocks; every other forecaster = 0.
 
 ### Sources
 

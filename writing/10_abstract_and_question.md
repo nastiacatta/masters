@@ -40,13 +40,16 @@ scope limitations documented in `writing/90_discussion_and_limits.md`.
 > Elia offshore-wind data with seven real forecasters under strictly
 > causal expanding normalisation, the mechanism reduces CRPS by 7.1% over
 > uniform averaging (Diebold–Mariano t = 40.77, p ≈ 0), reaching CRPS-
-> equivalent 76 MW against Elia's own published real-time forecast at 74
-> MW. On Elia electricity-imbalance prices (T = 10 000) the mechanism is
+> equivalent 83.7 MW against Elia's own published real-time forecast at
+> 74.0 MW — a gap of ~13%, while our best individual forecaster (online
+> XGBoost on the observed series only, no weather inputs) reaches 69.5
+> MW, beating Elia's operational forecast by ~6%. On Elia electricity-
+> imbalance prices (T = 10 000) the mechanism is
 > statistically indistinguishable from uniform (t = 0.008, p = 0.994), an
 > honest null that reflects the near-identical skill of the forecaster
 > panel on volatile imbalance prices. A post-hoc rolling isotonic
 > recalibration (Kuleshov et al. 2018) closes roughly 59% of the
-> Ranjan–Gneiting tail-calibration gap at a ~1.3% CRPS cost and ~9%
+> Ranjan–Gneiting tail-calibration gap at a ~1.3% CRPS cost and ~11%
 > sharpness cost, without modifying any of the economic layers. The
 > dominant empirical lever is the deposit policy, not the weighting rule.
 > The main limitations are (i) a systematic tail under-dispersion
@@ -58,7 +61,7 @@ scope limitations documented in `writing/90_discussion_and_limits.md`.
 
 Targets to tighten in the final version:
 
-- Recalibration numbers (59% tail, 79% centre, +1.3% CRPS, −9%
+- Recalibration numbers (59% tail, 79% centre, +1.3% CRPS, −11%
   sharpness) are exact; remove the tildes in the final abstract.
 - DM t = 40.77 (wind) and t = 0.008 (electricity) are the post-fix
   values from `onlinev2/outputs/post_fix_deltas/SUMMARY.md` dated

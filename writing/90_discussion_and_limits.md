@@ -40,7 +40,7 @@ the easiest way to lose a reviewer.
   17 344-hour full-length run, inverse-variance weighting (−7.0% vs
   uniform) is effectively tied with our mechanism (−7.1%); median
   (−9.3%) and trimmed_mean (−7.2%) beat us. Vitali's per-τ OGD
-  baseline (−18.3% on `baselines.json` static-mode) and the rolling
+  baseline (−18.0% on `baselines.json`) and the rolling
   100-step best_single (−22.9%) both beat the mechanism by large
   margins. The thesis's contribution is *conditional* forecasting
   improvement plus preserved economic structure, not raw CRPS

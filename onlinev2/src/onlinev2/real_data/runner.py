@@ -243,7 +243,14 @@ def run_real_data_comparison(
         series: 1D array of observed values (raw, will be normalized)
         forecasters: list of forecaster objects (default: all 7)
         warmup: number of initial rounds used only for training (no scoring)
-        taus: quantile levels for CRPS (default: [0.1, 0.25, 0.5, 0.75, 0.9])
+        taus: quantile levels for CRPS-hat. Default is the 9-level
+            equidistant grid ``[0.1, 0.2, ..., 0.9]``, which is the
+            post-audit canonical grid (see `onlinev2/src/onlinev2/
+            core/scoring.py::TAUS_FINE`). The 5-level non-equidistant
+            legacy grid ``[0.1, 0.25, 0.5, 0.75, 0.9]`` silently drops
+            about 20% of the classical CRPS integration range when the
+            simple ``(2/K) * sum pinball`` formula is used; prefer the
+            default unless you have a specific reason to override.
         outdir: output directory
         series_name: name for the output files
         gamma: EWMA loss-to-skill sensitivity (default 4.0, tuned: 16.0)
@@ -342,6 +349,14 @@ def run_real_data_comparison(
 
             # Predict
             point = fc.predict()
+            # NaN guard: np.clip preserves NaN, so a degenerate forecaster
+            # (e.g. ARIMA fit producing NaN) could poison `reports[i, t]`
+            # and cascade through the mechanism. Substitute the last-known
+            # history value (or 0.5 if history is empty) and count the
+            # fallback so the runner-level audit surfaces it.
+            if not np.isfinite(point):
+                fc.fallback_counter += 1
+                point = float(history[-1]) if len(history) > 0 else 0.5
             point = float(np.clip(point, 0, 1))
             reports[i, t] = point
             q_reports[i, t, :] = fc.predict_quantiles(taus)

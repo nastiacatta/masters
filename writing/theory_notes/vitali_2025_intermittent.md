@@ -53,9 +53,9 @@ of their Julia `michael/main_rewards.jl`.
   `michael_ogd_centered_median_fan` row lands at 0.03487 vs our
   mechanism at 0.03788, a gap of ~7 pp CRPS [source:
   `dashboard/public/data/real_data/elia_wind/data/comparison.json`].
-- In the `baselines.json` head-to-head (static-mode, pending
-  expanding refresh), Vitali's true per-τ OGD reaches −18.3% vs
-  uniform compared to our −7.1%, a ~11 pp gap [source:
+- In the `baselines.json` head-to-head (re-run 2026-05-07 under the
+  post-fix pipeline), Vitali's true per-τ OGD reaches −18.0% vs
+  uniform compared to our −7.0%, a ~11 pp gap [source:
   `dashboard/public/data/real_data/elia_wind/data/baselines.json`].
 
 The audit-slice parity is real; the full-length gaps are the CRPS

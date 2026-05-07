@@ -129,7 +129,15 @@ def _run_horizon_comparison(
                 else:
                     if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
                         fc.fit(history)
-                    point = float(np.clip(fc.predict(), 0, 1))
+                    raw_point = fc.predict()
+                    # NaN guard: np.clip preserves NaN so a degenerate
+                    # forecaster could poison reports[i, u] and cascade
+                    # through the mechanism. Substitute the last-known
+                    # history value and count the fallback.
+                    if not np.isfinite(raw_point):
+                        fc.fallback_counter += 1
+                        raw_point = float(history[-1])
+                    point = float(np.clip(raw_point, 0, 1))
                 pending_point[i] = point
                 pending_q[i] = (
                     np.clip(fc.predict_quantiles(taus), 0, 1)

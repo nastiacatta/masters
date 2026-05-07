@@ -6,10 +6,10 @@ export const AGENT_PALETTE = [
   '#f97316', '#06b6d4', '#84cc16', '#a855f7',
 ];
 
-export const CHART_MARGIN = { top: 8, right: 24, bottom: 4, left: 4 };
+export const CHART_MARGIN = { top: 10, right: 28, bottom: 6, left: 8 };
 
 /** Use when chart has X/Y axis labels so they are not clipped */
-export const CHART_MARGIN_LABELED = { top: 16, right: 24, bottom: 28, left: 52 };
+export const CHART_MARGIN_LABELED = { top: 20, right: 32, bottom: 36, left: 64 };
 
 export const AXIS_TICK = { fontSize: 13, fill: '#5a6175' };
 export const AXIS_STROKE = '#8c92a3';

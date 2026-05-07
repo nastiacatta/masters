@@ -65,16 +65,17 @@ checklist so nothing slips between the results and the manuscript.
 
 ## Conceptual points still to nail down
 
-- [ ] **Truthfulness under the skill gate.** The informal argument is
+- [x] **Truthfulness under the skill gate.** The informal argument is
   "σ_i is fixed pre-round, so Lambert's proof applies with m_i in
-  place of the original wager". Write this out explicitly in
-  Appendix A with the algebraic substitution. There is a subtlety:
-  if the deposit b_i depends on the participant's own forecast (via
-  the confidence proxy c_i), then even a pre-round σ_i does not
-  save truthfulness because the forecast still affects m_i. The fix
-  is to use a *lagged* confidence proxy (c_i derived from the
-  previous round's forecast width). Confirm this is what the code
-  does; if not, flag and fix, or document as a limitation.
+  place of the original wager". Written out explicitly in §3.3.1
+  (skill-gate truthfulness lemma, proof sketch), citing Gneiting
+  and Raftery 2007 Thm 3 for strict consistency of the pinball
+  score and spelling out the three deposit-mode cases. The subtlety
+  about c_i depending on the current forecast is addressed: the
+  code uses `deposit_mode="fixed"` on the real-data runner
+  (`runner.py:387`), and when `deposit_mode="bankroll"` is used,
+  `staking.py` explicitly warns that `c_t` must be lagged for the
+  theorem to apply. Scope limit (risk neutrality) is kept.
 - [ ] **Diversified-report sybil leakage.** Is ~6.5% the
   equilibrium leakage or just what the current preset produces? An
   attacker who diversifies optimally might extract more. Worth

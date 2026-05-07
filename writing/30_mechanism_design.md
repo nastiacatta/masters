@@ -36,7 +36,12 @@ information they encode:
 - **Bankroll-fraction:** b_i = min(W_i, b_max, f · W_i · c_i) where
   c_i ∈ [c_min, c_max] is a confidence proxy derived from the
   forecast's own spread (narrower forecast → higher c_i). Uses only
-  lagged information.
+  lagged information. *This is a heuristic design choice — it is the
+  deterministic analogue of fractional-Kelly betting (Kelly 1956;
+  Thorp 2006), replacing the log-optimal growth rate with the
+  probit-space forecast spread as a proxy for precision. It is not
+  incentive-compatible in the Lambert sense, but the experiments in
+  §5 use the `fixed` policy as the theorem-safe baseline.*
 - **Oracle-precision:** b_i ∝ true signal precision. Not implementable
   in practice; used as the ceiling.
 
@@ -98,8 +103,14 @@ L^{τ}(y, q) = τ · (y − q)      if y ≥ q
 L^{τ}(y, q) = (1 − τ) · (q − y)  if y < q
 ```
 
-Pinball loss L^{τ} is strictly proper (Gneiting and Raftery 2007). The
-bounded score is:
+Pinball loss L^{τ} is strictly consistent for the τ-quantile functional
+(Gneiting and Raftery 2007, §3.2; Steinwart and Christmann 2011): under
+a unique conditional quantile, the expected pinball loss is minimised
+only when the reported quantile equals the true one. Summing pinball
+losses over a fixed τ-grid gives a scoring rule that is strictly proper
+with respect to the discretised quantile representation of the
+predictive distribution — this is the finite-grid CRPS approximation
+we use for settlement. The bounded score is:
 
 ```
 s_i = 1 − Ĉ_i / 2         ∈ [0, 1]
@@ -150,9 +161,14 @@ Parameters and what they do:
 | σ_min | 0.1 | 0.1 | Skill floor (keeps market access) |
 | κ | 0 or 0.02 | 0.02 | Staleness decay toward L_0 |
 
-The staleness decay addresses intermittency (Vitali and Pinson 2025):
-an absent participant's skill reverts toward a neutral prior rather
-than freezing, so strategic absence is not rewarded.
+The staleness decay addresses intermittency: an absent participant's
+skill reverts toward a neutral prior rather than freezing, so strategic
+absence is not rewarded. This is a Bayesian shrinkage on `L_i` toward
+the prior `L_0`, analogous to empirical-Bayes hierarchical regularisation
+(James-Stein estimation, Robbins 1956). *It is not the robust-regression
+treatment used by Vitali and Pinson (2025) for the same problem — the
+two approaches solve the same symptom (stale-stake rewards absent
+agents) via different mechanisms: shrinkage vs robust weight projection.*
 
 Source: `onlinev2/src/onlinev2/core/skill.py`.
 
@@ -187,8 +203,8 @@ What Lambert 2008 gives us, unchanged by the skill layer:
 |---|:---:|---|
 | Budget balance | ✓ | Σ_i π_i = Σ_i m_i by construction; empirical gap < 1e-13 |
 | Anonymity | ✓ | Payout depends on (r, m, ω) only, never on i |
-| Truthfulness (per-round, under risk neutrality) | ✓ | σ_i is fixed pre-round; proof in Lambert 2008 §4.2 applies with m_i in place of the original wager |
-| Sybil-proofness (narrow: identical reports, conserved total wager) | ✓ | m_i' + m_i'' = m_i → π_i' + π_i'' = π_i; empirically 1.000000 |
+| Truthfulness (per-round, under risk neutrality) | ✓ | σ_i is fixed pre-round; proof in Lambert 2008 §4.2 applies with m_i in place of the original wager (see Appendix A: skill-gate truthfulness lemma) |
+| Sybil-proofness (narrow: identical reports, conserved total wager) | ✓ | m_i' + m_i'' = m_i → π_i' + π_i'' = π_i; empirically 1.000000. *Lambert's sybil-proofness is a narrow claim that does not extend to clones submitting diversified reports; see §3.3 final paragraph and Chen et al. 2014 for the broader impossibility.* |
 | Normality | ✓ | Payout is additively separable in scores; proof identical |
 | Individual rationality | ✓ | E_P[Π_i] ≥ m_i at r_i = Γ(P); proof identical with m_i gated |
 | Monotonicity | ✓ | d profit / d m_i has constant sign; proof identical |
@@ -196,7 +212,13 @@ What Lambert 2008 gives us, unchanged by the skill layer:
 What the skill layer adds:
 
 - **Online learning of reliability.** σ_i converges to the right
-  ranking on the known-noise panel (Spearman 1.0 after 2000 rounds).
+  ranking on the known-noise panel (Spearman 1.0 after 2000 rounds),
+  and the same perfect ranking holds on Elia wind at the full-length
+  horizon (Spearman(σ̄, CRPS_i) = 1.0 in steady state, 17 344 rounds,
+  expanding normalisation; source:
+  `dashboard/public/data/real_data/elia_wind/data/comparison.json`
+  `steady_state` block + per-agent CRPS via
+  `scripts/verify_t6_spearman.py`).
 - **Staleness-aware intermittency.** Absent agents decay toward L_0.
 - **Absolute skill.** One participant's σ_i can rise without any other
   participant's σ_j changing, which is not true of any
@@ -211,6 +233,39 @@ What the skill layer does *not* give us:
   assumption.
 - **Calibration of the aggregate.** Inherits the Ranjan–Gneiting
   impossibility; addressed by the orthogonal recalibration layer.
+
+### 3.3.1 Skill-gate truthfulness lemma (sketch)
+
+**Lemma.** *Let the effective wager at round t be m_{i,t} = b_{i,t} · g(σ_{i,t})
+with both b_{i,t} and σ_{i,t} measurable with respect to the σ-algebra
+generated by the history up to round t-1 (pre-round information).
+Then the per-round Lambert truthfulness argument applies to m_{i,t} in
+place of the original wager.*
+
+**Proof sketch.** The Lambert 2008 truthfulness proof (§4.2 of their
+paper) shows that the unique maximiser of E_P[Π_i(r_i, r_{-i}, m, ω) | F]
+over reports r_i is r_i* = Γ(P) where Γ is the elicited statistic, under
+two hypotheses: (i) the score s(r_i, ω) is strictly proper for Γ, and
+(ii) the wager m_i is constant with respect to r_i.
+
+Both hypotheses hold in our setting:
+
+1. Strictly proper score: s_i = 1 − Ĉ_i / 2 where Ĉ_i is the finite-grid
+   pinball-CRPS surrogate, which is strictly consistent for the
+   quantile-grid representation (Gneiting and Raftery 2007, Thm 3).
+2. Wager constant w.r.t. r_i: by construction of the round ordering
+   (§3.1), σ_{i,t} = f(L_{i,t-1}) uses no round-t information, and
+   b_{i,t} is either fixed (deposit mode = "fixed"), exogenous (deposit
+   mode = "exponential"), or computed from lagged confidence (deposit
+   mode = "bankroll" with `lag_confidence=True`). In all three cases
+   ∂m_{i,t}/∂r_{i,t} = 0.
+
+Therefore E_P[π_i | F, r_i] attains its unique maximum at r_i = Γ(P),
+which is exactly the truthfulness condition. ∎
+
+**Scope.** The lemma carries over the Lambert assumption of strict
+risk neutrality (expected-utility maximisation with linear utility).
+The same caveat applies to our mechanism as to Lambert 2008.
 
 ## 3.4 Why EWMA, specifically
 
@@ -228,6 +283,14 @@ for the skill update:
 
 The price: EWMA is not a regret-minimising aggregator. Our σ_i is an
 *estimator* of reliability, not a game-theoretically optimal weight.
+Under stationary losses it is consistent — a standard stochastic-
+approximation result (Robbins and Monro 1951; Benveniste, Métivier and
+Priouret 1990) gives L_{i,t} → E[ℓ_i] as t → ∞, which makes σ_i
+converge to the deterministic σ_min + (1-σ_min)·exp(-γ·E[ℓ_i]). Under
+non-stationarity this becomes a tracking error that decays at rate
+ρ · drift — the ρ = 0.5 tuned value for Elia wind trades off tracking
+speed against variance.
+
 The empirical consequence is that `michael_ogd` matches our mechanism
 within 0.3% CRPS on the 3000-point audit slice; on the full-length
 expanding-mode run the renamed `michael_ogd_centered_median_fan`

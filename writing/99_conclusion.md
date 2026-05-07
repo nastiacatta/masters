@@ -48,7 +48,7 @@ Mapped to `THESIS_CLAIMS.md`:
 7. **Post-hoc recalibration closes 59% of the tail gap (Claim 7).**
    Rolling isotonic recalibration (Kuleshov, Fenner and Ermon 2018) in
    a prequential buffer (Dawid 1984) reduces tail deviation 0.0171 →
-   0.0070 at a 1.3% CRPS cost and 9% sharpness cost, on the
+   0.0070 at a 1.3% CRPS cost and 11% sharpness cost, on the
    calibration-sharpness tradeoff floor (Gneiting, Balabdaoui, Raftery
    2007).
 
@@ -59,9 +59,11 @@ Mapped to `THESIS_CLAIMS.md`:
 
 9. **Elia operational-forecast comparison (new validation).** A simple
    online XGBoost trained on the observed series only beats Elia's
-   published real-time forecast (`mostrecentforecast`) by ~15% in CRPS-
-   MW-equivalent (62.6 vs 74.0 MW). Our mechanism is roughly on par
-   with Elia's real-time forecast (76.2 vs 74.0 MW). Elia's interval
+   published real-time forecast (`mostrecentforecast`) by ~6% in CRPS-
+   MW-equivalent (69.5 vs 74.0 MW). Our mechanism averages down to
+   83.7 MW — ~13% worse than Elia's real-time forecast — because the
+   seven-forecaster panel mixes XGBoost with weaker models. Elia's
+   interval
    forecasts are systematically miscalibrated (τ = 0.10 coverage is
    19.1%, τ = 0.90 coverage is 94.6%), motivating the recalibration
    layer as a generic operational tool.
@@ -91,9 +93,10 @@ Mapped to `THESIS_CLAIMS.md`:
 - *Can it happen while preserving Lambert's economic guarantees?* Yes.
   Budget balance is a construction property; sybil-proofness holds
   under Lambert's scope (identical reports, conserved total wager);
-  truthfulness holds under Lambert's risk-neutrality assumption. All
-  three survive because the skill layer modulates m_i pre-round using
-  only information from rounds < t.
+  truthfulness holds under Lambert's risk-neutrality assumption (the
+  formal carry-over is the skill-gate truthfulness lemma in §3.3.1).
+  All three survive because the skill layer modulates m_i pre-round
+  using only information from rounds < t.
 
 The honest headline: the skill layer buys a small forecasting
 improvement and adds online adaptivity; the economic structure comes

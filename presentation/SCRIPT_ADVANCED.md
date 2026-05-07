@@ -750,8 +750,9 @@ the small remaining difference between static and expanding modes is
 driven by warmup-window clipping on eval-window outliers. See
 `onlinev2/outputs/post_fix_deltas/SUMMARY.md`._
 
-DM statistic on wind is still highly significant ($\mathrm{DM}=+13.95$,
-$p < 10^{-6}$; mechanism vs uniform on `comparison.json`). JSON output:
+DM statistic on wind is highly significant ($\mathrm{DM}=+40.77$,
+$p \approx 0$; mechanism vs uniform on `comparison.json`, `dm_test`
+block). JSON output:
 `dashboard/public/data/real_data/{elia_wind,elia_electricity}/data/comparison.json`.
 
 ### Why the gap between the two datasets
@@ -821,19 +822,19 @@ $$
 - Uses effective wagers $m_i(t) = b_i(t)\,g(\sigma_i(t))$ as both aggregation weights and Lambert-settlement wagers.
 - Fixed deposits ($b_0 = 1$) and `omega_max=0` for comparability.
 
-### Numerical headline (from `baselines.json`, post-fix pipeline)
+### Numerical headline (from `baselines.json`, dated 2026-05-07)
 
 | Method | wind CRPS | wind Δ vs uniform | wind % | elec CRPS | elec % |
 |--------|-----------|-------------------|--------|-----------|--------|
-| Uniform | 0.04405 | — | 0 % | 0.09609 | 0 % |
-| Raja (history-free) | 0.04337 | −0.00067 | **−1.5 %** | 0.09611 | **+0.0 %** |
-| **This project** | **0.04071** | **−0.00334** | **−7.1 %** | **0.09591** | **0.0 %** |
-| Vitali OGD (per-quantile) | 0.03599 | −0.00806 | **−18.3 %** | 0.09386 | **−2.3 %** |
+| Uniform | 0.04198 | — | 0 % | 0.09308 | 0 % |
+| Raja (history-free) | 0.04134 | −0.00064 | **−1.5 %** | 0.09312 | **+0.0 %** |
+| **This project** | **0.03905** | **−0.00293** | **−7.0 %** | **0.09313** | **+0.1 %** |
+| Vitali OGD (per-quantile) | 0.03442 | −0.00756 | **−18.0 %** | 0.09119 | **−2.0 %** |
 
 ### Interpretation
 
-- **Raja ≪ This project.** The learning layer is what produces the improvement over Raja on wind (−7.1 % vs −1.5 %). This is direct empirical evidence that *history-free self-financed* is leaving gain on the table, even under the corrected strictly-causal pipeline where the absolute gains are an order of magnitude smaller than what earlier revisions of this script reported.
-- **Vitali < This project on CRPS.** Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~11 pp gap on wind (−18.3 % vs −7.1 %) is quantified here, not glossed over.
+- **Raja ≪ This project.** The learning layer is what produces the improvement over Raja on wind (−7.0 % vs −1.5 %). This is direct empirical evidence that *history-free self-financed* is leaving gain on the table, even under the corrected strictly-causal pipeline where the absolute gains are an order of magnitude smaller than what earlier revisions of this script reported.
+- **Vitali < This project on CRPS.** Per-quantile OGD is the lowest CRPS in this benchmark. But it pays three prices: (i) no Lambert self-financing, (ii) weights are relative (simplex), (iii) no single absolute skill signal that can be shown to a participant. The ~11 pp gap on wind (−18.0 % vs −7.0 %) is quantified here, not glossed over.
 - **The point of the project.** Adaptation + self-financing + absolute skill can coexist, and the empirical cost is now measurable.
 
 ### Stability check
@@ -882,7 +883,7 @@ A repeated self-financed wagering market that:
 - Guarantees: machine-precision budget balance, zero mean profit, exact identical-report sybilproofness.
 - Deposit design: bankroll × confidence closes ~75 % of the oracle gap over fixed deposits.
 - Real data (Elia, post-fix pipeline): **−7.1 %** CRPS on wind, **0.0 %** on electricity vs uniform.
-- Benchmark (same forecasts, three mechanisms): Raja −1.5 %, This project −7.1 %, Vitali −18.3 % on wind. The three trade-offs are now quantified.
+- Benchmark (same forecasts, three mechanisms): Raja −1.5 %, This project −7.0 %, Vitali −18.0 % on wind. The three trade-offs are now quantified.
 
 ### Clear priorities for future work
 

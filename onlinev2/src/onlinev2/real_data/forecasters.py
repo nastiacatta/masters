@@ -341,7 +341,15 @@ class ARIMAForecaster(BaseForecaster):
                 model = ARIMA(tail, order=self.order)
                 self._model = model.fit(method_kwargs={"maxiter": 50})
             forecast = self._model.forecast(steps=1)
-            self._last_pred = float(forecast.iloc[0]) if hasattr(forecast, 'iloc') else float(forecast[0])
+            pred = float(forecast.iloc[0]) if hasattr(forecast, 'iloc') else float(forecast[0])
+            # Guard against statsmodels emitting NaN/Inf on degenerate
+            # fits. Downstream `predict()` and `predict_quantiles()` both
+            # expect a finite value; fall back to persistence otherwise.
+            if not np.isfinite(pred):
+                self.fallback_counter += 1
+                self._last_pred = float(history[-1])
+            else:
+                self._last_pred = pred
         except Exception:
             self._last_pred = float(history[-1])
         self._fitted = True

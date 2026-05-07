@@ -178,15 +178,15 @@ The critical difference from relative-weight approaches: my skill signal is abso
 
 ### Script
 
-On the Elia wind dataset — seventeen thousand five hundred and forty-four hourly observations, seven forecasters, γ = 16, ρ = 0.5 — the mechanism achieves a seven-point-one per cent reduction in mean CRPS compared to equal weighting, under strictly-causal normalisation.
+On the Elia wind dataset — seventeen thousand three hundred and forty-four evaluation rounds (after a two-hundred-round warmup), seven forecasters, γ = 16, ρ = 0.5 — the mechanism achieves a seven-point-one per cent reduction in mean CRPS compared to equal weighting, under strictly-causal normalisation. The test statistic is Diebold–Mariano t = 40.77, p below zero-point-zero-zero-one.
 
 The graph shows the learned skill for each forecaster over time. The skill layer recovers the per-forecaster CRPS ordering correctly — this is the headline skill-recovery result. But on this dataset the gap between the top and bottom forecasters in real CRPS is modest, so the mechanism's reweighting produces only a modest gain in the aggregate.
 
-An earlier version of this deck reported thirty-four per cent. That figure was produced under a whole-series min/max normalisation that leaked evaluation-window extremes into every training round. After the training-pipeline audit, all reported CRPS numbers use only warmup-window statistics for normalisation, and the mechanism's advantage shrinks correspondingly. The post-audit numbers are the right ones to defend.
+An earlier version of this deck reported forty-four per cent. That figure was produced under a whole-series min/max normalisation that leaked evaluation-window extremes into every training round. After the training-pipeline audit, all reported CRPS numbers use only warmup-window statistics for normalisation, and the mechanism's advantage shrinks correspondingly. The post-audit numbers are the right ones to defend.
 
 On the Elia electricity dataset, the mechanism is essentially tied with equal weights — the improvement is under one per cent. The forecasters are more similar in quality on that task, so there is less heterogeneity for the skill layer to exploit.
 
-Importantly, a per-round oracle-of-best — picking the forecaster with the lowest rolling CRPS over the last hundred rounds — beats the mechanism by roughly sixteen per cent on wind. This is the forecast-combination puzzle surfacing honestly. The thesis contribution is not universal CRPS dominance; it is conditional improvement over equal weights while preserving the seven Lambert properties (budget balance, self-financing, sybil-proofness).
+Importantly, a rolling one-hundred-step best-single selector — which each round picks the forecaster with the lowest recent CRPS — beats the mechanism by roughly sixteen percentage points on wind. This is the forecast-combination puzzle surfacing honestly. The thesis contribution is not universal CRPS dominance; it is conditional improvement over equal weights while preserving the Lambert properties of budget balance, self-financing, and sybil-invariance under identical reports.
 
 ---
 
@@ -219,7 +219,7 @@ The noise-skill correlation is minus zero point nine eight — the mechanism rel
 
 * Conditional improvement, not universal dominance
 * Best single can still win
-* Tail calibration: under-dispersion ~5 pp
+* Tail calibration: mean deviation ≈ 0.017 before recalibration; recalibration closes ≈ 59%
 * Truthfulness holds under risk neutrality
 * Richer adversaries remain open
 * Influence depends on earned reliability
@@ -230,7 +230,7 @@ The result should be interpreted carefully.
 
 The mechanism improves the aggregate forecast in a disciplined market setting, especially when there is enough heterogeneity for the skill layer to learn from. But the best single forecaster can still outperform the aggregate, and equal weights remain competitive when forecasters are similar in quality.
 
-The limitations are clear. Tail calibration shows under-dispersion of about five percentage points — the aggregate is well-calibrated for central quantiles but weakens in the tails, a known limitation of the linear opinion pool. Truthfulness holds only under risk neutrality, following Lambert's original assumption. And richer strategic behaviour — sophisticated adaptive adversaries — remains open.
+The limitations are clear. Tail calibration shows systematic deviation of about one-point-seven percentage points on average — the aggregate is well-calibrated for central quantiles but weakens in the tails, a known limitation of the linear opinion pool (Ranjan and Gneiting, 2010). The post-hoc isotonic recalibration layer closes about fifty-nine per cent of that gap at a one-point-three per cent CRPS cost. Truthfulness holds only under risk neutrality, following Lambert's original assumption. And richer strategic behaviour — sophisticated adaptive adversaries — remains open.
 
 To conclude: this thesis develops a self-financed forecasting market with online skill learning. Influence depends on earned reliability rather than deposit alone. On real energy data with seven forecasting models, the mechanism reduces mean CRPS by seven-point-one per cent over equal weights on wind power and is essentially tied on electricity prices — substantially more modest than the pre-audit figures, but genuine and measured under a strictly-causal pipeline. The mechanism is correct to machine precision, the skill signal recovers true ordering perfectly, and the standard attacks are contained.
 

@@ -346,9 +346,14 @@ def _ks_uniform(x: np.ndarray) -> float:
     Prefer ``_ks_uniform_truncated`` when ``x`` is the output of
     ``compute_pit`` on a finite quantile grid; see that function's docstring
     for why the Uniform(0, 1) null is wrong in that setting.
+
+    Returns 0.0 on an empty input — matches the convention in
+    :func:`_ks_uniform_truncated`.
     """
     x_sorted = np.sort(x)
     n = len(x_sorted)
+    if n == 0:
+        return 0.0
     ecdf = np.arange(1, n + 1) / n
     return float(np.max(np.abs(ecdf - x_sorted)))
 

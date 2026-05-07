@@ -1,0 +1,19 @@
+# One filename per line, in the order they appear in the compiled PDF.
+# Blank lines and lines starting with '#' are ignored.
+# Remove a line to exclude that file from the build.
+
+00_outline.md
+10_abstract_and_question.md
+20_literature_review.md
+30_mechanism_design.md
+40_methodology.md
+50_results_synthetic.md
+60_results_real_data.md
+70_recalibration_layer.md
+80_robustness.md
+90_discussion_and_limits.md
+99_conclusion.md
+bibliography.md
+figures_and_tables.md
+open_questions.md
+quotes_and_snippets.md

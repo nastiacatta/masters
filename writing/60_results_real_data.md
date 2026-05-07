@@ -111,23 +111,25 @@ ranking from data alone without being told which model is best.
 
 [source: `onlinev2/outputs/elia_forecast_baseline.json` and
 `onlinev2/outputs/post_fix_deltas/SUMMARY.md`, §"Elia operational
-forecast baseline"].
+forecast baseline". MW-equivalent uses the full-series scale
+`series_min_mw = 0`, `series_max_mw = 2208.7` per
+`our_mechanism_post_fix` block.]
 
 | Forecast source | CRPS (MW equiv) | Notes |
 |---|---:|---|
 | Elia `mostrecentforecast` | 74.0 | Elia's real-time NWP-driven forecast |
 | Elia `dayaheadforecast` | 98.6 | Elia's day-ahead NWP-driven forecast |
 | Elia `weekaheadforecast` | 372.4 | Elia's week-ahead forecast (weak) |
-| **our best_single (XGBoost)** | **62.6** | Online-only, no weather input |
-| our mechanism | 76.2 | 7-forecaster aggregate |
-| our per_round_inv_crps_hindsight | 60.1 | Hindsight oracle |
+| **our best_single (XGBoost)** | **69.5** | Online-only, no weather input |
+| our mechanism | 83.7 | 7-forecaster aggregate |
+| our per_round_inv_crps_hindsight | 70.1 | Hindsight oracle |
 
 **Reading.** A simple online XGBoost trained on the observed series
-outperforms Elia's operational real-time forecast (which uses weather
-inputs) by ~15% in CRPS-MW-equivalent. The mechanism aggregates seven
-forecasters, most of which are weaker than XGBoost, and ends up roughly
-on par with Elia's operational forecast (76.2 vs 74.0 MW-CRPS-eq).
-Elia's day-ahead forecast is considerably worse at 98.6.
+beats Elia's operational real-time forecast (which uses weather
+inputs) by ~6% in CRPS-MW-equivalent (69.5 vs 74.0). The mechanism
+aggregates seven forecasters, most of which are weaker than XGBoost,
+and ends up ~13% worse than Elia's operational forecast (83.7 vs
+74.0). Elia's day-ahead forecast is considerably weaker at 98.6.
 
 Elia's published interval forecasts are **systematically miscalibrated**:
 τ = 0.10 nominal gives 19.1% empirical coverage (should be 10%), and
@@ -318,36 +320,42 @@ Per-season breakdown [source: `regime_shift.json` `regime_summary`]:
 
 Restart-per-season evaluation is listed as follow-up work (B13.8).
 
-## 6.5 Published-OGD head-to-head (static-mode, pending expanding re-run)
+## 6.5 Published-OGD head-to-head (static-mode baselines.json, pending expanding re-run)
 
 [source: `dashboard/public/data/real_data/elia_wind/data/baselines.json`
-and `elia_electricity/data/baselines.json`. Also flagged as static-mode
-in the post-fix SUMMARY; re-run [PENDING].]
+and `elia_electricity/data/baselines.json`, dated 2026-05-07. The
+baselines runner has not yet been re-run under
+`normalize_mode=expanding`; numbers below are from the committed
+static-mode output (matches the file currently on disk). Direction of
+comparisons is stable; absolute magnitudes may shift on refresh.]
 
 ### 6.5.1 Wind
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
-| vitali_ogd_per_quantile | 0.03599 | −18.3% |
-| **mechanism** | **0.04071** | **−7.58%** |
-| raja_history_free | 0.04337 | −1.53% |
-| uniform | 0.04405 | — |
+| vitali_ogd_per_quantile | 0.03442 | −18.01% |
+| **mechanism** | **0.03905** | **−6.99%** |
+| raja_history_free | 0.04134 | −1.53% |
+| uniform | 0.04198 | — |
 
 ### 6.5.2 Electricity
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
-| vitali_ogd_per_quantile | 0.09386 | −2.31% |
-| **mechanism** | **0.09591** | **−0.19%** |
-| raja_history_free | 0.09611 | +0.02% |
-| uniform | 0.09609 | — |
+| vitali_ogd_per_quantile | 0.09119 | −2.03% |
+| uniform | 0.09308 | — |
+| raja_history_free | 0.09312 | +0.04% |
+| **mechanism** | **0.09313** | **+0.05%** |
 
 **Reading.** Vitali's per-τ OGD beats the mechanism on both series
-(by 10.7 pp on wind, 2.1 pp on electricity). This is the CRPS cost of
+(by ~11 pp on wind, ~2 pp on electricity). This is the CRPS cost of
 keeping the Lambert budget-balance and per-round truthfulness
-guarantees — Vitali's aggregator drops both. Raja's history-free
-variant is essentially tied with uniform on both series because it
-ignores all inter-round state.
+guarantees (the truthfulness argument carried over by the skill-gate
+lemma in §3.3.1) — Vitali's aggregator drops both. Raja's
+history-free variant is essentially tied with uniform on both series
+because it ignores all inter-round state; on electricity the mechanism
+lands in the same tied band (+0.05%), consistent with the electricity
+null result in §6.3.
 
 ## 6.6 Sensitivity block (honest placeholder)
 
@@ -372,10 +380,11 @@ The canonical real-data headline is:
   p ≈ 0. Vitali per-τ OGD beats by ~11 pp.
 - **Electricity, post-fix:** null result, t = 0.008, p = 0.994. Report
   honestly.
-- **Elia operational forecast:** our best_single (XGBoost on observed
-  series only) beats Elia `mostrecentforecast` by 15% CRPS-MW-eq; our
-  mechanism is roughly on par. Elia interval forecasts are
-  systematically miscalibrated.
+- **Elia operational forecast:** our best_single (online XGBoost on
+  observed series only) beats Elia's `mostrecentforecast` by ~6%
+  CRPS-MW-eq (69.5 vs 74.0); our mechanism runs ~13% worse at 83.7 MW,
+  because aggregating the 7-forecaster panel mixes in weaker models.
+  Elia interval forecasts are systematically miscalibrated.
 - **Calibration anchor:** 3000-point audit slice. Mean tail deviation
   0.0171, recalibration layer closes 59% (Chapter 5.3).
 
