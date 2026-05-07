@@ -735,14 +735,19 @@ The runner reports **seven** weighting rules in one go (uniform, skill-only, mec
 
 | Dataset | Uniform CRPS | Mechanism CRPS | $\Delta$ | % vs uniform |
 |---------|--------------|----------------|----------|--------------|
-| Elia wind (offshore power) | 0.04265 | 0.03930 | −0.00335 | **−7.86 %** |
-| Elia electricity (imbalance) | 0.09345 | 0.09320 | −0.00025 | **−0.27 %** |
+| Elia wind (offshore power) | 0.04079 | 0.03788 | −0.00291 | **−7.12 %** |
+| Elia electricity (imbalance) | 0.09052 | 0.09052 | ≈0 | **≈0 %** |
 
-_Numbers regenerated under the post-fix pipeline (strictly-causal
-normalisation + pending-queue horizon residuals; model-training-testing
-audit, May 2026). Earlier revisions of this script reported −44 % / −8 %;
-those figures were produced under a whole-series min/max normalisation
-that leaked evaluation-window extremes into every training round. See
+_Numbers regenerated under the post-fix pipeline with
+`normalize_mode="expanding"` (strictly-causal normalisation with an
+expanding `(lo_t, hi_t)` window + pending-queue horizon residuals;
+model-training-testing audit, May 2026). Earlier revisions of this
+script reported −44 % / −8 %; those figures were produced under a
+whole-series min/max normalisation that leaked evaluation-window
+extremes into every training round. Under the earlier
+`normalize_mode="static"` fix the mechanism was at −7.86 % / −0.27 %;
+the small remaining difference between static and expanding modes is
+driven by warmup-window clipping on eval-window outliers. See
 `onlinev2/outputs/post_fix_deltas/SUMMARY.md`._
 
 DM statistic on wind is still highly significant ($\mathrm{DM}=+13.95$,
