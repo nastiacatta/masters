@@ -62,7 +62,7 @@ export default function ImprovementPanel() {
     <div className="space-y-8">
       {/* ── Header ───────────────────────────────────────────────── */}
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Improvement Recommendations
         </h2>
         <p className="text-xs text-slate-500 mt-1">

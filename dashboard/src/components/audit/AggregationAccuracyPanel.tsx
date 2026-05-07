@@ -169,7 +169,7 @@ export default function AggregationAccuracyPanel() {
     <div className="space-y-10">
       {/* ── Method comparison table ──────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Method Comparison
         </h2>
         <p className="text-xs text-slate-500">
@@ -228,7 +228,7 @@ export default function AggregationAccuracyPanel() {
       {/* ── Oracle gap badge ──────────────────────────────────────── */}
       {oracleGap && (
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Oracle Gap</h2>
+          <h2 className="panel-heading">Oracle Gap</h2>
           <div className="flex items-center gap-4">
             <span
               className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold ${
@@ -252,7 +252,7 @@ export default function AggregationAccuracyPanel() {
       {/* ── Vitali OGD gap comparison ────────────────────────────── */}
       {vitaliGap && (
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="panel-heading">
             Vitali OGD Comparison
           </h2>
           <div className="grid grid-cols-2 gap-4">
@@ -283,7 +283,7 @@ export default function AggregationAccuracyPanel() {
 
       {/* ── Calibration reliability diagram ──────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Calibration Reliability Diagram
         </h2>
         <p className="text-xs text-slate-500">
@@ -351,7 +351,7 @@ export default function AggregationAccuracyPanel() {
 
       {/* ── Per-quantile CRPS chart ──────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Per-Quantile Calibration Gap
         </h2>
         <p className="text-xs text-slate-500">
@@ -396,7 +396,7 @@ export default function AggregationAccuracyPanel() {
 
       {/* ── Alternative approaches ───────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Alternative Approaches
         </h2>
         <div className="space-y-3">
@@ -416,7 +416,7 @@ export default function AggregationAccuracyPanel() {
 
       {/* ── Ranjan-Gneiting explanation ──────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Why the Linear Pool is Uncalibrated
         </h2>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">

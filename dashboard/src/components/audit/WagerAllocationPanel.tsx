@@ -124,7 +124,7 @@ export default function WagerAllocationPanel() {
 
       {/* ── Effective wager stacked bar chart ────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Effective Wager Breakdown
         </h2>
         <p className="text-xs text-slate-500">
@@ -183,7 +183,7 @@ export default function WagerAllocationPanel() {
 
       {/* ── Normalised weight chart ──────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Normalised Weights
         </h2>
         <p className="text-xs text-slate-500">
@@ -235,7 +235,7 @@ export default function WagerAllocationPanel() {
 
       {/* ── Concentration metrics ────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Concentration Metrics
         </h2>
         <div className="grid grid-cols-2 gap-4">
@@ -270,7 +270,7 @@ export default function WagerAllocationPanel() {
 
       {/* ── Deposit policy comparison ────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Deposit Policy Comparison
         </h2>
         {depositPolicies.length > 0 ? (
@@ -381,7 +381,7 @@ export default function WagerAllocationPanel() {
 
       {/* ── Textual explanation ───────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Why fixed deposits give the mechanism the most headroom
         </h2>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">

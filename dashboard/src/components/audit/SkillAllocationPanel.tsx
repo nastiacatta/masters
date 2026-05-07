@@ -145,7 +145,7 @@ export default function SkillAllocationPanel() {
 
       {/* ── Sigma bar chart ──────────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Steady-State Skill Estimates (σ)
         </h2>
         <p className="text-xs text-slate-500">
@@ -196,7 +196,7 @@ export default function SkillAllocationPanel() {
 
       {/* ── Sigma trajectory chart ───────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Skill Trajectories Over Time
         </h2>
         <p className="text-xs text-slate-500">
@@ -246,7 +246,7 @@ export default function SkillAllocationPanel() {
 
       {/* ── Rank correlation badge ───────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Rank Correlation
         </h2>
         <div className="flex items-center gap-4">
@@ -278,7 +278,7 @@ export default function SkillAllocationPanel() {
 
       {/* ── Convergence analysis ─────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Convergence Analysis
         </h2>
         <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
@@ -313,7 +313,7 @@ export default function SkillAllocationPanel() {
 
       {/* ── Parameter comparison ──────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Parameter Comparison
         </h2>
         <p className="text-xs text-slate-500">

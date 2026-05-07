@@ -40,7 +40,7 @@ export default function TheoryGroundingPanel() {
     <div className="space-y-10">
       {/* ── Highlighted predictions ──────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Key Theoretical Predictions
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -63,7 +63,7 @@ export default function TheoryGroundingPanel() {
 
       {/* ── Literature summary by category ───────────────────────── */}
       <section className="space-y-6">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Literature Summary
         </h2>
         {grouped.map((group) => (
@@ -82,7 +82,7 @@ export default function TheoryGroundingPanel() {
 
       {/* ── Theory vs Practice table ─────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Theory vs Practice
         </h2>
         <div className="overflow-x-auto">

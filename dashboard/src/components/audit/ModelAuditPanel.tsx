@@ -143,7 +143,7 @@ export default function ModelAuditPanel() {
 
       {/* ── Forecaster ranking table ─────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Forecaster Ranking
         </h2>
         <p className="text-xs text-slate-500">
@@ -208,7 +208,7 @@ export default function ModelAuditPanel() {
       {/* ── Per-round CRPS time-series ───────────────────────────── */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="panel-heading">
             Per-Round CRPS
           </h2>
           <select
@@ -266,7 +266,7 @@ export default function ModelAuditPanel() {
 
       {/* ── Regime breakdown table ───────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Regime Breakdown
         </h2>
         <p className="text-xs text-slate-500">
@@ -330,7 +330,7 @@ export default function ModelAuditPanel() {
 
       {/* ── Model annotations ────────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           Model Annotations
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -369,7 +369,7 @@ export default function ModelAuditPanel() {
 
       {/* ── XGBoost Deep Dive ────────────────────────────────────── */}
       <section className="space-y-6">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="panel-heading">
           XGBoost deep dive
         </h2>
         <p className="text-xs text-slate-500">
