@@ -220,8 +220,13 @@ export default function NotesPage() {
 
         {/* ── Sticky mini ToC ── */}
         <nav
-          className="sticky top-0 z-10 -mx-6 px-6 py-3 bg-slate-50/85 backdrop-blur-md border-b border-slate-200"
+          className="sticky top-0 z-10 -mx-8 px-8 py-3"
           aria-label="Experiments"
+          style={{
+            background: 'rgba(251, 249, 244, 0.9)',
+            backdropFilter: 'saturate(180%) blur(8px)',
+            borderBottom: '1px solid var(--border)',
+          }}
         >
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">

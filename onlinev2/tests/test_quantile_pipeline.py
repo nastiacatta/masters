@@ -291,3 +291,65 @@ def test_isotonic_preserves_median():
     assert abs(result[median_idx] - original_median) < 0.15, (
         f"Median shifted too much: {original_median} -> {result[median_idx]}"
     )
+
+
+# ---------------------------------------------------------------------------
+# 11. test_predict_quantiles_handles_nan_point_forecast
+# ---------------------------------------------------------------------------
+def test_predict_quantiles_handles_nan_point_forecast():
+    """Property 1 invariant: predict_quantiles MUST return an all-finite
+    vector even if the forecaster's `predict()` returns NaN or Inf.
+
+    A NaN point forecast would otherwise produce a NaN quantile vector
+    that poisons downstream CRPS scoring. The pipeline substitutes a
+    flat 0.5 fan (the last-resort fallback) and increments
+    `fallback_counter` so the runner-level audit surfaces the failure.
+    """
+    fc = NaiveForecaster()
+    fc._last = float("nan")
+    fc._fitted = True
+
+    taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+
+    # Case A: early-round (fallback path) with NaN point
+    fc._residuals = [0.01] * 5
+    pre = fc.fallback_counter
+    q = fc.predict_quantiles(taus)
+    assert np.all(np.isfinite(q)), f"NaN leaked through pipeline: {q}"
+    assert len(q) == len(taus)
+    assert fc.fallback_counter > pre, (
+        "fallback_counter did not increment on non-finite raw quantiles"
+    )
+
+    # Case B: normal path with 50 residuals and NaN point
+    fc2 = NaiveForecaster()
+    fc2._last = float("nan")
+    fc2._fitted = True
+    fc2._residuals = [0.01] * 50
+    q2 = fc2.predict_quantiles(taus)
+    assert np.all(np.isfinite(q2))
+
+    # Case C: Inf point
+    fc3 = NaiveForecaster()
+    fc3._last = float("inf")
+    fc3._fitted = True
+    fc3._residuals = [0.01] * 50
+    q3 = fc3.predict_quantiles(taus)
+    assert np.all(np.isfinite(q3))
+
+
+# ---------------------------------------------------------------------------
+# 12. test_predict_quantiles_handles_all_nan_residuals
+# ---------------------------------------------------------------------------
+def test_predict_quantiles_handles_all_nan_residuals():
+    """If the residual buffer is all-NaN, the normal-path quantile
+    generation would propagate NaN. The pipeline must still return a
+    finite vector (falling through to the flat 0.5 last-resort fan)."""
+    fc = NaiveForecaster()
+    fc._last = 0.5
+    fc._fitted = True
+    fc._residuals = [float("nan")] * 50
+
+    taus = np.array([0.1, 0.5, 0.9])
+    q = fc.predict_quantiles(taus)
+    assert np.all(np.isfinite(q)), f"NaN residuals leaked through pipeline: {q}"

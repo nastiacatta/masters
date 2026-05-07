@@ -380,27 +380,63 @@ export default function MechanismPage() {
               <ChartLinkingProvider initialMethods={Array.from({ length: N }, (_, i) => `F${i + 1}`)}>
               <div className="space-y-4">
                 {/* Agent selector */}
-                <div className="flex items-center gap-1.5 flex-wrap bg-white rounded-xl border border-slate-200 p-3">
-                  <span className="text-[11px] text-slate-400 font-medium mr-1">Highlight agent:</span>
+                <div
+                  className="flex items-center gap-1.5 flex-wrap p-3"
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                  }}
+                >
+                  <span
+                    className="mr-1"
+                    style={{ fontSize: 11.5, color: 'var(--ink-soft)', fontWeight: 500 }}
+                  >
+                    Highlight agent:
+                  </span>
                   <button
                     onClick={() => setSelectedAgent(null)}
-                    className={`px-2 py-1 rounded-full text-[11px] font-medium transition-all ${
-                      selectedAgent == null ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                    }`}
-                  >All</button>
-                  {Array.from({ length: N }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedAgent(selectedAgent === i ? null : i)}
-                      className={`px-2 py-1 rounded-full text-[11px] font-medium transition-all flex items-center gap-1 ${
-                        selectedAgent === i ? 'text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                      }`}
-                      style={selectedAgent === i ? { background: AGENT_PALETTE[i % AGENT_PALETTE.length] } : undefined}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: AGENT_PALETTE[i % AGENT_PALETTE.length] }} />
-                      {agentName(i)}
-                    </button>
-                  ))}
+                    className="transition-colors"
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: selectedAgent == null ? 600 : 500,
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      background: selectedAgent == null ? 'var(--navy)' : 'var(--cream)',
+                      color:      selectedAgent == null ? '#fff' : 'var(--ink-soft)',
+                      border: '1px solid',
+                      borderColor: selectedAgent == null ? 'var(--navy)' : 'var(--border)',
+                    }}
+                  >
+                    All
+                  </button>
+                  {Array.from({ length: N }, (_, i) => {
+                    const color = AGENT_PALETTE[i % AGENT_PALETTE.length];
+                    const active = selectedAgent === i;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedAgent(active ? null : i)}
+                        className="transition-colors flex items-center gap-1.5"
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: active ? 600 : 500,
+                          padding: '4px 10px',
+                          borderRadius: 999,
+                          background: active ? color : 'var(--cream)',
+                          color:      active ? '#fff' : 'var(--ink-soft)',
+                          border: '1px solid',
+                          borderColor: active ? color : 'var(--border)',
+                        }}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ background: active ? '#fff' : color }}
+                        />
+                        {agentName(i)}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Error chart */}
