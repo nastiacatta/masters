@@ -121,6 +121,136 @@ Convention for every entry:
   when members disagree; used as the theoretical basis for
   `CoordinatedGroupBehaviour` in weighted-mean mode.
 
+### Dimitrov, Sami 2008
+
+```bibtex
+@inproceedings{dimitrov2008nonmyopic,
+  title     = {Non-myopic strategies in prediction markets},
+  author    = {Dimitrov, Stanko and Sami, Rahul},
+  booktitle = {Proceedings of the 9th ACM conference on Electronic
+               commerce (EC '08)},
+  year      = {2008},
+  pages     = {200--209}
+}
+```
+
+- Used in: Chapter 2 (adversary catalogue context), Chapter 8.9
+  (strategic reporter).
+- What we take: the original observation that in a repeated
+  prediction-market setting, rational non-myopic forecasters can
+  "bluff" -- report off-belief values to mislead competitors before
+  correcting -- and that a discount factor can be used to blunt the
+  incentive. Relevant to the strategic-influence / strategic-reporter
+  attack archetypes, where the attacker accepts near-term score loss
+  in exchange for an aggregate shift that feeds an off-mechanism
+  objective.
+
+### Chen, Wortman Vaughan 2010
+
+```bibtex
+@inproceedings{chen2010new,
+  title     = {A new understanding of prediction markets via no-regret
+               learning},
+  author    = {Chen, Yiling and Wortman Vaughan, Jennifer},
+  booktitle = {Proceedings of the 11th ACM conference on Electronic
+               commerce (EC '10)},
+  year      = {2010},
+  pages     = {189--198}
+}
+```
+
+- Used in: Chapter 2 (background).
+- What we take: the equivalence between market scoring rules and
+  online no-regret algorithms, which motivates our EWMA skill layer
+  as a bounded-regret estimator on a stationary panel.
+
+### Hardt, Jagadeesan, Mendler-Dünner 2023
+
+```bibtex
+@inproceedings{hardt2023performative,
+  title     = {Performative Prediction: Past and Future},
+  author    = {Hardt, Moritz and Jagadeesan, Meena and
+               Mendler-D{\"u}nner, Celestine},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2309.05015}
+}
+```
+
+- Used in: Chapter 8.9 (strategic reporting discussion).
+- What we take: the framing that forecasts can influence outcomes
+  (performative setting). In our robustness analysis this would
+  amplify the strategic-reporter threat because shifting the aggregate
+  $\hat r$ can also shift the outcome $y$ that scores the attacker,
+  creating a fixed-point problem. We do not model this directly but
+  cite it as a real-world extension.
+
+### Treutlein 2023
+
+```bibtex
+@article{treutlein2023performative,
+  title   = {Incentivizing honest performative predictions with
+             proper scoring rules},
+  author  = {Treutlein, Johannes},
+  journal = {arXiv preprint arXiv:2305.17601},
+  year    = {2023},
+  url     = {https://arxiv.org/abs/2305.17601}
+}
+```
+
+- Used in: Chapter 2, Chapter 8.9.
+- What we take: bounds on how inaccurate expected-score-maximising
+  reports are when predictions are performative, and the observation
+  that fixed-point solutions exist for bounded-influence binary
+  outcomes but not for richer outcome spaces. Relevant framing for
+  the strategic-reporter attack.
+
+### Witkowski, Freeman, Wortman Vaughan, Pennock, Krause 2018
+
+```bibtex
+@inproceedings{witkowski2018forecasting,
+  title     = {Incentive-Compatible Forecasting Competitions},
+  author    = {Witkowski, Jens and Freeman, Rupert and Wortman
+               Vaughan, Jennifer and Pennock, David M. and Krause,
+               Andreas},
+  booktitle = {Proceedings of the 32nd AAAI Conference on Artificial
+               Intelligence (AAAI '18)},
+  year      = {2018},
+  url       = {https://arxiv.org/abs/2101.01816}
+}
+```
+
+- Used in: Chapter 2 (forecasting competition context), Chapter 8.13
+  (robustness headline).
+- What we take: the impossibility result for winner-take-all
+  forecasting competitions (forecasters have incentive to report
+  extreme beliefs to maximise the probability of winning), and the
+  ELF mechanism as a truthful alternative. Explains why the Lambert
+  self-financed framing is not the same as a forecasting tournament
+  and why our mechanism's budget-balance property is structurally
+  different from a competition prize.
+
+### Freeman, Pennock, Reeves, Wortman Vaughan 2017
+
+```bibtex
+@inproceedings{freeman2017peer,
+  title     = {Crowdsourced Outcome Determination in Prediction
+               Markets},
+  author    = {Freeman, Rupert and Pennock, David M. and Reeves,
+               Daniel M. and Wortman Vaughan, Jennifer},
+  booktitle = {Proceedings of the 31st AAAI Conference on Artificial
+               Intelligence (AAAI '17)},
+  year      = {2017}
+}
+```
+
+- Used in: Chapter 2 (peer-prediction arbiter context).
+- What we take: the peer-prediction mechanism that incentivises
+  truthful arbitration via market fees, relevant for the outcome
+  determination step. We do not use peer-prediction directly; we cite
+  it to pre-empt the natural reviewer question of whether our
+  settlement could be made adversarially robust by a peer-prediction
+  verifier.
+
 ## B. Online learning for forecast combination
 
 ### Vitali, Pinson 2025
