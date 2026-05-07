@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import PageShell from '@/components/dashboard/PageShell';
 import PageHeader from '@/components/dashboard/PageHeader';
 
 const SECTIONS = [
@@ -9,8 +10,9 @@ const SECTIONS = [
 
 export default function Appendix() {
   return (
-    <div className="p-6 max-w-3xl space-y-6">
+    <PageShell width="narrow">
       <PageHeader
+        hero
         title="Appendix"
         subtitle="Reference material: DGP, behaviour scenarios, and mechanism detail."
       />
@@ -19,14 +21,28 @@ export default function Appendix() {
           <li key={to}>
             <Link
               to={to}
-              className="block rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+              className="block panel-card transition-colors hover:shadow-sm"
             >
-              <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-              <p className="text-sm text-slate-600 mt-1">{description}</p>
+              <h2
+                className="font-serif"
+                style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
+              >
+                {title}
+              </h2>
+              <p
+                style={{
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  color: 'var(--ink-soft)',
+                  marginTop: 6,
+                }}
+              >
+                {description}
+              </p>
             </Link>
           </li>
         ))}
       </ul>
-    </div>
+    </PageShell>
   );
 }

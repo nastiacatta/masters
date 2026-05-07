@@ -4522,14 +4522,16 @@ def run_identity_attack_matrix(outdir="outputs", seed=42, block="behaviour", wri
         for u in pop:
             state.wealth[u.traits.user_id] = u.traits.initial_wealth
         profits, n_eff_ts = [], []
+        agg_hist: list = []
         for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=agg_hist, weights_prev=state.weights_prev,
                                   sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
             actions = behaviour.act(pub)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
             profits.append(sum(logs["profit"]))
             n_eff_ts.append(logs["N_eff"])
+            agg_hist.append(logs["r_hat"])
         results.append({"identity": scenario_name, "total_profit": sum(profits), "final_n_eff": logs["N_eff"], "final_gini": logs["Gini"]})
     _write_csv(ep.data("identity_attack_matrix.csv"), ["identity", "total_profit", "final_n_eff", "final_gini"], results)
     if write_summary:
@@ -4572,8 +4574,9 @@ def run_drift_adaptation(outdir="outputs", seed=42, block="behaviour", write_sum
         for u in pop:
             state.wealth[u.traits.user_id] = u.traits.initial_wealth
         mae_list = []
+        agg_hist: list = []
         for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=agg_hist, weights_prev=state.weights_prev,
                                   sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
             actions = behaviour.act(pub)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
@@ -4581,6 +4584,7 @@ def run_drift_adaptation(outdir="outputs", seed=42, block="behaviour", write_sum
             if logs.get("r_hat") is not None:
                 r = logs["r_hat"] if isinstance(logs["r_hat"], (int, float)) else (np.mean(logs["r_hat"]) if hasattr(logs["r_hat"], "__len__") else 0.5)
                 mae_list.append(abs(float(r) - float(y[t])))
+            agg_hist.append(logs["r_hat"])
         results.append({"belief": scenario_name, "mean_mae": float(np.mean(mae_list)) if mae_list else 0.0, "final_gini": logs["Gini"]})
     _write_csv(ep.data("drift_adaptation.csv"), ["belief", "mean_mae", "final_gini"], results)
     if write_summary:
@@ -4629,14 +4633,16 @@ def run_stake_policy_matrix(outdir="outputs", seed=42, block="behaviour", write_
         for u in pop:
             state.wealth[u.traits.user_id] = u.traits.initial_wealth
         profits, deposits_sum = [], []
+        agg_hist: list = []
         for t in range(T):
-            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=[], weights_prev=state.weights_prev,
+            pub = RoundPublicState(t=t, y_history=y[:t].tolist(), agg_history=agg_hist, weights_prev=state.weights_prev,
                                   sigma_prev=state.sigma, wealth_prev=state.wealth, profit_prev=state.profit_prev)
             actions = behaviour.act(pub)
             state, logs = run_round(state=state, params=params, actions=actions, y_t=float(y[t]))
             behaviour.observe_round_result(t=t, y_t=float(y[t]), logs_t=logs)
             profits.append(sum(logs["profit"]))
             deposits_sum.append(sum(logs["deposits"]))
+            agg_hist.append(logs["r_hat"])
         results.append({"staking": scenario_name, "total_profit": sum(profits), "mean_deposit": float(np.mean(deposits_sum)), "final_gini": logs["Gini"]})
     _write_csv(ep.data("stake_policy_matrix.csv"), ["staking", "total_profit", "mean_deposit", "final_gini"], results)
     if write_summary:
