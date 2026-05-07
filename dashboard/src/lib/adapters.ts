@@ -243,19 +243,65 @@ export async function loadIntermittencyStress(
 export async function loadArbitrageScan(
   exp: ExperimentMeta,
 ): Promise<ArbitrageScanRow[]> {
+  // Prefer the aggregated-by-lam summary if available (multi-seed runs);
+  // fall back to the per-seed/per-lam flat file for single-seed runs.
+  try {
+    const summary = await fetchCSV<{
+      lam: number;
+      mean_profit: number;
+      mean_final_wealth: number;
+      mean_found_rounds: number;
+      mean_participation_rounds?: number;
+      se_profit?: number;
+      ci_low?: number;
+      ci_high?: number;
+    }>(`${expPath(exp)}/data/${dataFile(exp, 'arbitrage_scan', 'arbitrage_scan_by_lam.csv')}`);
+    if (summary.length > 0) {
+      return summary.map((r) => ({
+        lam: Number(r.lam),
+        arbTotalProfit: Number(r.mean_profit),
+        arbFinalWealth: Number(r.mean_final_wealth),
+        arbitrageFoundRounds: Number(r.mean_found_rounds),
+        participationRounds:
+          r.mean_participation_rounds != null
+            ? Number(r.mean_participation_rounds)
+            : undefined,
+      }));
+    }
+  } catch {
+    // Fall through to the per-seed CSV below.
+  }
+
   const raw = await fetchCSV<{
     lam: number;
     arb_total_profit: number;
     arb_final_wealth: number;
     arbitrage_found_rounds: number;
+    participation_rounds?: number;
   }>(`${expPath(exp)}/data/${dataFile(exp, 'arbitrage_scan', 'arbitrage_scan.csv')}`);
 
-  return raw.map((r) => ({
-    lam: Number(r.lam),
-    arbTotalProfit: Number(r.arb_total_profit),
-    arbFinalWealth: Number(r.arb_final_wealth),
-    arbitrageFoundRounds: Number(r.arbitrage_found_rounds),
-  }));
+  // Group per-seed rows into per-lam means (works for both single- and
+  // multi-seed flat files).
+  const byLam: Map<number, { profits: number[]; wealths: number[]; founds: number[]; parts: number[] }> = new Map();
+  for (const r of raw) {
+    const lam = Number(r.lam);
+    const entry = byLam.get(lam) ?? { profits: [], wealths: [], founds: [], parts: [] };
+    entry.profits.push(Number(r.arb_total_profit));
+    entry.wealths.push(Number(r.arb_final_wealth));
+    entry.founds.push(Number(r.arbitrage_found_rounds));
+    if (r.participation_rounds != null) entry.parts.push(Number(r.participation_rounds));
+    byLam.set(lam, entry);
+  }
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return [...byLam.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([lam, e]) => ({
+      lam,
+      arbTotalProfit: mean(e.profits),
+      arbFinalWealth: mean(e.wealths),
+      arbitrageFoundRounds: mean(e.founds),
+      participationRounds: e.parts.length ? mean(e.parts) : undefined,
+    }));
 }
 
 export async function loadDetectionAdaptation(
@@ -265,6 +311,9 @@ export async function loadDetectionAdaptation(
     attacker: string;
     total_profit: number;
     final_wealth: number;
+    detector_mean_score?: number;
+    detector_flag_rate?: number;
+    detector_eval_rounds?: number;
   }>(
     `${expPath(exp)}/data/${dataFile(
       exp,
@@ -277,6 +326,9 @@ export async function loadDetectionAdaptation(
     attacker: String(r.attacker),
     totalProfit: Number(r.total_profit),
     finalWealth: Number(r.final_wealth),
+    detectorMeanScore: r.detector_mean_score != null ? Number(r.detector_mean_score) : undefined,
+    detectorFlagRate: r.detector_flag_rate != null ? Number(r.detector_flag_rate) : undefined,
+    detectorEvalRounds: r.detector_eval_rounds != null ? Number(r.detector_eval_rounds) : undefined,
   }));
 }
 
@@ -333,48 +385,171 @@ export async function loadFixedDeposit(
 }
 
 export async function loadCollusionStress(exp: ExperimentMeta): Promise<CollusionStressRow[]> {
-  const raw = await fetchCSV<{ scenario: string; total_profit: number; mean_profit: number; final_gini: number; participation_rate: number }>(
+  // Prefer per-scenario summary produced by multi-seed runs.
+  try {
+    const summary = await fetchCSV<{
+      scenario: string;
+      mean_coalition_profit: number;
+      se_coalition_profit?: number;
+      mean_final_gini: number;
+    }>(
+      `${expPath(exp)}/data/${dataFile(exp, 'collusion_stress', 'collusion_stress_summary.csv')}`,
+    );
+    if (summary.length > 0) {
+      return summary.map((r) => ({
+        scenario: String(r.scenario),
+        totalProfit: Number(r.mean_coalition_profit),
+        meanProfit: Number(r.mean_coalition_profit),
+        finalGini: Number(r.mean_final_gini),
+        participationRate: 0,
+      }));
+    }
+  } catch {
+    // Fall through.
+  }
+
+  const raw = await fetchCSV<{
+    scenario: string;
+    total_profit?: number;
+    coalition_profit?: number;
+    mean_profit: number;
+    final_gini: number;
+    participation_rate: number;
+  }>(
     `${expPath(exp)}/data/${dataFile(exp, 'collusion_stress', 'collusion_stress.csv')}`,
   );
-  return raw.map((r) => ({
-    scenario: String(r.scenario),
-    totalProfit: Number(r.total_profit),
-    meanProfit: Number(r.mean_profit),
-    finalGini: Number(r.final_gini),
-    participationRate: Number(r.participation_rate),
+  // Group by scenario for per-seed flat file.
+  const byScenario = new Map<string, { profits: number[]; coalition: number[]; gini: number[]; part: number[] }>();
+  for (const r of raw) {
+    const key = String(r.scenario);
+    const entry = byScenario.get(key) ?? { profits: [], coalition: [], gini: [], part: [] };
+    entry.profits.push(Number(r.total_profit ?? r.coalition_profit ?? 0));
+    if (r.coalition_profit != null) entry.coalition.push(Number(r.coalition_profit));
+    entry.gini.push(Number(r.final_gini));
+    entry.part.push(Number(r.participation_rate));
+    byScenario.set(key, entry);
+  }
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return [...byScenario.entries()].map(([scenario, e]) => ({
+    scenario,
+    totalProfit: e.coalition.length ? mean(e.coalition) : mean(e.profits),
+    meanProfit: mean(e.profits),
+    finalGini: mean(e.gini),
+    participationRate: mean(e.part),
   }));
 }
 
 export async function loadInsiderAdvantage(exp: ExperimentMeta): Promise<InsiderAdvantageRow[]> {
+  try {
+    const summary = await fetchCSV<{
+      scenario: string;
+      mean_insider_profit: number;
+    }>(
+      `${expPath(exp)}/data/${dataFile(exp, 'insider_advantage', 'insider_advantage_summary.csv')}`,
+    );
+    if (summary.length > 0) {
+      return summary.map((r) => ({
+        scenario: String(r.scenario),
+        insiderProfit: Number(r.mean_insider_profit),
+        finalGini: 0,
+      }));
+    }
+  } catch {
+    // Fall through.
+  }
   const raw = await fetchCSV<{ scenario: string; insider_profit: number; final_gini: number }>(
     `${expPath(exp)}/data/${dataFile(exp, 'insider_advantage', 'insider_advantage.csv')}`,
   );
-  return raw.map((r) => ({
-    scenario: String(r.scenario),
-    insiderProfit: Number(r.insider_profit),
-    finalGini: Number(r.final_gini),
+  const byScenario = new Map<string, { profits: number[]; gini: number[] }>();
+  for (const r of raw) {
+    const key = String(r.scenario);
+    const entry = byScenario.get(key) ?? { profits: [], gini: [] };
+    entry.profits.push(Number(r.insider_profit));
+    entry.gini.push(Number(r.final_gini));
+    byScenario.set(key, entry);
+  }
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return [...byScenario.entries()].map(([scenario, e]) => ({
+    scenario,
+    insiderProfit: mean(e.profits),
+    finalGini: mean(e.gini),
   }));
 }
 
 export async function loadWashActivity(exp: ExperimentMeta): Promise<WashActivityRow[]> {
+  try {
+    const summary = await fetchCSV<{
+      scenario: string;
+      mean_inflation_rate: number;
+    }>(
+      `${expPath(exp)}/data/${dataFile(exp, 'wash_activity_gaming', 'wash_activity_gaming_summary.csv')}`,
+    );
+    if (summary.length > 0) {
+      // inflation_rate is relative; multiply by a nominal baseline (1000) so
+      // downstream components that expect total_activity have a sensible
+      // absolute number. Dashboard components should prefer the summary row.
+      return summary.map((r) => ({
+        scenario: String(r.scenario),
+        totalActivity: Math.round(Number(r.mean_inflation_rate) * 1000),
+        nRounds: 1000,
+      }));
+    }
+  } catch {
+    // Fall through.
+  }
   const raw = await fetchCSV<{ scenario: string; total_activity: number; n_rounds: number }>(
     `${expPath(exp)}/data/${dataFile(exp, 'wash_activity_gaming', 'wash_activity_gaming.csv')}`,
   );
-  return raw.map((r) => ({
-    scenario: String(r.scenario),
-    totalActivity: Number(r.total_activity),
-    nRounds: Number(r.n_rounds),
+  const byScenario = new Map<string, { act: number[]; rounds: number[] }>();
+  for (const r of raw) {
+    const key = String(r.scenario);
+    const entry = byScenario.get(key) ?? { act: [], rounds: [] };
+    entry.act.push(Number(r.total_activity));
+    entry.rounds.push(Number(r.n_rounds));
+    byScenario.set(key, entry);
+  }
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return [...byScenario.entries()].map(([scenario, e]) => ({
+    scenario,
+    totalActivity: mean(e.act),
+    nRounds: mean(e.rounds),
   }));
 }
 
 export async function loadStrategicReporting(exp: ExperimentMeta): Promise<StrategicReportingRow[]> {
-  const raw = await fetchCSV<{ scenario: string; mean_agg_error: number; final_gini: number }>(
+  try {
+    const summary = await fetchCSV<{
+      scenario: string;
+      mean_agg_error: number;
+    }>(
+      `${expPath(exp)}/data/${dataFile(exp, 'strategic_reporting', 'strategic_reporting_summary.csv')}`,
+    );
+    if (summary.length > 0) {
+      return summary.map((r) => ({
+        scenario: String(r.scenario),
+        meanAggError: Number(r.mean_agg_error),
+        finalGini: 0,
+      }));
+    }
+  } catch {
+    // Fall through.
+  }
+  const raw = await fetchCSV<{ scenario: string; mean_agg_error: number; final_gini?: number }>(
     `${expPath(exp)}/data/${dataFile(exp, 'strategic_reporting', 'strategic_reporting.csv')}`,
   );
-  return raw.map((r) => ({
-    scenario: String(r.scenario),
-    meanAggError: Number(r.mean_agg_error),
-    finalGini: Number(r.final_gini),
+  const byScenario = new Map<string, { err: number[]; gini: number[] }>();
+  for (const r of raw) {
+    const key = String(r.scenario);
+    const entry = byScenario.get(key) ?? { err: [], gini: [] };
+    entry.err.push(Number(r.mean_agg_error));
+    if (r.final_gini != null) entry.gini.push(Number(r.final_gini));
+    byScenario.set(key, entry);
+  }
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  return [...byScenario.entries()].map(([scenario, e]) => ({
+    scenario,
+    meanAggError: mean(e.err),
+    finalGini: e.gini.length ? mean(e.gini) : 0,
   }));
 }
 

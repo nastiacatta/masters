@@ -44,9 +44,12 @@ export default function SensitivityTab({ data }: { data: SweepPoint[] }) {
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600">
-        The skill gate g(σ) = λ + (1−λ)σ^η has two key parameters.
-        λ controls the floor (how much influence an unskilled agent retains).
-        σ_min sets the minimum skill estimate. A robust mechanism should vary smoothly.
+        The skill gate g(σ) = λ + (1−λ)σ<sup>η</sup> has two key parameters.
+        λ is the floor — the fraction of influence an unskilled agent (σ = σ_min)
+        retains, so larger λ means a smaller skill discount. σ_min is the minimum
+        skill estimate the mechanism will assign to anyone. A robust mechanism
+        should vary smoothly across these settings rather than flip between
+        regimes.
       </p>
       <MathBlock accent label="Skill gate" latex="g(\\sigma_i) = \\lambda + (1-\\lambda)\\,\\sigma_i^\\eta, \\quad \\sigma_i = \\sigma_{\\min} + (1-\\sigma_{\\min})\\,e^{-\\gamma L_i}" />
 
@@ -79,9 +82,13 @@ export default function SensitivityTab({ data }: { data: SweepPoint[] }) {
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-slate-800">Seasonal robustness (real data)</h3>
         <p className="text-sm text-slate-600">
-          Wind patterns change across seasons. The EWMA skill layer adapts automatically —
-          no explicit regime detection needed. Data: Elia Belgian offshore wind, 17,544 hourly points,
-          5 forecasting models. All improvements significant (DM test, p &lt; 0.001).
+          Wind patterns change across seasons. The EWMA skill layer adapts automatically without
+          any explicit regime detection. Data: Elia Belgian offshore wind, 17,544 hourly points,
+          seven forecasting models (Naive, EWMA-5, ARIMA(2,1,1), XGBoost, MLP, Theta, Naive+EWMA
+          ensemble). The per-season percentages shown here come from an earlier run under the
+          pre-audit normalisation; with the current strictly-causal normalisation the full-series
+          regime-shift improvement is around +1.1%. Read the seasonal numbers as the <em>relative
+          pattern</em> (winter largest, summer smallest) rather than absolute magnitudes.
         </p>
         <div className="grid sm:grid-cols-4 gap-3">
           {SEASON_DATA.map(s => (
@@ -95,11 +102,12 @@ export default function SensitivityTab({ data }: { data: SweepPoint[] }) {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-        Error varies smoothly — no cliff edges. λ = 0 (pure skill, no floor) performs worst because
-        it gives zero influence to new agents. High σ_min reduces differentiation.
-        The production config (λ = 0.3, σ_min = 0.1) is near-optimal.
-        Winter gains are largest (+17.3%) because wind variability is highest and model quality
-        differences are most pronounced.
+        Mean CRPS varies smoothly across configurations &mdash; no cliff edges. λ = 0 (pure skill,
+        no floor) performs worst because it gives zero influence to any agent whose σ sits near
+        σ_min; a high σ_min reduces differentiation by compressing the skill range. The production
+        config (λ = 0.3, σ_min = 0.1) sits near the best observed point.
+        Winter shows the largest relative gain in the pattern above, consistent with winter being
+        the period of highest wind variability and the biggest quality gaps between models.
       </div>
     </div>
   );

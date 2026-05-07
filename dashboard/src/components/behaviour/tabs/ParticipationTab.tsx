@@ -147,9 +147,11 @@ export default function ParticipationTab({ bursty, baseline }: {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-        On real data (Notes page), the mechanism still improves by +4.4% at 60% missingness.
-        This aligns with Vitali &amp; Pinson's robust regression approach, which handles missing forecasts
-        via a linear correction matrix D that compensates for absent sellers.
+        On real data (see the Notes page), the mechanism still improves CRPS
+        by +4.4% when 60% of agents are missing each round. This is consistent
+        with the robust-regression approach of Vitali &amp; Pinson, which
+        compensates for absent forecasters through a linear correction matrix
+        rather than by simply dropping their columns.
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">

@@ -48,18 +48,21 @@ export default function ObjectivesTab({ riskAverse, baseline }: {
     <div className="space-y-6">
       <PlaceholderBanner family="Objectives" description={PLACEHOLDER_DESCRIPTIONS.Objectives} />
       <p className="text-sm text-slate-600">
-        Not all agents maximise expected value. Under CRRA (Constant Relative Risk Aversion)
-        utility, agents with higher &gamma; stake less and hedge reports toward the centre.
-        The mechanism should tolerate diverse objectives without breaking the aggregate.
+        Not all agents maximise expected value. Under CRRA (Constant Relative
+        Risk Aversion) utility, agents with higher risk-aversion coefficient
+        (written γ<sub>CRRA</sub> here to distinguish it from the mechanism&apos;s
+        skill-sharpness γ) stake less and hedge their reports toward the centre
+        of the distribution. The mechanism should tolerate this kind of
+        heterogeneity without breaking the aggregate.
       </p>
-      <MathBlock accent label="CRRA utility" latex="u(w) = \\begin{cases} \\frac{w^{1-\\gamma}}{1-\\gamma} & \\gamma \\neq 1 \\\\ \\ln(w) & \\gamma = 1 \\end{cases}" />
+      <MathBlock accent label="CRRA utility" latex="u(w) = \\begin{cases} \\frac{w^{1-\\gamma_{\\mathrm{CRRA}}}}{1-\\gamma_{\\mathrm{CRRA}}} & \\gamma_{\\mathrm{CRRA}} \\neq 1 \\\\ \\ln(w) & \\gamma_{\\mathrm{CRRA}} = 1 \\end{cases}" />
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 space-y-1">
-        <div className="font-semibold text-slate-700">&gamma; mapping</div>
-        <p>&gamma; = 0: risk-neutral (maximises expected value)</p>
-        <p>&gamma; &gt; 0: risk-averse (concave utility, prefers certainty)</p>
-        <p>&gamma; &lt; 0: risk-seeking (convex utility, prefers gambles)</p>
-        <p>The risk_averse preset uses &gamma; = 2, producing hedged reports and lower deposits.</p>
+        <div className="font-semibold text-slate-700">γ<sub>CRRA</sub> mapping</div>
+        <p>γ<sub>CRRA</sub> = 0: risk-neutral (maximises expected value)</p>
+        <p>γ<sub>CRRA</sub> &gt; 0: risk-averse (concave utility, prefers certainty)</p>
+        <p>γ<sub>CRRA</sub> &lt; 0: risk-seeking (convex utility, prefers gambles)</p>
+        <p>The <code>risk_averse</code> preset uses γ<sub>CRRA</sub> = 2, which produces hedged reports and smaller deposits.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -91,13 +94,15 @@ export default function ObjectivesTab({ riskAverse, baseline }: {
       </ChartCard>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note  - Loss aversion, signalling, leaderboard motives</div>
+        <div className="font-semibold text-amber-800">Taxonomy note &mdash; Loss aversion, signalling, leaderboard motives</div>
         <p>
-          The full taxonomy also includes <em>loss aversion</em> (asymmetric weighting of gains vs losses,
-          Kahneman &amp; Tversky 1979), <em>signalling</em> (agents who participate to demonstrate
-          competence rather than earn payoffs), and <em>leaderboard motives</em> (agents who optimise
-          rank rather than wealth). These are not simulated here but represent important real-world
-          objective functions that could interact with the mechanism&apos;s incentive structure.
+          The full taxonomy also covers <em>loss aversion</em> (asymmetric
+          weighting of gains versus losses; Kahneman &amp; Tversky 1979),
+          <em> signalling</em> (agents who participate to demonstrate competence
+          rather than to earn payoffs), and <em>leaderboard motives</em> (agents
+          who optimise their rank rather than their wealth). None of these is
+          simulated here, but they are real-world objective functions that
+          could interact with the mechanism&apos;s incentive structure.
         </p>
       </div>
     </div>

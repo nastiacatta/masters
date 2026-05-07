@@ -72,7 +72,7 @@ const ClipboardIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-/** Thesis argument flow — numbered steps + unnumbered reference pages */
+/** Main nav — numbered steps + unnumbered reference pages */
 const NAV_ITEMS: NavItem[] = [
   { to: '/',              label: 'Overview',       icon: HomeIcon,     step: 1, shortcut: '1' },
   { to: '/evidence',      label: 'Evidence',       icon: ChartBarIcon, step: 2, shortcut: '2' },
@@ -122,21 +122,42 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="bg-white border-r border-slate-200/70 flex flex-col h-full shrink-0 overflow-hidden"
-      style={{ width: effectiveWidth, transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1)' }}
+      className="flex flex-col h-full shrink-0 overflow-hidden"
+      style={{
+        width: effectiveWidth,
+        transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+        background: 'var(--cream)',
+        borderRight: '1px solid var(--border)',
+      }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {/* Header — brand mark + toggle */}
-      <div className="px-2 py-2.5 flex items-center gap-2 border-b border-slate-100">
+      <div
+        className="px-2 py-3 flex items-center gap-2"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         <button
           onClick={toggle}
           className={clsx(
-            'flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-50',
-            'transition-colors duration-150 shrink-0',
+            'flex items-center justify-center rounded-md transition-colors duration-150 shrink-0',
             showLabels ? '' : 'mx-auto',
           )}
-          style={{ minWidth: 32, minHeight: 32, width: 32, height: 32 }}
+          style={{
+            minWidth: 32,
+            minHeight: 32,
+            width: 32,
+            height: 32,
+            color: 'var(--ink-faint)',
+          }}
+          onMouseOver={(e) => {
+            (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
+            (e.currentTarget as HTMLElement).style.background = 'rgba(15, 23, 42, 0.04)';
+          }}
+          onMouseOut={(e) => {
+            (e.currentTarget as HTMLElement).style.color = 'var(--ink-faint)';
+            (e.currentTarget as HTMLElement).style.background = 'transparent';
+          }}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
         >
@@ -148,13 +169,30 @@ export default function Sidebar() {
           <div className="flex items-center gap-2 min-w-0 overflow-hidden">
             <span
               aria-hidden="true"
-              className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[11px] font-bold text-white bg-gradient-to-br from-teal-500 to-indigo-500 shrink-0"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-[13px] font-semibold shrink-0"
+              style={{
+                fontFamily: 'var(--font-serif)',
+                background: 'var(--navy)',
+                color: '#fbf9f4',
+                fontFeatureSettings: "'kern', 'liga'",
+              }}
             >
               σ
             </span>
-            <span className="text-[13px] font-semibold tracking-tight text-slate-800 truncate">
-              Skill × Stake
-            </span>
+            <div className="min-w-0 overflow-hidden">
+              <div
+                className="text-[13px] font-semibold tracking-tight truncate"
+                style={{ color: 'var(--ink)', fontFamily: 'var(--font-serif)' }}
+              >
+                Skill &times; Stake
+              </div>
+              <div
+                className="text-[10px] truncate uppercase tracking-[0.14em]"
+                style={{ color: 'var(--ink-faint)', letterSpacing: '0.1em' }}
+              >
+                MSc thesis
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -162,7 +200,10 @@ export default function Sidebar() {
       {/* Navigation — grouped with subtle eyebrow labels */}
       <nav className="flex-1 px-1.5 pt-3 pb-3 overflow-y-auto">
         {showLabels && (
-          <p className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <p
+            className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase"
+            style={{ letterSpacing: '0.14em', color: 'var(--ink-faint)' }}
+          >
             Thesis
           </p>
         )}
@@ -175,10 +216,16 @@ export default function Sidebar() {
         </ul>
 
         {/* Subtle separator */}
-        <div className="border-t border-slate-100 my-3 mx-2" />
+        <div
+          className="my-3 mx-2"
+          style={{ borderTop: '1px solid var(--border)' }}
+        />
 
         {showLabels && (
-          <p className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <p
+            className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase"
+            style={{ letterSpacing: '0.14em', color: 'var(--ink-faint)' }}
+          >
             Reference
           </p>
         )}
@@ -193,8 +240,36 @@ export default function Sidebar() {
 
       {/* Footer — shortcut hint when expanded */}
       {showLabels && (
-        <div className="px-3 py-2 border-t border-slate-100 text-[10px] text-slate-400">
-          Press <kbd className="font-mono bg-slate-50 border border-slate-200 rounded px-1 py-px">g</kbd> for glossary
+        <div
+          className="px-3 py-2 text-[10px] flex items-center justify-between"
+          style={{ borderTop: '1px solid var(--border)', color: 'var(--ink-faint)' }}
+        >
+          <span className="flex items-center gap-1">
+            <kbd
+              className="font-mono rounded px-1 py-px"
+              style={{
+                background: 'var(--paper)',
+                border: '1px solid var(--border)',
+                color: 'var(--ink-soft)',
+              }}
+            >
+              g
+            </kbd>{' '}
+            glossary
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd
+              className="font-mono rounded px-1 py-px"
+              style={{
+                background: 'var(--paper)',
+                border: '1px solid var(--border)',
+                color: 'var(--ink-soft)',
+              }}
+            >
+              ?
+            </kbd>{' '}
+            keys
+          </span>
         </div>
       )}
     </aside>
@@ -215,51 +290,56 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
       title={showLabel ? undefined : `${item.label}${item.shortcut ? ` (${item.shortcut})` : ''}`}
       className={({ isActive }) =>
         clsx(
-          'group relative flex items-center rounded-lg text-[13px] font-medium',
-          'transition-all duration-150',
+          'group relative flex items-center rounded-md text-[13px] font-medium transition-colors duration-150',
           showLabel ? 'gap-2 px-2.5 py-1.5' : 'justify-center px-1 py-1.5',
-          isActive
-            ? 'bg-slate-900 text-white shadow-sm'
-            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+          isActive && 'shadow-sm',
         )
       }
+      style={({ isActive }: { isActive: boolean }) => ({
+        background: isActive ? 'var(--navy)' : 'transparent',
+        color: isActive ? '#fbf9f4' : 'var(--ink-soft)',
+      })}
+      onMouseOver={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        if (el.getAttribute('aria-current') !== 'page') {
+          el.style.background = 'rgba(15, 23, 42, 0.04)';
+          el.style.color = 'var(--ink)';
+        }
+      }}
+      onMouseOut={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        if (el.getAttribute('aria-current') !== 'page') {
+          el.style.background = 'transparent';
+          el.style.color = 'var(--ink-soft)';
+        }
+      }}
     >
       {({ isActive }) => (
         <>
-          {/* Step number (thesis pages) or icon (reference pages) */}
+          {/* Step number (numbered pages) or icon (reference pages) */}
           {item.step != null ? (
             <span
-              className={clsx(
-                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors',
-                isActive
-                  ? 'bg-white text-slate-900'
-                  : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700',
-              )}
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors"
+              style={{
+                background: isActive ? 'rgba(251, 249, 244, 0.18)' : 'rgba(15, 23, 42, 0.06)',
+                color: isActive ? '#fbf9f4' : 'var(--ink-soft)',
+                fontFamily: 'var(--font-serif)',
+              }}
             >
               {item.step}
             </span>
           ) : (
-            <Icon
-              className={clsx(
-                'shrink-0 transition-colors',
-                isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700',
-              )}
-            />
+            <span
+              className="inline-flex shrink-0 transition-colors"
+              style={{
+                color: isActive ? '#fbf9f4' : 'var(--ink-faint)',
+              }}
+            >
+              <Icon className="shrink-0" />
+            </span>
           )}
           {showLabel && (
             <span className="whitespace-nowrap overflow-hidden flex-1">{item.label}</span>
-          )}
-          {showLabel && item.shortcut && (
-            <kbd
-              className={clsx(
-                'hidden sm:inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-mono font-semibold shrink-0',
-                isActive
-                  ? 'bg-white/15 text-white/70'
-                  : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200',
-              )}
-            >
-              {item.shortcut}
-            </kbd>
           )}
         </>
       )}

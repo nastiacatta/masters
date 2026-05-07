@@ -166,16 +166,16 @@ export default function DeltaBarChart({
   return (
     <ChartCard
       title={title ?? "Accuracy Ranking"}
-      subtitle="Bars show Δ vs baseline — left of zero is better."
+      subtitle="Horizontal bars show the change in mean CRPS versus equal weighting. Bars to the left of zero are better than the baseline."
       provenance={provenance}
       help={{
         term: 'Delta Bar Chart',
         definition:
-          'Horizontal bars showing the difference in accuracy (ΔCRPS) relative to the equal-weight baseline for each method.',
+          'Horizontal bars showing the difference in accuracy (ΔCRPS) relative to the equal-weighting baseline for each method.',
         interpretation:
-          'Negative values (bars extending left) indicate better accuracy than the baseline. Methods are ranked from best (top) to worst (bottom).' +
+          'Negative values (bars extending left) indicate better accuracy than equal weighting. Methods are ranked from best (top) to worst (bottom).' +
           (showErrorBars
-            ? ' Error bars show 95% confidence intervals (±1.96 × SE). An asterisk (*) marks methods whose CI does not cross zero (statistically significant).'
+            ? ' Error bars show the 95% confidence interval (±1.96 × SE). An asterisk (*) marks methods whose CI does not cross zero, i.e. the improvement is statistically significant.'
             : ''),
         axes: { x: metricLabel, y: 'Method (ranked)' },
       }}

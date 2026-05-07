@@ -40,47 +40,135 @@ export default function ExperimentsPage() {
   );
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-semibold text-slate-900">Experiments</h1>
-        <p className="text-sm text-slate-600 mt-0.5">
+    <div className="flex flex-col h-full" style={{ background: 'var(--paper)' }}>
+      <div
+        className="px-8 py-6"
+        style={{
+          background: 'var(--card)',
+          borderBottom: '1px solid var(--border)',
+        }}
+      >
+        <p className="eyebrow mb-2" style={{ color: 'var(--navy)' }}>
+          Appendix
+        </p>
+        <h1
+          className="font-serif tracking-tight"
+          style={{ fontSize: 28, lineHeight: 1.2, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          Experiments
+        </h1>
+        <p style={{ fontSize: 14.5, color: 'var(--ink-soft)', marginTop: 6 }}>
           Browse all experiments. Filter by block or search by name.
         </p>
       </div>
 
       {/* Filter controls */}
-      <div className="px-4 pt-3 pb-2 space-y-2">
-        <div className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+      <div
+        className="px-8 pt-4 pb-3 flex flex-wrap items-center gap-3"
+        style={{ background: 'var(--paper)' }}
+      >
+        <div
+          className="inline-flex flex-wrap gap-1 p-1"
+          role="group"
+          aria-label="Filter by block"
+          style={{
+            background: 'var(--cream)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+          }}
+        >
           {BLOCK_FILTERS.map((b) => (
             <button
               key={b}
               type="button"
               onClick={() => setBlockFilter(b)}
+              aria-pressed={blockFilter === b}
               className={clsx(
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize',
-                blockFilter === b
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-800',
+                'px-3 py-1.5 transition-colors capitalize',
               )}
+              style={{
+                fontSize: 13.5,
+                fontWeight: blockFilter === b ? 600 : 500,
+                borderRadius: 4,
+                background: blockFilter === b ? 'var(--card)' : 'transparent',
+                color: blockFilter === b ? 'var(--ink)' : 'var(--ink-soft)',
+                boxShadow: blockFilter === b ? 'var(--shadow-sm)' : 'none',
+              }}
             >
               {b === 'all' ? 'All' : b}
             </button>
           ))}
         </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search experiments…"
-          className="w-full max-w-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
-        />
+        <div className="relative flex-1 max-w-sm">
+          <svg
+            width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--ink-faint)' }}
+          >
+            <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search experiments…"
+            aria-label="Search experiments"
+            className="w-full pl-9 pr-8 py-2 focus:outline-none transition-colors"
+            style={{
+              fontSize: 14,
+              border: '1px solid var(--border)',
+              background: 'var(--card)',
+              color: 'var(--ink)',
+              borderRadius: 4,
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full transition-colors"
+              style={{ color: 'var(--ink-faint)' }}
+            >
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <span
+          className="ml-auto font-medium tabular-nums"
+          style={{ fontSize: 12, color: 'var(--ink-faint)' }}
+        >
+          {filtered.length} of {experiments.length}
+        </span>
       </div>
 
       {/* Card grid */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6 pt-2">
+      <div className="flex-1 overflow-y-auto px-8 pb-8 pt-2">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-sm text-slate-500">
-            No experiments match your filters.
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ color: 'var(--ink-faint)' }}>
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <p style={{ fontSize: 14, color: 'var(--ink-soft)' }}>
+              No experiments match your filters.
+            </p>
+            {(searchQuery || blockFilter !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setBlockFilter('all');
+                }}
+                className="transition-colors mt-1"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         ) : (
           <AnimatePresence mode="popLayout">

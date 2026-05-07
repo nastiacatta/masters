@@ -197,14 +197,19 @@ export default function AdversarialTab({ manipulator, arbitrageur, sybil, collus
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 space-y-2">
         <p>
-          The skill gate is the primary defence. Misreporting increases CRPS loss &rarr; raises L &rarr; lowers &sigma; &rarr; reduces m_i.
-          The reputation reset attack (honest then exploit) shows the mechanism recovers: once F1 starts manipulating,
-          &sigma; drops within ~20 rounds (EWMA half-life &asymp; 7 rounds with &rho; = 0.1).
+          The skill gate is the primary defence. Misreporting raises the CRPS
+          loss, which raises L, which lowers σ, which shrinks the effective
+          wager mᵢ. The reputation-reset attack (honest for a while, then
+          exploit) shows the mechanism recovers: once F1 starts manipulating,
+          σ drops within roughly 20 rounds (EWMA half-life &asymp; 7 rounds with
+          ρ = 0.1).
         </p>
         <p>
-          The Chen arbitrageur reports the mean of others&apos; predictions  - guaranteed nonneg payoff per round.
-          But in the repeated setting, this strategy earns mediocre scores (it can&apos;t beat the best forecaster),
-          so &sigma; stays moderate and the arbitrageur doesn&apos;t dominate.
+          The Chen arbitrageur reports the mean of other agents&apos;
+          predictions, which guarantees a non-negative per-round payoff under
+          the Lambert mechanism. In the repeated setting, this strategy still
+          earns only mediocre scores (it cannot beat the best forecaster), so
+          its σ stays moderate and it does not dominate.
         </p>
       </div>
     </div>

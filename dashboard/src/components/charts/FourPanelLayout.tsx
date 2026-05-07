@@ -18,7 +18,7 @@ interface FourPanelLayoutProps {
 const PANEL_LABELS = [
   'Primary outcome',
   'Calibration',
-  'Market structure',
+  'Weight concentration',
   'Failure mode',
 ] as const;
 

@@ -4,6 +4,7 @@ import { TAXONOMY_ITEMS } from '@/lib/behaviour/taxonomyData';
 import { useBehaviourSimulations } from '@/hooks/useBehaviourSimulations';
 import { FigureProvider } from '@/contexts/FigureContext';
 import { EquationProvider } from '@/contexts/EquationContext';
+import TabBar from '@/components/dashboard/TabBar';
 
 // ── Tab components ─────────────────────────────────────────────────────────
 import OverviewTab from '@/components/behaviour/tabs/OverviewTab';
@@ -31,6 +32,9 @@ const CORE_TABS: Tab[] = ['Overview', 'Participation', 'Information', 'Reporting
 /** Extended tabs — in-browser simulations. */
 const EXTENDED_TABS: Tab[] = ['Staking', 'Objectives', 'Identity', 'Learning', 'Operational'];
 
+/** Display order: core tabs first, then extended. */
+const DISPLAY_TABS: Tab[] = [...CORE_TABS, ...EXTENDED_TABS];
+
 /** Tabs that have experiment-backed content (not just taxonomy placeholders). */
 const EXPERIMENT_TABS = new Set<string>(
   TAXONOMY_ITEMS
@@ -56,48 +60,49 @@ export default function BehaviourPage() {
     <FigureProvider>
     <EquationProvider>
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      <div className="max-w-[900px] mx-auto px-8 pt-14 pb-20 space-y-12">
         <header>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Robustness</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Testing mechanism resilience under diverse agent behaviours, strategic attacks, and parameter sensitivity.
-            18 behaviour presets tested against the truthful baseline using paired comparison.
+          <p
+            className="eyebrow mb-3"
+            style={{ color: 'var(--navy)' }}
+          >
+            Step 3 &middot; Stress tests
+          </p>
+          <h1
+            className="font-serif tracking-tight"
+            style={{
+              fontSize: 'clamp(32px, 4vw, 42px)',
+              lineHeight: 1.15,
+              fontWeight: 600,
+              color: 'var(--ink)',
+            }}
+          >
+            Robustness
+          </h1>
+          <p
+            className="font-serif mt-4"
+            style={{
+              fontSize: 18,
+              lineHeight: 1.55,
+              color: 'var(--ink-muted)',
+              maxWidth: 680,
+            }}
+          >
+            Stress-tests of the mechanism under diverse agent behaviours, strategic attacks, and parameter
+            shifts. Eighteen behaviour presets are compared against a truthful baseline using paired runs,
+            same underlying outcomes and seeds, so every reported difference comes from the behaviour alone.
           </p>
         </header>
 
         {/* ── Tab bar with experiment/taxonomy indicators ─────────────── */}
-        <div className="flex items-center gap-0">
-          <div className="flex gap-0 border-b border-slate-200 overflow-x-auto flex-1">
-            {CORE_TABS.map(t => {
-              const hasExperiment = EXPERIMENT_TABS.has(t);
-              return (
-                <button key={t} onClick={() => setTab(t)}
-                  className={`relative px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === t ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                  <span className="flex items-center gap-1.5">
-                    {t}
-                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${hasExperiment ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                  </span>
-                </button>
-              );
-            })}
-            <span className="inline-block w-px bg-slate-300 mx-1 self-stretch" />
-            {EXTENDED_TABS.map(t => {
-              const hasExperiment = EXPERIMENT_TABS.has(t);
-              return (
-                <button key={t} onClick={() => setTab(t)}
-                  className={`relative px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === t ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                  <span className="flex items-center gap-1.5">
-                    {t}
-                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${hasExperiment ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <span className="ml-auto flex-shrink-0 whitespace-nowrap pl-4 pr-1 text-slate-400" style={{ fontSize: '11px' }}>
-            Tab {TABS.indexOf(tab) + 1} of {TABS.length}: {tab}
-          </span>
-        </div>
+        <TabBar
+          tabs={DISPLAY_TABS}
+          activeTab={tab}
+          onTabChange={(t) => setTab(t as Tab)}
+          experimentTabs={EXPERIMENT_TABS}
+          groupBreaks={[CORE_TABS.length]}
+          progressLabel={`Tab ${DISPLAY_TABS.indexOf(tab) + 1} of ${DISPLAY_TABS.length}: ${tab}`}
+        />
 
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.15 }}>

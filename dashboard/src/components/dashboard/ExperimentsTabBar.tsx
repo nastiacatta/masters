@@ -15,29 +15,37 @@ interface ExperimentsTabBarProps {
 export default function ExperimentsTabBar({ activeTab, className }: ExperimentsTabBarProps) {
   return (
     <div
-      className={clsx(
-        'inline-flex rounded-xl bg-slate-100 p-1',
-        className
-      )}
+      className={clsx('inline-flex p-1', className)}
       role="tablist"
       aria-label="Main sections"
+      style={{
+        background: 'var(--cream)',
+        border: '1px solid var(--border)',
+        borderRadius: 6,
+      }}
     >
-      {TABS.map((t) => (
-        <Link
-          key={t.id}
-          to={t.to}
-          role="tab"
-          aria-selected={activeTab === t.id}
-          className={clsx(
-            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-            activeTab === t.id
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700'
-          )}
-        >
-          {t.label}
-        </Link>
-      ))}
+      {TABS.map((t) => {
+        const active = activeTab === t.id;
+        return (
+          <Link
+            key={t.id}
+            to={t.to}
+            role="tab"
+            aria-selected={active}
+            className="px-4 py-1.5 transition-colors"
+            style={{
+              fontSize: 13.5,
+              fontWeight: active ? 600 : 500,
+              borderRadius: 4,
+              background: active ? 'var(--card)' : 'transparent',
+              color:      active ? 'var(--ink)' : 'var(--ink-soft)',
+              boxShadow:  active ? 'var(--shadow-sm)' : 'none',
+            }}
+          >
+            {t.label}
+          </Link>
+        );
+      })}
     </div>
   );
 }

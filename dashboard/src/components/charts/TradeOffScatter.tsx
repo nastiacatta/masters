@@ -134,17 +134,17 @@ export default function TradeOffScatter({
   return (
     <ChartCard
       title={title}
-      subtitle="Each point is one aggregation method. Right = more accurate, down = less concentrated. Bottom-right is ideal."
+      subtitle="Each point is one aggregation method. Further right means more accurate; further down means more evenly distributed weight. The bottom-right quadrant is ideal."
       provenance={provenance}
       help={{
-        term: 'Trade-off Scatter',
+        term: 'Accuracy vs concentration trade-off',
         definition:
-          'A scatter plot showing the trade-off between forecast accuracy (CRPS improvement) and weight concentration (Gini coefficient) for each aggregation method.',
+          'A scatter plot pairing each method\u2019s accuracy gain (CRPS improvement over equal weighting) with its weight concentration (Gini coefficient on the final weight vector).',
         interpretation:
-          'Points in the bottom-right quadrant achieve high accuracy with low concentration — the ideal outcome. Points in the top-left are both less accurate and more concentrated.',
+          'Points in the bottom-right combine high accuracy with low concentration \u2014 the ideal outcome. Points in the top-left are both less accurate and more concentrated.',
         axes: {
-          x: 'CRPS improvement (positive = better)',
-          y: 'Gini coefficient (lower = better)',
+          x: 'CRPS improvement (positive = better than equal weighting)',
+          y: 'Gini coefficient (lower = less concentrated)',
         },
       }}
       chartType="Scatter chart"

@@ -126,11 +126,12 @@ export default function IdentityTab({ sybil, collusion, repReset, baseline }: {
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note  - Dormancy/reactivation</div>
+        <div className="font-semibold text-amber-800">Taxonomy note &mdash; Dormancy / reactivation</div>
         <p>
-          The taxonomy also includes <em>dormancy/reactivation</em>: agents who go silent for many
-          rounds then return. The EWMA freeze handles this identically to bursty participation  -
-          σ is preserved during absence and resumes updating on return.
+          The taxonomy also includes <em>dormancy / reactivation</em>: agents who
+          go silent for many rounds and then return. The EWMA freeze handles
+          this case identically to bursty participation: σ is preserved during
+          absence and resumes updating on return.
         </p>
       </div>
     </div>

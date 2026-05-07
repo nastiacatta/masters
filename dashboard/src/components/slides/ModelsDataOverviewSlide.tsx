@@ -111,7 +111,7 @@ const ELIA_DATASETS = [
  */
 export default function ModelsDataOverviewSlide() {
   return (
-    <SlideShell title="Models, Data, and Synthetic Setup" slideNumber={9}>
+    <SlideShell title="Models, Data, and Synthetic Setup" slideNumber={8}>
       <div
         style={{
           flex: 1,

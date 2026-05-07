@@ -11,7 +11,7 @@ const BASE = import.meta.env.BASE_URL;
  */
 export default function SyntheticResultsSlide() {
   return (
-    <SlideShell title="Synthetic Validation: Convergence" slideNumber={10}>
+    <SlideShell title="Synthetic Validation: Convergence" slideNumber={9}>
       <div
         style={{
           flex: 1,

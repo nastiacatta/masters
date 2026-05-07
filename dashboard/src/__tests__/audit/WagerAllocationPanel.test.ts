@@ -80,7 +80,7 @@ describe('WagerAllocationPanel', () => {
     expect(screen.getByText('Normalised Weights')).toBeTruthy();
     expect(screen.getByText('Concentration Metrics')).toBeTruthy();
     expect(screen.getByText('Deposit Policy Comparison')).toBeTruthy();
-    expect(screen.getByText('Why Fixed Deposits Outperform')).toBeTruthy();
+    expect(screen.getByText('Why fixed deposits give the mechanism the most headroom')).toBeTruthy();
   });
 
   it('shows high-concentration warning when Gini > 0.5', () => {

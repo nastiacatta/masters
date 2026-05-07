@@ -80,7 +80,7 @@ export default function BaselineComparisonSlide() {
               Raja et&nbsp;al. (history-free)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              −2.5% wind, −2.3% electricity. Self-financed but history-free.
+              −1.5% wind, +0.0% electricity. Self-financed but history-free.
             </div>
           </div>
 
@@ -101,7 +101,7 @@ export default function BaselineComparisonSlide() {
               Vitali &amp; Pinson (OGD)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              −65% wind, −20% electricity. Lowest CRPS — not self-financed; Shapley-based.
+              −18.3% wind, −2.3% electricity. Lowest CRPS — not self-financed; Shapley-based.
             </div>
           </div>
 
@@ -122,7 +122,7 @@ export default function BaselineComparisonSlide() {
               This project (skill + self-financed)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              −44% wind, −8% electricity. Retains Lambert&apos;s properties; absolute skill.
+              −7.6% wind, −0.2% electricity. Retains Lambert&apos;s properties; absolute skill.
             </div>
           </div>
         </div>

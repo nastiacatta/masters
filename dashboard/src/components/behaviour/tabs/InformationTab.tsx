@@ -57,7 +57,11 @@ export default function InformationTab({ biased, miscalibrated, baseline }: {
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600">
-        Biased and miscalibrated agents degrade signal quality. The skill layer should detect and downweight them.
+        Biased and miscalibrated agents both degrade signal quality. Biased
+        agents systematically over- or under-report the truth; miscalibrated
+        agents get the centre right but over- or under-state their own
+        uncertainty. The skill layer should detect both kinds of error and
+        downweight those agents.
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -74,7 +78,7 @@ export default function InformationTab({ biased, miscalibrated, baseline }: {
       {!biasedSigmaDropped && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
           <span className="text-red-500 text-base">⚠</span>
-          Biased agent's σ did not drop below 0.5 within 50 rounds. Skill layer may be slow to downweight.
+          The biased agent&apos;s skill estimate σ did not drop below 0.5 within the first 50 rounds — the skill layer is responding slowly to the bias.
         </div>
       )}
 

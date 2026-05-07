@@ -5,12 +5,12 @@ const EXPERIMENTS = [
     id: 'deposit-sensitivity',
     title: 'Deposit policy determines whether skill helps',
     status: 'confirmed' as const,
-    finding: 'On synthetic data: exponential deposits drown out the skill signal (mechanism +0.0%). On real wind data: the mechanism improves under ALL deposit regimes, including fixed (+21.0%), exponential (+15.5%), and bankroll (+5.3%). Real forecasters have genuinely different quality that the skill layer exploits regardless of deposit noise.',
-    implication: 'The deposit sensitivity is real but less severe on real data than synthetic. The skill signal is stronger when forecasters have heterogeneous, time-varying quality.',
+    finding: 'On synthetic data, exponential deposits drown out the skill signal (mechanism +0.0%). On real wind data the mechanism improves under every deposit regime tested \u2014 fixed (+21.0%), exponential (+15.5%), and bankroll (+5.3%) \u2014 showing that the ranking between rules is robust even when the absolute gain shrinks. These percentages come from an earlier deposit-sensitivity pipeline that used the pre-audit normalisation, so they are larger than the current post-audit headline (\u22487.9% on the 1h-ahead comparison run). The <em>ordering</em> of the three rules, not the raw percentages, is the persistent finding.',
+    implication: 'Deposit sensitivity is real but less severe on real data than on synthetic data. The skill signal is stronger when forecasters have genuinely heterogeneous, time-varying quality.',
     data: [
-      { label: 'Real: Fixed deposits', delta: '-0.019562', pct: '+21.0%', sig: true },
-      { label: 'Real: Exponential deposits', delta: '-0.014383', pct: '+15.5%', sig: true },
-      { label: 'Real: Bankroll deposits', delta: '-0.004968', pct: '+5.3%', sig: true },
+      { label: 'Real: Fixed deposits (pre-audit scale)', delta: '-0.019562', pct: '+21.0%', sig: true },
+      { label: 'Real: Exponential deposits (pre-audit scale)', delta: '-0.014383', pct: '+15.5%', sig: true },
+      { label: 'Real: Bankroll deposits (pre-audit scale)', delta: '-0.004968', pct: '+5.3%', sig: true },
       { label: 'Synthetic: Fixed deposits', delta: '-0.002862', pct: '+5.2%', sig: true },
       { label: 'Synthetic: Exponential deposits', delta: '-0.000006', pct: '+0.0%', sig: false },
     ],
@@ -78,114 +78,221 @@ const EXPERIMENTS = [
   },
   {
     id: 'real-data-wind',
-    title: 'Real data: Elia offshore wind, mechanism +21.1% (1h-ahead)',
+    title: 'Real data: Elia offshore wind, mechanism \u22127.9% CRPS (1h-ahead, post-audit)',
     status: 'confirmed' as const,
-    finding: '5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on Elia Belgian offshore wind power (17,544 hourly points, 2024–2025). The mechanism beats equal weighting by 21.1% and skill-only by 8.5%. This is the strongest result: the skill × stake combination adds genuine value when forecasters have heterogeneous, time-varying quality.',
-    implication: 'On real data with real models, the project claim holds strongly. The mechanism correctly identifies and upweights better forecasters as their relative quality shifts over time.',
+    finding: 'Seven forecasting models (Naive, EWMA-5, ARIMA(2,1,1), XGBoost, MLP, Theta, and a Naive+EWMA ensemble) run on Elia Belgian offshore wind power (17,544 hourly points, 2024\u20132025). After the strictly-causal normalisation audit, the mechanism reduces mean CRPS by 7.9% versus equal weighting; skill-only reduces it by 5.9%. The improvement is genuine and significant, but materially smaller than the pre-audit figure (\u224821%) that assumed an incorrect normalisation.',
+    implication: 'The mechanism still adds value on real data, but its headline advantage is in the single-digit-percent range on this series, not the tens of percent. Best-single remains a strong individual benchmark.',
     data: [
-      { label: 'Mechanism (skill × stake)', delta: '-0.019612', pct: '+21.1%', sig: true },
-      { label: 'Skill-only', delta: '-0.011749', pct: '+12.6%', sig: true },
+      { label: 'Mechanism (skill \u00d7 stake)', delta: '-0.003351', pct: '+7.9%', sig: true },
+      { label: 'Skill-only', delta: '-0.002494', pct: '+5.9%', sig: true },
       { label: 'Equal (uniform)', delta: '0.000000', pct: '0.0%', sig: false },
-      { label: 'Best single model', delta: '-0.060261', pct: '+64.9%', sig: true },
+      { label: 'Best single model', delta: '-0.010387', pct: '+24.4%', sig: true },
     ],
   },
   {
     id: 'day-ahead',
-    title: 'Day-ahead forecasting: mechanism +1.1%',
-    status: 'confirmed' as const,
-    finding: 'At day-ahead horizon (daily resolution, 730 points), the mechanism improves by 1.1%. Smaller than hourly because all models struggle equally at longer horizons and the skill differences are smaller.',
-    implication: 'The mechanism helps at all horizons, but the gain scales with how different the models are. Day-ahead is the standard benchmark in energy forecasting.',
+    title: 'Day-ahead forecasting: mechanism essentially flat',
+    status: 'partial' as const,
+    finding: 'At the day-ahead horizon (daily resolution, 732 points) the mechanism moves mean CRPS by only \u22120.08% versus equal weighting. The pre-audit figure of +1.1% was an artefact of the old normalisation; with strictly-causal normalisation the day-ahead gain is indistinguishable from noise.',
+    implication: 'When all forecasters are roughly equally bad at a horizon, there is very little skill signal for the mechanism to exploit. Day-ahead wind is such a case on this dataset.',
     data: [
-      { label: 'Mechanism', delta: '-0.001764', pct: '+1.1%', sig: true },
-      { label: 'Skill-only', delta: '-0.001062', pct: '+0.7%', sig: true },
+      { label: 'Mechanism', delta: '-0.000159', pct: '+0.08%', sig: false },
+      { label: 'Skill-only', delta: '-0.000089', pct: '+0.05%', sig: false },
+      { label: 'Best single', delta: '-0.003696', pct: '+1.9%', sig: true },
     ],
   },
   {
     id: '4h-ahead',
-    title: '4-hour-ahead (15-min resolution): mechanism +6.7%',
-    status: 'confirmed' as const,
-    finding: 'At 4-hour horizon on 15-minute data (20k points), the mechanism improves by 6.7%. This is the sweet spot: enough horizon for models to differentiate, enough data for skill to converge.',
-    implication: 'The 4-hour horizon is practical for energy trading and shows a meaningful improvement.',
+    title: '4-hour-ahead (15-min resolution): mechanism \u22120.6%',
+    status: 'partial' as const,
+    finding: 'At a 4-hour horizon on 15-minute data (20,000 points, 16-step ahead) the mechanism reduces mean CRPS by 0.6% versus equal weighting. The pre-audit figure of +6.7% was based on the old normalisation; with strictly-causal normalisation the gain shrinks to under 1%.',
+    implication: 'A longer horizon at finer granularity exposes less skill signal than the hourly case. The best-single benchmark is still the strongest individual option at this horizon.',
     data: [
-      { label: 'Mechanism', delta: '-0.008632', pct: '+6.7%', sig: true },
-      { label: 'Skill-only', delta: '-0.005420', pct: '+4.2%', sig: true },
-      { label: 'Best single', delta: '-0.009151', pct: '+7.1%', sig: true },
+      { label: 'Mechanism', delta: '-0.000663', pct: '+0.6%', sig: true },
+      { label: 'Skill-only', delta: '-0.000396', pct: '+0.4%', sig: true },
+      { label: 'Best single', delta: '-0.004869', pct: '+4.5%', sig: true },
     ],
   },
   {
     id: 'regime-shift',
-    title: 'Regime shift: mechanism adapts across seasons',
-    status: 'confirmed' as const,
-    finding: 'The mechanism improves in every season: winter +17.3%, spring +14.3%, summer +11.8%, autumn +14.6%. The biggest gains are in winter when wind is most variable and model quality differences are largest.',
-    implication: 'The online skill layer adapts to seasonal regime shifts without any explicit season detection. This directly answers the non-stationarity part of the project question.',
+    title: 'Regime shift: mechanism adapts but gain is small',
+    status: 'partial' as const,
+    finding: 'On the full wind series under a regime-shift protocol (17,544 points; model quality changes across seasons), the mechanism reduces mean CRPS by 1.1% versus equal weighting. The EWMA skill layer does adapt to the changing ranking, but the magnitude of the gain is small once the strictly-causal normalisation is applied; earlier season-by-season numbers (+11\u2013+17%) relied on the pre-audit normalisation and are no longer supported by the data.',
+    implication: 'The mechanism does track non-stationarity \u2014 the skill estimates shift with the regime \u2014 but on this series the aggregate improvement from that tracking is modest.',
     data: [
-      { label: 'Winter (Dec–Feb)', delta: '-0.018', pct: '+17.3%', sig: true },
-      { label: 'Spring (Mar–May)', delta: '-0.015', pct: '+14.3%', sig: true },
-      { label: 'Autumn (Sep–Nov)', delta: '-0.015', pct: '+14.6%', sig: true },
-      { label: 'Summer (Jun–Aug)', delta: '-0.012', pct: '+11.8%', sig: true },
+      { label: 'Mechanism', delta: '-0.000705', pct: '+1.1%', sig: true },
+      { label: 'Skill-only', delta: '-0.000393', pct: '+0.6%', sig: true },
+      { label: 'Best single', delta: '-0.007365', pct: '+11.0%', sig: true },
     ],
   },
 ] as const;
 
-const STATUS_STYLE = {
-  confirmed: 'bg-emerald-100 text-emerald-700',
-  partial: 'bg-amber-100 text-amber-700',
-  rejected: 'bg-red-100 text-red-700',
+const STATUS_META = {
+  confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500', label: 'Confirmed' },
+  partial:   { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-500',   label: 'Partial' },
+  rejected:  { bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',     dot: 'bg-red-500',     label: 'Rejected' },
 } as const;
 
+function StatusPill({ status }: { status: keyof typeof STATUS_META }) {
+  const m = STATUS_META[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${m.bg} ${m.text} ${m.border}`}
+    >
+      <span className={`inline-block w-1.5 h-1.5 rounded-full ${m.dot}`} />
+      {m.label}
+    </span>
+  );
+}
+
 export default function NotesPage() {
+  const confirmedCount = EXPERIMENTS.filter((e) => e.status === 'confirmed').length;
+  const partialCount = EXPERIMENTS.filter((e) => e.status === 'partial').length;
+
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      <div className="max-w-[900px] mx-auto px-8 pt-14 pb-20 space-y-12">
 
         <header>
-          <div className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold tracking-wide mb-4">
+          <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
             Research Notes
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Mechanism Design Experiments
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-            Tested improvements to the skill × stake mechanism. Each experiment uses 100+ paired seeds
-            on the same DGP realization. All deltas are vs equal weighting.
           </p>
+          <h1
+            className="font-serif tracking-tight"
+            style={{
+              fontSize: 'clamp(32px, 4vw, 42px)',
+              lineHeight: 1.15,
+              fontWeight: 600,
+              color: 'var(--ink)',
+            }}
+          >
+            Mechanism design experiments
+          </h1>
+          <p
+            className="font-serif mt-4"
+            style={{
+              fontSize: 18,
+              lineHeight: 1.55,
+              color: 'var(--ink-muted)',
+              maxWidth: 680,
+            }}
+          >
+            Experiments probing extensions and variants of the skill &times; stake mechanism. Each synthetic
+            experiment uses 100 or more paired seeds drawn from the same data-generating process, so every
+            weighting rule sees the same outcomes; only the rule changes. All deltas are reported versus
+            equal weighting.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-2" style={{ fontSize: 12 }}>
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium"
+              style={{
+                background: 'var(--teal-tint)',
+                color: 'var(--teal-deep)',
+                border: '1px solid rgba(15, 118, 110, 0.2)',
+              }}
+            >
+              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--teal)' }} />
+              {confirmedCount} confirmed
+            </span>
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium"
+              style={{
+                background: 'var(--amber-tint)',
+                color: 'var(--amber)',
+                border: '1px solid rgba(180, 83, 9, 0.2)',
+              }}
+            >
+              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: 'var(--amber)' }} />
+              {partialCount} partial
+            </span>
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium"
+              style={{
+                background: 'var(--card)',
+                color: 'var(--ink-soft)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {EXPERIMENTS.length} total experiments
+            </span>
+          </div>
         </header>
 
-        <div className="space-y-8">
-          {EXPERIMENTS.map((exp) => (
-            <section key={exp.id} className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_STYLE[exp.status]}`}>
-                  {exp.status}
+        {/* ── Sticky mini ToC ── */}
+        <nav
+          className="sticky top-0 z-10 -mx-6 px-6 py-3 bg-slate-50/85 backdrop-blur-md border-b border-slate-200"
+          aria-label="Experiments"
+        >
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
+              Jump to
+            </span>
+            {EXPERIMENTS.map((exp, i) => (
+              <a
+                key={exp.id}
+                href={`#${exp.id}`}
+                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 text-[11px] text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+              >
+                <span className="font-mono text-[10px] text-slate-400">{String(i + 1).padStart(2, '0')}</span>
+                <span className={`inline-block w-1 h-1 rounded-full ${STATUS_META[exp.status].dot}`} />
+              </a>
+            ))}
+          </div>
+        </nav>
+
+        <div className="space-y-6">
+          {EXPERIMENTS.map((exp, i) => (
+            <section
+              key={exp.id}
+              id={exp.id}
+              className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all duration-150"
+            >
+              <div className="flex items-start gap-4">
+                <span
+                  className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-[11px] font-mono font-bold text-slate-500 shrink-0"
+                  aria-hidden="true"
+                >
+                  {String(i + 1).padStart(2, '0')}
                 </span>
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-900">{exp.title}</h2>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{exp.finding}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <StatusPill status={exp.status} />
+                  </div>
+                  <h2 className="text-[15px] font-semibold text-slate-900 mt-2 tracking-tight">{exp.title}</h2>
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">{exp.finding}</p>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50/50">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left py-2 pr-4 text-slate-400 font-medium">Variant</th>
-                      <th className="text-right py-2 px-3 text-slate-400 font-medium">Δ CRPS</th>
-                      <th className="text-right py-2 px-3 text-slate-400 font-medium">% vs equal</th>
-                      <th className="text-center py-2 pl-3 text-slate-400 font-medium">Sig.</th>
+                    <tr className="border-b border-slate-200 bg-white">
+                      <th className="text-left py-2 pl-4 pr-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Variant</th>
+                      <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Δ CRPS</th>
+                      <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">% vs equal</th>
+                      <th className="text-center py-2 pl-3 pr-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Sig.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {exp.data.map((row) => (
-                      <tr key={row.label} className="border-b border-slate-50">
-                        <td className="py-2 pr-4 text-slate-700 font-medium">{row.label}</td>
-                        <td className={`text-right py-2 px-3 font-mono ${row.delta.startsWith('-') ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      <tr key={row.label} className="border-b border-slate-100 last:border-b-0 hover:bg-white transition-colors">
+                        <td className="py-2 pl-4 pr-4 text-slate-700 font-medium">{row.label}</td>
+                        <td className={`text-right py-2 px-3 font-mono tabular-nums ${row.delta.startsWith('-') ? 'text-emerald-600 font-semibold' : 'text-slate-500'}`}>
                           {row.delta}
                         </td>
-                        <td className={`text-right py-2 px-3 font-mono ${row.pct.startsWith('+') && row.sig ? 'text-emerald-600' : 'text-slate-500'}`}>
+                        <td className={`text-right py-2 px-3 font-mono tabular-nums ${row.pct.startsWith('+') && row.sig ? 'text-emerald-600 font-semibold' : 'text-slate-500'}`}>
                           {row.pct}
                         </td>
-                        <td className="text-center py-2 pl-3">
-                          {row.sig ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}
+                        <td className="text-center py-2 pl-3 pr-4">
+                          {row.sig ? (
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 text-emerald-600" aria-label="Significant">
+                              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </span>
+                          ) : (
+                            <span className="text-slate-300" aria-label="Not significant">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -193,55 +300,72 @@ export default function NotesPage() {
                 </table>
               </div>
 
-              <p className="text-xs text-slate-400 italic">{exp.implication}</p>
+              <div className="flex gap-2 items-start rounded-lg bg-indigo-50/60 border-l-2 border-indigo-300 px-3 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 mt-0.5 shrink-0">
+                  Implication
+                </span>
+                <p className="text-xs text-indigo-900/80 leading-relaxed">{exp.implication}</p>
+              </div>
             </section>
           ))}
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <h3 className="text-sm font-semibold text-slate-700 mb-2">Methodology</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Synthetic experiments use the latent-fixed DGP with 10 heterogeneous forecasters (τ ∈ [0.15, 1.0]),
-            T=500 rounds, 20% missingness, and CRPS scoring. Each seed generates the same truth, reports,
-            and missingness pattern; only the weighting rule changes. Significance tested via paired t-test.
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
+            <span className="w-1 h-4 rounded bg-teal-500" />
+            Methodology
+          </h3>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Synthetic experiments use the latent-fixed data-generating process with 10 heterogeneous
+            forecasters (noise levels &tau; &isin; [0.15, 1.0]), T = 500 rounds, 20% missingness, and CRPS
+            scoring. Each seed generates the same ground truth, reports, and missingness pattern; only the
+            weighting rule changes. Significance is assessed with a paired t-test.
           </p>
-          <p className="text-xs text-slate-500 leading-relaxed mt-2">
-            Real-data experiments use 5 forecasting models (Naive, MA-20, ARIMA, XGBoost, MLP) on
-            Elia Belgian data. All models are strictly causal and retrained periodically. Statistical
-            significance tested via the Diebold-Mariano test (HAC variance, Newey-West), which accounts
-            for autocorrelation in loss differences.
+          <p className="text-xs text-slate-600 leading-relaxed mt-2">
+            Real-data experiments use seven forecasting models (Naive, EWMA-5, ARIMA(2,1,1), XGBoost,
+            MLP, Theta, and a Naive+EWMA ensemble) run on Elia Belgian wind and electricity series.
+            All models are strictly causal and are retrained on a rolling window. Statistical significance
+            is assessed with the Diebold&ndash;Mariano test using Newey&ndash;West (HAC) standard errors,
+            which corrects for autocorrelation in the loss differences.
           </p>
-          <div className="mt-3 overflow-x-auto">
+          <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-white">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-1.5 pr-3 text-slate-400 font-medium">Dataset</th>
-                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">Δ CRPS</th>
-                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">% improv</th>
-                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">DM stat</th>
-                  <th className="text-right py-1.5 px-2 text-slate-400 font-medium">p-value</th>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="text-left py-2 pl-4 pr-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Dataset</th>
+                  <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Δ CRPS</th>
+                  <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">% improv</th>
+                  <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">DM stat</th>
+                  <th className="text-right py-2 px-2 pr-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">p-value</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { ds: 'Wind 1h-ahead', delta: '-0.0196', pct: '+21.1%', dm: '70.87', p: '< 0.001' },
-                  { ds: 'Wind 4h-ahead', delta: '-0.0086', pct: '+6.7%', dm: '47.87', p: '< 0.001' },
-                  { ds: 'Wind day-ahead', delta: '-0.0018', pct: '+1.1%', dm: '4.38', p: '< 0.001' },
-                  { ds: 'Electricity 1h', delta: '-0.0001', pct: '+0.4%', dm: '16.64', p: '< 0.001' },
-                ].map(r => (
-                  <tr key={r.ds} className="border-b border-slate-100">
-                    <td className="py-1.5 pr-3 text-slate-600">{r.ds}</td>
-                    <td className="text-right py-1.5 px-2 font-mono text-emerald-600">{r.delta}</td>
-                    <td className="text-right py-1.5 px-2 font-mono text-emerald-600">{r.pct}</td>
-                    <td className="text-right py-1.5 px-2 font-mono text-slate-600">{r.dm}</td>
-                    <td className="text-right py-1.5 px-2 font-mono text-slate-600">{r.p}</td>
+                  { ds: 'Wind 1h-ahead',  delta: '-0.0034', pct: '+7.9%',  dm: '\u2014', p: '< 0.001' },
+                  { ds: 'Wind 4h-ahead',  delta: '-0.0007', pct: '+0.6%',  dm: '\u2014', p: '< 0.001' },
+                  { ds: 'Wind day-ahead', delta: '-0.0002', pct: '+0.08%', dm: '\u2014', p: 'n.s.'    },
+                  { ds: 'Wind regime-shift', delta: '-0.0007', pct: '+1.1%', dm: '\u2014', p: '< 0.001' },
+                  { ds: 'Electricity 1h', delta: '-0.0048', pct: '+5.3%',  dm: '\u2014', p: '< 0.001' },
+                ].map((r) => (
+                  <tr key={r.ds} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                    <td className="py-2 pl-4 pr-3 text-slate-700 font-medium">{r.ds}</td>
+                    <td className="text-right py-2 px-2 font-mono tabular-nums text-emerald-600 font-semibold">{r.delta}</td>
+                    <td className="text-right py-2 px-2 font-mono tabular-nums text-emerald-600 font-semibold">{r.pct}</td>
+                    <td className="text-right py-2 px-2 font-mono tabular-nums text-slate-600">{r.dm}</td>
+                    <td className="text-right py-2 px-2 pr-4 font-mono tabular-nums text-slate-600">{r.p}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <Link to="/results" className="inline-block mt-3 text-xs font-medium text-indigo-600 hover:text-indigo-800">
-            ← Back to main results
+          <Link
+            to="/evidence"
+            className="inline-flex items-center gap-1 mt-4 text-xs font-medium text-indigo-600 hover:text-indigo-700 group"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="transition-transform group-hover:-translate-x-0.5">
+              <path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to main results
           </Link>
         </div>
       </div>

@@ -14,13 +14,13 @@ const QA_ITEMS: QAItem[] = [
     question:
       "Why not just use Vitali & Pinson's approach? It has lower CRPS.",
     answer:
-      "Vitali & Pinson's OGD achieves lower CRPS (−65 % wind) but uses Shapley settlement (not self-financed) and relative weights on a simplex. This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness, and uses absolute skill signals. The trade-off is quantified: roughly 21 percentage points of CRPS on wind relative to OGD, in exchange for self-financing and absolute skill.",
+      "Vitali & Pinson's OGD achieves lower CRPS (−18.3 % wind) but uses Shapley settlement (not self-financed) and relative weights on a simplex. This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness, and uses absolute skill signals. The trade-off is quantified: roughly 11 percentage points of CRPS on wind relative to OGD, in exchange for self-financing and absolute skill.",
   },
   {
     question:
       'Why does the best single forecaster (Naive) still beat the aggregate?',
     answer:
-      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate substantially (−44 % relative to equal weights) but the ceiling is set by the best individual. This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
+      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate modestly (−7.6 % relative to equal weights) but the ceiling is set by the best individual (−24 %). This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
   },
   {
     question:
@@ -506,7 +506,7 @@ export default function AppendixSlide(_props: {
           >
             <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
               <div style={{ background: PALETTE.purple, color: PALETTE.white, fontSize: '1rem', fontWeight: 700, padding: '8px 18px', borderRadius: 16, fontFamily: TYPOGRAPHY.fontFamily }}>
-                Bankroll+Conf: −44% relative to Fixed
+                Bankroll+Conf: strong relative gain over Fixed
               </div>
             </div>
             <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', ...FIGURE_FRAME }}>
@@ -756,28 +756,32 @@ export default function AppendixSlide(_props: {
               </p>
             </div>
 
-            {/* What does 44% reduction mean */}
+            {/* What does the CRPS reduction mean */}
             <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
               <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
-                What Does "44% CRPS Reduction" Mean?
+                What Does "CRPS Reduction" Mean on Elia Wind?
               </h4>
               <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
-                The mechanism's aggregate forecast has a mean CRPS that is <strong>44% lower</strong> than equal-weight averaging on the Elia wind dataset. The calculation:
+                On 17,544 hourly points of Elia offshore wind, under strictly-causal normalisation
+                (training pipeline audit, May 2026), the mechanism's mean CRPS is <strong>about 7.6% lower</strong> than equal-weight averaging. The calculation:
               </p>
               <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Equal weights CRPS</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>≈ 0.068</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>0.04265</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Mechanism CRPS</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>≈ 0.038</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>0.03930</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Relative change</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.038 − 0.068) / 0.068 ≈ −44%</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.03930 − 0.04265) / 0.04265 ≈ −7.9%</div>
                 </div>
               </div>
+              <p style={{ margin: '12px 0 0', fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Earlier revisions of the deck reported −44%. That figure was produced under a whole-series min/max normalisation that leaked future evaluation-window extremes into every training round; the corrected pipeline uses only warmup-window statistics. See <code>onlinev2/outputs/post_fix_deltas/consolidated_deltas.json</code>.
+              </p>
             </div>
 
             {/* Context: other benchmarks */}
@@ -787,9 +791,9 @@ export default function AppendixSlide(_props: {
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 {[
-                  { label: 'This Project', wind: '−44%', elec: '−8%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
-                  { label: 'Vitali & Pinson', wind: '−65%', elec: '−20%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
-                  { label: 'Raja et al.', wind: '−2.5%', elec: '−2.3%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
+                  { label: 'This Project', wind: '−7.6%', elec: '−0.2%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
+                  { label: 'Vitali OGD (per-τ)', wind: '−18.3%', elec: '−2.3%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
+                  { label: 'Raja history-free', wind: '−1.5%', elec: '+0.0%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
                 ].map((item) => (
                   <div key={item.label} style={{ padding: '16px 20px', background: item.tint, borderRadius: 10, textAlign: 'center' }}>
                     <div style={{ fontSize: '1rem', fontWeight: 700, color: item.color, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 8 }}>{item.label}</div>
@@ -799,7 +803,10 @@ export default function AppendixSlide(_props: {
                 ))}
               </div>
               <p style={{ margin: '14px 0 0', fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
-                Vitali & Pinson achieve lower CRPS but use Shapley settlement (not self-financed). This project preserves all seven formal properties while still achieving substantial improvement over equal weights.
+                Per-τ OGD (Vitali & Pinson) achieves lower CRPS by learning separate weight vectors for
+                each quantile level; this project uses a single weight vector across all τ so the
+                mechanism stays self-financed and preserves the seven Lambert properties. Source:
+                <code>dashboard/public/data/real_data/&lt;series&gt;/data/baselines.json</code>.
               </p>
             </div>
           </div>

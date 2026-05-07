@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { METHOD_COLORS } from '@/lib/palette';
 import {
   Bar,
@@ -67,6 +67,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChartLinkingProvider } from '@/contexts/ChartLinkingContext';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
 import Breadcrumb from '@/components/dashboard/Breadcrumb';
+import TabBar from '@/components/dashboard/TabBar';
 import MathBlock from '@/components/dashboard/MathBlock';
 import Skeleton from '@/components/dashboard/Skeleton';
 import { FigureProvider } from '@/contexts/FigureContext';
@@ -147,9 +148,23 @@ const VERDICT_TEXT: Record<Verdict, string> = {
   bad: 'text-red-600',
 };
 const VERDICT_BG: Record<Verdict, string> = {
-  good: 'bg-emerald-50',
-  neutral: 'bg-amber-50',
-  bad: 'bg-red-50',
+  good: 'bg-gradient-to-br from-emerald-50 to-emerald-50/30',
+  neutral: 'bg-gradient-to-br from-amber-50 to-amber-50/30',
+  bad: 'bg-gradient-to-br from-red-50 to-red-50/30',
+};
+const VERDICT_ICON: Record<Verdict, { bg: string; path: ReactNode }> = {
+  good: {
+    bg: 'bg-emerald-500',
+    path: <path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />,
+  },
+  neutral: {
+    bg: 'bg-amber-500',
+    path: <path d="M4 8H12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />,
+  },
+  bad: {
+    bg: 'bg-red-500',
+    path: <><path d="M4 4L12 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /><path d="M12 4L4 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /></>,
+  },
 };
 
 function AnswerCard({
@@ -157,14 +172,27 @@ function AnswerCard({
 }: {
   question: string; answer: string; detail: string; verdict: Verdict; explanation: string;
 }) {
+  const icon = VERDICT_ICON[verdict];
   return (
-    <div className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-5 space-y-3`}>
-      <div className="text-xs font-semibold text-slate-700">{question}</div>
-      <div className="flex items-baseline gap-3">
-        <span className={`text-2xl font-bold font-mono ${VERDICT_TEXT[verdict]}`}>{answer}</span>
-        <span className="text-xs text-slate-500">{detail}</span>
+    <div
+      className={`rounded-xl border border-slate-200 border-l-4 ${VERDICT_BORDER[verdict]} ${VERDICT_BG[verdict]} p-5 space-y-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-shadow duration-150`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-xs font-semibold text-slate-700 leading-relaxed">{question}</div>
+        <span
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${icon.bg} text-white shadow-sm shrink-0`}
+          aria-hidden="true"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+            {icon.path}
+          </svg>
+        </span>
       </div>
-      <p className="text-xs text-slate-500 leading-relaxed">{explanation}</p>
+      <div className="flex items-baseline gap-3 flex-wrap">
+        <span className={`text-2xl font-bold font-mono tabular-nums ${VERDICT_TEXT[verdict]}`}>{answer}</span>
+        <span className="text-xs text-slate-500 font-mono">{detail}</span>
+      </div>
+      <p className="text-xs text-slate-600 leading-relaxed">{explanation}</p>
     </div>
   );
 }
@@ -192,39 +220,58 @@ function seFinite(values: Array<number | undefined | null>): number | null {
 }
 
 const EXPERIMENT_CARDS = [
-  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 7 models', key: '44% CRPS improvement (tuned)' },
-  { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-min prices, volatile spikes', key: 'Generalisation test' },
-  { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill gate', key: 'Ranking correct, modest separation' },
-  { title: 'Method Race', tab: 'Accuracy', color: '#6366f1', desc: '6 agents, 200 rounds, 4 methods', key: 'Skill × stake wins after ~50 rounds' },
-  { title: 'Skill Recognition', tab: 'Accuracy', color: '#f59e0b', desc: '3 agents with known quality', key: 'Good→high σ, Bad→low σ' },
-  { title: 'Concentration', tab: 'Concentration', color: '#ef4444', desc: 'Gini and N_eff by method', key: 'Accuracy–fairness trade-off' },
-  { title: 'Deposit Policy', tab: 'Deposit policy', color: '#64748b', desc: 'Fixed vs wealth-fraction vs σ-scaled', key: 'Deposit quality is the key lever' },
+  { title: 'Elia Wind', tab: 'Real data', color: '#10b981', desc: '17,544 hourly points, 7 forecasting models', key: 'Mechanism reduces mean CRPS by ~7.6% vs equal weights (post-audit)' },
+  { title: 'Elia Electricity', tab: 'Real data', color: '#0ea5e9', desc: '15-minute clearing prices, volatile', key: 'Generalisation test on a second real series' },
+  { title: 'Weight Learning', tab: 'Real data', color: '#8b5cf6', desc: 'LMS vs EWMA skill gate', key: 'Correct ranking, modest separation' },
+  { title: 'Method Race', tab: 'Accuracy', color: '#6366f1', desc: '6 agents, 200 rounds, 4 weighting rules', key: 'Skill \u00d7 stake wins after \u224850 rounds' },
+  { title: 'Skill Recognition', tab: 'Accuracy', color: '#f59e0b', desc: '3 agents with known quality', key: 'Good \u2192 high \u03c3, bad \u2192 low \u03c3' },
+  { title: 'Concentration', tab: 'Concentration', color: '#ef4444', desc: 'Gini and effective-N by method', key: 'Accuracy\u2013fairness trade-off' },
+  { title: 'Deposit Policy', tab: 'Deposit policy', color: '#64748b', desc: 'Fixed vs wealth-fraction vs \u03c3-scaled', key: 'Deposit policy is the main lever' },
 ] as const;
 
 function ExperimentGuide() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      <button type="button" onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50 transition-colors">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50 transition-colors"
+        aria-expanded={open}
+      >
         <div className="flex items-center gap-2">
+          <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-indigo-500" />
           <span className="text-xs font-semibold text-slate-700">Experiment guide</span>
-          <span className="text-[11px] text-slate-400">{EXPERIMENT_CARDS.length} experiments</span>
+          <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-500 text-[10px] font-mono font-semibold px-1.5 py-0.5">
+            {EXPERIMENT_CARDS.length}
+          </span>
         </div>
-        <span className={`text-slate-400 text-sm transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+          className={`text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
       {open && (
-        <div className="px-5 pb-4 border-t border-slate-100">
+        <div className="px-5 pb-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-3">
             {EXPERIMENT_CARDS.map((exp) => (
-              <div key={exp.title} className="rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition-colors">
+              <div
+                key={exp.title}
+                className="rounded-lg border border-slate-100 p-3 hover:bg-slate-50 hover:border-slate-200 transition-all duration-150"
+              >
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ background: exp.color }} />
                   <span className="text-xs font-semibold text-slate-800 truncate">{exp.title}</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">{exp.desc}</p>
                 <div className="mt-1.5 text-[11px] font-medium" style={{ color: exp.color }}>{exp.key}</div>
-                <div className="mt-1 text-[10px] text-slate-400">{exp.tab}</div>
+                <div className="mt-1 text-[10px] text-slate-400 uppercase tracking-wider font-semibold">{exp.tab}</div>
               </div>
             ))}
           </div>
@@ -283,9 +330,12 @@ function DepositSensitivityPanel() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800">How deposit policy affects accuracy (Elia Wind)</h3>
         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-          Fixed deposits give the mechanism the most room to work (~44% CRPS improvement over equal weighting with tuned parameters).
-          Exponential deposits reduce the advantage to ~15%, and bankroll-fraction deposits to ~5%.
-          The deposit policy determines how much of the skill signal reaches the aggregate weights.
+          The ordering between deposit rules is consistent across pipelines: fixed deposits give
+          the mechanism the most headroom, bankroll-fraction deposits the least. The absolute
+          percentages on this chart come from an earlier deposit-sensitivity run that used the
+          pre-audit normalisation, so they are larger than the post-audit headline (&sim;7.9%
+          vs equal on the 1h-ahead comparison run). Read the bars as the <em>relative</em> effect
+          of the deposit rule rather than the absolute gain of the mechanism.
         </p>
       </div>
       <ResponsiveContainer width="100%" height={360}>
@@ -725,13 +775,33 @@ export default function ResultsPage() {
     <div className="flex-1 overflow-y-auto">
       <FigureProvider>
       <EquationProvider>
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      <div className="max-w-[1100px] mx-auto px-8 pt-14 pb-20 space-y-12">
         <Breadcrumb activeTab={activeTab} />
 
         {/* ── Header ── */}
         <header>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Results</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
+            Step 2 &middot; Empirical results
+          </p>
+          <h1
+            className="font-serif tracking-tight"
+            style={{
+              fontSize: 'clamp(32px, 4vw, 42px)',
+              lineHeight: 1.15,
+              fontWeight: 600,
+              color: 'var(--ink)',
+            }}
+          >
+            Results
+          </h1>
+          <p
+            style={{
+              fontSize: 15,
+              lineHeight: 1.6,
+              color: 'var(--ink-soft)',
+              marginTop: 10,
+            }}
+          >
             {useExp
               ? `${expSeedCount} scenarios, paired comparison across all methods.`
               : `Seed ${DEMO_SEED} · ${DEMO_N} agents · ${DEMO_T} rounds`}
@@ -773,14 +843,13 @@ export default function ResultsPage() {
 
         {/* ── Tabs ── */}
         <section>
-          <div className="flex gap-1 border-b border-slate-200 mb-6">
-            {tabs.map((tab) => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${activeTab === tab ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                {tab}
-              </button>
-            ))}
-          </div>
+          <TabBar
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={(t) => setActiveTab(t as typeof activeTab)}
+            progressLabel={`Section ${tabs.indexOf(activeTab as never) + 1} of ${tabs.length}: ${activeTab}`}
+          />
+          <div className="mt-6" />
 
           <ChartLinkingProvider initialMethods={['uniform', 'deposit', 'skill', 'mechanism']}>
 
@@ -810,9 +879,10 @@ export default function ResultsPage() {
                   <h3 className="text-sm font-semibold text-indigo-900">Elia Offshore Wind: {realData.config.T.toLocaleString()} hourly points</h3>
                 </div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  {realData.config.n_forecasters} forecasting models ({realData.config.forecasters.join(', ')}) on Belgian offshore wind power (2024–2025).
-                  Each model is strictly causal and retrained periodically. The mechanism learns which model is best and adjusts weights over time.
-                  Diebold-Mariano test confirms statistical significance (p &lt; 0.001).
+                  {realData.config.n_forecasters} forecasting models ({realData.config.forecasters.join(', ')}) run on Belgian offshore wind power, 2024&ndash;2025.
+                  Every model is strictly causal and is retrained on a rolling window. The mechanism does not see future information;
+                  it learns which model is performing best so far and adjusts the aggregate weights accordingly.
+                  Improvement over equal weighting is statistically significant at the 0.1% level (Diebold&ndash;Mariano test, HAC-corrected).
                 </p>
               </div>
 
@@ -839,26 +909,27 @@ export default function ResultsPage() {
                     realData.dm_test.significant_at_005 ? 'bg-amber-100 text-amber-700' :
                     'bg-slate-100 text-slate-500'
                   }`}>
-                    DM test: p {realData.dm_test.significant_at_001 ? '< 0.001 ***' :
+                    Diebold&ndash;Mariano test: p {realData.dm_test.significant_at_001 ? '< 0.001 ***' :
                       realData.dm_test.significant_at_005 ? '< 0.05 *' : `= ${realData.dm_test.p_value.toFixed(4)}`}
                   </span>
                   <span className="text-[11px] text-slate-400">
-                    Mechanism vs uniform (Diebold-Mariano, HAC-corrected)
+                    Mechanism vs equal weighting, Newey&ndash;West (HAC) standard errors
                   </span>
                 </div>
               )}
 
               {/* Mechanism vs alternatives interpretive callout */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-2">
-                <h4 className="text-xs font-semibold text-indigo-900">Why simpler methods beat the mechanism on pure CRPS</h4>
+                <h4 className="text-xs font-semibold text-indigo-900">Why simpler methods can still beat the mechanism on raw CRPS</h4>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  Median and inverse-variance weighting achieve better CRPS because they directly optimise for forecast quality.
-                  The mechanism trades some aggregation quality for properties these methods lack:
-                  <strong> incentive-compatible settlement</strong> (agents are rewarded for accuracy),
-                  <strong> budget balance</strong> (no external funding),
-                  <strong> sybil-proofness</strong> (splitting identity provides zero advantage), and
-                  <strong> online adaptivity</strong> (learns skill without prior knowledge).
-                  The mechanism's contribution is the complete economic structure, not just the aggregation.
+                  Median and inverse-variance weighting reach slightly lower CRPS on this dataset because they optimise
+                  pure forecast quality with no other constraints. The mechanism gives up a small amount of aggregation
+                  quality in exchange for properties those methods lack:
+                  <strong> incentive-compatible settlement</strong> (agents are paid for being accurate),
+                  <strong> budget balance</strong> (no external funding is needed),
+                  <strong> sybil resistance</strong> (identical clones gain nothing; diversified sybil strategies gain only a small margin), and
+                  <strong> online adaptivity</strong> (skill is learned from scratch, with no prior information).
+                  The contribution of this project is the complete economic structure, not just the aggregate accuracy.
                 </p>
               </div>
 
@@ -868,10 +939,12 @@ export default function ResultsPage() {
                   <ZoomBadge isZoomed={cumErrorZoom.state.isZoomed} onReset={cumErrorZoom.reset} />
                 </div>
                 <p className="text-xs text-slate-500 mb-3">
-                  Running average CRPS (lower = better) for each weighting method over {realData.config.T.toLocaleString()} hourly rounds.
-                  If the Skill × stake line stays below Equal weighting, the online skill layer adds value.
-                  The gap between lines grows over time as the mechanism learns. Early rounds are noisy because
-                  the EWMA hasn't converged yet (half-life ≈ 7 rounds with ρ = 0.1). After ~50 rounds the ranking stabilises.
+                  Running average of CRPS (lower is better) for each weighting method over the
+                  {' '}{realData.config.T.toLocaleString()} hourly rounds. If the skill &times; stake line
+                  stays below the equal-weighting line, the online skill layer is adding value.
+                  The gap widens as the mechanism learns. Early rounds are noisy because the EWMA has
+                  not yet converged (half-life &asymp; 7 rounds at ρ = 0.1); the ranking stabilises
+                  after roughly 50 rounds.
                 </p>
                 <div className="cursor-crosshair">
                   <ResponsiveContainer width="100%" height={400}>
@@ -911,8 +984,9 @@ export default function ResultsPage() {
                       How the mechanism learns forecaster quality
                     </h3>
                     <p className="text-xs text-slate-500 mt-1">
-                      The EWMA skill gate observes each model's CRPS each round and updates a skill estimate σ.
-                      Higher σ = better forecaster = more weight in the aggregate.
+                      The EWMA skill layer observes each forecaster&apos;s CRPS every round and updates a
+                      running skill estimate σ. Higher σ means a better forecaster, which in turn means
+                      a larger weight in the aggregate.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -981,8 +1055,9 @@ export default function ResultsPage() {
                         </BarChart>
                       </ResponsiveContainer>
                       <p className="text-[11px] text-slate-400 mt-1">
-                        Naive (last value) ranks highest because wind power is highly autocorrelated.
-                        ARIMA ranks lowest due to poor quantile calibration.
+                        Naive (last value) ranks highest because wind power is highly autocorrelated
+                        hour to hour, so the previous value is a strong predictor. ARIMA ranks lowest
+                        because its quantile predictions are poorly calibrated on this series.
                       </p>
                     </div>
 
@@ -1022,16 +1097,19 @@ export default function ResultsPage() {
                         </LineChart>
                       </ResponsiveContainer>
                       <p className="text-[11px] text-slate-400 mt-1">
-                        Lines separate within the first ~500 hours as the EWMA converges.
-                        The top line (Naive) stays consistently highest. Hover for values.
+                        The lines separate during the first few hundred hours as the EWMA converges,
+                        then stay in order &mdash; Naive (last-value) is the top line throughout.
+                        Hover for numerical values.
                       </p>
                     </div>
                   </>
                 ) : (
                   <>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      3 forecasters with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
-                      The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
+                      Three synthetic forecasters with controlled noise: Good (τ = 0.2, low noise),
+                      Okay (τ = 0.6, medium noise), and Bad (τ = 1.5, high noise). The EWMA skill layer
+                      has to learn which is which from their CRPS scores alone. Deposits are held fixed
+                      so the skill signal is isolated from any wealth feedback.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -1097,10 +1175,15 @@ export default function ResultsPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800 mb-1">Weight learning: two approaches</h3>
                   <p className="text-xs text-slate-500">
-                    The core question: does the mechanism correctly identify who is skilled? We test two approaches.
-                    The LMS learner (left) directly recovers structural weights from an endogenous DGP (w = [0.8, 0.1, 0.5]).
-                    The core mechanism (right) uses EWMA skill estimation on an exogenous DGP with 3 agents of known quality:
-                    Good (τ=0.2, low noise), Okay (τ=0.6, medium), Bad (τ=1.5, high). All start equal and the mechanism must learn the ranking.
+                    The core question: does the mechanism correctly identify which forecasters are skilled?
+                    Two approaches are compared here. The least-mean-squares (LMS) learner on the left
+                    regresses the outcome on the reports directly, so it recovers the structural weights
+                    by construction (here w = [0.8, 0.1, 0.5]). The core mechanism on the right works
+                    differently: it scores each forecaster individually with CRPS, smooths that score with
+                    an EWMA, and maps the smoothed loss to a skill estimate σ. It is tested on an exogenous
+                    data-generating process with three forecasters of known quality &mdash; Good (τ = 0.2,
+                    low noise), Okay (τ = 0.6, medium noise), and Bad (τ = 1.5, high noise). All three start
+                    with equal weight, and the mechanism has to learn the ranking from scratch.
                   </p>
                 </div>
 
@@ -1114,8 +1197,10 @@ export default function ResultsPage() {
                           <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold">T = 15,000</span>
                         </div>
                         <p className="text-[11px] text-slate-500">
-                          Directly minimises (y − w·r)² via gradient descent. Sees the outcome and all reports,
-                          adjusts weights to make the linear combination match. Recovers structural weights precisely.
+                          Minimises the squared error (y − w &middot; r)² by gradient descent. It sees the
+                          outcome and all the reports and adjusts the weight vector so that the linear
+                          combination matches. Under this set-up it recovers the structural weights
+                          almost exactly.
                         </p>
                       </div>
                       <ResponsiveContainer width="100%" height={360}>
@@ -1138,8 +1223,9 @@ export default function ResultsPage() {
                         </BarChart>
                       </ResponsiveContainer>
                       <p className="text-[11px] text-slate-500">
-                        MAE = {fmt(weightRecovery.reduce((s, r) => s + r.absError, 0) / weightRecovery.length, 4)}.
-                        The LMS recovers the true weights almost exactly because it directly optimises for them.
+                        Mean absolute error (MAE) = {fmt(weightRecovery.reduce((s, r) => s + r.absError, 0) / weightRecovery.length, 4)}.
+                        The LMS learner recovers the true weights almost exactly because it optimises
+                        for them directly.
                       </p>
                     </div>
                   )}
@@ -1148,7 +1234,7 @@ export default function ResultsPage() {
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-indigo-700">Core mechanism (EWMA skill gate)</span>
+                        <span className="text-xs font-semibold text-indigo-700">Core mechanism (EWMA skill layer)</span>
                         <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold">T = 500</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mb-1">
@@ -1230,23 +1316,28 @@ export default function ResultsPage() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-2">
                   <div className="font-semibold text-slate-700">Why the difference matters</div>
                   <p>
-                    The LMS learner directly regresses y on [r₁, r₂, r₃]. It solves a linear system and recovers
-                    the structural weights (MAE ≈ 0.02). The core mechanism does something different: it measures
-                    each agent's individual CRPS, maps that to a skill estimate σ via EWMA, then derives weights
-                    from σ × deposit. It never optimises the aggregation weights directly.
+                    The LMS learner regresses y on the report vector [r₁, r₂, r₃] directly, so it solves
+                    a linear system and recovers the structural weights (MAE &asymp; 0.02). The core
+                    mechanism does something different: it measures each forecaster&apos;s individual CRPS,
+                    smooths it with an EWMA, converts the smoothed loss to a skill estimate σ, and then
+                    derives weights as σ &times; deposit. It never optimises the aggregation weights
+                    directly.
                   </p>
                   <p>
-                    This is by design. The mechanism's goal is not to recover structural weights but to
-                    <span className="font-semibold"> identify and upweight skilled forecasters</span> in a setting
-                    where agents have deposits, strategic incentives, and intermittent participation. The EWMA
-                    skill gate provides robustness to manipulation (σ drops when agents misreport) at the cost
+                    That is by design. The mechanism&apos;s goal is not to recover structural weights,
+                    it is to <span className="font-semibold">identify skilled forecasters and give them
+                    more influence</span> in a setting where agents hold deposits, face strategic
+                    incentives, and participate intermittently. Going through individual CRPS gives the
+                    mechanism robustness to manipulation (σ falls when an agent misreports) at the cost
                     of precise weight recovery.
                   </p>
                   <p>
-                    In the exogenous DGP (latent_fixed), where "skill" = low noise, the mechanism correctly
-                    gives more weight to low-noise agents. In the endogenous DGP (aggregation), where "skill"
-                    is structural contribution, the mechanism approximates but doesn't precisely recover the
-                    true weights because individual CRPS doesn't perfectly reflect structural importance.
+                    On the exogenous data-generating process used here (latent-fixed, where &ldquo;skill&rdquo;
+                    means low noise), the mechanism correctly gives more weight to the low-noise
+                    forecasters. On an endogenous data-generating process (where &ldquo;skill&rdquo; means
+                    structural contribution to the outcome), it approximates but does not exactly recover
+                    the true weights, because individual CRPS does not map perfectly to structural
+                    importance.
                   </p>
                 </div>
               </div>
@@ -1256,8 +1347,8 @@ export default function ResultsPage() {
                 <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
                   <h3 className="text-sm font-semibold text-slate-800">Per-forecaster CRPS over time</h3>
                   <p className="text-xs text-slate-500">
-                    Individual CRPS for each forecaster at each round. Lower is better.
-                    Shows which forecaster is best at different times.
+                    Individual CRPS for each forecaster at each round. Lower is better. Useful for
+                    seeing which forecaster is leading at different points in the run.
                   </p>
                   <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={realData.per_agent_crps} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
@@ -1281,8 +1372,9 @@ export default function ResultsPage() {
                 <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
                   <h3 className="text-sm font-semibold text-slate-800">Rolling improvement over time</h3>
                   <p className="text-xs text-slate-500">
-                    Mechanism vs uniform CRPS improvement in sliding 1000-hour windows.
-                    Negative = mechanism is better. Shows stability across time.
+                    CRPS improvement of the mechanism over equal weighting, measured in sliding
+                    1&thinsp;000-hour windows. A negative value means the mechanism is better in that
+                    window. The chart gives a sense of how stable the advantage is across the run.
                   </p>
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={realData.rolling_improvement} margin={{ ...CHART_MARGIN_LABELED, left: 52 }}>
@@ -1305,8 +1397,9 @@ export default function ResultsPage() {
                 <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
                   <h3 className="text-sm font-semibold text-slate-800">Aggregate calibration (mechanism)</h3>
                   <p className="text-xs text-slate-500">
-                    PIT coverage: fraction of outcomes below each quantile level.
-                    Perfect calibration = empirical matches nominal.
+                    Probability integral transform (PIT) coverage: the empirical fraction of outcomes
+                    that fall below each nominal quantile level. Perfect calibration means the
+                    empirical coverage equals the nominal level.
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
@@ -1385,10 +1478,12 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-[11px] font-semibold">Dataset 2</span>
-                  <h3 className="text-sm font-semibold text-teal-900">Elia Imbalance Prices: {realDataElec.config.T.toLocaleString()} points</h3>
+                  <h3 className="text-sm font-semibold text-teal-900">Elia imbalance prices: {realDataElec.config.T.toLocaleString()} points</h3>
                 </div>
                 <p className="text-xs text-teal-700 leading-relaxed">
-                  Same 7 models on Belgian electricity imbalance prices (15-min, 2024). Prices are volatile with spikes, making this a harder forecasting task.
+                  The same seven forecasting models, run on Belgian electricity imbalance prices at
+                  15-minute resolution (2024). Prices are volatile and spike frequently, which makes
+                  this a harder forecasting task and a useful generalisation check.
                 </p>
               </div>
               <DeltaBarChart
@@ -1410,7 +1505,7 @@ export default function ResultsPage() {
 
           {activeTab === 'Real data' && !realData && !loading && (
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
-              <p className="text-sm text-slate-500">Real-data comparison not available. Run the forecaster models on your data first.</p>
+              <p className="text-sm text-slate-500">Real-data comparison is not available. Run the forecaster models on the Elia data first, then reload this page.</p>
             </div>
           )}
 
@@ -1421,7 +1516,7 @@ export default function ResultsPage() {
               <div className="space-y-6">
               <FourPanelLayout
                 title="Master Comparison"
-                thesisPoint="Accuracy, calibration, market structure, and ablation evidence at a glance."
+                thesisPoint="Accuracy, calibration, weight concentration, and ablation evidence at a glance."
                 primary={
                   <DeltaBarChart
                     data={expAccuracyDisplay.map((d) => ({
@@ -1569,10 +1664,15 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  {DEMO_N} synthetic agents, baseline DGP (y ~ U(0,1), reports = y + agent-specific noise), {DEMO_T} rounds, seed {DEMO_SEED}.
-                  Four weighting methods run on identical data; only the influence rule changes.
-                  Equal (w = 1/N), Stake-only (w ∝ deposit), Skill-only (w ∝ g(σ)), Skill × stake (w ∝ deposit · g(σ)).
-                  All agents participate every round and report truthfully. This isolates the effect of the weighting rule.
+                  {DEMO_N} synthetic forecasters, baseline data-generating process
+                  (y &sim; U(0, 1); each agent reports y plus independent noise), {DEMO_T} rounds,
+                  seed {DEMO_SEED}. Four weighting methods are run on identical data; only the
+                  influence rule changes:
+                  equal (w<sub>i</sub> = 1/N), stake-only (w<sub>i</sub> &prop; b<sub>i</sub>),
+                  skill-only (w<sub>i</sub> &prop; g(σ<sub>i</sub>)), and
+                  skill &times; stake (w<sub>i</sub> &prop; b<sub>i</sub> &middot; g(σ<sub>i</sub>)).
+                  Every agent participates every round and reports truthfully, so the only thing
+                  changing is the weighting rule.
                 </p>
               </div>
 
@@ -1760,8 +1860,9 @@ export default function ResultsPage() {
                 ) : (
                   <>
                     <p className="text-xs text-slate-500 mb-3">
-                      3 forecasters with controlled noise: Good (τ=0.2), Okay (τ=0.6), Bad (τ=1.5).
-                      The EWMA skill gate learns who is good and assigns σ accordingly. Fixed deposits isolate the skill signal.
+                      Three synthetic forecasters with controlled noise: Good (τ = 0.2), Okay (τ = 0.6),
+                      Bad (τ = 1.5). The EWMA skill layer has to recover that ranking from individual
+                      CRPS scores alone, with fixed deposits so there is no wealth feedback.
                     </p>
                 <div className="grid grid-cols-2 gap-4">
                   <ResponsiveContainer width="100%" height={360}>
@@ -1814,9 +1915,10 @@ export default function ResultsPage() {
                 )}
                 <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 mt-3">
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    The mechanism correctly identifies forecaster quality: F1 (Good, low noise) gets the highest σ,
-                    F3 (Bad, high noise) gets the lowest. Weights diverge from equal (1/3) via the skill gate
-                    g(σ) = λ + (1−λ)σ. Dashed lines show steady-state targets.
+                    The mechanism recovers the correct ranking: F1 (Good, low noise) ends up with the
+                    highest σ, F3 (Bad, high noise) with the lowest. Weights fan out from the equal
+                    starting point (1/3) through the skill gate g(σ) = λ + (1−λ)σ; the dashed lines
+                    mark the steady-state targets measured over the final 100 rounds.
                   </p>
                 </div>
 
@@ -1845,9 +1947,11 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  Same {DEMO_N} agents and {DEMO_T} rounds as the Accuracy tab. For each weighting method, we measure
-                  final wealth Gini (how unequally wealth is distributed) and mean N_eff (how many agents have meaningful
-                  influence). The question: does skill-weighting concentrate wealth too much?
+                  Same {DEMO_N} forecasters and {DEMO_T} rounds as the Accuracy tab. For each weighting
+                  method we measure the final wealth Gini (how unequally wealth is distributed at the
+                  end of the run) and the mean effective panel size N<sub>eff</sub> (how many
+                  forecasters carry meaningful weight in the aggregate each round). The question is
+                  whether skill weighting concentrates wealth too aggressively.
                 </p>
               </div>
               <div>
@@ -1857,18 +1961,22 @@ export default function ResultsPage() {
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Metrics explained</div>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <MathBlock latex="\\text{Gini} = \\frac{\\sum_{i<j} |w_i - w_j|}{n \\sum w_i}" label="Gini coefficient" caption="0 = equal, 1 = monopoly" />
+                      <MathBlock latex="\\text{Gini} = \\frac{\\sum_{i<j} |w_i - w_j|}{n \\sum w_i}" label="Gini coefficient" caption="0 = perfectly equal; 1 = a single agent gets everything" />
                     </div>
                     <div>
-                      <MathBlock latex="N_{\\text{eff}} = \\frac{1}{\\text{HHI}} = \\frac{1}{\\sum_i \\hat{w}_i^2}" label="Effective participants" caption="How many agents have real influence" />
+                      <MathBlock latex="N_{\\text{eff}} = \\frac{1}{\\text{HHI}} = \\frac{1}{\\sum_i \\hat{w}_i^2}" label="Effective number of forecasters" caption="How many agents carry meaningful weight" />
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Equal weighting: Gini ≈ 0, N_eff = N, fair but ignores skill differences.
-                    Skill × stake: higher Gini, lower N_eff, concentrates influence in skilled agents, improving accuracy.
-                    The mechanism targets N_eff ≈ 4–5 out of 6: enough concentration to reward skill,
-                    not so much that one agent controls the aggregate. This is Lambert's (2008) design property:
-                    the settlement rule ensures skilled agents profit while the aggregate stays diversified.
+                    Equal weighting gives Gini &asymp; 0 and N<sub>eff</sub> = N: perfectly fair, but
+                    it ignores skill differences.
+                    Skill &times; stake gives a higher Gini and a lower N<sub>eff</sub>: it concentrates
+                    influence on the more skilled forecasters, which is what improves accuracy.
+                    The mechanism is tuned so that N<sub>eff</sub> lands around 4&ndash;5 out of 6 &mdash;
+                    enough concentration to reward skill, but not so much that one agent drives the
+                    aggregate on its own. This balance comes from Lambert&apos;s (2008) design property:
+                    the settlement rule ensures skilled agents profit without letting the aggregate
+                    collapse onto a single participant.
                   </p>
                 </div>
               </div>
@@ -1913,9 +2021,11 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  Same {DEMO_N} agents and {DEMO_T} rounds. All use Skill × stake influence rule; only the deposit policy changes.
-                  Three deposit rules tested: Fixed (b=1), Wealth fraction (b=0.18·W), σ-scaled (b=f·W·(0.25+0.85σ)).
-                  The question: how does the deposit rule affect the accuracy–concentration trade-off?
+                  Same {DEMO_N} forecasters and {DEMO_T} rounds. All runs use the skill &times; stake
+                  influence rule; only the deposit policy changes. Three rules are tested:
+                  fixed (b = 1 every round), wealth fraction (b = 0.18 &middot; W), and
+                  σ-scaled (b = f &middot; W &middot; (0.25 + 0.85 σ), where confident agents stake more).
+                  The question is how the deposit rule shifts the trade-off between accuracy and concentration.
                 </p>
               </div>
               <ResponsiveContainer width="100%" height={360}>
@@ -1958,30 +2068,34 @@ export default function ResultsPage() {
                     <div className="text-[11px] font-semibold text-slate-700 mb-1">Fixed (b = 1)</div>
                     <MathBlock latex="b_i = 1 \\;\\; \\forall i" />
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Isolates skill signal. Weight differences come only from σ. Fairest: no wealth feedback.
+                      Isolates the skill signal &mdash; weight differences come only from σ. Fairest
+                      rule because wealth never feeds back into influence.
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="text-[11px] font-semibold text-slate-700 mb-1">Wealth fraction</div>
                     <MathBlock latex="b_i = f \\cdot W_i, \\quad f \\approx 0.18" />
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Feedback loop: winners deposit more → more weight → more profit. Amplifies skill differences.
+                      Adds a feedback loop: winners deposit more, which gives them more weight, which
+                      earns them more profit. Amplifies skill differences.
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="text-[11px] font-semibold text-slate-700 mb-1">σ-scaled</div>
                     <MathBlock latex="b_i = f \\cdot W_i \\cdot (0.25 + 0.85\\,\\sigma_i)" />
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Strongest amplification: confident agents stake more. Most accurate but highest concentration.
+                      Strongest amplification: confident agents stake more on top of the wealth
+                      feedback. Highest accuracy in this demo, but also the highest concentration.
                     </p>
                   </div>
                 </div>
 
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  The chart shows mean CRPS (accuracy, lower = better) and Gini (concentration, lower = fairer)
-                  for each rule. The project uses wealth_fraction as the default. It balances accuracy improvement
-                  against concentration risk. Fixed deposits are used for the skill recognition experiment above
-                  to isolate the pure skill signal without wealth confounds.
+                  The chart shows mean CRPS (accuracy, lower is better) and final Gini (concentration,
+                  lower is fairer) for each rule. The project uses the wealth-fraction rule as the
+                  default because it balances accuracy against concentration risk. Fixed deposits
+                  are used for the skill-recognition experiment above to isolate the pure skill
+                  signal without any wealth feedback.
                 </p>
               </div>
             </div>
@@ -1992,11 +2106,12 @@ export default function ResultsPage() {
           {activeTab === 'Scientific Analysis' && (
             <div className="space-y-6">
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
-                <h3 className="text-sm font-semibold text-indigo-900 mb-1">Scientific Analysis</h3>
+                <h3 className="text-sm font-semibold text-indigo-900 mb-1">Scientific analysis</h3>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  Automated validation of project claims, cross-experiment consistency, sensitivity analysis,
-                  failure mode documentation, and analysis gap tracking. This section provides the interpretive
-                  layer that ensures results are presented with scientific rigour.
+                  Automated checks on the project&apos;s claims: each headline statement is recomputed from
+                  the underlying data, cross-experiment rankings are compared, parameter sensitivity is
+                  summarised, failure modes are catalogued, and known analysis gaps are tracked. This
+                  section is the interpretive layer that holds the results to scientific rigour.
                 </p>
               </div>
 

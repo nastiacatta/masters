@@ -2,196 +2,250 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --accent: #0d9488;
-  --accent-light: #14b8a6;
-  --accent-secondary: #6366f1;
-  --muted: #94a3b8;
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --text-secondary: #475569;
+/* ──────────────────────────────────────────────────────────────
+   Academic palette — restrained but colourful
+   ──────────────────────────────────────────────────────────────
+   ink        #0b1220   near-black, for display type
+   paper      #fbf9f4   warm off-white background
+   cream      #f5f1e8   sidebar / alt surface
+   border     #e4dfd3   warm, low-contrast rule
+   rule       #2c3347   dark keyline for accents
 
-  /* Unified soft shadows used across cards and floating UI */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.14), 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+   navy       #1d3461   primary accent, headings
+   teal       #0f766e   evidence / positive
+   amber      #b45309   warning / caution
+   crimson    #9a1a2f   negative / destructive
+   plum       #5b21b6   methodology / secondary
+   ────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Surfaces */
+  --paper: #fbf9f4;
+  --cream: #f5f1e8;
+  --card:  #ffffff;
+  --border:     #e8e2d2;
+  --border-strong: #d3ccb9;
+
+  /* Ink */
+  --ink:        #0b1220;
+  --ink-muted:  #2b3246;
+  --ink-soft:   #5a6175;
+  --ink-faint:  #8c92a3;
+
+  /* Accents */
+  --navy:    #1d3461;
+  --navy-ink:#0f1f3d;
+  --teal:    #0f766e;
+  --teal-deep:#115e59;
+  --amber:   #b45309;
+  --crimson: #9a1a2f;
+  --plum:    #5b21b6;
+  --gold:    #a16207;
+
+  /* Soft tints for panels */
+  --navy-tint:    #eef2f9;
+  --teal-tint:    #e7f3f1;
+  --amber-tint:   #fbf3e5;
+  --crimson-tint: #fbecef;
+  --plum-tint:    #f1ecfb;
+
+  /* Type scale — academic, slightly larger than typical SaaS */
+  --fs-xs:  13px;   /* labels, captions */
+  --fs-sm:  14.5px; /* secondary body */
+  --fs-md:  16px;   /* body default */
+  --fs-lg:  18px;   /* lead / callouts */
+  --fs-h3:  22px;
+  --fs-h2:  28px;
+  --fs-h1:  40px;
+
+  --lh-tight:  1.25;
+  --lh-snug:   1.4;
+  --lh-normal: 1.55;
+  --lh-relax:  1.7;
+
+  /* Shadows — subtler than before */
+  --shadow-sm: 0 1px 0 rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px -6px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 2px 4px rgba(15, 23, 42, 0.04), 0 16px 40px -12px rgba(15, 23, 42, 0.12);
+
+  /* Font stacks */
+  --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Source Serif 4', 'Charter', 'Iowan Old Style', Georgia, serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Legacy aliases used by existing code */
+  --accent: var(--teal);
+  --accent-light: #14b8a6;
+  --accent-secondary: var(--navy);
+  --muted: var(--ink-faint);
+  --bg: var(--paper);
+  --text: var(--ink);
+  --text-secondary: var(--ink-soft);
 }
 
 html {
   scroll-behavior: smooth;
+  font-size: 16px;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
   font-feature-settings: 'cv11', 'ss01', 'ss03';
-  background: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+
+/* Display type uses the serif — journal-style headings */
+h1, h2, h3, .font-display {
+  font-family: var(--font-serif);
+  font-feature-settings: 'kern', 'liga', 'onum';
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: var(--fs-h1); line-height: var(--lh-tight); font-weight: 600; }
+h2 { font-size: var(--fs-h2); line-height: var(--lh-tight); font-weight: 600; }
+h3 { font-size: var(--fs-h3); line-height: var(--lh-snug); font-weight: 600; }
+
+/* A thin, understated small-caps label for eyebrows */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
-/* Refined text selection */
+/* Paper-like card surface */
+.paper-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Subtle prose flow for reading blocks */
+.prose-academic p {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--ink-muted);
+}
+.prose-academic p + p { margin-top: 0.8em; }
+
+/* Text selection */
 ::selection {
-  background: rgba(13, 148, 136, 0.18);
-  color: var(--text);
+  background: rgba(15, 118, 110, 0.18);
+  color: var(--ink);
 }
 
-/* Global focus ring — consistent accessibility */
 :focus-visible {
-  outline: 2px solid rgba(13, 148, 136, 0.45);
+  outline: 2px solid rgba(29, 52, 97, 0.55);
   outline-offset: 2px;
   border-radius: 4px;
 }
-button:focus-visible,
-a:focus-visible,
-[role='tab']:focus-visible {
-  outline: 2px solid rgba(13, 148, 136, 0.45);
-  outline-offset: 2px;
-}
 
-/* Default: slightly nicer scrollbars app-wide */
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Gentle scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.28);
+  background: rgba(140, 146, 163, 0.28);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.45);
+  background: rgba(90, 97, 117, 0.5);
   background-clip: padding-box;
   border: 2px solid transparent;
 }
 
-/* Recharts grid */
+/* Recharts tune — slightly warmer grid lines */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: #e2e8f0;
+  stroke: #e4dfd3;
 }
 
-/* Recharts tooltip animation */
 .recharts-tooltip-wrapper {
   transition: transform 80ms ease-out !important;
 }
 
-/* Custom scrollbar for dark panels */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
-}
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Dark-panel scrollbar, kept for explorer */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.3);
   border-radius: 4px;
-  border: none;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
 }
 
-/* Range input styling */
+/* Range inputs */
 input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  background: #334155;
-  border-radius: 4px;
-  outline: none;
+  -webkit-appearance: none; appearance: none;
+  height: 4px; background: #d3ccb9; border-radius: 4px; outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #0d9488;
-  cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--teal); cursor: pointer;
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   transition: transform 0.15s ease;
 }
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-}
-input[type="range"]::-webkit-slider-thumb:active {
-  transform: scale(1.25);
-}
-/* Light context range inputs */
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.25); }
+
 .bg-white input[type="range"],
 .bg-slate-50 input[type="range"],
-.bg-slate-100 input[type="range"] {
-  background: #e2e8f0;
-}
+.bg-slate-100 input[type="range"] { background: #e4dfd3; }
 
-/* Smooth animations for tabs */
+/* Animation primitives kept for existing pages */
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-/* Pulse for live badge */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50%      { opacity: 0.5; }
 }
-
-/* Soft pulse used for accent indicators */
 @keyframes soft-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.12); opacity: 0.85; }
+  50%      { transform: scale(1.12); opacity: 0.85; }
 }
-
-/* Gentle entry for hero elements */
 @keyframes heroRise {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* KaTeX error fallback: neutral colour instead of red */
-.katex-error {
-  color: #64748b !important; /* slate-500 */
-}
+.katex-error { color: var(--ink-soft) !important; }
 
-/* Reusable link underline that animates in on hover — purely cosmetic */
-.link-underline {
-  position: relative;
-}
+/* Animated underline */
+.link-underline { position: relative; }
 .link-underline::after {
   content: '';
   position: absolute;
-  left: 0;
-  bottom: -2px;
-  height: 1px;
-  width: 100%;
+  left: 0; bottom: -2px;
+  height: 1px; width: 100%;
   background: currentColor;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 180ms ease;
 }
-.link-underline:hover::after {
-  transform: scaleX(1);
-}
+.link-underline:hover::after { transform: scaleX(1); }
 
-/* Respect users who prefer reduced motion */
+/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

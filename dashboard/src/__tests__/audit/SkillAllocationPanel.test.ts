@@ -94,8 +94,8 @@ describe('SkillAllocationPanel', () => {
 
   it('displays parameter comparison table', () => {
     renderPanel();
-    expect(screen.getAllByText('γ (deposit multiplier)').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('ρ (learning rate)').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('γ (skill sharpness)').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('ρ (EWMA learning rate)').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows Spearman ρ badge', () => {

@@ -128,9 +128,7 @@ export default function WagerAllocationPanel() {
           Effective Wager Breakdown
         </h2>
         <p className="text-xs text-slate-500">
-          Each forecaster's effective wager is the product of their deposit and
-          skill gate (σ). The stacked bars show the deposit (base) and skill
-          gate components.
+          Each forecaster&apos;s effective wager m<sub>i</sub> = b<sub>i</sub> &middot; g(σ<sub>i</sub>) decomposes into a deposit b<sub>i</sub> (held constant here, normalised to 1) and a skill-gate factor g(σ<sub>i</sub>). The stacked bars show the two contributions side by side so it is clear how much of each forecaster&apos;s weight comes from their deposit versus their skill estimate.
         </p>
         {wagerBarData.length > 0 ? (
           <ResponsiveContainer width="100%" height={250}>
@@ -189,8 +187,7 @@ export default function WagerAllocationPanel() {
           Normalised Weights
         </h2>
         <p className="text-xs text-slate-500">
-          w_i = m_i / Σm_j — the fraction of total effective wager held by each
-          forecaster.
+          w<sub>i</sub> = m<sub>i</sub> / Σ<sub>j</sub> m<sub>j</sub> &mdash; the fraction of the total effective wager held by each forecaster. These are the weights the mechanism puts on each forecaster in the aggregate.
         </p>
         {weightData.length > 0 ? (
           <ResponsiveContainer width="100%" height={250}>
@@ -279,8 +276,7 @@ export default function WagerAllocationPanel() {
         {depositPolicies.length > 0 ? (
           <>
             <p className="text-xs text-slate-500">
-              Mean CRPS under three deposit policies: fixed, exponential, and
-              bankroll-fraction. Lower is better.
+              Mean CRPS under three deposit policies &mdash; fixed, exponential, and bankroll-fraction &mdash; under equal weighting, pure-skill weighting, and the full skill &times; stake mechanism. Lower is better. The chart uses the pre-audit deposit-sensitivity pipeline, so absolute CRPS values are on an earlier normalisation than the headline comparison; the ordering between policies is the durable finding.
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={depositPolicies}>
@@ -386,24 +382,14 @@ export default function WagerAllocationPanel() {
       {/* ── Textual explanation ───────────────────────────────────── */}
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900">
-          Why Fixed Deposits Outperform
+          Why fixed deposits give the mechanism the most headroom
         </h2>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
           <p className="text-xs text-slate-600 leading-relaxed">
-            Fixed deposits outperform exponential and bankroll-fraction policies
-            because they maintain stable participation across all forecasters.
-            Exponential deposits amplify wealth differences, causing low-wealth
-            agents to deposit negligible amounts and effectively exit the
-            mechanism. Bankroll-fraction deposits create a feedback loop where
-            poor performance reduces deposits, which reduces influence, which
-            prevents recovery.
+            Fixed deposits work well because they keep every forecaster participating at the same scale. With exponential deposits, small wealth differences compound into very different stake sizes, so poorly-performing forecasters quickly contribute a negligible share of the effective wager and effectively exit the mechanism. Bankroll-fraction deposits are milder but still create a feedback loop: poor performance reduces deposits, which reduces influence, which prevents recovery.
           </p>
           <p className="text-xs text-slate-600 leading-relaxed">
-            With fixed deposits, the skill gate (σ) alone determines effective
-            wager differences. This separation of concerns — deposits for
-            participation, skill for weighting — produces the best aggregation
-            accuracy because all forecasters contribute meaningfully to the
-            pool, and the mechanism can learn from diverse forecast signals.
+            With fixed deposits, only the skill gate g(σ) differentiates forecasters, so the mechanism can separate skill cleanly from wealth dynamics. The split between a deposit layer (which controls participation) and a skill layer (which controls weighting) is what makes the mechanism&apos;s aggregation robust: every forecaster keeps contributing a signal, and the mechanism re-weights them on the basis of accuracy rather than bankroll.
           </p>
         </div>
       </section>

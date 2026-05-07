@@ -11,7 +11,7 @@ import { VERDICT_COLOURS } from '@/lib/palette';
 export interface KeyInsight {
   /** ≤ 12 words */
   headline: string;
-  /** e.g. "−34% CRPS" */
+  /** e.g. "−7.6% CRPS" */
   statistic: string;
   /** One sentence */
   interpretation: string;
@@ -233,7 +233,13 @@ export default function ChartCard({
   return (
     <>
       <div
-        className={`bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-shadow duration-150 ${className}`}
+        className={`rounded-lg ${className}`}
+        style={{
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          padding: 18,
+          boxShadow: 'var(--shadow-sm)',
+        }}
         aria-label={ariaLabel}
       >
         {/* Header area */}

@@ -130,14 +130,15 @@ export default function SkillAllocationPanel() {
             reactive for reliable skill ranking
           </p>
           <p className="mt-1 text-xs text-amber-800">
-            The effective skill-averaging window is ≈ 1/ρ ={' '}
-            {Math.round(1 / comparison.config.rho)} rounds. With round-to-round
-            CRPS noise of order 0.05, the induced skill-estimate noise is
-            comparable to (or larger than) the CRPS differences between the
-            top forecasters (~0.002–0.005 on this dataset). This means the
-            ordering of close-performing models (e.g. XGBoost vs ARIMA) is
-            not stable from round to round. Lower ρ (≈ 0.05) gives stable
-            rankings at the cost of adaptation speed.
+            The effective skill-averaging window is &asymp; 1 / ρ ={' '}
+            {Math.round(1 / comparison.config.rho)} rounds. With per-round
+            CRPS noise of order 0.05, the induced noise in the skill estimate
+            is comparable to (or larger than) the CRPS gaps between the
+            top forecasters on this dataset (roughly 0.002 to 0.005). The
+            practical consequence is that the ordering of close-performing
+            models (for example, XGBoost versus ARIMA) is not stable from
+            round to round. A smaller ρ (around 0.05) gives stable rankings
+            at the cost of slower adaptation to genuine quality changes.
           </p>
         </div>
       )}
@@ -337,7 +338,7 @@ export default function SkillAllocationPanel() {
             <tbody>
               <tr className="border-b border-slate-100">
                 <td className="py-2 pr-4 text-slate-700">
-                  γ (deposit multiplier)
+                  γ (skill sharpness)
                 </td>
                 <td className="py-2 pr-4 text-right text-slate-600 tabular-nums">
                   4
@@ -348,7 +349,7 @@ export default function SkillAllocationPanel() {
               </tr>
               <tr className="border-b border-slate-100 last:border-0">
                 <td className="py-2 pr-4 text-slate-700">
-                  ρ (learning rate)
+                  ρ (EWMA learning rate)
                 </td>
                 <td className="py-2 pr-4 text-right text-slate-600 tabular-nums">
                   0.1
@@ -362,13 +363,15 @@ export default function SkillAllocationPanel() {
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs text-slate-600 leading-relaxed">
-            The tuned parameters (γ=16, ρ=0.5) achieve better skill
-            differentiation on the stable Elia wind dataset. Higher γ amplifies
-            the deposit gap between high-skill and low-skill forecasters, while
-            higher ρ makes the EWMA more responsive to recent performance.
-            However, sigma trajectories show occasional rank-order flips during
-            regime transitions, suggesting the aggressive parameters may
-            overreact to short-term noise.
+            The tuned parameters (γ = 16, ρ = 0.5) achieve better skill
+            differentiation on the stable Elia wind dataset. Higher γ makes the
+            loss-to-skill map σ = σ_min + (1−σ_min)·exp(−γL) steeper, so small
+            differences in mean loss translate into larger σ gaps between
+            high-skill and low-skill forecasters. Higher ρ makes the
+            exponentially-weighted loss estimate L react more quickly to recent
+            observations. The trade-off is noise: in the σ trajectories,
+            occasional rank-order flips appear during regime transitions, which
+            suggests the aggressive tuning also overreacts to short-term noise.
           </p>
         </div>
       </section>

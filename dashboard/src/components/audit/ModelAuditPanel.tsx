@@ -370,19 +370,23 @@ export default function ModelAuditPanel() {
       {/* ── XGBoost Deep Dive ────────────────────────────────────── */}
       <section className="space-y-6">
         <h2 className="text-lg font-semibold text-slate-900">
-          XGBoost Deep Dive
+          XGBoost deep dive
         </h2>
         <p className="text-xs text-slate-500">
-          XGBoost ranks 4th of 7 forecasters despite being the most complex
-          model. This section explores why it doesn't dominate simpler
-          baselines.
+          On this 1h-ahead slice, XGBoost ranks first among the seven forecasters
+          by mean CRPS and is correctly identified as top-skill by the EWMA
+          layer. Its lead over the naive and ARIMA persistence baselines is
+          modest, however, because wind power is strongly autocorrelated hour
+          to hour, which makes a simple persistence forecast a strong
+          benchmark. This section unpacks why the gap is small and where
+          XGBoost can be improved.
         </p>
 
         {/* Comparison bar chart */}
         {xgbComparison.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700">
-              XGBoost vs Key Baselines
+              XGBoost versus key baselines
             </h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={xgbComparison} layout="vertical">
@@ -426,10 +430,13 @@ export default function ModelAuditPanel() {
         {rollingXgbNaive.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700">
-              Rolling CRPS Difference (XGBoost − Naive, 168-step window)
+              Rolling CRPS difference (XGBoost &minus; Naive, 168-hour window)
             </h3>
             <p className="text-xs text-slate-500">
-              Positive values mean XGBoost is worse than Naive in that window.
+              Positive values mean XGBoost is worse than the naive persistence
+              forecast in that window. A mostly-negative series means XGBoost
+              is reliably ahead; any sustained positive excursion flags a
+              period where it loses to the simple baseline.
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={rollingXgbNaive}>
@@ -469,23 +476,25 @@ export default function ModelAuditPanel() {
         {/* Textual explanation */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
           <h3 className="text-sm font-semibold text-slate-800">
-            Why XGBoost Doesn't Dominate
+            Why the lead over persistence is narrow
           </h3>
           <p className="text-xs text-slate-600 leading-relaxed">
-            At 1-hour-ahead horizons, wind power autocorrelation exceeds 0.95,
-            making the persistence forecast (Naive) extremely competitive. XGBoost's
-            lag-based features capture the same autocorrelation structure but add
-            estimation noise from the rolling 168-hour training window. The short
-            retraining window limits the effective sample size for learning stable
-            nonlinear patterns, and separate pinball-loss quantile models can produce
-            crossing quantiles that degrade CRPS.
+            At the 1h-ahead horizon, hourly wind power has an autocorrelation
+            above 0.95, which makes the naive &ldquo;last-value&rdquo; forecast
+            very hard to beat. XGBoost&apos;s lag-based features capture the
+            same autocorrelation structure but also add estimation noise from
+            the rolling 168-hour training window. That short window limits the
+            effective sample size for learning stable non-linear patterns, and
+            fitting separate pinball-loss quantile models can produce crossing
+            quantiles that degrade CRPS. The result is that XGBoost does come
+            out on top here, but only marginally.
           </p>
         </div>
 
         {/* Improvement suggestions */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-slate-700">
-            Improvement Suggestions
+            Improvement suggestions
           </h3>
           {XGBOOST_SUGGESTIONS.map((sug) => (
             <div

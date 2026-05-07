@@ -95,14 +95,14 @@ export default function WaterfallChart({
   return (
     <ChartCard
       title={title}
-      subtitle="Each step adds one component. Green bars show the CRPS at that stage (lower = better)."
+      subtitle="Each step turns on one component of the mechanism. Green bars show the change in mean CRPS at that step (shorter bars = closer to the oracle)."
       provenance={provenance}
       help={{
-        term: 'Waterfall Chart',
+        term: 'Waterfall chart',
         definition:
-          'A chart showing how an initial value is incrementally increased or decreased by successive factors.',
+          'Shows how an initial value is successively moved up or down by a sequence of factors.',
         interpretation:
-          'Green bars indicate improvements (negative Δ, lower CRPS). Red bars indicate degradations (positive Δ, higher CRPS). Indigo bars show totals.',
+          'Green bars indicate improvements (negative Δ, lower CRPS). Red bars indicate degradations (positive Δ, higher CRPS). Indigo bars are absolute totals at that stage.',
         axes: { x: 'Step', y: metricLabel },
       }}
       chartType="Bar chart"

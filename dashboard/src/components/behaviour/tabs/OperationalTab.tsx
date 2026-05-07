@@ -42,9 +42,10 @@ export default function OperationalTab({ latencyExploiter, baseline }: {
         </p>
       </div>
       <p className="text-sm text-slate-600">
-        Latency exploiters submit reports with partial outcome information  - they observe
-        a noisy signal of the realisation before the submission deadline. This creates an unfair
-        information advantage that concentrates wealth.
+        Latency exploiters submit reports with partial outcome information:
+        they observe a noisy signal of the realised value before the submission
+        deadline. That creates an unfair information advantage which
+        concentrates wealth.
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -77,12 +78,13 @@ export default function OperationalTab({ latencyExploiter, baseline }: {
       </ChartCard>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700 space-y-1">
-        <div className="font-semibold text-amber-800">Taxonomy note  - Interface errors &amp; automation patterns</div>
+        <div className="font-semibold text-amber-800">Taxonomy note &mdash; Interface errors &amp; automation patterns</div>
         <p>
-          The full taxonomy also includes <em>interface errors</em> (accidental misreports due to
-          UI bugs or fat-finger mistakes) and <em>automation patterns</em> (bot-like agents that
-          submit at fixed intervals with algorithmic reports). These are not simulated here but
-          represent important operational frictions in real-world prediction market deployments.
+          The full taxonomy also covers <em>interface errors</em> (accidental
+          misreports from UI bugs or fat-finger mistakes) and <em>automation
+          patterns</em> (bot-like agents that submit at fixed intervals with
+          algorithmic reports). Neither is simulated here, but both are
+          important operational frictions in real-world prediction markets.
         </p>
       </div>
     </div>

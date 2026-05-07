@@ -29,7 +29,7 @@ export const LITERATURE_REFS: LiteratureRef[] = [
     keyFinding:
       'Extends Lambert\'s framework to energy forecasting with quantile-based settlement, showing that wagering mechanisms can aggregate wind power forecasts while maintaining incentive compatibility.',
     empiricalConnection:
-      'The Elia wind dataset evaluation directly follows Raja & Pinson\'s energy forecasting setting. The mechanism achieves −21% CRPS improvement over uniform weighting on this dataset.',
+      'The Elia wind dataset evaluation directly follows Raja & Pinson\'s energy forecasting setting. Under strictly-causal normalisation (May 2026 audit), the mechanism achieves −7.6% CRPS vs uniform on this dataset; Raja\'s history-free variant is −1.5%.',
   },
   {
     id: 'ranjan-gneiting-2010',
@@ -59,7 +59,7 @@ export const LITERATURE_REFS: LiteratureRef[] = [
     keyFinding:
       'Per-quantile OGD weighting learns separate weight vectors for each quantile level, allowing the aggregation to adapt to forecasters that excel at different parts of the distribution.',
     empiricalConnection:
-      'Vitali OGD achieves −65.5% CRPS improvement vs uniform in baselines, compared to the mechanism\'s −44.1%. The 21-percentage-point gap represents the cost of using a single weight vector across all quantiles.',
+      'Under strictly-causal normalisation, Vitali OGD achieves −18.3% CRPS improvement vs uniform on Elia wind baselines, compared to the mechanism\'s −7.6%. The ~11-percentage-point gap represents the cost of using a single weight vector across all quantiles.',
   },
   {
     id: 'berrisch-ziel-2024',
@@ -116,7 +116,7 @@ export const THEORY_VS_PRACTICE: TheoryVsPracticeRow[] = [
     theoreticalPrediction:
       'Per-quantile weighting should outperform single-weight aggregation when forecasters have heterogeneous quantile skill',
     empiricalObservation:
-      'Vitali OGD (per-quantile) achieves −65.5% vs uniform while mechanism (single-weight) achieves −44.1%, a 21-percentage-point gap confirming the benefit of per-quantile adaptation',
+      'On Elia wind (post-audit), Vitali OGD (per-quantile) achieves −18.3% vs uniform while the mechanism (single-weight) achieves −7.6%, an ~11-percentage-point gap confirming the benefit of per-quantile adaptation',
     source: 'Vitali et al.',
     supported: true,
   },
@@ -329,8 +329,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
     title: 'Switch to Vitali OGD per-quantile weighting',
     description:
       'Replace the single-weight linear pool with per-quantile OGD that learns separate weight vectors for each τ. This is the single highest-impact change available.',
-    evidence: 'Based on baselines.json: Vitali OGD achieves −65.5% vs uniform compared to mechanism\'s −44.1%.',
-    crpsEstimate: '21 percentage points additional improvement vs uniform',
+    evidence: 'Based on baselines.json: Vitali OGD achieves −18.3% vs uniform compared to mechanism\'s −7.6% on Elia wind (post-audit, strictly-causal normalisation).',
+    crpsEstimate: '~11 percentage points additional improvement vs uniform on wind',
   },
   {
     id: 'rec-agg-recalibration',

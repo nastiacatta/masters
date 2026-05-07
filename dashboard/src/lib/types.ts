@@ -175,12 +175,16 @@ export interface ArbitrageScanRow {
   arbTotalProfit: number;
   arbFinalWealth: number;
   arbitrageFoundRounds: number;
+  participationRounds?: number;
 }
 
 export interface DetectionAdaptationRow {
   attacker: string;
   totalProfit: number;
   finalWealth: number;
+  detectorMeanScore?: number;
+  detectorFlagRate?: number;
+  detectorEvalRounds?: number;
 }
 
 export interface CollusionStressRow {

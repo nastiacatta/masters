@@ -7,20 +7,54 @@ interface MetricCardProps {
   accent?: boolean;
 }
 
+/**
+ * Academic metric card — small eyebrow label, large tabular number in navy
+ * when accented, warm border and paper card background.
+ */
 export default function MetricCard({ label, value, subtitle, accent }: MetricCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      whileHover={{ y: -1 }}
-      className="bg-white border border-slate-200 rounded-xl px-4 py-3 min-w-0 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-[box-shadow,border-color] duration-150"
+      transition={{ duration: 0.2 }}
+      className="min-w-0 transition-colors"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        borderRadius: 4,
+        padding: '14px 16px',
+      }}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate">{label}</p>
-      <p className={`text-xl font-semibold mt-1 tabular-nums ${accent ? 'text-blue-600' : 'text-slate-900'}`}>
+      <p
+        className="uppercase tracking-wider truncate"
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.1em',
+          color: 'var(--ink-soft)',
+        }}
+      >
+        {label}
+      </p>
+      <p
+        className="mt-1 tabular-nums font-serif"
+        style={{
+          fontSize: 26,
+          lineHeight: 1.15,
+          fontWeight: 600,
+          color: accent ? 'var(--navy)' : 'var(--ink)',
+        }}
+      >
         {value}
       </p>
-      {subtitle && <p className="text-xs text-slate-400 mt-0.5 truncate">{subtitle}</p>}
+      {subtitle && (
+        <p
+          className="truncate"
+          style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}
+        >
+          {subtitle}
+        </p>
+      )}
     </motion.div>
   );
 }

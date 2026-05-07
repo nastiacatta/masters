@@ -54,7 +54,7 @@ const DATASETS: DatasetConfig[] = [
     rounds: '17,544 rounds',
     url: `${BASE}data/real_data/elia_wind/data/comparison.json`,
     colour: PALETTE.teal,
-    improvement: '44% CRPS improvement over equal weights',
+    improvement: 'Mechanism 7.6% better than equal weights (post-audit)',
   },
   {
     key: 'electricity',
@@ -62,7 +62,7 @@ const DATASETS: DatasetConfig[] = [
     rounds: '10,000 rounds',
     url: `${BASE}data/real_data/elia_electricity/data/comparison.json`,
     colour: PALETTE.coral,
-    improvement: '8% CRPS improvement (forecasters more similar)',
+    improvement: 'Essentially tied with equal weights (forecasters similar)',
   },
 ];
 
@@ -235,38 +235,53 @@ export default function ContributionsChartSlide() {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={skillData} margin={{ top: 8, right: 24, bottom: 28, left: 24 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
+            <LineChart data={skillData} margin={{ top: 12, right: 28, bottom: 36, left: 32 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} strokeOpacity={0.6} vertical={false} />
               <XAxis
                 dataKey="t"
                 label={{
                   value: 'Round',
                   position: 'insideBottom',
-                  offset: -12,
-                  style: { fontSize: TYPOGRAPHY.chartAxis.fontSize, fontFamily: TYPOGRAPHY.fontFamily },
+                  offset: -16,
+                  style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily },
                 }}
-                tick={{ fontSize: 16, fontFamily: TYPOGRAPHY.fontFamily }}
+                tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
+                tickLine={false}
+                axisLine={{ stroke: PALETTE.border }}
                 stroke={PALETTE.slate}
+                tickFormatter={(v: number) => v.toLocaleString()}
               />
               <YAxis
                 domain={[0, 1]}
+                ticks={[0, 0.25, 0.5, 0.75, 1]}
                 label={{
-                  value: 'Learned Skill (σ)',
+                  value: 'Learned skill (σ)',
                   angle: -90,
                   position: 'insideLeft',
-                  offset: 4,
-                  style: { fontSize: TYPOGRAPHY.chartAxis.fontSize, fontFamily: TYPOGRAPHY.fontFamily },
+                  offset: 8,
+                  style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAnchor: 'middle' },
                 }}
-                tick={{ fontSize: 16, fontFamily: TYPOGRAPHY.fontFamily }}
+                tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
+                tickLine={false}
+                axisLine={{ stroke: PALETTE.border }}
                 stroke={PALETTE.slate}
               />
               <Tooltip
                 isAnimationActive={false}
+                cursor={{ stroke: PALETTE.slate, strokeDasharray: '3 3', strokeOpacity: 0.5 }}
                 contentStyle={{
                   fontFamily: TYPOGRAPHY.fontFamily,
-                  fontSize: 13,
+                  fontSize: 12,
                   borderRadius: 8,
                   border: `1px solid ${PALETTE.border}`,
+                  boxShadow: '0 4px 16px rgba(27, 42, 74, 0.08)',
+                  padding: '8px 12px',
+                }}
+                labelFormatter={(label) => `Round ${Number(label).toLocaleString()}`}
+                formatter={(value, _name, entry) => {
+                  const key = (entry as { dataKey?: string })?.dataKey;
+                  const meta = FORECASTER_META.find((m) => m.key === key);
+                  return [Number(value).toFixed(3), meta?.name ?? String(key ?? '')];
                 }}
               />
               {FORECASTER_META.map((meta, idx) => (
@@ -297,7 +312,7 @@ export default function ContributionsChartSlide() {
           }}
         >
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Wind: 44% CRPS improvement — Naive ranks highest
+            Wind: −7.6% vs uniform — skill recovers ordering; best_single still wins
           </span>
         </div>
         <div
@@ -308,7 +323,7 @@ export default function ContributionsChartSlide() {
           }}
         >
           <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.coral, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Electricity: 8% gain (forecasters more similar)
+            Electricity: near-tied with equal weights (forecasters similar)
           </span>
         </div>
       </div>

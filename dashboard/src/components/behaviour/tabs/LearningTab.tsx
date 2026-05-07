@@ -64,9 +64,9 @@ export default function LearningTab() {
       {/* taxonomy notes for the 3 items */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-1">
         <div className="font-semibold text-slate-700">Taxonomy items in this family</div>
-        <p>• <strong>Reinforcement from profits</strong> - Agents adjust strategy based on payoff history. The mechanism&apos;s EWMA already performs this function on the mechanism side.</p>
-        <p>• <strong>Rule learning</strong> - Agents discover the scoring rule structure and optimise against it. Proper scoring rules are designed to make truthful reporting optimal even when the rule is known.</p>
-        <p>• <strong>Exploration vs exploitation</strong> - Agents balance trying new strategies vs exploiting known ones. This creates non-stationary behaviour that the EWMA must track.</p>
+        <p>&bull; <strong>Reinforcement from profits.</strong> Agents adjust strategy based on payoff history. The mechanism&apos;s EWMA already performs this function on the mechanism side.</p>
+        <p>&bull; <strong>Rule learning.</strong> Agents discover the structure of the scoring rule and optimise against it. Proper scoring rules are designed so truthful reporting remains optimal even when the rule is known.</p>
+        <p>&bull; <strong>Exploration versus exploitation.</strong> Agents balance trying new strategies against exploiting known ones. This creates non-stationary behaviour that the EWMA must track.</p>
       </div>
     </div>
   );

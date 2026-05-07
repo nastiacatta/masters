@@ -14,6 +14,9 @@ interface InfoToggleProps extends InfoToggleContent {
   className?: string;
 }
 
+/**
+ * Small "i" info affordance with a compact academic popover.
+ */
 export default function InfoToggle({
   term,
   definition,
@@ -31,8 +34,7 @@ export default function InfoToggle({
       if (
         popRef.current?.contains(e.target as Node) ||
         btnRef.current?.contains(e.target as Node)
-      )
-        return;
+      ) return;
       setOpen(false);
     };
     document.addEventListener('mousedown', close);
@@ -45,44 +47,69 @@ export default function InfoToggle({
         ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full transition-colors shrink-0"
         title={`What is ${term}?`}
         aria-label={`Help: ${term}`}
+        aria-expanded={open}
+        style={{
+          color: open ? 'var(--navy)' : 'var(--ink-faint)',
+          background: open ? 'var(--navy-tint)' : 'transparent',
+        }}
       >
-        <span className="text-[11px] font-bold">i</span>
+        <span style={{ fontSize: 11, fontWeight: 700 }}>i</span>
       </button>
       {open && (
         <div
           ref={popRef}
-          className="absolute left-0 top-full mt-1 z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow-lg p-4 animate-in fade-in slide-in-from-top-1"
+          className="absolute left-0 top-full mt-1.5 z-50 w-72 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-1 duration-150"
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border-strong)',
+            borderRadius: 6,
+            padding: 16,
+            boxShadow: 'var(--shadow-lg)',
+          }}
           role="dialog"
           aria-label={`Definition: ${term}`}
         >
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h5 className="text-xs font-semibold text-slate-800">{term}</h5>
+            <h5
+              className="font-serif"
+              style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}
+            >
+              {term}
+            </h5>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-slate-600 text-sm shrink-0"
+              className="rounded w-5 h-5 inline-flex items-center justify-center text-sm shrink-0 transition-colors"
               aria-label="Close"
+              style={{ color: 'var(--ink-faint)' }}
             >
               ✕
             </button>
           </div>
           {latex && (
-            <div className="mb-3 p-2.5 rounded-lg bg-slate-50 border border-slate-100 overflow-x-auto text-base [&_.katex]:text-[1.0625rem]">
+            <div
+              className="mb-3 p-2.5 overflow-x-auto text-base [&_.katex]:text-[1.0625rem]"
+              style={{
+                background: 'var(--cream)',
+                border: '1px solid var(--border)',
+                borderRadius: 4,
+              }}
+            >
               <MathBlock latex={latex} inline />
             </div>
           )}
-          <p className="text-[11px] text-slate-600 leading-relaxed mb-1.5">
-            <strong className="text-slate-700">Meaning:</strong> {definition}
+          <p style={{ fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.55, marginBottom: 6 }}>
+            <strong style={{ color: 'var(--ink)' }}>Meaning.</strong> {definition}
           </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed mb-1.5">
-            <strong className="text-slate-700">Interpretation:</strong> {interpretation}
+          <p style={{ fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.55, marginBottom: 6 }}>
+            <strong style={{ color: 'var(--ink)' }}>Interpretation.</strong> {interpretation}
           </p>
           {axes && (
-            <p className="text-[11px] text-slate-500">
-              <strong className="text-slate-600">Axes:</strong> x = {axes.x}, y = {axes.y}
+            <p style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+              <strong style={{ color: 'var(--ink-muted)' }}>Axes.</strong> x = {axes.x}, y = {axes.y}
             </p>
           )}
         </div>

@@ -135,13 +135,36 @@ export default function MechanismPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      <div className="max-w-[1100px] mx-auto px-8 pt-14 pb-20 space-y-12">
         {/* ── Header ── */}
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Explorer</h2>
-          <p className="text-sm text-slate-600 mt-2 max-w-2xl">
-            Interactive sandbox for exploring the mechanism. Adjust parameters, step through rounds, and inspect agent-level data.
-            Each forecaster submits quantiles at τ = (0.1, 0.25, 0.5, 0.75, 0.9); the mechanism scores them via the pinball-loss CRPS surrogate.
+          <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
+            Interactive mechanism
+          </p>
+          <h1
+            className="font-serif tracking-tight"
+            style={{
+              fontSize: 'clamp(32px, 4vw, 42px)',
+              lineHeight: 1.15,
+              fontWeight: 600,
+              color: 'var(--ink)',
+            }}
+          >
+            Explorer
+          </h1>
+          <p
+            className="font-serif mt-4"
+            style={{
+              fontSize: 18,
+              lineHeight: 1.55,
+              color: 'var(--ink-muted)',
+              maxWidth: 680,
+            }}
+          >
+            Interactive sandbox for exploring the mechanism. Change parameters, step through rounds, and
+            inspect per-agent state. Each forecaster submits quantile forecasts at &tau; = (0.1, 0.25, 0.5,
+            0.75, 0.9); the mechanism scores them with the pinball loss, a per-quantile surrogate for CRPS
+            that is fast to compute and sensitive to both bias and sharpness.
           </p>
         </div>
 

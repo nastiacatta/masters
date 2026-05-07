@@ -16,8 +16,13 @@ interface PageHeaderProps {
   breadcrumbs?: { label: string; to?: string }[];
   /** When true, title uses larger hero styling */
   hero?: boolean;
+  /** Optional eyebrow label (rendered above the title) */
+  eyebrow?: string;
 }
 
+/**
+ * Academic page header — serif title, understated eyebrow, readable lead.
+ */
 export default function PageHeader({
   title,
   subtitle,
@@ -27,51 +32,117 @@ export default function PageHeader({
   controls,
   breadcrumbs,
   hero = false,
+  eyebrow,
 }: PageHeaderProps) {
   return (
-    <div className="mb-6">
+    <header className="mb-8">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+        <nav
+          className="flex items-center gap-1.5 mb-3"
+          style={{ fontSize: 12.5, color: 'var(--ink-faint)' }}
+        >
           {breadcrumbs.map((b, i) => (
             <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-slate-300">/</span>}
+              {i > 0 && <span style={{ color: 'var(--ink-faint)', opacity: 0.5 }}>/</span>}
               {b.to ? (
-                <Link to={b.to} className="hover:text-slate-700">
+                <Link
+                  to={b.to}
+                  className="transition-colors"
+                  style={{ color: 'var(--ink-soft)' }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink)'; }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-soft)'; }}
+                >
                   {b.label}
                 </Link>
               ) : (
-                <span className="text-slate-600">{b.label}</span>
+                <span style={{ color: 'var(--ink-soft)' }}>{b.label}</span>
               )}
             </span>
           ))}
         </nav>
       )}
-      <h2 className={hero ? 'text-2xl font-semibold text-slate-900' : 'text-xl font-semibold text-slate-900'}>
+
+      {eyebrow && (
+        <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
+          {eyebrow}
+        </p>
+      )}
+
+      <h1
+        className="font-serif tracking-tight"
+        style={{
+          fontSize: hero ? 'clamp(32px, 4vw, 42px)' : 28,
+          lineHeight: 1.15,
+          fontWeight: 600,
+          color: 'var(--ink)',
+        }}
+      >
         {title}
-      </h2>
+      </h1>
+
       {subtitle && (
-        <p className="text-sm text-slate-600 mt-1">
+        <p
+          className="font-serif"
+          style={{
+            fontSize: 18,
+            lineHeight: 1.55,
+            color: 'var(--ink-muted)',
+            marginTop: 14,
+            maxWidth: 680,
+          }}
+        >
           {subtitle}
         </p>
       )}
+
       {description && (
-        <p className="text-sm text-slate-500 mt-1">{description}</p>
+        <p
+          style={{
+            fontSize: 15,
+            lineHeight: 1.6,
+            color: 'var(--ink-soft)',
+            marginTop: 10,
+            maxWidth: 680,
+          }}
+        >
+          {description}
+        </p>
       )}
+
       {question && (
-        <p className="text-sm font-medium text-slate-700 mt-2">
+        <p
+          className="font-serif"
+          style={{
+            fontSize: 16.5,
+            lineHeight: 1.55,
+            color: 'var(--ink)',
+            marginTop: 14,
+            fontWeight: 500,
+          }}
+        >
           {question}
         </p>
       )}
+
       {takeaway && (
-        <p className="text-sm text-slate-600 mt-1 italic">
+        <p
+          className="font-serif italic"
+          style={{
+            fontSize: 15.5,
+            lineHeight: 1.55,
+            color: 'var(--ink-soft)',
+            marginTop: 8,
+          }}
+        >
           {takeaway}
         </p>
       )}
+
       {controls && (
-        <div className="mt-4 flex flex-wrap items-center gap-4">
+        <div className="mt-6 flex flex-wrap items-center gap-4">
           {controls}
         </div>
       )}
-    </div>
+    </header>
   );
 }

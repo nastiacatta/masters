@@ -141,24 +141,25 @@ function FeedbackArrow() {
       <svg
         viewBox="0 0 1000 56"
         style={{ width: '100%', height: '100%' }}
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
       >
         <defs>
           <marker id="feedback-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
-        {/* Straight horizontal line from step 5 (right) to step 2 (left) — arrowhead points left */}
+        {/* Horizontal line from step 5 centre (~900) to step 2 centre (~300) — arrowhead points left */}
         <path
-          d="M 820 28 L 300 28"
+          d="M 900 28 L 300 28"
           fill="none"
           stroke={PALETTE.teal}
           strokeWidth="2.5"
           strokeDasharray="8 5"
           markerEnd="url(#feedback-arrow)"
+          vectorEffect="non-scaling-stroke"
         />
         <text
-          x="560" y="20"
+          x="600" y="20"
           fill={PALETTE.teal}
           fontSize="13"
           fontWeight="600"

@@ -12,12 +12,7 @@ export interface SectionHeaderProps {
 }
 
 /**
- * Clean academic section header.
- *
- * Renders as "A. Title" in 14px semi-bold slate-900, with an optional
- * description below. Children are rendered beneath the header block.
- * Replaces the old StepSection component — no numbered circles, no
- * tutorial styling.
+ * Academic section header — small navy lettered label paired with a serif title.
  */
 export default function SectionHeader({
   label,
@@ -28,22 +23,47 @@ export default function SectionHeader({
   return (
     <section>
       <h3
-        className="font-semibold text-slate-900"
-        style={{ fontSize: '14px', lineHeight: '20px' }}
+        className="flex items-baseline gap-2.5"
+        style={{ margin: 0 }}
       >
-        {label ? `${label}. ` : ''}{title}
+        {label && (
+          <span
+            aria-hidden="true"
+            className="inline-flex items-center justify-center font-mono"
+            style={{
+              minWidth: 22, height: 22, padding: '0 6px',
+              borderRadius: 3,
+              background: 'var(--navy-tint)',
+              color: 'var(--navy)',
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          >
+            {label}
+          </span>
+        )}
+        <span
+          className="font-serif tracking-tight"
+          style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          {title}
+        </span>
       </h3>
 
       {description && (
         <p
-          className="text-slate-500 mt-1"
-          style={{ fontSize: '12px', lineHeight: '18px' }}
+          style={{
+            fontSize: 13.5,
+            lineHeight: 1.55,
+            color: 'var(--ink-soft)',
+            marginTop: 6,
+          }}
         >
           {description}
         </p>
       )}
 
-      <div className="mt-3">
+      <div className="mt-4">
         {children}
       </div>
     </section>

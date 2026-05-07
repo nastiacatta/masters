@@ -69,16 +69,26 @@ export default function MathBlock({
 
   return (
     <div
-      className={clsx(
-        'text-center',
-        showAccent
-          ? 'rounded-xl border border-blue-300 bg-blue-50/50 text-slate-800 px-4 py-3'
-          : '',
-        className
-      )}
+      className={clsx('text-center', className)}
+      style={showAccent ? {
+        border: '1px solid rgba(29, 52, 97, 0.25)',
+        background: 'var(--navy-tint)',
+        color: 'var(--ink)',
+        padding: '12px 16px',
+        borderRadius: 4,
+      } : undefined}
     >
       {label && (
-        <p className="text-[11px] font-sans font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+        <p
+          className="font-sans uppercase"
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.12em',
+            color: 'var(--ink-soft)',
+            marginBottom: 6,
+          }}
+        >
           {label}
         </p>
       )}
@@ -92,31 +102,45 @@ export default function MathBlock({
             <div className="font-mono text-sm break-all">{children}</div>
           )}
         </div>
-        <span className="ml-2 shrink-0 text-[11px] font-sans font-medium text-slate-500">
+        <span
+          className="ml-2 shrink-0 font-sans"
+          style={{ fontSize: 11, fontWeight: 500, color: 'var(--ink-faint)' }}
+        >
           Eq.&nbsp;{eqNum}
         </span>
       </div>
 
       {caption && (
-        <p className="text-xs font-sans text-slate-500 mt-1.5">{caption}</p>
+        <p
+          className="font-sans"
+          style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 6 }}
+        >
+          {caption}
+        </p>
       )}
 
       {/* Explanation and variable legend for critical formulas */}
       {showDetails && (
-        <div className="mt-2 text-left">
+        <div className="mt-3 text-left">
           {explanation && (
-            <p className="text-[12px] leading-relaxed text-slate-600">
+            <p style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.55 }}>
               {explanation}
             </p>
           )}
           {variables && variables.length > 0 && (
-            <div className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+            <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
               {variables.map((v) => (
                 <div key={v.symbol} className="contents">
-                  <span className="text-[11px] font-mono text-slate-700 text-left">
+                  <span
+                    className="font-mono text-left"
+                    style={{ fontSize: 12, color: 'var(--ink)' }}
+                  >
                     {v.symbol}
                   </span>
-                  <span className="text-[11px] font-sans text-slate-600 text-right">
+                  <span
+                    className="font-sans text-right"
+                    style={{ fontSize: 12, color: 'var(--ink-muted)' }}
+                  >
                     {v.meaning}
                   </span>
                 </div>

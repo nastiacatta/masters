@@ -24,27 +24,27 @@ import { useAuditData } from '@/hooks/useAuditData';
 const ALTERNATIVE_APPROACHES = [
   {
     id: 'vitali-ogd',
-    title: 'Per-quantile Online Gradient Descent (Vitali et al.)',
+    title: 'Per-quantile Online Gradient Descent (OGD) — Vitali et al.',
     description:
-      'Learns separate weight vectors for each quantile level, allowing the aggregation to adapt to forecasters that excel at different parts of the distribution.',
+      'Learns a separate weight vector for each quantile level using online gradient descent, so the aggregation can adapt to forecasters that excel at different parts of the distribution.',
   },
   {
     id: 'kernel-pool',
     title: 'Kernel-embedded probabilistic forecast pooling (Bassetti et al.)',
     description:
-      'Embeds forecasts in a reproducing kernel Hilbert space before pooling, preserving calibration properties that the linear pool destroys.',
+      'Embeds each forecast in a reproducing kernel Hilbert space before pooling, preserving calibration properties that the linear pool destroys.',
   },
   {
     id: 'quasi-arith',
-    title: 'Quasi-arithmetic pooling with proper scoring rule',
+    title: 'Quasi-arithmetic pooling with a proper scoring rule',
     description:
-      'Uses a generalised mean (logarithmic or power mean) instead of the arithmetic mean, which can preserve calibration under certain conditions.',
+      'Uses a generalised mean (logarithmic or power mean) in place of the arithmetic mean. Under certain conditions this preserves calibration.',
   },
   {
     id: 'recalibration',
     title: 'Empirical recalibration transform',
     description:
-      'Post-processes the linear pool CDF with a learned recalibration function (e.g., isotonic regression on PIT values) to correct systematic tail miscalibration.',
+      'Post-processes the linear-pool CDF with a learned recalibration function (for example, isotonic regression on the probability integral transform) to correct systematic tail miscalibration.',
   },
 ];
 
@@ -173,8 +173,9 @@ export default function AggregationAccuracyPanel() {
           Method Comparison
         </h2>
         <p className="text-xs text-slate-500">
-          Mean CRPS and delta vs uniform weighting for all aggregation methods.
-          Lower CRPS is better; negative delta means improvement over uniform.
+          Mean CRPS for each aggregation method and the difference versus
+          equal (uniform) weighting. Lower CRPS is better; a negative delta is
+          an improvement over equal weighting.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
@@ -286,7 +287,8 @@ export default function AggregationAccuracyPanel() {
           Calibration Reliability Diagram
         </h2>
         <p className="text-xs text-slate-500">
-          PIT coverage by quantile. Perfect calibration follows the diagonal.
+          Probability integral transform (PIT) coverage by nominal quantile
+          level. Perfect calibration tracks the 45° diagonal.
         </p>
         {calibrationData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
@@ -419,20 +421,20 @@ export default function AggregationAccuracyPanel() {
         </h2>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
           <p className="text-xs text-slate-700 leading-relaxed">
-            <span className="font-semibold">Ranjan & Gneiting (2010)</span>{' '}
+            <span className="font-semibold">Ranjan &amp; Gneiting (2010)</span>{' '}
             proved that any nontrivial weighted average (linear pool) of
-            individually calibrated probabilistic forecasts is necessarily
-            uncalibrated. The combined forecast is overdispersed in the centre
+            individually calibrated probabilistic forecasts is itself
+            uncalibrated. The pooled forecast is overdispersed in the centre
             and underdispersed in the tails.
           </p>
           <p className="text-xs text-slate-600 leading-relaxed">
-            This is a fundamental limitation of the linear pooling approach used
-            by the mechanism. The calibration reliability diagram above confirms
-            this prediction: central quantiles (0.25–0.75) are well-calibrated,
-            but tail quantiles (0.1, 0.9) show systematic miscalibration with
-            coverage gaps of 3–5%. Post-hoc recalibration (e.g., isotonic
-            regression on PIT values) or switching to a non-linear pooling
-            method could address this limitation.
+            This is a fundamental limitation of the linear pooling this
+            mechanism uses. The reliability diagram above is consistent with
+            the theorem: central quantiles (0.25&ndash;0.75) are close to the
+            diagonal, but the outer quantiles (0.1 and 0.9) show systematic
+            coverage gaps of 3&ndash;5 percentage points. Post-hoc
+            recalibration (for example, isotonic regression on the PIT) or a
+            non-linear pooling method would be needed to close those gaps.
           </p>
         </div>
       </section>

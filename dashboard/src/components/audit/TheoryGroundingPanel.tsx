@@ -45,17 +45,17 @@ export default function TheoryGroundingPanel() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <HighlightCard
-            title="Linear Pool Uncalibration"
-            source="Ranjan & Gneiting (2010)"
-            prediction="Any nontrivial weighted average of calibrated forecasts is necessarily uncalibrated — overdispersed in the centre, underdispersed in the tails."
-            observation="Calibration diagram confirms: central quantiles (0.25–0.75) are well-calibrated, but tail quantiles (0.1, 0.9) show 3–5% coverage gaps."
+            title="Linear-Pool Miscalibration"
+            source="Ranjan &amp; Gneiting (2010)"
+            prediction="Any nontrivial weighted average of individually-calibrated forecasts is necessarily uncalibrated: overdispersed in the centre, underdispersed in the tails."
+            observation="The calibration reliability diagram confirms this: central quantiles (0.25–0.75) are well-calibrated, but tail quantiles (0.1, 0.9) show coverage gaps of 3–5 percentage points."
             colour="amber"
           />
           <HighlightCard
-            title="MWU Regret Bound"
-            source="Cesa-Bianchi & Lugosi (2006)"
-            prediction="Multiplicative Weights Update achieves O(√(T log N)) regret. Fixed learning rate EWMA does not guarantee sublinear regret."
-            observation="Mechanism CRPS (0.0448) is 23% above oracle (0.0344). The gap persists over 17,344 rounds — consistent with linear regret accumulation."
+            title="Multiplicative-Weights Regret Bound"
+            source="Cesa-Bianchi &amp; Lugosi (2006)"
+            prediction="Multiplicative Weights Update (MWU) achieves O(√(T log N)) regret. A fixed-rate EWMA does not in general guarantee sublinear regret."
+            observation="The mechanism's mean CRPS (0.0448) is 23% above oracle (0.0344), and the gap persists over the 17,344 evaluation rounds (17,544 hourly points minus a 200-round warmup). This is consistent with linear regret accumulation."
             colour="blue"
           />
         </div>

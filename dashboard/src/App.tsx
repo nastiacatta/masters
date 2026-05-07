@@ -3,6 +3,8 @@ import { StoreProvider } from '@/lib/store';
 import { ExplorerProvider } from '@/lib/explorerStore';
 import Sidebar from '@/components/dashboard/Sidebar';
 import StickyGlossary from '@/components/dashboard/StickyGlossary';
+import BackToTop from '@/components/dashboard/BackToTop';
+import KeyboardShortcuts from '@/components/dashboard/KeyboardShortcuts';
 
 import HomePage from '@/pages/HomePage';
 import MechanismPage from '@/pages/MechanismPage';
@@ -48,9 +50,9 @@ export default function App() {
 function MainLayout() {
   return (
     <>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen overflow-hidden" style={{ background: 'var(--paper)' }}>
         <Sidebar />
-        <main className="flex-1 overflow-hidden bg-slate-50 flex flex-col">
+        <main className="flex-1 overflow-hidden flex flex-col" style={{ background: 'var(--paper)' }}>
           <PageTransition>
             <Routes>
               {/* Thesis flow */}
@@ -87,6 +89,8 @@ function MainLayout() {
         </main>
       </div>
       <StickyGlossary />
+      <BackToTop />
+      <KeyboardShortcuts />
     </>
   );
 }

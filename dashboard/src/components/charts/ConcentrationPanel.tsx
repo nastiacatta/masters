@@ -78,13 +78,13 @@ export default function ConcentrationPanel({ data }: ConcentrationPanelProps) {
   return (
     <ChartCard
       title="Influence Distribution"
-      subtitle="How evenly influence is spread across forecasters. Lower Gini = fairer. Higher N_eff = more diverse."
+      subtitle="How evenly weight is spread across forecasters. Lower Gini = fairer; higher N_eff = more diverse aggregate."
       help={{
         term: 'Concentration Metrics',
         definition:
-          'Gini measures wealth inequality (0 = equal, 1 = one agent holds all). HHI measures influence concentration. N_eff is the effective number of participants.',
+          'Gini measures inequality in the weight or wealth vector (0 = perfectly equal, 1 = one forecaster has everything). HHI is the sum of squared weights, Σ wᵢ², so larger HHI means more concentration. N_eff = 1 / HHI is the effective number of forecasters that carry meaningful weight.',
         interpretation:
-          'Lower Gini and HHI indicate healthier market structure. Higher N_eff means more diverse participation. Compare across methods to see which concentrates influence.',
+          'Lower Gini and HHI indicate a healthier, less concentrated aggregate. Higher N_eff means more forecasters are actually contributing. Compare across methods to see which concentrates weight the most.',
         axes: { x: 'Method', y: 'Metric value' },
       }}
     >

@@ -82,16 +82,54 @@ export default function RobustnessPage() {
     <div className="flex-1 overflow-y-auto">
     <FigureProvider>
     <EquationProvider>
-    <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+    <div className="max-w-[1100px] mx-auto px-8 pt-14 pb-20 space-y-12">
       <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Robustness &amp; attacks</h2>
-        <p className="text-sm text-slate-600 mt-2 max-w-2xl">
+        <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
+          Resilience testing
+        </p>
+        <h1
+          className="font-serif tracking-tight"
+          style={{
+            fontSize: 'clamp(32px, 4vw, 42px)',
+            lineHeight: 1.15,
+            fontWeight: 600,
+            color: 'var(--ink)',
+          }}
+        >
+          Robustness &amp; attacks
+        </h1>
+        <p
+          className="font-serif mt-4"
+          style={{
+            fontSize: 18,
+            lineHeight: 1.55,
+            color: 'var(--ink-muted)',
+            maxWidth: 680,
+          }}
+        >
           Does the mechanism hold up under missingness, identity splitting, and parameter variation?
         </p>
-        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] text-amber-900 max-w-2xl leading-relaxed">
-          In-browser simulation (point-score, baseline DGP, seed 42, N = 6, T = 200).
-          For project-grade evidence, see the pre-run Python experiment outputs.
+        <div
+          className="mt-5 flex items-start gap-2.5 px-4 py-3 max-w-2xl"
+          style={{
+            background: 'var(--amber-tint)',
+            border: '1px solid rgba(180, 83, 9, 0.22)',
+            borderRadius: 4,
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: '#78350f',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="mt-0.5 shrink-0" style={{ color: 'var(--amber)' }}>
+            <path d="M8 2L1.5 13.5H14.5L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            <path d="M8 7V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="8" cy="12" r="0.75" fill="currentColor" />
+          </svg>
+          <span>
+            In-browser simulation (point-score, baseline DGP, seed 42, N = 6, T = 200).
+            For project-grade evidence, see the pre-run Python experiment outputs.
+          </span>
         </div>
       </div>
 

@@ -123,7 +123,7 @@ export default function OverviewTab({ summary, familyImpact, setTab }: {
     <div className="space-y-8">
       {/* (1) Summary sentence */}
       <p className="text-sm text-slate-600">
-        The mechanism sees deposits, reports, and participation, never motives. Each behaviour below is tested in isolation.
+        The mechanism observes deposits, reports, and participation, never motives. Each behaviour below is tested in isolation against the truthful baseline.
       </p>
 
       {/* (2) Cross-behaviour comparison table — promoted to top */}
@@ -131,7 +131,7 @@ export default function OverviewTab({ summary, familyImpact, setTab }: {
         <h3 className="text-sm font-semibold text-slate-800">Cross-behaviour comparison</h3>
         <p className="text-xs text-slate-500">
           Sorted by CRPS impact (worst first). Green = beneficial, red = harmful.
-          All runs: {T} rounds, {N} agents, seed {SEED}, baseline DGP. Paired against truthful baseline. 18 presets (RL excluded, mechanism layer).
+          All runs use {T} rounds, {N} agents, seed {SEED}, and the baseline data-generating process, paired against the truthful baseline. 18 presets total; reinforcement-learning agents are excluded at the mechanism layer.
         </p>
         <EnhancedComparisonTable
           rows={summary}

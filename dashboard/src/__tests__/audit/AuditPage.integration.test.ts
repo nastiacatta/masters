@@ -164,7 +164,7 @@ describe('AuditPage integration', () => {
   it('renders all 6 tab buttons', () => {
     renderPage();
     for (const name of TAB_NAMES) {
-      expect(screen.getByRole('button', { name })).toBeTruthy();
+      expect(screen.getByRole('tab', { name })).toBeTruthy();
     }
   });
 
@@ -172,47 +172,47 @@ describe('AuditPage integration', () => {
 
   it('defaults to the Theory tab', () => {
     renderPage();
-    // Theory tab should be active (has the active border class)
-    const theoryBtn = screen.getByRole('button', { name: 'Theory' });
-    expect(theoryBtn.className).toContain('border-slate-800');
+    // Theory tab should be active (aria-selected="true")
+    const theoryBtn = screen.getByRole('tab', { name: 'Theory' });
+    expect(theoryBtn.getAttribute('aria-selected')).toBe('true');
   });
 
   it('switches to Models tab on click', () => {
     renderPage();
-    fireEvent.click(screen.getByRole('button', { name: 'Models' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Models' }));
     // Models tab should now be active
-    const modelsBtn = screen.getByRole('button', { name: 'Models' });
-    expect(modelsBtn.className).toContain('border-slate-800');
+    const modelsBtn = screen.getByRole('tab', { name: 'Models' });
+    expect(modelsBtn.getAttribute('aria-selected')).toBe('true');
     // Theory tab should be inactive
-    const theoryBtn = screen.getByRole('button', { name: 'Theory' });
-    expect(theoryBtn.className).toContain('border-transparent');
+    const theoryBtn = screen.getByRole('tab', { name: 'Theory' });
+    expect(theoryBtn.getAttribute('aria-selected')).toBe('false');
   });
 
   it('switches to each tab and shows the correct panel content', () => {
     renderPage();
 
     // Click Models tab — should show Forecaster Ranking
-    fireEvent.click(screen.getByRole('button', { name: 'Models' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Models' }));
     expect(screen.getByText('Forecaster Ranking')).toBeTruthy();
 
     // Click Skill tab — should show skill-related content
-    fireEvent.click(screen.getByRole('button', { name: 'Skill' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Skill' }));
     expect(screen.getByText(/Sigma Bar Chart|Skill Allocation|Convergence/)).toBeTruthy();
 
     // Click Wagers tab — should show wager-related content
-    fireEvent.click(screen.getByRole('button', { name: 'Wagers' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Wagers' }));
     expect(screen.getByText('Effective Wager Breakdown')).toBeTruthy();
 
     // Click Aggregation tab — should show aggregation-related content
-    fireEvent.click(screen.getByRole('button', { name: 'Aggregation' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Aggregation' }));
     expect(screen.getByText('Method Comparison')).toBeTruthy();
 
     // Click Improvements tab — should show improvement-related content
-    fireEvent.click(screen.getByRole('button', { name: 'Improvements' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Improvements' }));
     expect(screen.getAllByText(/model|skill|aggregation|economic/i).length).toBeGreaterThan(0);
 
     // Click back to Theory tab
-    fireEvent.click(screen.getByRole('button', { name: 'Theory' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Theory' }));
     expect(screen.getByText('Literature Summary')).toBeTruthy();
   });
 
@@ -220,10 +220,10 @@ describe('AuditPage integration', () => {
     renderPage();
     expect(screen.getByText(/Tab 1 of 6: Theory/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Models' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Models' }));
     expect(screen.getByText(/Tab 2 of 6: Models/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Improvements' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Improvements' }));
     expect(screen.getByText(/Tab 6 of 6: Improvements/)).toBeTruthy();
   });
 
@@ -241,7 +241,7 @@ describe('AuditPage integration', () => {
     mockAuditData.comparison = null;
     renderPage();
     // Tab buttons should still render
-    expect(screen.getByRole('button', { name: 'Theory' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Theory' })).toBeTruthy();
     // But panel content should not be visible
     expect(screen.queryByText('Forecaster Ranking')).toBeNull();
   });
@@ -275,6 +275,6 @@ describe('AuditPage integration', () => {
 
   it('renders the page header', () => {
     renderPage();
-    expect(screen.getByText('Performance Audit')).toBeTruthy();
+    expect(screen.getByText('Performance audit')).toBeTruthy();
   });
 });

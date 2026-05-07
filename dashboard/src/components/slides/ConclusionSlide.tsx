@@ -2,29 +2,33 @@ import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /* ── CRPS comparison data (benchmark on Elia) ── */
+// Numbers regenerated under the post-fix pipeline (causal normalisation,
+// horizon residual rewrite, warmup floor). Source: baselines.json emitted
+// by scripts/run_baseline_comparison.py on Elia wind (T=17344) and
+// electricity (T=~70k). See onlinev2/outputs/post_fix_deltas/SUMMARY.md.
 const comparisons = [
   {
     label: 'Raja et al.',
     tag: 'History-free',
     tagColour: PALETTE.slate,
-    wind: '−2.5 %',
-    elec: '−2.3 %',
+    wind: '−1.5 %',
+    elec: '+0.0 %',
     note: 'Self-financed but no memory across rounds',
   },
   {
     label: 'Vitali & Pinson',
     tag: 'OGD',
     tagColour: PALETTE.purple,
-    wind: '−65 %',
-    elec: '−20 %',
+    wind: '−18.3 %',
+    elec: '−2.3 %',
     note: 'Lowest CRPS in this benchmark — not self-financed; relative weights',
   },
   {
     label: 'This project',
     tag: 'Skill + Lambert',
     tagColour: PALETTE.teal,
-    wind: '−44 %',
-    elec: '−8 %',
+    wind: '−7.6 %',
+    elec: '−0.2 %',
     note: 'Adaptive and self-financed, with an absolute skill signal',
   },
 ] as const;
