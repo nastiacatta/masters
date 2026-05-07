@@ -14,7 +14,7 @@ const QA_ITEMS: QAItem[] = [
     question:
       "Why not just use Vitali & Pinson's approach? It has lower CRPS.",
     answer:
-      "Vitali & Pinson's OGD achieves lower CRPS (−18.3 % wind) but uses Shapley settlement (not self-financed) and relative weights on a simplex. This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness, and uses absolute skill signals. The trade-off is quantified: roughly 11 percentage points of CRPS on wind relative to OGD, in exchange for self-financing and absolute skill.",
+      "Vitali & Pinson's OGD achieves lower CRPS (−18.0 % wind) but uses Shapley settlement (not self-financed) and relative weights on a simplex. This project's mechanism preserves Lambert's seven formal properties, including budget balance and sybilproofness, and uses absolute skill signals. The trade-off is quantified: roughly 11 percentage points of CRPS on wind relative to OGD, in exchange for self-financing and absolute skill.",
   },
   {
     question:
@@ -763,7 +763,7 @@ export default function AppendixSlide(_props: {
               </h4>
               <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
                 On 17,544 hourly points of Elia offshore wind, under strictly-causal normalisation
-                (training pipeline audit, May 2026), the mechanism's mean CRPS is <strong>about 7.6% lower</strong> than equal-weight averaging. The calculation:
+                (training pipeline audit, May 2026), the mechanism's mean CRPS is <strong>about 7.0% lower</strong> than equal-weight averaging. The calculation:
               </p>
               <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -791,8 +791,8 @@ export default function AppendixSlide(_props: {
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 {[
-                  { label: 'This Project', wind: '−7.6%', elec: '−0.2%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
-                  { label: 'Vitali OGD (per-τ)', wind: '−18.3%', elec: '−2.3%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
+                  { label: 'This Project', wind: '−7.0%', elec: '−0.2%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
+                  { label: 'Vitali OGD (per-τ)', wind: '−18.0%', elec: '−2.3%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
                   { label: 'Raja history-free', wind: '−1.5%', elec: '+0.0%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
                 ].map((item) => (
                   <div key={item.label} style={{ padding: '16px 20px', background: item.tint, borderRadius: 10, textAlign: 'center' }}>

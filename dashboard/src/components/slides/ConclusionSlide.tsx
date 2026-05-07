@@ -19,7 +19,7 @@ const comparisons = [
     label: 'Vitali & Pinson',
     tag: 'OGD',
     tagColour: PALETTE.purple,
-    wind: '−18.3 %',
+    wind: '−18.0 %',
     elec: '−2.3 %',
     note: 'Lowest CRPS in this benchmark — not self-financed; relative weights',
   },

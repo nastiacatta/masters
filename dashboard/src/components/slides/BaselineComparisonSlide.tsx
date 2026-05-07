@@ -101,7 +101,7 @@ export default function BaselineComparisonSlide() {
               Vitali &amp; Pinson (OGD)
             </div>
             <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, lineHeight: 1.45, marginTop: 4 }}>
-              −18.3% wind, −2.3% electricity. Lowest CRPS — not self-financed; Shapley-based.
+              −18.0% wind, −2.3% electricity. Lowest CRPS — not self-financed; Shapley-based.
             </div>
           </div>
 
