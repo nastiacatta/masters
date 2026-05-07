@@ -140,44 +140,56 @@ Chapter 5.3.
 ## 6.2 Elia offshore wind — 3000-point audit slice (calibration anchor)
 
 Used only for calibration and per-quantile diagnostics. Mechanism
-parameters γ = 16, ρ = 0.5, λ = 0.05, η = 2.0; warmup-window causal
-normalisation (`normalize_mode` not yet in this older output).
+parameters γ = 16, ρ = 0.5, λ = 0.05, η = 2.0; strictly-causal
+warmup-window normalisation (`normalize_mode="static"`), post-fix
+pipeline (negative raw wind values clipped to 0 before normalisation).
 [source: `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/
-comparison.json`, dated 2026-04-29].
+comparison.json`, regenerated 2026-05-07].
 
 ### 6.2.1 Aggregate comparison on the audit slice (Claim 4 reference)
 
 | Rule | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
-| best_single (rolling 100-step CRPS selector) | 0.01542 | −22.1% |
-| oracle (hindsight inverse-variance) | 0.01564 | −21.0% |
-| median | 0.01761 | −11.1% |
-| inverse_variance | 0.01819 | −8.1% |
-| trimmed_mean | 0.01823 | −7.9% |
-| **michael_ogd** (pre-rename) | **0.01869** | **−5.6%** |
-| **our mechanism** | **0.01874** | **−5.3%** |
-| skill | 0.01914 | −3.3% |
-| uniform | 0.01980 | — |
+| oracle (per-round argmin) | 0.01281 | −47.1% |
+| per_round_inv_crps_hindsight | 0.01837 | −24.2% |
+| best_single (rolling 100-step CRPS selector) | 0.01847 | −23.7% |
+| median | 0.02145 | −11.4% |
+| inverse_variance | 0.02246 | −7.3% |
+| **our mechanism** | **0.02251** | **−7.1%** |
+| trimmed_mean | 0.02260 | −6.7% |
+| skill | 0.02301 | −5.0% |
+| **michael_ogd_centered_median_fan** (rename of legacy `michael_ogd`) | **0.02374** | **−2.0%** |
+| uniform | 0.02422 | — |
 
-**Ratio mechanism / michael_ogd** = 0.01874 / 0.01869 = **1.003**.
+**Ratio mechanism / michael_ogd_centered_median_fan** =
+0.02251 / 0.02374 = **0.948×** (mechanism beats the centered-median
+fan by 5.2% on this slice).
 
-DM test (mechanism vs uniform) on this slice: **+15.92, p < 1e-6**
-[source: `THESIS_CLAIMS.md` Claim 4, to be re-derived from per-round
-series at write-time].
+DM test (mechanism vs uniform) on this slice: **+12.41, p < 1e-6**
+[source: `dm_test.statistic` in the regenerated `comparison.json`].
+
+_Earlier revisions of this table cited 0.01874 / 0.01869 with ratio
+1.003×. Those numbers were produced before the audit script clipped
+negative raw wind values (`series_min = −8.23` MW, physically
+impossible for generation). The post-fix numbers use the clipped
+series (`series_min = 1105.93` warmup min). See
+`onlinev2/outputs/pre_fix_snapshot/elia_wind_audit_fresh/
+comparison.json` for the archived pre-fix values._
 
 ### 6.2.2 Per-forecaster CRPS on the audit slice (Claim 5)
 
-[source: same `comparison.json`, `per_agent_crps` block]:
+[source: same `comparison.json`, `per_agent_crps` block,
+post-fix 2026-05-07]:
 
 | Rank | Forecaster | CRPS | vs best |
 |---:|---|---:|---:|
-| 1 | XGBoost | 0.01666 | — |
-| 2 | ARIMA(2,1,1) | 0.01809 | +8.6% |
-| 3 | Naive | 0.01822 | +9.4% |
-| 4 | Neural Net (MLP) | 0.01829 | +9.8% |
-| 5 | Ensemble (Naive+EWMA) | 0.02312 | +38.8% |
-| 6 | EWMA(5) | 0.03036 | +82.3% |
-| 7 | Theta | 0.03384 | +103.2% |
+| 1 | XGBoost | 0.02203 | — |
+| 2 | Naive (last value) | 0.02351 | +6.7% |
+| 3 | ARIMA(2,1,1) | 0.02373 | +7.7% |
+| 4 | Ensemble (Naive+EWMA) | 0.02859 | +29.8% |
+| 5 | Neural Net (MLP) | 0.03230 | +46.6% |
+| 6 | EWMA(5) | 0.03646 | +65.5% |
+| 7 | Theta | 0.04023 | +82.6% |
 
 Steady-state σ (last 20% of rounds):
 

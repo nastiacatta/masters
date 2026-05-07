@@ -133,7 +133,7 @@ Key parameters:
 | Learning rate | rho | 0.1 | 0.5 | Higher = faster adaptation, more noise |
 | Skill sensitivity | gamma | 4 | 16 | Higher = sharper skill differentiation |
 | Skill gate floor | lambda | 0.05 | 0.05 | Higher = less skill influence |
-| Skill exponent | eta | 1 | 1 | Higher = more nonlinear skill gating |
+| Skill exponent | eta | 1 | 2 | Higher = more nonlinear skill gating (real-data runner hardcodes 2.0) |
 | Skill minimum | sigma_min | 0.1 | 0.1 | Floor on skill estimate |
 | Dominance cap | omega_max | 1.0 | 1.0 | Maximum weight share per agent |
 
@@ -199,15 +199,28 @@ The mechanism correctly identifies forecaster quality:
 
 ### 5.4 Deposit Policy Sensitivity
 
-These results are from the **synthetic benchmark** (latent_fixed DGP, N=10, default parameters γ=4, ρ=0.1):
+Current canonical numbers live in `writing/50_results_synthetic.md §5.1.4`
+and are regenerated from
+`onlinev2/outputs/core/experiments/deposit_policy_comparison/data/deposit_policy_comparison.csv`
+(20 seeds, T = 1000, 6 forecasters, quantile-CRPS scoring, mechanism
+weight rule):
 
-| Deposit Policy | CRPS Improvement | Mechanism |
+| Deposit Policy | Mean CRPS | Δ vs fixed_unit |
 |---------------|------------------|-----------|
-| Fixed (b=1) | -21% | Full skill signal |
-| Exponential | -15% | Reduced advantage |
-| Bankroll fraction | -5% | Minimal advantage |
+| iid_exp (random) | 0.04549 | +7.37% |
+| fixed_unit (b=1) | 0.04237 | baseline |
+| bankroll_conf | 0.03796 | **−10.40%** |
+| oracle_precision | 0.02271 | **−46.39%** |
 
-**Insight:** The deposit policy is the key lever. Fixed deposits isolate the skill signal, giving the mechanism maximum room to work. Wealth-fraction deposits create a feedback loop that can either amplify or dampen the skill signal.
+**Insight:** The deposit policy is the key lever. Random deposits carry
+no information and lose ground to the fixed baseline. Bankroll +
+confidence — using only observable wealth and forecast-width signals —
+captures about 22% of the way to the oracle ceiling. Oracle precision
+(true τ) is the theoretical ceiling and cannot be accessed in practice.
+
+The earlier "-21% / -15% / -5%" table on this page reflected a
+superseded synthetic benchmark (N=10, default γ=4, ρ=0.1, different
+deposit regime). Those numbers are retained in git history only.
 
 ---
 

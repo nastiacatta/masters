@@ -154,20 +154,20 @@ full-length run than on the audit slice (XGBoost 0.808 vs 0.910) because
 expanding normalisation produces larger normalised losses than
 warmup-window normalisation on a 3000-point slice.
 
-### Evidence (3000-point Elia wind slice)
+### Evidence (3000-point Elia wind slice, post-fix 2026-05-07)
 
 | Rank | Forecaster | CRPS | vs best |
 |---:|---|---:|---:|
-| 1 | **XGBoost** | **0.01666** | — |
-| 2 | ARIMA(2,1,1) | 0.01809 | +8.6% |
-| 3 | Naive | 0.01822 | +9.4% |
-| 4 | Neural Net (MLP) | 0.01829 | +9.8% |
-| 5 | Ensemble (Naive+EWMA) | 0.02312 | +38.8% |
-| 6 | EWMA(5) | 0.03036 | +82.3% |
-| 7 | Theta | 0.03384 | +103.2% |
+| 1 | **XGBoost** | **0.02203** | — |
+| 2 | Naive (last value) | 0.02351 | +6.7% |
+| 3 | ARIMA(2,1,1) | 0.02373 | +7.7% |
+| 4 | Ensemble (Naive+EWMA) | 0.02859 | +29.8% |
+| 5 | Neural Net (MLP) | 0.03230 | +46.6% |
+| 6 | EWMA(5) | 0.03646 | +65.5% |
+| 7 | Theta | 0.04023 | +82.6% |
 
-Steady-state σ ranking (last 20% of rounds): XGBoost 0.910, MLP 0.902,
-ARIMA 0.896, Naive 0.893, Ensemble 0.856, EWMA 0.814, Theta 0.796 —
+Steady-state σ ranking (last 20% of rounds): XGBoost 0.930, Naive 0.914,
+ARIMA 0.912, Ensemble 0.889, MLP 0.880, EWMA 0.865, Theta 0.850 —
 **identical to the CRPS ordering** (Spearman rank correlation = 1.0).
 
 ### Sources
