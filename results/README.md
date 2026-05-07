@@ -190,9 +190,11 @@ a stale figure can be regenerated in one command.
 | PNG | Generator |
 |---|---|
 | `baseline_comparison.png` | `presentation/R/plot_baseline_comparison.R` |
+| `behaviour_concentration.png` | `presentation/R/plot_behaviour_concentration.R` |
 | `calibration_reliability.png` | `presentation/R/plot_calibration_reliability.R` |
 | `deposit_policy_comparison.png` | `presentation/R/plot_deposit_policy.R` |
 | `forecast_aggregation.png`, `forecast_aggregation_four_panel.png`, `motivation_aggregation.png` | `presentation/R/plot_forecast_aggregation.R` |
+| `parameter_sweep.png` | `presentation/R/plot_parameter_sweep.R` |
 | `positioning_matrix.png` | `presentation/R/plot_positioning_matrix.R` |
 | `real_data_validation.png` | `presentation/R/plot_real_data.R` |
 | `settlement_sanity.png` | `presentation/R/plot_settlement_sanity.R` |
@@ -204,9 +206,9 @@ a stale figure can be regenerated in one command.
 
 The slide deck also uses a handful of composite figures
 (`master_comparison*.png`, `bankroll_ablation*.png`,
-`behaviour_concentration.png`, `behaviour_wealth.png`,
+`behaviour_wealth.png`,
 `crps_calibration.png`,
-`mechanism_steps.png`, `parameter_sweep.png`, `scoring_validation.png`,
+`mechanism_steps.png`, `scoring_validation.png`,
 `selective_participation.png`,
 `fixed_deposit.png`, `arbitrage_heatmap.png`, `title_background.png`)
 that are produced by ad-hoc Python scripts under `onlinev2/scripts/`;
