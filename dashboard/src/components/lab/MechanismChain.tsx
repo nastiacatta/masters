@@ -73,29 +73,62 @@ export default function MechanismChain({ trace, selectedAgent, onSelectAgent }: 
         {CHAIN_NODES.map((node, idx) => (
           <div key={node.key} className="contents">
             {idx > 0 && (
-              <div className="shrink-0 flex items-center">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-slate-300">
+              <div className="shrink-0 flex items-center" style={{ color: 'var(--ink-faint)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M5 12h14M14 7l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
             )}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: idx * 0.05 }}
-              className="shrink-0 rounded-xl border-2 px-4 py-3 min-w-[110px] text-center cursor-default transition-shadow hover:shadow-md"
-              style={{ borderColor: node.color + '40', background: node.bgColor }}
+              transition={{ delay: idx * 0.04 }}
+              className="shrink-0 text-center"
+              style={{
+                minWidth: 118,
+                padding: '12px 14px',
+                border: `1px solid ${node.color}30`,
+                borderTop: `3px solid ${node.color}`,
+                background: node.bgColor,
+                borderRadius: 4,
+              }}
             >
-              <div className="text-[9px] font-bold uppercase tracking-wider" style={{ color: node.color + 'aa' }}>
+              <div
+                className="uppercase"
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  color: node.color,
+                  opacity: 0.8,
+                }}
+              >
                 {node.label}
               </div>
-              <div className="text-lg font-bold font-mono mt-0.5" style={{ color: node.color }}>
+              <div
+                className="font-mono tabular-nums"
+                style={{
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: node.color,
+                  marginTop: 4,
+                  lineHeight: 1.1,
+                }}
+              >
                 {agentIdx != null && node.key !== 'aggregate'
                   ? fmt(node.getValue(trace, agentIdx), node.key === 'payoff' ? 2 : 3)
                   : fmt(node.getAggregate(trace), node.key === 'aggregate' ? 4 : 2)
                 }
               </div>
-              <div className="text-[10px] font-mono mt-0.5" style={{ color: node.color + '99' }}>
+              <div
+                className="font-mono"
+                style={{
+                  fontSize: 11,
+                  color: node.color,
+                  opacity: 0.7,
+                  marginTop: 2,
+                }}
+              >
                 {node.sym}
               </div>
             </motion.div>
@@ -107,31 +140,48 @@ export default function MechanismChain({ trace, selectedAgent, onSelectAgent }: 
         <button
           type="button"
           onClick={() => onSelectAgent(null)}
-          className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
-            agentIdx == null
-              ? 'bg-slate-800 text-white'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-          }`}
+          className="transition-colors"
+          style={{
+            fontSize: 12,
+            fontWeight: agentIdx == null ? 600 : 500,
+            padding: '4px 12px',
+            borderRadius: 999,
+            background: agentIdx == null ? 'var(--navy)' : 'var(--cream)',
+            color:      agentIdx == null ? '#fff' : 'var(--ink-soft)',
+            border: '1px solid',
+            borderColor: agentIdx == null ? 'var(--navy)' : 'var(--border)',
+          }}
         >
           All agents
         </button>
-        {Array.from({ length: N }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => onSelectAgent(agentIdx === i ? null : i)}
-            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all flex items-center gap-1 ${
-              agentIdx === i
-                ? 'text-white shadow-sm'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}
-            style={agentIdx === i ? { background: AGENT_PALETTE[i % AGENT_PALETTE.length] } : undefined}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: AGENT_PALETTE[i % AGENT_PALETTE.length] }} />
-            F{i + 1}
-            {!trace.participated[i] && <span className="text-[9px] opacity-60">(out)</span>}
-          </button>
-        ))}
+        {Array.from({ length: N }, (_, i) => {
+          const color = AGENT_PALETTE[i % AGENT_PALETTE.length];
+          const active = agentIdx === i;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSelectAgent(active ? null : i)}
+              className="transition-all flex items-center gap-1.5"
+              style={{
+                fontSize: 12,
+                fontWeight: active ? 600 : 500,
+                padding: '4px 12px',
+                borderRadius: 999,
+                background: active ? color : 'var(--cream)',
+                color:      active ? '#fff' : 'var(--ink-soft)',
+                border: '1px solid',
+                borderColor: active ? color : 'var(--border)',
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: active ? '#fff' : color }} />
+              F{i + 1}
+              {!trace.participated[i] && (
+                <span style={{ fontSize: 10, opacity: 0.65 }}>(out)</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
