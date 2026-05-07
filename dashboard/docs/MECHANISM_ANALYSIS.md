@@ -236,13 +236,37 @@ The payoff is identical. No incentive to split.
 
 **Important scope limitation:** This holds only for the narrow case of identical reports and conserved total wager. In practice, sybil clones may submit slightly different reports (due to noise or strategy), which can break the invariance. The dashboard's sybil preset tests this more realistic scenario where clones have small report divergence, not the theoretical invariance property.
 
-### 6.3 Arbitrage-Free
+### 6.3 Arbitrage behaviour
 
-No parameter setting allows risk-free profit. Tested across lambda in [0, 0.5] with no arbitrage found.
+The single-round arbitrage interval of Chen-Devanur-Pennock-Vaughan (2014) applies to this mechanism. A theory-grounded arbitrage seeker that reports the wager-weighted median of other participants' reports (the MAE analogue of the f-norm arbitrage point) extracts +11 to +24 cumulative profit across the λ grid over 1000 rounds. Profit scales roughly linearly with crowd size. Under sybil splitting (Lambert narrow sense, identical reports, conserved total wager) the arbitrage profit is invariant across k ∈ {1, 3, 5}, confirming Lambert's sybilproofness holds on top of an already-exploited attack. Removing the arbitrage entirely requires moving to the no-arbitrage wagering family (Chen et al. 2014 §4–5), which is outside the scope of this thesis.
 
 ---
 
 ## 7. Robustness Analysis (18 Behaviour Presets)
+
+> **Note (Nov 2026).** The behaviour adversary catalogue was rebuilt
+> around cited threat models (Chen-Devanur-Pennock-Vaughan 2014
+> arbitrage, Chun-Shachter 2011 coalition, Lambert 2008 sybilproofness).
+> The headline findings below are stable; the detailed quantitative
+> tables now live in `onlinev2/outputs/behaviour/experiments/ANALYSIS.md`
+> and the thesis chapter `writing/80_robustness.md`. The old 18-preset
+> Δ CRPS table is retained as a reference.
+
+### 7.0 Theory-grounded attack results (10–20 seeds, T=1000)
+
+| Attack | Outcome | Source |
+|--------|---------|--------|
+| Chen-Devanur arbitrage (`ArbitrageSeekingBehaviour`) | Profitable; +11 to +24 across λ grid, monotone in λ | `outputs/.../arbitrage_scan/` |
+| Arbitrage × crowd size | Scales roughly linearly with `n_benign`; +50 at (λ=1.0, n=32) | `outputs/.../arbitrage_crowd_size/` |
+| Chun-Shachter coalition (`CoordinatedGroupBehaviour`) | +21 (weighted mean), +18 (weighted median) | `outputs/.../collusion_stress/` |
+| Informed coalition (coalition + insider) | +34, ≈+40% over pure collusion | `outputs/.../informed_collusion/` |
+| Sybil arbitrageur (audit of Lambert sybilproofness) | Profit invariant across k ∈ {1, 3, 5} | `outputs/.../sybil_arbitrage/` |
+| Privileged lagged information (AR(1) DGP) | +55 (F_{t-1}-compliant) vs +61 (leakage audit) | `outputs/.../insider_advantage/` |
+| Strategic reporting (pull sweep) | Profitable at pull=0.3; self-defeats at pull≥0.6 | `outputs/.../strategic_reporting/` |
+| Wash / activity gaming | +68% inflation at near-zero profit (anchor); +113% at −258 profit (split) | `outputs/.../wash_activity_gaming/` |
+| Detection-adaptation | Both bankrupted at target=0.2 on uniform y | `outputs/.../detection_adaptation/` |
+
+### 7.1 Legacy 18-preset Δ CRPS table (pre-theory-revamp, retained for reference)
 
 The mechanism was tested against 18 strategic behaviour presets:
 
@@ -293,12 +317,14 @@ The mechanism was tested against 18 strategic behaviour presets:
 
 ### What the mechanism does well:
 - Correctly identifies and upweights skilled forecasters (perfect rank correlation on real data)
-- Budget-balanced, sybil-proof, and arbitrage-free by construction
+- Budget-balanced and sybil-proof (narrow Lambert sense) by construction
 - Robust to point-forecast manipulation (EWMA detects within ~7 rounds)
 - 7.1% CRPS reduction on real wind data; near-tied on electricity (post-audit, strictly-causal)
 
 ### What the mechanism does NOT do:
 - It does not consistently beat simpler methods (median, inverse-variance) on pure CRPS
+- It is **not arbitrage-free**: the Chen-Devanur (2014) arbitrage interval applies to every WSWM, including this one. Theory-grounded arbitrage seekers extract +11 to +24 profit over 1000 rounds. Preventing arbitrage requires moving to the no-arbitrage wagering family (Chen et al. 2014 §4–5), which is outside this thesis's scope.
+- It is **not coalition-proof**: Chun-Shachter coalitions earn +18 to +33 over 1000 rounds depending on whether members share privileged information.
 - The advantage depends heavily on parameter tuning (gamma, rho)
 - The deposit policy is the key lever, and the "right" deposit policy is application-dependent
 - Quantile-level attacks (bias, noise) are not well-contained

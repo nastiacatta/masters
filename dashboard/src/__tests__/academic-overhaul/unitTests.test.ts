@@ -486,7 +486,7 @@ describe('15.18 HomePage cleanup — pure logic', () => {
   const FINDINGS = [
     { color: '#10b981', title: 'Modest CRPS reduction on Elia wind; essentially flat on electricity', detail: 'Across 17,544 hourly points on Elia offshore wind with seven forecasting models (Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble), the skill x stake aggregate cuts mean CRPS by 7.1% relative to equal weighting under strictly-causal normalisation. On Elia electricity prices the mechanism improvement is under 1%.' },
     { color: '#6366f1', title: 'Deposit policy is the key lever', detail: 'The mechanism\'s value depends on deposit quality. With informative deposits (correlated with skill), blended weighting achieves near-oracle accuracy. With random deposits, equal weighting is hard to beat.' },
-    { color: '#f59e0b', title: 'Mathematically sound', detail: 'Budget-balanced to machine precision (gap < 10\u207B\u00B9\u2074). Sybil-proof: splitting identity provides zero advantage. Arbitrage-free across all parameter settings.' },
+    { color: '#f59e0b', title: 'Mathematically sound', detail: 'Budget-balanced to machine precision (gap < 10\u207B\u00B9\u2074). Sybil-proof in the Lambert narrow sense (identical reports, conserved total wager): splitting identity provides zero advantage. The Chen-Devanur (2014) arbitrage interval applies, as predicted by theory for any WSWM.' },
     { color: '#64748b', title: 'Equal weighting is a strong baseline', detail: 'Uniform weights are surprisingly competitive, especially under non-stationarity or small panels. The mechanism helps most when forecasters have heterogeneous skill and enough rounds for learning to converge.' },
   ] as const;
 

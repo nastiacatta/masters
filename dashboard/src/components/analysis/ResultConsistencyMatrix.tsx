@@ -48,49 +48,85 @@ export default function ResultConsistencyMatrix({ result }: ResultConsistencyMat
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3 gap-3 flex-wrap">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-            <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-teal-500" />
-            Method Ranking Consistency
-          </h3>
-          <p className="text-[11px] text-slate-500 mt-1 leading-relaxed max-w-xl">
-            Kendall&apos;s W measures how consistently different experiments rank the methods.
-            1 = perfect agreement, 0 = no agreement.
-          </p>
-        </div>
+    <PanelShell
+      title="Method ranking consistency"
+      accent="var(--teal)"
+      right={
         <div className="flex items-center gap-2 shrink-0">
-          <span className="inline-flex items-center gap-1 text-[11px] font-mono tabular-nums text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">
-            <span className="text-slate-400">W</span>
-            <span className="font-bold">{kendallW.toFixed(3)}</span>
+          <span
+            className="inline-flex items-center gap-1 font-mono tabular-nums"
+            style={{
+              fontSize: 11.5,
+              color: 'var(--ink)',
+              background: 'var(--cream)',
+              border: '1px solid var(--border)',
+              padding: '3px 8px',
+              borderRadius: 4,
+            }}
+          >
+            <span style={{ color: 'var(--ink-faint)' }}>W</span>
+            <span style={{ fontWeight: 700 }}>{kendallW.toFixed(3)}</span>
           </span>
           <span
-            className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
-              isConsistent
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'
-            }`}
+            className="inline-flex items-center gap-1.5"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '3px 10px',
+              borderRadius: 999,
+              background: isConsistent ? 'var(--teal-tint)' : 'var(--amber-tint)',
+              color:      isConsistent ? 'var(--teal-deep)' : '#78350f',
+              border: `1px solid ${isConsistent ? 'rgba(15,118,110,0.22)' : 'rgba(180,83,9,0.22)'}`,
+            }}
           >
-            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isConsistent ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{ background: isConsistent ? 'var(--teal)' : 'var(--amber)' }}
+            />
             {isConsistent ? 'Consistent' : 'Unstable rankings'}
           </span>
         </div>
-      </div>
+      }
+    >
+      <p
+        style={{
+          fontSize: 12.5,
+          color: 'var(--ink-soft)',
+          lineHeight: 1.55,
+          maxWidth: 720,
+          marginTop: -4,
+          marginBottom: 12,
+        }}
+      >
+        Kendall&apos;s W measures how consistently different experiments rank the methods.
+        1 = perfect agreement, 0 = no agreement.
+      </p>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-slate-100 bg-slate-50/40">
-        <table className="w-full text-xs">
+      <div
+        className="overflow-x-auto"
+        style={{ border: '1px solid var(--border)', borderRadius: 4 }}
+      >
+        <table className="w-full" style={{ fontSize: 12.5 }}>
           <thead>
-            <tr className="border-b border-slate-200 bg-white">
-              <th className="text-left py-2 pl-3 pr-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <tr style={{ background: 'var(--cream)', borderBottom: '1px solid var(--border)' }}>
+              <th
+                className="text-left uppercase"
+                style={{
+                  padding: '10px 12px', fontSize: 10.5, fontWeight: 700,
+                  letterSpacing: '0.1em', color: 'var(--ink-soft)',
+                }}
+              >
                 Experiment
               </th>
               {methods.map((m) => (
                 <th
                   key={m}
-                  className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                  className="text-center uppercase"
+                  style={{
+                    padding: '10px 8px', fontSize: 10.5, fontWeight: 700,
+                    letterSpacing: '0.1em', color: 'var(--ink-soft)',
+                  }}
                 >
                   {m}
                 </th>
@@ -98,9 +134,15 @@ export default function ResultConsistencyMatrix({ result }: ResultConsistencyMat
             </tr>
           </thead>
           <tbody>
-            {experiments.map((exp) => (
-              <tr key={exp} className="border-b border-slate-100 last:border-0 hover:bg-white transition-colors">
-                <td className="py-2 pl-3 pr-3 text-slate-700 font-medium whitespace-nowrap">
+            {experiments.map((exp, i) => (
+              <tr
+                key={exp}
+                style={{ borderBottom: i < experiments.length - 1 ? '1px solid var(--border)' : 'none' }}
+              >
+                <td
+                  className="font-medium whitespace-nowrap"
+                  style={{ padding: '8px 12px', color: 'var(--ink)' }}
+                >
                   {exp}
                 </td>
                 {methods.map((method) => {
@@ -110,22 +152,23 @@ export default function ResultConsistencyMatrix({ result }: ResultConsistencyMat
                   const hasContradiction = cellContradictions && cellContradictions.length > 0;
 
                   return (
-                    <td key={method} className="text-center py-2 px-2">
+                    <td key={method} className="text-center" style={{ padding: '8px' }}>
                       {rank != null ? (
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-xs font-bold border font-mono tabular-nums ${rankColor(rank, methods.length)} ${
-                            hasContradiction ? 'ring-2 ring-amber-400 ring-offset-1' : ''
-                          }`}
-                          title={
-                            hasContradiction
-                              ? cellContradictions!.join('\n')
-                              : `Rank ${rank}`
-                          }
+                          className={`inline-flex items-center justify-center font-mono tabular-nums ${rankColor(rank, methods.length)}`}
+                          style={{
+                            width: 26, height: 26,
+                            fontSize: 12, fontWeight: 700,
+                            borderRadius: 4,
+                            boxShadow: hasContradiction ? '0 0 0 2px var(--amber)' : 'none',
+                            border: '1px solid',
+                          }}
+                          title={hasContradiction ? cellContradictions!.join('\n') : `Rank ${rank}`}
                         >
                           {rank}
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span style={{ color: 'var(--ink-faint)' }}>—</span>
                       )}
                     </td>
                   );
@@ -138,8 +181,19 @@ export default function ResultConsistencyMatrix({ result }: ResultConsistencyMat
 
       {/* Contradictions summary */}
       {contradictions.length > 0 && (
-        <div className="mt-3 rounded-lg border border-amber-200/60 bg-amber-50/40 p-3">
-          <p className="text-[11px] text-amber-700 font-semibold mb-1 flex items-center gap-1.5">
+        <div
+          className="mt-4 p-3"
+          style={{
+            background: 'var(--amber-tint)',
+            border: '1px solid rgba(180,83,9,0.22)',
+            borderLeft: '3px solid var(--amber)',
+            borderRadius: 4,
+          }}
+        >
+          <p
+            className="mb-1.5 flex items-center gap-1.5"
+            style={{ fontSize: 12, color: '#78350f', fontWeight: 600 }}
+          >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M8 2L1.5 13.5H14.5L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
               <path d="M8 7V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -147,16 +201,24 @@ export default function ResultConsistencyMatrix({ result }: ResultConsistencyMat
             </svg>
             {contradictions.length} contradiction{contradictions.length > 1 ? 's' : ''} detected
           </p>
-          <ul className="text-[11px] text-amber-800/90 space-y-0.5 pl-5 list-disc">
+          <ul
+            className="space-y-1 pl-5 list-disc"
+            style={{ fontSize: 12, color: '#5c2a07', lineHeight: 1.55 }}
+          >
             {contradictions.slice(0, 3).map((c, i) => (
               <li key={i}>{c.description}</li>
             ))}
             {contradictions.length > 3 && (
-              <li className="list-none text-[10px] text-amber-600 italic">… and {contradictions.length - 3} more</li>
+              <li
+                className="list-none italic"
+                style={{ fontSize: 11, color: 'var(--amber)' }}
+              >
+                … and {contradictions.length - 3} more
+              </li>
             )}
           </ul>
         </div>
       )}
-    </div>
+    </PanelShell>
   );
 }

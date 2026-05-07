@@ -56,9 +56,9 @@ const FINDINGS = [
   },
   {
     kicker: 'Theoretical',
-    title: 'Budget-balanced, arbitrage-free, sybil-resistant',
+    title: 'Budget-balanced and sybil-resistant (Lambert narrow sense)',
     body:
-      'Total payouts equal total effective wagers to machine precision (residual < 10\u207B\u00B9\u2074). Arbitrage-free across the parameter range tested. Sybil-resistant against identical clones (deposit splitting makes cloning gain nothing), though diversified sybil strategies can still extract a small advantage (\u224B6%).',
+      'Total payouts equal total effective wagers to machine precision (residual < 10\u207B\u00B9\u2074). Sybil-resistant against identical clones with conserved total wager (Lambert 2008): splitting identity provides zero advantage even when the underlying attack extracts arbitrage profit. Diversified sybil strategies can extract a small advantage (\u224B6%). The Chen-Devanur-Pennock-Vaughan (2014) arbitrage interval applies: a theory-grounded arbitrage seeker earns a positive expected profit, as predicted.',
     accent: '#b45309',
   },
   {
