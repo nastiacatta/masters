@@ -3,31 +3,35 @@
     "id": "skill_improves_accuracy",
     "title": "Skill improves accuracy in the identifiable benchmark",
     "claim": "Blended skill + stake weighting reduces forecast error relative to equal weights when the DGP has a latent truth.",
-    "metric": "ΔCRPS = -21% on wind data",
+    "metric": "ΔCRPS = −7.1% on Elia wind",
     "metricLabel": "ΔCRPS vs equal",
     "chart": "cumulative_error",
-    "interpretation": "The online skill layer tracks intrinsic forecaster quality well in the latent-truth setting, so up-weighting better forecasters improves the aggregate. This 21% figure is from the synthetic benchmark (latent_fixed DGP, N=10, default parameters). On real Elia wind data with tuned parameters (γ=16, ρ=0.5) and 7 forecasters, the improvement reaches 33.7% over equal weights. The size of the improvement also depends on the deposit policy: fixed deposits (which isolate the skill signal) yield the full synthetic advantage, while bankroll-fraction deposits reduce it to ~5%.",
-    "caveat": "This is a clean benchmark with identifiable truth, not a strategic or adversarial setting.",
-    "experimentName": "master_comparison",
+    "interpretation": "The online skill layer tracks forecaster quality and up-weights the better forecasters. On the full Elia offshore wind run (17,344 evaluation rounds, 7 forecasters, post-audit expanding normalisation) the mechanism reduces mean CRPS by 7.1% vs equal weighting (Diebold–Mariano t = 40.77, p < 0.001). Earlier dashboard numbers of −21% to −33% came from the pre-audit pipeline with whole-series min/max normalisation (B1 in Claim 9); those figures are superseded. The improvement remains meaningful but modest, and depends strongly on deposit policy: fixed deposits give the mechanism the most headroom, bankroll-fraction the least.",
+    "caveat": "Best-single (oracle of the per-round best forecaster) still outperforms the mechanism by ~16 pp on this series. The contribution is preserved economic structure (budget balance, sybil resistance, online skill), not universal accuracy dominance.",
+    "experimentName": "real_data_elia_wind",
     "category": "aggregation_quality",
     "conditions": {
-      "dgp": "latent_fixed",
-      "n_forecasters": 10,
-      "T": 20000,
+      "dgp": "elia_wind",
+      "n_forecasters": 7,
+      "T": 17344,
       "deposit_policy": "fixed",
-      "n_seeds": 20
+      "normalize_mode": "expanding",
+      "gamma": 16,
+      "rho": 0.5,
+      "lam": 0.05
     },
     "evidence": {
       "metric_field": "delta_crps_vs_equal",
       "expected_sign": "negative",
-      "threshold": 0.01,
+      "threshold": 0.001,
       "comparison_method": "equal"
     },
     "limitations": [
-      "Does not hold with small panels (N ≤ 3) where estimation noise dominates",
-      "Advantage shrinks under bankroll-fraction deposit policy (~5% vs 21%)",
-      "Requires heterogeneous forecaster skill; homogeneous panels see no benefit",
-      "Short horizons (T < 50) may not allow EWMA to converge"
+      "Holds on wind; essentially null on Elia electricity (t = 0.008, p = 0.99)",
+      "Best-single still beats the mechanism by ~16 pp on wind — universal accuracy dominance is not claimed",
+      "Pre-audit numbers (−21%, −33%) were artefacts of whole-series min/max normalisation and are superseded",
+      "Requires heterogeneous forecaster skill; a homogeneous panel sees no benefit",
+      "Small panels (N ≤ 3) or short horizons (T < 50) can erase the advantage"
     ]
   },
   {

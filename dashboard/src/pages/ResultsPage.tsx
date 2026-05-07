@@ -63,6 +63,8 @@ import type { TradeOffPoint } from '@/components/charts/TradeOffScatter';
 import WaterfallChart from '@/components/charts/WaterfallChart';
 import type { WaterfallDatum } from '@/components/charts/WaterfallChart';
 import CalibrationChart from '@/components/charts/CalibrationChart';
+import EliaOperationalBaseline from '@/components/charts/EliaOperationalBaseline';
+import RecalibrationPanel from '@/components/charts/RecalibrationPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChartLinkingProvider } from '@/contexts/ChartLinkingContext';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
@@ -986,6 +988,12 @@ export default function ResultsPage() {
               {realData && (
                 <DepositSensitivityPanel />
               )}
+
+              {/* ═══ External validation: Elia operational forecasts (Claim 10) ═══ */}
+              <EliaOperationalBaseline />
+
+              {/* ═══ Calibration + recalibration layer (Claims 6 & 7) ═══ */}
+              <RecalibrationPanel />
 
               {/* ═══ Skill Recognition ═══ */}
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-6">
