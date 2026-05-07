@@ -1,8 +1,8 @@
 # Results — synthetic validation
 
-Status: **[LOCKED]** on correctness and skill recovery; the deposit and
-bankroll ablation numbers quoted from earlier committed runs; bankroll
-pipeline re-run is [PENDING] post training-audit merge.
+Status: **[LOCKED]** on correctness, skill recovery, deposit policy
+ablation, weight rule comparison, and bankroll pipeline ablation. All
+numbers below verified against committed CSV / JSON outputs.
 
 This chapter is the foundation the real-data chapter stands on. If any
 of these results fail, the mechanism is not trustworthy and the rest of
@@ -46,22 +46,23 @@ retuned to 0.05 so the EWMA saturates on the short horizon):
 - κ = 0 missingness preservation: absent agents' skill does not drift.
 - `calibrate_gamma` round-trip holds.
 
-Known-noise six-forecaster extended run (T = 20000, 20 seeds, point
-mode and quantile mode)
-[source: `presentation/script_part3_validation.md` Slide 12,
-originally from `experiments.py --exp skill_recovery`]:
+Known-noise six-forecaster extended run (T = 20 000, 20 seeds,
+quantile mode) [source:
+`onlinev2/outputs/core/experiments/skill_recovery/data/
+quantiles_crps_summary.csv`]:
 
-| Forecaster | True noise τ | Mean loss | Learned σ |
+| Forecaster | True noise τ | Mean loss (tail) | Learned σ (tail) |
 |---|---:|---:|---:|
-| f0 | 0.15 | 0.023 | 0.959 |
-| f1 | 0.22 | 0.033 | 0.942 |
-| f2 | 0.32 | 0.047 | 0.919 |
-| f3 | 0.46 | 0.066 | 0.890 |
-| f4 | 0.68 | 0.089 | 0.854 |
-| f5 | 1.00 | 0.112 | 0.820 |
+| f0 | 0.15 | 0.0232 | 0.959 |
+| f1 | 0.22 | 0.0334 | 0.942 |
+| f2 | 0.32 | 0.0474 | 0.919 |
+| f3 | 0.46 | 0.0656 | 0.890 |
+| f4 | 0.68 | 0.0888 | 0.854 |
+| f5 | 1.00 | 0.1121 | 0.820 |
 
-Rank correlation between true noise and learned σ: **1.0000** for both
-point and quantile modes. Noise–skill linear correlation r = −0.98.
+Headline: **Spearman rank correlation between true noise and learned
+σ = 1.00** for both point and quantile modes
+[source: `onlinev2/outputs/core/experiments/skill_recovery/summary.md`].
 
 **Interpretation.** EWMA + exponential loss-to-skill mapping is not
 regret-minimising — it is an estimator of reliability. On a stationary
@@ -108,10 +109,22 @@ run via `experiments.py --exp deposit_policies`]:
 | Bankroll + confidence | 0.0375 ± 0.0001 | −11.3% |
 | Oracle precision (true τ) | 0.0227 ± 0.0001 | −46.3% |
 
+Post-audit fresh means from 20 seeds
+[source: `onlinev2/outputs/core/experiments/deposit_policy_comparison/
+data/deposit_policy_comparison.csv`, `mean_crps_all` column with
+pooled SE]:
+
+| Deposit policy | Mean CRPS | SE | Δ% vs fixed_unit |
+|---|---:|---:|---:|
+| iid_exp (random) | 0.04549 | 0.00023 | +7.37% |
+| fixed_unit (b = 1) | 0.04237 | 0.00011 | baseline |
+| bankroll_conf | 0.03796 | 0.00012 | **−10.40%** |
+| oracle_precision | 0.02271 | 0.00007 | **−46.39%** |
+
 **Reading.** Random deposits are worst (no information). Fixed unit
 isolates the skill signal and is the benchmark. Bankroll-confidence
 uses only observable quantities (wealth, forecast width) yet captures
-about a quarter of the oracle improvement. Oracle is the theoretical
+about 22% of the oracle improvement. Oracle is the theoretical
 ceiling.
 
 This table is the single clearest empirical statement the thesis makes:
@@ -119,41 +132,47 @@ This table is the single clearest empirical statement the thesis makes:
 
 ## 5.1.5 Weight rule comparison
 
-Same panel, same seeds, two deposit regimes
-[source: `presentation/script_part3_validation.md` Slide 11]:
+Fresh means from 20 seeds, two deposit regimes
+[source: `onlinev2/outputs/core/experiments/weight_rule_comparison/
+data/weight_rule_comparison.csv`]:
 
 Under fixed deposits (isolates the skill signal):
 
-| Weight rule | Mean CRPS |
-|---|---:|
-| Uniform | 0.0434 ± 0.0002 |
-| Deposit | 0.0434 ± 0.0002 (deposit = uniform when all b equal) |
-| Skill | 0.0419 ± 0.0002 |
-| Mechanism (skill × deposit) | 0.0423 ± 0.0002 |
-| Best single | 0.0232 ± 0.0001 |
+| Weight rule | Mean CRPS | SE |
+|---|---:|---:|
+| uniform | 0.04340 | 0.00011 |
+| deposit | 0.04340 | 0.00011 (= uniform when all b equal) |
+| skill | 0.04188 | 0.00011 |
+| **mechanism** (skill × deposit) | **0.04237** | 0.00011 |
+| best_single | 0.02305 | 0.00012 |
 
-Skill-only beats uniform by 3.5%. The mechanism sits marginally behind
-skill-only under fixed deposits because it adds the skill gate on a
-signal the skill rule already exploits directly.
+Skill-only beats uniform by 3.5%. The mechanism sits marginally
+behind skill-only under fixed deposits because the skill gate adds a
+nonlinear η = 2 exponent on top of a signal the skill rule already
+exploits directly.
 
 Under bankroll deposits:
 
-| Weight rule | Mean CRPS |
-|---|---:|
-| Deposit | 0.0230 ± 0.0001 |
-| Mechanism | 0.0375 ± 0.0001 |
+| Weight rule | Mean CRPS | SE |
+|---|---:|---:|
+| uniform | 0.04340 | 0.00011 |
+| deposit | 0.02642 | 0.00008 |
+| skill | 0.04188 | 0.00011 |
+| **mechanism** | **0.03796** | 0.00012 |
+| best_single | 0.02305 | 0.00012 |
 
-Here deposit-only is extremely strong (0.0230) because the bankroll
+Here deposit-only is extremely strong (0.02642) because the bankroll
 already carries skill information via the deposit policy. The
-mechanism's additional gate is redundant in this setting.
+mechanism's additional skill gate is redundant in this setting and
+slightly dilutes the signal.
 
 **Interpretation.** The right choice of weighting rule depends on the
-deposit policy. Under fixed deposits the skill signal must be extracted
-from the weights, and a skill-gated rule helps. Under bankroll deposits
-the skill signal is already in the deposit, and the weights can be
-simpler. The thesis's contribution is to package both levers into a
-single mechanism that remains self-financed regardless of which channel
-carries the information.
+deposit policy. Under fixed deposits the skill signal must be
+extracted from the weights, and a skill-gated rule helps. Under
+bankroll deposits the skill signal is already in the deposit, and
+the weights can be simpler. The thesis's contribution is to package
+both levers into a single mechanism that remains self-financed
+regardless of which channel carries the information.
 
 ## 5.1.6 Five-step bankroll pipeline ablation
 
@@ -167,25 +186,40 @@ Pipeline steps (Chapter 3):
 | D | Weight cap | Simplex projection with ω_max |
 | E | Wealth update | W_{t+1} = max(0, W_t + π_t) |
 
-Ablations run: Full, A− (no c_i, so c = 1), B− (fixed b_i), C− (m_i =
-b_i), D− (no ω_max), E− (fixed W).
+20 seeds, mechanism weighting, DGP = `latent_fixed`, preset =
+`exponential_deposits`
+[source: `onlinev2/outputs/core/experiments/bankroll_ablation/data/
+bankroll_ablation.csv`, aggregated across 20 seeds]:
 
-[PENDING] post training-audit re-run. The shape of the expected result
-is: C− degrades most (removing the skill gate), then A−/B− degrade
-jointly (removing the bankroll-confidence loop), D− is near-neutral at
-typical ω_max, and E− is near-neutral over short horizons but may
-change the wealth distribution at long horizons.
+| Variant | Mean CRPS | Δ vs Full | Mean HHI | Final Gini |
+|---|---:|---:|---:|---:|
+| Full (A→B→C→D→E) | 0.05326 | 0 | 0.334 | 0.774 |
+| A− (no c_i; c = 1) | 0.05300 | −0.00026 | 0.362 | 0.800 |
+| B− (fixed b_i) | 0.05423 | +0.00097 | 0.129 | 0.000 |
+| C− (no skill gate, m = b) | 0.05304 | −0.00022 | 0.354 | 0.797 |
+| D− (no dominance cap, ω_max = ∞) | **0.02987** | **−0.02340** | 0.334 | 0.774 |
+| E− (fixed wealth) | 0.05496 | +0.00169 | 0.130 | 0.000 |
 
-Slot for the final table:
+**Reading.**
 
-| Ablation | Δ CRPS vs Full | Δ Gini vs Full | Interpretation |
-|---|---:|---:|---|
-| Full | 0 | 0 | baseline |
-| A− | [PENDING] | [PENDING] | lose c_i informativeness |
-| B− | [PENDING] | [PENDING] | fixed deposits (everyone stakes 1) |
-| C− | [PENDING] | [PENDING] | no skill gate (deposit-only) |
-| D− | [PENDING] | [PENDING] | no dominance cap |
-| E− | [PENDING] | [PENDING] | fixed wealth (no feedback) |
+- **D− (no weight cap) is dramatically better by −0.0234 CRPS** on
+  this exponential-deposit DGP. Without the ω_max projection, a
+  single strong forecaster can capture nearly all the weight; on a
+  DGP where one forecaster has much lower noise than the others,
+  unconstrained concentration maximises aggregation accuracy. HHI
+  stays at 0.334 because the measurement is pre-cap, but the effective
+  distribution is sharply concentrated. Gini stays at 0.774 (high).
+  The cap exists for economic-fairness reasons, not CRPS reasons.
+- **B− and E− (no deposit shaping, no wealth feedback) are both
+  slightly worse.** HHI drops to 0.13 (near-uniform) and Gini is
+  zero because the wealth channel is disabled. The deposit
+  information is lost, consistent with §5.1.4.
+- **A− and C− are near-neutral** (−0.0003 CRPS each) with slightly
+  higher concentration because the skill signal enters more directly.
+
+The thesis interpretation: the mechanism pays a CRPS cost (~0.023 on
+this DGP) for the weight cap, buying market fairness. Report this
+honestly in Chapter 7.
 
 ## Notes for the write-up
 
