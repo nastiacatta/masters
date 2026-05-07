@@ -37,9 +37,9 @@ and is treated as an audit check rather than a realistic adversary.
 
 ## 8.2 Arbitrage scan (Chen et al. 2014)
 
-Arbitrageur profit over 10 seeds, T = 1000, versus floor parameter λ
+Arbitrageur profit over 20 seeds, T = 1000, versus floor parameter λ
 [source: `onlinev2/outputs/behaviour/experiments/arbitrage_scan/
-data/arbitrage_scan_summary.csv`]:
+data/arbitrage_scan_by_lam.csv`]:
 
 | λ | Mean profit ± SE | 95% CI | Mean found-rounds |
 |---:|---:|---|---:|
@@ -72,14 +72,14 @@ the same λ — more disagreement means more wager pool to access.
 
 ## 8.3 Collusion (Chun & Shachter 2011)
 
-Three-member coalition, 10 seeds [source:
+Three-member coalition, 20 seeds [source:
 `collusion_stress/data/collusion_stress_summary.csv`]:
 
 | Scenario | Mean coalition profit ± SE | 95% CI |
 |---|---:|---|
 | no_collusion | 0.00 ± 0.00 | [0, 0] |
-| collusion_weighted_mean (Chun–Shachter) | +21.03 ± 3.30 | [+14.57, +27.49] |
-| collusion_weighted_median | +18.16 ± 3.33 | [+11.64, +24.67] |
+| collusion_weighted_mean (Chun–Shachter) | +19.87 ± 2.32 | [+15.32, +24.41] |
+| collusion_weighted_median | +16.86 ± 2.37 | [+12.22, +21.50] |
 
 Both coalition variants extract strictly positive profit. The weighted-
 mean variant is marginally better in expectation than the weighted-
@@ -103,14 +103,14 @@ collusion (+24.12) by ~40%.
 
 ## 8.5 Insider advantage (Lambert et al. 2008; Johnstone 2007)
 
-AR(1) DGP with φ = 0.7, σ_eps = 0.18, 10 seeds [source:
+AR(1) DGP with φ = 0.7, σ_eps = 0.18, 20 seeds [source:
 `insider_advantage/data/insider_advantage_summary.csv`]:
 
 | Scenario | Mean profit ± SE | 95% CI | Mean score |
 |---|---:|---|---:|
 | no_insider | 0.00 ± 0.00 | [0, 0] | 0.000 |
-| insider_lagged (F_{t−1}, lag = 1, σ = 0.015) | **+54.53 ± 3.18** | [+48.30, +60.76] | 0.852 |
-| insider_leaked (audit: reads y_t) | +61.43 ± 3.72 | [+54.14, +68.72] | 0.992 |
+| insider_lagged (F_{t−1}, lag = 1, σ = 0.015) | **+57.14 ± 2.15** | [+52.93, +61.36] | 0.852 |
+| insider_leaked (audit: reads y_t) | +63.98 ± 2.65 | [+58.78, +69.19] | 0.992 |
 
 The legitimate lagged insider earns ~89% of the leaker's profit — the
 cost of making the information boundary honest. The effect requires an
@@ -139,14 +139,14 @@ is not a defect but an honest scope limitation.
 ### 8.6.2 Sybil-arbitrage audit (combined with Chen et al. 2014)
 
 Sybilproofness *for the arbitrage attack*, k clones fanning the
-arbitrage behaviour with equal total stake, paired seeds [source:
+arbitrage behaviour with equal total stake, 20 paired seeds [source:
 `sybil_arbitrage/data/sybil_arbitrage_summary.csv`]:
 
 | k | Mean profit ± SE | 95% CI | Mean N_eff |
 |---:|---:|---|---:|
-| 1 | +12.02 ± 1.28 | [+9.52, +14.52] | 3.04 |
-| 3 | +12.02 ± 1.28 | [+9.52, +14.52] | 4.88 |
-| 5 | +12.02 ± 1.28 | [+9.52, +14.52] | 5.87 |
+| 1 | +13.01 ± 1.05 | [+10.96, +15.06] | 3.21 |
+| 3 | +13.01 ± 1.05 | [+10.96, +15.06] | 5.05 |
+| 5 | +13.01 ± 1.05 | [+10.96, +15.06] | 5.97 |
 
 **Profit is invariant to k** (to within Monte-Carlo error). The
 Lambert sybilproofness property carries over to the arbitrage attack:
@@ -157,13 +157,14 @@ counting identities, not influence) but has no payoff consequence.
 ## 8.7 Wash trading / activity gaming (parimutuel wash)
 
 10 seeds [source:
-`wash_activity_gaming/data/wash_activity_gaming_summary.csv`]:
+`wash_activity_gaming/data/wash_activity_gaming_summary.csv`,
+inflation reported as ratio so 0.67 ≈ +67%]:
 
 | Scenario | Inflation rate ± SE | Wash profit ± SE |
 |---|---:|---:|
-| no_wash | 0.0% ± 0.0% | 0.00 ± 0.00 |
-| wash_k3_anchor | +68.1% ± 1.3% | +15.14 ± 2.03 |
-| wash_k5_split | +113.4% ± 2.1% | −257.54 ± 4.39 |
+| no_wash | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| wash_k3_anchor | 0.67 ± 0.01 (≈ +67%) | +14.71 ± 1.36 |
+| wash_k5_split | 1.12 ± 0.02 (≈ +112%) | −261.51 ± 2.71 |
 
 **Anchor style** inflates activity cheaply (small positive profit +
 60% inflation). **Split-bet style** inflates more but pays a large

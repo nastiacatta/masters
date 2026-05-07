@@ -158,30 +158,80 @@ export default function RoundRibbon({ trace, selectedAgent, onSelectAgent }: Pro
   const toggleAgent = (i: number) => onSelectAgent(selectedAgent === i ? null : i);
 
   return (
-    <div className="text-sm">
+    <div>
       {/* Aggregate summary */}
-      <div className="flex flex-wrap gap-4 items-center px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 mb-4">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Aggregate r̂</span>
-          <span className="font-bold font-mono text-slate-800">{trace.r_hat.toFixed(4)}</span>
-        </div>
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Outcome y</span>
-          <span className="font-bold font-mono text-slate-800">{trace.y.toFixed(4)}</span>
-        </div>
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Error</span>
-          <span className={`font-bold font-mono ${Math.abs(trace.y - trace.r_hat) < 0.1 ? 'text-emerald-600' : 'text-red-500'}`}>
+      <div
+        className="flex flex-wrap gap-5 items-baseline px-4 py-3 mb-5"
+        style={{
+          background: 'var(--cream)',
+          border: '1px solid var(--border)',
+          borderRadius: 6,
+        }}
+      >
+        {[
+          { label: 'Aggregate r̂', value: trace.r_hat.toFixed(4), emphasis: false },
+          { label: 'Outcome y',    value: trace.y.toFixed(4),    emphasis: false },
+        ].map(({ label, value }) => (
+          <div key={label} className="flex items-baseline gap-2">
+            <span
+              className="uppercase"
+              style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-soft)' }}
+            >
+              {label}
+            </span>
+            <span
+              className="font-mono tabular-nums"
+              style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}
+            >
+              {value}
+            </span>
+          </div>
+        ))}
+        <div className="flex items-baseline gap-2">
+          <span
+            className="uppercase"
+            style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-soft)' }}
+          >
+            Error
+          </span>
+          <span
+            className="font-mono tabular-nums"
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: Math.abs(trace.y - trace.r_hat) < 0.1 ? 'var(--teal-deep)' : 'var(--crimson)',
+            }}
+          >
             {Math.abs(trace.y - trace.r_hat).toFixed(4)}
           </span>
         </div>
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">N_eff</span>
-          <span className="font-mono text-slate-700">{trace.nEff.toFixed(1)}</span>
+        <div className="flex items-baseline gap-2">
+          <span
+            className="uppercase"
+            style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-soft)' }}
+          >
+            N_eff
+          </span>
+          <span
+            className="font-mono tabular-nums"
+            style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-muted)' }}
+          >
+            {trace.nEff.toFixed(1)}
+          </span>
         </div>
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Active</span>
-          <span className="font-mono text-slate-700">{trace.activeCount}/{N}</span>
+        <div className="flex items-baseline gap-2">
+          <span
+            className="uppercase"
+            style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-soft)' }}
+          >
+            Active
+          </span>
+          <span
+            className="font-mono tabular-nums"
+            style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-muted)' }}
+          >
+            {trace.activeCount}/{N}
+          </span>
         </div>
       </div>
 
@@ -190,18 +240,42 @@ export default function RoundRibbon({ trace, selectedAgent, onSelectAgent }: Pro
         <table className="border-collapse" style={{ minWidth: `${COLUMNS.length * 100 + 80}px` }}>
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-white text-left py-2 pr-3 pl-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 min-w-[72px]">
+              <th
+                className="sticky left-0 z-10 text-left uppercase"
+                style={{
+                  background: 'var(--card)',
+                  padding: '10px 10px 10px 8px',
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  color: 'var(--ink-soft)',
+                  minWidth: 72,
+                }}
+              >
                 Agent
               </th>
               {COLUMNS.map(col => (
                 <th
                   key={col.key}
-                  className="relative text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:opacity-80 min-w-[90px]"
-                  style={{ background: col.bg, color: col.color }}
+                  className="relative text-center uppercase cursor-pointer hover:opacity-85"
+                  style={{
+                    padding: '10px 8px',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    background: col.bg,
+                    color: col.color,
+                    minWidth: 92,
+                  }}
                   onClick={() => setTooltipCol(tooltipCol === col.key ? null : col.key)}
                 >
                   <span>{col.label}</span>
-                  <span className="ml-1 text-slate-400 text-[9px]">ⓘ</span>
+                  <span
+                    className="ml-1"
+                    style={{ fontSize: 9, color: 'var(--ink-faint)' }}
+                  >
+                    ⓘ
+                  </span>
                   {tooltipCol === col.key && (
                     <FormulaPanel col={col} onClose={() => setTooltipCol(null)} />
                   )}
@@ -218,18 +292,40 @@ export default function RoundRibbon({ trace, selectedAgent, onSelectAgent }: Pro
                 <tr
                   key={i}
                   onClick={() => toggleAgent(i)}
-                  className={`cursor-pointer transition-all duration-150 ${
-                    selected ? 'ring-1 ring-inset ring-indigo-400' : ''
-                  } ${
-                    highlighted ? 'opacity-100' : 'opacity-20'
-                  } ${
-                    i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
-                  } hover:bg-indigo-50/50`}
+                  className="cursor-pointer transition-opacity duration-150"
+                  style={{
+                    opacity: highlighted ? 1 : 0.2,
+                    background: selected
+                      ? 'var(--navy-tint)'
+                      : i % 2 === 0
+                      ? 'transparent'
+                      : 'rgba(245, 241, 232, 0.5)',
+                    boxShadow: selected ? 'inset 0 0 0 1px var(--navy)' : undefined,
+                  }}
                 >
-                  <td className="sticky left-0 z-10 py-2 pr-3 pl-2 bg-inherit whitespace-nowrap">
-                    <span className="font-medium text-slate-700">F{i + 1}</span>
+                  <td
+                    className="sticky left-0 z-10 whitespace-nowrap"
+                    style={{ padding: '10px 10px 10px 8px', background: 'inherit' }}
+                  >
+                    <span
+                      className="font-serif"
+                      style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}
+                    >
+                      F{i + 1}
+                    </span>
                     {!active && (
-                      <span className="ml-1.5 text-[9px] text-slate-400 border border-slate-300 rounded px-1">out</span>
+                      <span
+                        className="ml-1.5"
+                        style={{
+                          fontSize: 9.5,
+                          color: 'var(--ink-faint)',
+                          border: '1px solid var(--border)',
+                          borderRadius: 3,
+                          padding: '1px 5px',
+                        }}
+                      >
+                        out
+                      </span>
                     )}
                   </td>
                   {COLUMNS.map(col => {
@@ -238,16 +334,21 @@ export default function RoundRibbon({ trace, selectedAgent, onSelectAgent }: Pro
                     const alpha = heatOpacity(raw, min, max);
                     const isProfit = col.key === 'profit';
                     const profitColor = isProfit
-                      ? raw >= 0 ? 'text-emerald-700' : 'text-red-600'
-                      : 'text-slate-800';
+                      ? raw >= 0 ? 'var(--teal-deep)' : 'var(--crimson)'
+                      : 'var(--ink)';
                     return (
                       <td
                         key={col.key}
-                        className={`text-center py-2 px-2 tabular-nums font-mono text-xs ${profitColor}`}
+                        className="text-center tabular-nums font-mono"
                         style={{
+                          padding: '10px 8px',
+                          fontSize: 12.5,
+                          color: profitColor,
                           background: selected
-                            ? `${col.color}${Math.round(alpha * 60).toString(16).padStart(2, '0')}`
-                            : active ? `${col.color}${Math.round(alpha * 20).toString(16).padStart(2, '0')}` : undefined,
+                            ? `${col.color}${Math.round(alpha * 55).toString(16).padStart(2, '0')}`
+                            : active
+                            ? `${col.color}${Math.round(alpha * 18).toString(16).padStart(2, '0')}`
+                            : undefined,
                         }}
                       >
                         {col.format(raw)}
@@ -261,7 +362,10 @@ export default function RoundRibbon({ trace, selectedAgent, onSelectAgent }: Pro
         </table>
       </div>
 
-      <p className="mt-2 text-[11px] text-slate-400">
+      <p
+        className="mt-3"
+        style={{ fontSize: 12, color: 'var(--ink-soft)' }}
+      >
         Click any row to highlight its path. Click a column header for the formula.
       </p>
     </div>

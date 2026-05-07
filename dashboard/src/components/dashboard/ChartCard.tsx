@@ -87,28 +87,50 @@ function KeyInsightCard({ insight }: { insight: KeyInsight }) {
 
   return (
     <div
-      className="rounded-lg p-3"
       style={{
         borderLeft: `3px solid ${verdict.border}`,
-        backgroundColor: verdict.bg,
+        background: verdict.bg,
+        padding: '14px 16px',
+        borderRadius: 4,
       }}
     >
-      <p className="font-semibold text-slate-800" style={{ fontSize: '14px', lineHeight: '20px' }}>
+      <p
+        className="font-serif"
+        style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.35 }}
+      >
         {insight.headline}
       </p>
       <p
-        className="font-bold font-mono mt-1"
-        style={{ fontSize: '20px', lineHeight: '28px', color: verdict.fg }}
+        className="font-mono tabular-nums"
+        style={{
+          fontSize: 22,
+          lineHeight: 1.2,
+          fontWeight: 700,
+          color: verdict.fg,
+          marginTop: 6,
+        }}
       >
         {insight.statistic}
       </p>
-      <p className="text-slate-600 mt-1" style={{ fontSize: '12px', lineHeight: '16px' }}>
+      <p
+        style={{
+          fontSize: 12.5,
+          lineHeight: 1.55,
+          color: 'var(--ink-soft)',
+          marginTop: 6,
+        }}
+      >
         {insight.interpretation}
       </p>
       {insight.derivation && (
         <p
-          className="text-slate-400 mt-1 cursor-help"
-          style={{ fontSize: '11px', lineHeight: '16px' }}
+          className="cursor-help"
+          style={{
+            fontSize: 11,
+            lineHeight: 1.5,
+            color: 'var(--ink-faint)',
+            marginTop: 4,
+          }}
           title={insight.derivation}
         >
           ℹ Hover for derivation
@@ -130,17 +152,29 @@ function FigureFooter({
   interpretation?: string;
 }) {
   return (
-    <div className="mt-2">
-      <p className="font-semibold text-slate-600" style={{ fontSize: '11px', lineHeight: '16px' }}>
+    <div
+      className="mt-3 pt-2"
+      style={{ borderTop: '1px solid var(--border)' }}
+    >
+      <p
+        className="font-serif"
+        style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-muted)', lineHeight: 1.5 }}
+      >
         Figure {figureNumber}
+        {caption && (
+          <span style={{ fontWeight: 400, color: 'var(--ink-soft)' }}> &middot; {caption}</span>
+        )}
       </p>
-      {caption && (
-        <p className="text-slate-500 font-normal" style={{ fontSize: '11px', lineHeight: '16px' }}>
-          {caption}
-        </p>
-      )}
       {interpretation && (
-        <p className="text-slate-600 italic mt-0.5" style={{ fontSize: '12px', lineHeight: '16px' }}>
+        <p
+          className="italic"
+          style={{
+            fontSize: 12.5,
+            color: 'var(--ink-muted)',
+            lineHeight: 1.55,
+            marginTop: 4,
+          }}
+        >
           {interpretation}
         </p>
       )}
@@ -172,14 +206,45 @@ function ExpandModal({
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] flex flex-col border border-slate-200/60">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
-          <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-in fade-in duration-150"
+      style={{
+        background: 'rgba(11, 18, 32, 0.4)',
+        backdropFilter: 'blur(4px)',
+      }}
+    >
+      <div
+        className="w-full max-w-[95vw] max-h-[90vh] flex flex-col"
+        style={{
+          background: 'var(--card)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 8,
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
+        <div
+          className="flex items-center justify-between px-5 py-3"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
+          <h3
+            className="font-serif tracking-tight"
+            style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}
+          >
+            {title}
+          </h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors w-8 h-8 inline-flex items-center justify-center text-lg leading-none"
+            className="rounded transition-colors w-8 h-8 inline-flex items-center justify-center text-lg leading-none"
+            style={{ color: 'var(--ink-faint)' }}
+            onMouseOver={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
+              (e.currentTarget as HTMLElement).style.background = 'rgba(15, 23, 42, 0.05)';
+            }}
+            onMouseOut={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--ink-faint)';
+              (e.currentTarget as HTMLElement).style.background = 'transparent';
+            }}
             aria-label="Close"
           >
             &times;

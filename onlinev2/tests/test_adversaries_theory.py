@@ -440,3 +440,131 @@ class TestAdversaryPlotsSmoke:
         # File exists and is non-empty.
         assert os.path.exists(out)
         assert os.path.getsize(out) > 1000  # PNG with content
+
+
+# ---------------------------------------------------------------------------
+# Quantile-mode support
+# ---------------------------------------------------------------------------
+
+
+class TestQuantileMode:
+    """Every adversary must emit a quantile vector under quantiles_crps mode
+    so downstream run_round can score it without falling back."""
+
+    def test_strategic_influence_emits_quantile_vector(self):
+        from onlinev2.behaviour.adversaries.strategic_influence import (
+            StrategicInfluenceBehaviour,
+        )
+        traits = UserTraits(user_id="m", initial_wealth=10.0, manipulation_strength=0.5)
+        adv = StrategicInfluenceBehaviour(
+            traits, target=0.7, scoring_mode="quantiles_crps",
+            taus=[0.1, 0.5, 0.9],
+        )
+        adv.reset(0)
+        state = _state(user_id="m")
+        action = adv.act(state)[0]
+        assert action.participate is True
+        report = np.asarray(action.report, dtype=float)
+        assert report.shape == (3,)
+        # Quantiles must be sorted after clamping (centred at 0.7 with Normal noise).
+        assert (report >= 0.0).all() and (report <= 1.0).all()
+
+    def test_strategic_reporter_emits_quantile_vector(self):
+        from onlinev2.behaviour.adversaries.strategic_reporter import (
+            StrategicReporterBehaviour,
+        )
+        traits = UserTraits(user_id="m", initial_wealth=10.0, manipulation_strength=0.5)
+        adv = StrategicReporterBehaviour(
+            traits, target=0.6, pull=0.5,
+            scoring_mode="quantiles_crps", taus=[0.1, 0.5, 0.9],
+        )
+        adv.reset(0)
+        state = _state(user_id="m", agg_history=[0.4, 0.45])
+        action = adv.act(state)[0]
+        report = np.asarray(action.report, dtype=float)
+        assert report.shape == (3,)
+
+    def test_detector_aware_emits_quantile_vector(self):
+        from onlinev2.behaviour.adversaries.detector_aware import DetectorAwareBehaviour
+        traits = UserTraits(user_id="e", initial_wealth=10.0)
+        adv = DetectorAwareBehaviour(
+            traits, target=0.2,
+            scoring_mode="quantiles_crps", taus=[0.1, 0.5, 0.9],
+        )
+        adv.reset(0)
+        state = _state(user_id="e", agg_history=[0.5])
+        action = adv.act(state)[0]
+        report = np.asarray(action.report, dtype=float)
+        assert report.shape == (3,)
+
+    def test_privileged_information_emits_quantile_vector(self):
+        traits = UserTraits(user_id="i", initial_wealth=10.0, insider_bonus=0.3)
+        adv = PrivilegedInformationBehaviour(
+            traits, scoring_mode="quantiles_crps", taus=[0.1, 0.5, 0.9],
+            mode="lagged_noisy", lag=1, sigma_priv=0.02,
+        )
+        adv.reset(0)
+        state = _state(user_id="i", y_history=[0.3, 0.4, 0.5])
+        action = adv.act(state)[0]
+        report = np.asarray(action.report, dtype=float)
+        assert report.shape == (3,)
+
+    def test_wash_trader_emits_quantile_vectors(self):
+        from onlinev2.behaviour.adversaries.wash_trader import WashTraderBehaviour
+        traits = UserTraits(user_id="w", initial_wealth=10.0)
+        adv = WashTraderBehaviour(
+            traits, k_accounts=3,
+            scoring_mode="quantiles_crps", taus=[0.1, 0.5, 0.9],
+            wash_report_style="anchor",
+        )
+        adv.reset(0)
+        state = _state(user_id="w", y_history=[0.5] * 15)
+        actions = adv.act(state)
+        assert len(actions) == 3
+        for a in actions:
+            report = np.asarray(a.report, dtype=float)
+            assert report.shape == (3,)
+
+    def test_coordinated_group_emits_quantile_vectors(self):
+        from onlinev2.behaviour.adversaries.coordinated_group import (
+            CoordinatedGroupBehaviour,
+        )
+        members = [
+            UserTraits(user_id=f"c_{j}", initial_wealth=10.0,
+                       bias=(-0.1 + 0.05 * j), stake_fraction=0.2)
+            for j in range(3)
+        ]
+        adv = CoordinatedGroupBehaviour(
+            members, scoring_mode="quantiles_crps", taus=[0.1, 0.5, 0.9],
+        )
+        adv.reset(0)
+        state = RoundPublicState(
+            t=0, y_history=[0.5] * 20, agg_history=[],
+            weights_prev={m.user_id: 0.1 for m in members},
+            sigma_prev={m.user_id: 0.5 for m in members},
+            wealth_prev={m.user_id: 10.0 for m in members},
+            profit_prev={m.user_id: 0.0 for m in members},
+        )
+        actions = adv.act(state)
+        participating = [a for a in actions if a.participate]
+        assert len(participating) >= 2
+        for a in participating:
+            report = np.asarray(a.report, dtype=float)
+            assert report.shape == (3,)
+        # All members must share the same coordinated vector.
+        arrays = [tuple(np.asarray(a.report).round(6).tolist()) for a in participating]
+        assert len(set(arrays)) == 1
+
+    def test_arbitrage_seeker_emits_quantile_vector(self):
+        traits = UserTraits(user_id="a", initial_wealth=10.0)
+        snapshot = {"p": np.array([0.2, 0.4, 0.6, 0.8]), "m": np.ones(4)}
+        adv = ArbitrageSeekingBehaviour(
+            traits, scoring_mode="quantiles_crps", taus=[0.1, 0.5, 0.9],
+            target_others=lambda _s: (snapshot["p"], snapshot["m"]),
+        )
+        adv.reset(0)
+        state = _state(user_id="a", agg_history=[0.5])
+        actions = adv.act(state)
+        if actions and actions[0].participate:
+            report = np.asarray(actions[0].report, dtype=float)
+            assert report.shape == (3,)
