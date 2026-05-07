@@ -43,3 +43,6 @@ dashboard/public/data/behaviour
 # Legacy top-level dirs (deprecated)
 onlinev1
 michael
+
+# Local tooling binaries
+tectonic

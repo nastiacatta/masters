@@ -28,6 +28,10 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "audit: mechanism correctness audit suite (bug conditions A-E)",
+    "audit_slow: audit suite cases requiring T>=2000 rounds",
+]
 
 [tool.ruff]
 line-length = 120

@@ -130,7 +130,14 @@ def test_xgboost_fallback_on_failure():
 # 5. test_xgboost_same_features
 # ---------------------------------------------------------------------------
 def test_xgboost_same_features():
-    """Req 3.5 — XGBoost quantile models use the same n_lags as the point model."""
+    """Req 3.5 — XGBoost quantile models use the same feature vector as the point model.
+
+    The actual feature count is n_lags (raw lags) + (n_lags-1) first-differences +
+    12 engineered features (rolling means at 3 scales, rolling stds at 2 scales,
+    rmin/rmax/pos_in_range, momentum, acceleration, mean_rev at 2 scales). What we
+    guarantee is CONSISTENCY: the point model and every quantile model see exactly
+    the same feature vector, so predictions compose cleanly.
+    """
     try:
         import xgboost as xgb  # noqa: F401
     except Exception:
@@ -145,14 +152,29 @@ def test_xgboost_same_features():
     history = np.clip(history, 0, 1)
     fc.fit(history)
 
-    # The point model and every quantile model should expect n_lags features
+    # Point model is trained
     assert fc._model is not None
-    assert fc._model.n_features_in_ == n_lags
+    point_features = fc._model.n_features_in_
+
+    # Must include at least n_lags features (raw lags are always present)
+    assert point_features >= n_lags, (
+        f"Point model has {point_features} features, expected >= {n_lags}"
+    )
+
+    # Every quantile model must see the same feature count as the point model
     for tau, qm in fc._quantile_models.items():
-        assert qm.n_features_in_ == n_lags, (
+        assert qm.n_features_in_ == point_features, (
             f"Quantile model for tau={tau} has {qm.n_features_in_} features, "
-            f"expected {n_lags}"
+            f"expected {point_features} (matching point model)"
         )
+
+    # Verify at prediction time the feature vector also matches
+    pred_features = fc._make_predict_features(history)
+    assert pred_features is not None
+    assert pred_features.shape[1] == point_features, (
+        f"Predict-time features have {pred_features.shape[1]} columns, "
+        f"expected {point_features}"
+    )
 
 
 # ---------------------------------------------------------------------------

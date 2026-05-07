@@ -172,14 +172,14 @@ function ExpandModal({
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] flex flex-col border border-slate-200/60">
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
           <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 transition-colors text-lg leading-none px-1"
+            className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors w-8 h-8 inline-flex items-center justify-center text-lg leading-none"
             aria-label="Close"
           >
             &times;
@@ -233,7 +233,7 @@ export default function ChartCard({
   return (
     <>
       <div
-        className={`bg-white border border-slate-200 rounded-xl p-4 ${className}`}
+        className={`bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-shadow duration-150 ${className}`}
         aria-label={ariaLabel}
       >
         {/* Header area */}
@@ -248,10 +248,10 @@ export default function ChartCard({
               type="button"
               onClick={handleDownloadCSV}
               disabled={!hasCsvData}
-              className="ml-auto text-slate-400 hover:text-slate-700 transition-colors text-xs px-1.5 py-0.5 rounded border border-slate-200 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="ml-auto text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors rounded-md border border-slate-200 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               aria-label="Download CSV"
               title={hasCsvData ? 'Download CSV' : 'No data available'}
-              style={{ minWidth: '32px', minHeight: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ minWidth: '28px', minHeight: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <DownloadIcon />
             </button>
@@ -260,15 +260,15 @@ export default function ChartCard({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="text-slate-400 hover:text-slate-700 transition-colors text-xs px-1.5 py-0.5 rounded border border-slate-200 hover:border-slate-300"
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors rounded-md border border-slate-200 hover:border-slate-300"
               aria-label="Expand chart to fullscreen"
               title="Expand to fullscreen"
-              style={{ minWidth: '32px', minHeight: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ minWidth: '28px', minHeight: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <ExpandIcon />
             </button>
           </div>
-          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
         </div>
 
         {/* Chart content area — with optional insight 70/30 split */}

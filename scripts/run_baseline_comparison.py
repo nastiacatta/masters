@@ -48,22 +48,56 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "onlinev2", "src"))
 
 from onlinev2.core.aggregation import aggregate_forecast  # noqa: E402
 from onlinev2.core.scoring import crps_hat_from_quantiles  # noqa: E402
-from onlinev2.real_data.forecasters import get_all_forecasters  # noqa: E402
+from onlinev2.real_data.forecasters import (  # noqa: E402
+    MLPForecaster,
+    XGBoostForecaster,
+    get_all_forecasters,
+)
 from onlinev2.real_data.loader import load_csv_series  # noqa: E402
+from onlinev2.real_data.runner import (  # noqa: E402
+    PIPELINE_VERSION,
+    causal_normalize,
+)
 from onlinev2.simulation import run_simulation  # noqa: E402
 from scipy.stats import norm  # noqa: E402
+
+
+def _forecaster_config_hash() -> str:
+    """Stable hash of forecaster-set configuration (post-audit issue #4).
+
+    Invalidates the cache when any of the following change:
+    - the forecaster name set,
+    - XGBoost's n_lags or val_gap,
+    - MLP's n_lags or hidden size,
+    - the seed passed to deterministic forecasters,
+    - the top-level PIPELINE_VERSION.
+
+    Keeps the cache stricter than a version string alone; fresh caches
+    are generated whenever any of these knobs shift.
+    """
+    import hashlib
+
+    forecasters = get_all_forecasters()
+    sig_parts: list[str] = [PIPELINE_VERSION]
+    for fc in forecasters:
+        sig_parts.append(fc.name)
+        if isinstance(fc, XGBoostForecaster):
+            sig_parts.append(f"xgb:n_lags={fc.n_lags}")
+            sig_parts.append(f"xgb:val_gap={fc.val_gap}")
+        elif isinstance(fc, MLPForecaster):
+            sig_parts.append(f"mlp:n_lags={fc.n_lags}")
+            sig_parts.append(f"mlp:hidden={fc.hidden}")
+            sig_parts.append(f"mlp:seed={fc.seed}")
+    signature = "|".join(sig_parts)
+    return hashlib.sha256(signature.encode("utf-8")).hexdigest()[:16]
+
+
+FORECASTER_CONFIG_HASH = _forecaster_config_hash()
 
 
 # ────────────────────────────────────────────────────────────────────
 # Helpers
 # ────────────────────────────────────────────────────────────────────
-
-
-def normalize_series(series: np.ndarray) -> tuple[np.ndarray, float, float]:
-    lo, hi = float(np.min(series)), float(np.max(series))
-    if hi - lo < 1e-12:
-        return np.full_like(series, 0.5), lo, hi
-    return (series - lo) / (hi - lo), lo, hi
 
 
 def confidence_from_quantiles(
@@ -110,8 +144,8 @@ def project_simplex(v: np.ndarray) -> np.ndarray:
 
 def run_forecasters(
     series: np.ndarray, taus: np.ndarray
-) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Run all forecasters causally; return y_all, q_reports, names."""
+) -> tuple[np.ndarray, np.ndarray, list[str], dict[str, int]]:
+    """Run all forecasters causally; return y_all, q_reports, names, fallback_counts."""
     forecasters = get_all_forecasters()
     n = len(forecasters)
     T = len(series)
@@ -135,7 +169,8 @@ def run_forecasters(
         if t % 2000 == 0 and t > 0:
             print(f"    forecasting step {t}/{T}  ({time.time() - t0:.1f}s elapsed)")
     print(f"    forecasting done in {time.time() - t0:.1f}s")
-    return y_all, q_reports, [fc.name for fc in forecasters]
+    fallback_counts = {fc.name: int(fc.fallback_counter) for fc in forecasters}
+    return y_all, q_reports, [fc.name for fc in forecasters], fallback_counts
 
 
 def ensure_cache(
@@ -144,31 +179,78 @@ def ensure_cache(
     taus: np.ndarray,
     *,
     hourly: bool,
+    warmup: int,
     force: bool = False,
 ) -> dict:
     if os.path.isfile(cache_path) and not force:
-        print(f"  Using cached forecasts: {cache_path}")
         data = np.load(cache_path, allow_pickle=True)
-        return {
-            "y_norm": data["y_norm"],
-            "q_reports": data["q_reports"],
-            "names": list(data["names"]),
-            "taus": data["taus"],
-            "series_min": float(data["series_min"]),
-            "series_max": float(data["series_max"]),
-        }
+        cached_version = (
+            str(data["pipeline_version"].item())
+            if "pipeline_version" in data.files
+            else "legacy"
+        )
+        cached_hash = (
+            str(data["forecaster_config_hash"].item())
+            if "forecaster_config_hash" in data.files
+            else "legacy"
+        )
+        if (
+            cached_version == PIPELINE_VERSION
+            and cached_hash == FORECASTER_CONFIG_HASH
+        ):
+            print(f"  Using cached forecasts: {cache_path}")
+            fc_counts: dict[str, int] = {}
+            if "fallback_counts" in data.files:
+                try:
+                    fc_counts = json.loads(str(data["fallback_counts"].item()))
+                except Exception:
+                    fc_counts = {}
+            return {
+                "y_norm": data["y_norm"],
+                "q_reports": data["q_reports"],
+                "names": list(data["names"]),
+                "taus": data["taus"],
+                "series_min": float(data["series_min"]),
+                "series_max": float(data["series_max"]),
+                "fallback_counts": fc_counts,
+            }
+        print(
+            f"  Cache mismatch — regenerating "
+            f"(pipeline_version got={cached_version!r}, want={PIPELINE_VERSION!r}; "
+            f"forecaster_config_hash got={cached_hash!r}, want={FORECASTER_CONFIG_HASH!r})."
+        )
 
     print(f"  Loading series from {series_path}")
     if hourly:
         df = pd.read_csv(series_path)
         raw = df["measured"].dropna().values.astype(np.float64)
-        series = raw[::4]  # 15-min → hourly
+        # Clip negative values (physically impossible for wind generation)
+        n_neg = (raw < 0).sum()
+        if n_neg > 0:
+            print(f"  Clipping {n_neg} negative values to 0")
+            raw = np.clip(raw, 0, None)
+        # Hourly averaging (not subsampling) — preserves information
+        n_full = (len(raw) // 4) * 4
+        series = raw[:n_full].reshape(-1, 4).mean(axis=1)
+        print(f"  Hourly averaged: {len(raw)} → {len(series)} points")
     else:
-        series = load_csv_series(series_path)
+        # Electricity: use positiveimbalanceprice column (€/MWh), not the
+        # generic first-numeric-column fallback (which picks netregulationvolume).
+        df = pd.read_csv(series_path)
+        if "positiveimbalanceprice" in df.columns:
+            series = df["positiveimbalanceprice"].dropna().values.astype(np.float64)
+            # Winsorize extreme outliers at 1st/99th percentile
+            p1, p99 = np.percentile(series, [1, 99])
+            n_clipped = ((series < p1) | (series > p99)).sum()
+            if n_clipped > 0:
+                print(f"  Winsorizing {n_clipped} outliers to [{p1:.1f}, {p99:.1f}]")
+                series = np.clip(series, p1, p99)
+        else:
+            series = load_csv_series(series_path)
     print(f"  Series length = {len(series)}")
 
-    norm_series, s_min, s_max = normalize_series(series)
-    y_all, q_reports, names = run_forecasters(norm_series, taus)
+    norm_series, s_min, s_max = causal_normalize(series, warmup_len=warmup)
+    y_all, q_reports, names, fallback_counts = run_forecasters(norm_series, taus)
 
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     np.savez_compressed(
@@ -179,8 +261,14 @@ def ensure_cache(
         taus=taus,
         series_min=s_min,
         series_max=s_max,
+        pipeline_version=np.array(PIPELINE_VERSION),
+        forecaster_config_hash=np.array(FORECASTER_CONFIG_HASH),
+        fallback_counts=np.array(json.dumps(fallback_counts)),
     )
-    print(f"  Cached forecasts to {cache_path}")
+    print(
+        f"  Cached forecasts to {cache_path} "
+        f"(pipeline_version={PIPELINE_VERSION}, config_hash={FORECASTER_CONFIG_HASH})"
+    )
     return {
         "y_norm": y_all,
         "q_reports": q_reports,
@@ -188,6 +276,7 @@ def ensure_cache(
         "taus": taus,
         "series_min": s_min,
         "series_max": s_max,
+        "fallback_counts": fallback_counts,
     }
 
 
@@ -387,7 +476,7 @@ def run_dataset(
     taus = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
     cache_path = os.path.join(REPO_ROOT, "onlinev2", "outputs_cache", f"{series_name}_forecasts.npz")
 
-    cache = ensure_cache(cache_path, csv_path, taus, hourly=hourly, force=force_cache)
+    cache = ensure_cache(cache_path, csv_path, taus, hourly=hourly, warmup=warmup, force=force_cache)
     y_all = cache["y_norm"]
     q_reports = cache["q_reports"]
     names: list[str] = list(cache["names"])
@@ -450,6 +539,10 @@ def run_dataset(
         "summary": summary_rows,
         "rolling_crps": rolling,
         "rolling_window": int(window),
+        # Fallback summary (bugfix clause 1.9 / 2.9). Surfaces each
+        # forecaster's end-of-run fallback_counter so silent training
+        # failures are visible to downstream consumers.
+        "fallback_summary": cache.get("fallback_counts", {}),
     }
 
     # Write dashboard JSON.

@@ -63,6 +63,15 @@ const SlidesIcon: FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const ClipboardIcon: FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="3" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M5.5 1.5H10.5C10.5 1.5 11 1.5 11 2V3.5H5V2C5 1.5 5.5 1.5 5.5 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="M5.5 7H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M5.5 9.5H8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
 /** Thesis argument flow — numbered steps + unnumbered reference pages */
 const NAV_ITEMS: NavItem[] = [
   { to: '/',              label: 'Overview',       icon: HomeIcon,     step: 1, shortcut: '1' },
@@ -71,6 +80,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/presentation',  label: 'Slides',         icon: SlidesIcon,   step: null, shortcut: 'p' },
   { to: '/notes',         label: 'Notes',          icon: BookIcon,     step: null, shortcut: 'n' },
   { to: '/explorer',      label: 'Explorer',       icon: CogIcon,      step: null, shortcut: 'e' },
+  { to: '/audit',         label: 'Audit',          icon: ClipboardIcon, step: null, shortcut: 'a' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -112,18 +122,18 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="bg-white border-r border-slate-100 flex flex-col h-full shrink-0 overflow-hidden"
-      style={{ width: effectiveWidth, transition: 'width 200ms ease' }}
+      className="bg-white border-r border-slate-200/70 flex flex-col h-full shrink-0 overflow-hidden"
+      style={{ width: effectiveWidth, transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1)' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* Header — toggle */}
-      <div className="px-2 py-2.5 flex items-center gap-2">
+      {/* Header — brand mark + toggle */}
+      <div className="px-2 py-2.5 flex items-center gap-2 border-b border-slate-100">
         <button
           onClick={toggle}
           className={clsx(
             'flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-50',
-            'transition-colors duration-100 shrink-0',
+            'transition-colors duration-150 shrink-0',
             showLabels ? '' : 'mx-auto',
           )}
           style={{ minWidth: 32, minHeight: 32, width: 32, height: 32 }}
@@ -134,10 +144,28 @@ export default function Sidebar() {
             {isCollapsed ? '»' : '«'}
           </span>
         </button>
+        {showLabels && (
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <span
+              aria-hidden="true"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[11px] font-bold text-white bg-gradient-to-br from-teal-500 to-indigo-500 shrink-0"
+            >
+              σ
+            </span>
+            <span className="text-[13px] font-semibold tracking-tight text-slate-800 truncate">
+              Skill × Stake
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Navigation — clean, no group labels */}
-      <nav className="flex-1 px-1.5 pb-3 overflow-y-auto">
+      {/* Navigation — grouped with subtle eyebrow labels */}
+      <nav className="flex-1 px-1.5 pt-3 pb-3 overflow-y-auto">
+        {showLabels && (
+          <p className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Thesis
+          </p>
+        )}
         <ul className="space-y-0.5">
           {thesis.map((item) => (
             <li key={item.to}>
@@ -147,8 +175,13 @@ export default function Sidebar() {
         </ul>
 
         {/* Subtle separator */}
-        <div className="border-t border-slate-100 my-2 mx-2" />
+        <div className="border-t border-slate-100 my-3 mx-2" />
 
+        {showLabels && (
+          <p className="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Reference
+          </p>
+        )}
         <ul className="space-y-0.5">
           {reference.map((item) => (
             <li key={item.to}>
@@ -157,6 +190,13 @@ export default function Sidebar() {
           ))}
         </ul>
       </nav>
+
+      {/* Footer — shortcut hint when expanded */}
+      {showLabels && (
+        <div className="px-3 py-2 border-t border-slate-100 text-[10px] text-slate-400">
+          Press <kbd className="font-mono bg-slate-50 border border-slate-200 rounded px-1 py-px">g</kbd> for glossary
+        </div>
+      )}
     </aside>
   );
 }
@@ -175,12 +215,12 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
       title={showLabel ? undefined : `${item.label}${item.shortcut ? ` (${item.shortcut})` : ''}`}
       className={({ isActive }) =>
         clsx(
-          'flex items-center rounded-lg text-[13px] font-medium',
-          'transition-colors duration-100',
+          'group relative flex items-center rounded-lg text-[13px] font-medium',
+          'transition-all duration-150',
           showLabel ? 'gap-2 px-2.5 py-1.5' : 'justify-center px-1 py-1.5',
           isActive
-            ? 'bg-slate-900 text-white'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800',
+            ? 'bg-slate-900 text-white shadow-sm'
+            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
         )
       }
     >
@@ -190,21 +230,37 @@ function SidebarLink({ item, showLabel }: { item: NavItem; showLabel: boolean })
           {item.step != null ? (
             <span
               className={clsx(
-                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0',
+                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors',
                 isActive
                   ? 'bg-white text-slate-900'
-                  : 'bg-slate-100 text-slate-400',
+                  : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700',
               )}
             >
               {item.step}
             </span>
           ) : (
-            <Icon className="shrink-0" />
+            <Icon
+              className={clsx(
+                'shrink-0 transition-colors',
+                isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700',
+              )}
+            />
           )}
           {showLabel && (
             <span className="whitespace-nowrap overflow-hidden flex-1">{item.label}</span>
           )}
-          {/* Keyboard shortcuts removed — were redundant visual clutter */}
+          {showLabel && item.shortcut && (
+            <kbd
+              className={clsx(
+                'hidden sm:inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-mono font-semibold shrink-0',
+                isActive
+                  ? 'bg-white/15 text-white/70'
+                  : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200',
+              )}
+            >
+              {item.shortcut}
+            </kbd>
+          )}
         </>
       )}
     </NavLink>

@@ -46,6 +46,10 @@ def update_ewma_loss(
     Present (alpha=0): L = (1 - rho_eff) * L_prev + rho_eff * loss.
     When use_exposure_weighting is True, rho_eff_i = rho * min(1, m_i / m_ref).
     Missing (alpha=1): L = (1 - kappa) * L_prev + kappa * L0 (unchanged).
+
+    Invariants preserved under bugfix spec `mechanism-correctness-audit-fix`
+    (clauses 1.22 κ=0 preserves missing, 1.20 σ_t uses only L_{t-1}).
+    Do NOT refactor without re-running `pytest -m audit onlinev2/tests/audit/`.
     """
     L_prev = np.asarray(L_prev, dtype=np.float64)
     losses_t = np.asarray(losses_t, dtype=np.float64)
@@ -82,7 +86,12 @@ def update_ewma_loss(
 
 
 def loss_to_skill(L_prev, sigma_min, gamma):
-    """sigma = sigma_min + (1 - sigma_min) * exp(-gamma * L). Clamped to [sigma_min, 1]."""
+    """sigma = sigma_min + (1 - sigma_min) * exp(-gamma * L). Clamped to [sigma_min, 1].
+
+    Invariants preserved under bugfix spec `mechanism-correctness-audit-fix`
+    (clauses 1.18 σ bounds, 1.19 strictly decreasing in L, 1.23 calibrate_gamma
+    round-trip). Do NOT refactor without re-running the audit PBT suite.
+    """
     L_prev = np.asarray(L_prev, dtype=np.float64)
     s_min = float(sigma_min)
     sigma = s_min + (1.0 - s_min) * np.exp(-float(gamma) * L_prev)

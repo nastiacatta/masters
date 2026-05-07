@@ -1,0 +1,412 @@
+/**
+ * WagerAllocationPanel — Effective wager breakdown, weight distribution,
+ * deposit policy comparison, concentration metrics, and textual explanation
+ * for the audit page.
+ */
+
+import { useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from 'recharts';
+import { useAuditData } from '@/hooks/useAuditData';
+import { giniCoefficient, effectiveN } from '@/lib/audit/auditUtils';
+
+// ── Colour palette ─────────────────────────────────────────────────────────
+
+const FORECASTER_COLOURS: Record<string, string> = {
+  Naive: '#64748b',
+  'EWMA(5)': '#0ea5e9',
+  'ARIMA(2,1,1)': '#8b5cf6',
+  XGBoost: '#f59e0b',
+  'Neural Net': '#ef4444',
+  Theta: '#10b981',
+  Ensemble: '#6366f1',
+};
+
+function getColour(name: string): string {
+  return FORECASTER_COLOURS[name] ?? '#94a3b8';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+
+export default function WagerAllocationPanel() {
+  const { comparison, depositSensitivity } = useAuditData();
+
+  const steadyState = comparison?.steady_state ?? [];
+
+  // ── Effective wager data (deposit + skill gate) ────────────────
+  const wagerBarData = useMemo(() => {
+    return [...steadyState]
+      .sort((a, b) => b.mean_weight - a.mean_weight)
+      .map((s) => ({
+        name: s.forecaster,
+        deposit: 1.0, // normalised base deposit
+        skillGate: s.mean_sigma,
+        totalWeight: s.mean_weight,
+      }));
+  }, [steadyState]);
+
+  // ── Normalised weights ─────────────────────────────────────────
+  const weightData = useMemo(() => {
+    const totalWeight = steadyState.reduce((s, v) => s + v.mean_weight, 0);
+    if (totalWeight === 0) return [];
+    return [...steadyState]
+      .sort((a, b) => b.mean_weight - a.mean_weight)
+      .map((s) => ({
+        name: s.forecaster,
+        weight: s.mean_weight / totalWeight,
+        fill: getColour(s.forecaster),
+      }));
+  }, [steadyState]);
+
+  // ── Concentration metrics ──────────────────────────────────────
+  const weights = steadyState.map((s) => s.mean_weight);
+  const gini = giniCoefficient(weights);
+  const nEff = effectiveN(weights);
+
+  // ── Deposit policy comparison ──────────────────────────────────
+  const depositPolicies = useMemo(() => {
+    if (!depositSensitivity?.deposit_sensitivity) return [];
+    const ds = depositSensitivity.deposit_sensitivity;
+    return Object.entries(ds).map(([policy, data]) => ({
+      policy: policy.charAt(0).toUpperCase() + policy.slice(1),
+      uniform: data.uniform,
+      skill: data.skill,
+      mechanism: data.mechanism,
+      gini: giniCoefficient([data.uniform, data.skill, data.mechanism]),
+      nEff: effectiveN([data.uniform, data.skill, data.mechanism]),
+    }));
+  }, [depositSensitivity]);
+
+  // ── Per-policy Gini and N_eff from deposit sensitivity ─────────
+  const policyMetrics = useMemo(() => {
+    if (!depositSensitivity?.deposit_sensitivity) return [];
+    const ds = depositSensitivity.deposit_sensitivity;
+    return Object.entries(ds).map(([policy, data]) => ({
+      policy: policy.charAt(0).toUpperCase() + policy.slice(1),
+      deltaMech: data.delta_mech,
+      pctMech: data.pct_mech,
+      deltaSk: data.delta_skill,
+      pctSk: data.pct_skill,
+    }));
+  }, [depositSensitivity]);
+
+  if (!comparison) {
+    return (
+      <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center">
+        <p className="text-sm text-slate-400">
+          Wager allocation data unavailable — comparison.json could not be
+          loaded.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-10">
+      {/* ── High-concentration warning ───────────────────────────── */}
+      {gini > 0.5 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-xs font-medium text-amber-800">
+            ⚠ High concentration warning: Gini coefficient is{' '}
+            {gini.toFixed(3)} (&gt; 0.5). Wager allocation is heavily
+            concentrated on a few forecasters.
+          </p>
+        </div>
+      )}
+
+      {/* ── Effective wager stacked bar chart ────────────────────── */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Effective Wager Breakdown
+        </h2>
+        <p className="text-xs text-slate-500">
+          Each forecaster's effective wager is the product of their deposit and
+          skill gate (σ). The stacked bars show the deposit (base) and skill
+          gate components.
+        </p>
+        {wagerBarData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={wagerBarData} layout="vertical">
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e2e8f0"
+                horizontal={false}
+              />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tickLine={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={{ fontSize: 11, fill: '#475569' }}
+                tickLine={false}
+                width={100}
+              />
+              <Tooltip
+                contentStyle={{
+                  fontSize: 11,
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar
+                dataKey="deposit"
+                stackId="wager"
+                fill="#94a3b8"
+                name="Deposit"
+                radius={[0, 0, 0, 0]}
+              />
+              <Bar
+                dataKey="skillGate"
+                stackId="wager"
+                fill="#6366f1"
+                name="Skill Gate (σ)"
+                radius={[0, 4, 4, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-xs text-slate-400 py-4 text-center">
+            Steady-state data not available.
+          </p>
+        )}
+      </section>
+
+      {/* ── Normalised weight chart ──────────────────────────────── */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Normalised Weights
+        </h2>
+        <p className="text-xs text-slate-500">
+          w_i = m_i / Σm_j — the fraction of total effective wager held by each
+          forecaster.
+        </p>
+        {weightData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={weightData} layout="vertical">
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e2e8f0"
+                horizontal={false}
+              />
+              <XAxis
+                type="number"
+                domain={[0, 1]}
+                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tickLine={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={{ fontSize: 11, fill: '#475569' }}
+                tickLine={false}
+                width={100}
+              />
+              <Tooltip
+                contentStyle={{
+                  fontSize: 11,
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                }}
+                formatter={(value: unknown) => (Number(value) * 100).toFixed(1) + '%'}
+              />
+              <Bar
+                dataKey="weight"
+                fill="#6366f1"
+                radius={[0, 4, 4, 0]}
+                name="Weight"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-xs text-slate-400 py-4 text-center">
+            Weight data not available.
+          </p>
+        )}
+      </section>
+
+      {/* ── Concentration metrics ────────────────────────────────── */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Concentration Metrics
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-center">
+            <p className="text-xs text-slate-500 uppercase tracking-wider">
+              Gini Coefficient
+            </p>
+            <p
+              className={`text-2xl font-bold mt-1 ${
+                gini > 0.5 ? 'text-amber-600' : 'text-slate-800'
+              }`}
+            >
+              {gini.toFixed(3)}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              0 = equal, 1 = maximally concentrated
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-center">
+            <p className="text-xs text-slate-500 uppercase tracking-wider">
+              Effective N
+            </p>
+            <p className="text-2xl font-bold text-slate-800 mt-1">
+              {nEff.toFixed(2)}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              of {steadyState.length} forecasters
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Deposit policy comparison ────────────────────────────── */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Deposit Policy Comparison
+        </h2>
+        {depositPolicies.length > 0 ? (
+          <>
+            <p className="text-xs text-slate-500">
+              Mean CRPS under three deposit policies: fixed, exponential, and
+              bankroll-fraction. Lower is better.
+            </p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={depositPolicies}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="policy"
+                  tick={{ fontSize: 11, fill: '#475569' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickLine={false}
+                  width={50}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 11,
+                    borderRadius: 8,
+                    border: '1px solid #e2e8f0',
+                  }}
+                  formatter={(value: unknown) => Number(value).toFixed(4)}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar
+                  dataKey="uniform"
+                  fill="#94a3b8"
+                  name="Uniform"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="skill"
+                  fill="#0ea5e9"
+                  name="Skill"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="mechanism"
+                  fill="#6366f1"
+                  name="Mechanism"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+
+            {/* Per-policy metrics table */}
+            {policyMetrics.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 pr-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Policy
+                      </th>
+                      <th className="text-right py-2 pr-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Δ Mechanism
+                      </th>
+                      <th className="text-right py-2 pr-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        % Mechanism
+                      </th>
+                      <th className="text-right py-2 pr-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Δ Skill
+                      </th>
+                      <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        % Skill
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {policyMetrics.map((row) => (
+                      <tr
+                        key={row.policy}
+                        className="border-b border-slate-100 last:border-0"
+                      >
+                        <td className="py-2 pr-4 text-slate-800 font-medium">
+                          {row.policy}
+                        </td>
+                        <td className="py-2 pr-4 text-right text-slate-700 tabular-nums">
+                          {row.deltaMech.toFixed(4)}
+                        </td>
+                        <td className="py-2 pr-4 text-right text-slate-700 tabular-nums">
+                          {row.pctMech.toFixed(1)}%
+                        </td>
+                        <td className="py-2 pr-4 text-right text-slate-700 tabular-nums">
+                          {row.deltaSk.toFixed(4)}
+                        </td>
+                        <td className="py-2 text-right text-slate-700 tabular-nums">
+                          {row.pctSk.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-slate-400 py-4 text-center">
+            Deposit sensitivity data not available.
+          </p>
+        )}
+      </section>
+
+      {/* ── Textual explanation ───────────────────────────────────── */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Why Fixed Deposits Outperform
+        </h2>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Fixed deposits outperform exponential and bankroll-fraction policies
+            because they maintain stable participation across all forecasters.
+            Exponential deposits amplify wealth differences, causing low-wealth
+            agents to deposit negligible amounts and effectively exit the
+            mechanism. Bankroll-fraction deposits create a feedback loop where
+            poor performance reduces deposits, which reduces influence, which
+            prevents recovery.
+          </p>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            With fixed deposits, the skill gate (σ) alone determines effective
+            wager differences. This separation of concerns — deposits for
+            participation, skill for weighting — produces the best aggregation
+            accuracy because all forecasters contribute meaningfully to the
+            pool, and the mechanism can learn from diverse forecast signals.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}

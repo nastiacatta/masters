@@ -11,7 +11,34 @@ import numpy as np
 import pandas as pd
 
 from .forecasters import BaseForecaster, get_all_forecasters
-from .runner import normalize_series
+from .runner import best_single_by_crps, causal_normalize, normalize_series
+
+
+def min_warmup_for(forecasters: list[BaseForecaster]) -> int:
+    """Return the minimum warmup required so every forecaster in
+    ``forecasters`` has enough history to train (not fall back to
+    persistence) by the end of the warmup window.
+
+    See `XGBoostForecaster.fit` (requires ``max(n_lags, 50) + 20``
+    history), `MLPForecaster.fit` (``max(n_lags, 50) + 10``), and the
+    simpler forecasters (minimum 20 to pass the retrain gate in the
+    runners).
+
+    Bugfix clause 1.16 / 2.16.
+    """
+    # Import locally to avoid a circular import at module load time
+    # (experiments → runner → forecasters).
+    from .forecasters import MLPForecaster, XGBoostForecaster
+
+    mins = []
+    for fc in forecasters:
+        if isinstance(fc, XGBoostForecaster):
+            mins.append(max(fc.n_lags, 50) + 20)
+        elif isinstance(fc, MLPForecaster):
+            mins.append(max(fc.n_lags, 50) + 10)
+        else:
+            mins.append(20)
+    return max(mins) if mins else 20
 
 
 def _run_horizon_comparison(
@@ -21,15 +48,24 @@ def _run_horizon_comparison(
     warmup: int,
     taus: np.ndarray,
     label: str,
+    seed: int = 42,
+    strict_no_fallback: bool = False,
 ) -> dict:
     """Run forecasters with a given forecast horizon.
 
     At each round t, models see data up to t-horizon and predict t.
     This ensures strictly causal forecasting at the given horizon.
     """
-    norm, s_min, s_max = normalize_series(series)
+    # Strictly-causal normalization using only series[:warmup] for (lo, hi)
+    # (bugfix clause 1.1 / 2.1 of .kiro/specs/model-training-testing-audit/).
+    norm, s_min, s_max = causal_normalize(series, warmup_len=warmup)
     T = len(norm)
     n = len(forecasters)
+
+    # Propagate deterministic seed (bugfix clause 1.8 / 2.8).
+    for fc in forecasters:
+        if hasattr(fc, "seed"):
+            fc.seed = seed
 
     # Reset forecasters
     for fc in forecasters:
@@ -39,30 +75,68 @@ def _run_horizon_comparison(
     q_reports = np.zeros((n, T, len(taus)))
     reports = np.zeros((n, T))
 
+    # Rounds 0..horizon-1 are never predicted by the pending-queue logic
+    # (the first enqueue targets u = 0 + horizon = horizon). Without this
+    # initialisation they would be passed to `run_simulation` as all-zeros,
+    # polluting sigma_hist / score_hist for the very first rounds before
+    # scoring begins. Seed them with a neutral 0.5 flat fan so the
+    # mechanism sees a well-formed but uninformative forecast.
+    reports[:, :horizon] = 0.5
+    q_reports[:, :horizon, :] = 0.5
+
+    # Pending-prediction queue: each element is (u, ŷ_point_u, ŷ_q_u).
+    # At round s we enqueue a prediction targeting u = s + horizon,
+    # computed from norm[:s]; when round u is observable we drain it and
+    # pair it with norm[u] to update each forecaster's residual buffer
+    # with a well-defined h-step-ahead error (bugfix clause 1.5 / 2.5).
+    from collections import deque
+    pending: deque[tuple[int, np.ndarray, np.ndarray]] = deque()
+
     print(f"  Generating forecasts (horizon={horizon})...")
     t0 = time.time()
     for t in range(T):
-        # Models see data up to t-horizon (strictly causal at given horizon)
-        cutoff = max(0, t - horizon)
-        history = norm[:cutoff] if cutoff > 0 else np.array([])
+        # Step 1: issue a prediction targeting round u = t + horizon
+        # using the strictly-causal history norm[:t].
+        u = t + horizon
+        if u < T:
+            history = norm[:t] if t > 0 else np.array([])
+            pending_point = np.zeros(n)
+            pending_q = np.zeros((n, len(taus)))
+            for i, fc in enumerate(forecasters):
+                if len(history) < 5:
+                    point = 0.5
+                else:
+                    if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+                        fc.fit(history)
+                    point = float(np.clip(fc.predict(), 0, 1))
+                pending_point[i] = point
+                pending_q[i] = (
+                    np.clip(fc.predict_quantiles(taus), 0, 1)
+                    if len(history) >= 5
+                    else np.full(len(taus), point)
+                )
+            pending.append((u, pending_point, pending_q))
 
-        for i, fc in enumerate(forecasters):
-            if len(history) < 5:
-                point = 0.5
-            else:
-                if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
-                    fc.fit(history)
-                point = float(np.clip(fc.predict(), 0, 1))
-
-            reports[i, t] = point
-            q_reports[i, t, :] = np.clip(fc.predict_quantiles(taus), 0, 1) if len(history) >= 5 else np.full(len(taus), point)
-
-            if cutoff > 0:
-                fc.update_residuals(norm[cutoff - 1], point)
+        # Step 2: drain any pending predictions whose target index is
+        # now observable (u == t). Under the loop invariant at most one
+        # element is drainable per round (queue is FIFO and enqueue
+        # index is monotone).
+        while pending and pending[0][0] <= t:
+            u_drain, ŷ_point_u, ŷ_q_u = pending.popleft()
+            assert u_drain == t, (
+                f"pending queue drained out of order: u={u_drain}, t={t}"
+            )
+            reports[:, u_drain] = ŷ_point_u
+            q_reports[:, u_drain, :] = ŷ_q_u
+            for i, fc in enumerate(forecasters):
+                # Residual pair (y_u, ŷ_u) — matching target index.
+                fc.update_residuals(float(norm[u_drain]), float(ŷ_point_u[i]))
+            # Advance forecaster caches to the observed point.
+            for fc in forecasters:
                 if hasattr(fc, '_history'):
-                    fc._history = norm[:cutoff]
+                    fc._history = norm[:u_drain + 1]
                 if hasattr(fc, '_last') and isinstance(fc._last, float):
-                    fc._last = norm[cutoff - 1]
+                    fc._last = float(norm[u_drain])
 
     print(f"    Done in {time.time()-t0:.1f}s")
 
@@ -84,10 +158,21 @@ def _run_horizon_comparison(
     rules = ["uniform", "skill", "mechanism", "best_single"]
     crps_per_rule = {r: [] for r in rules}
     per_round = []
+    # Per-agent CRPS history for the shared best_single_by_crps helper
+    # (bugfix clause 1.11 / 2.11). Matches the bookkeeping in
+    # run_real_data_comparison so both runners use the same selector.
+    agent_rolling_crps: list[list[float]] = [[] for _ in range(n)]
 
     for t in range(warmup, T):
         y_t = float(norm[t])
         q_t = q_reports[:, t, :]
+
+        # Per-agent CRPS at round t (feeds best_single_by_crps below)
+        agent_crps_t = crps_hat_from_quantiles(y_t, q_t, taus)
+        for i in range(n):
+            agent_rolling_crps[i].append(float(agent_crps_t[i]))
+            if len(agent_rolling_crps[i]) > 500:
+                agent_rolling_crps[i] = agent_rolling_crps[i][-500:]
 
         agg_u = np.mean(q_t, axis=0)
         c_u = float(crps_hat_from_quantiles(y_t, agg_u.reshape(1, -1), taus)[0])
@@ -106,7 +191,12 @@ def _run_horizon_comparison(
         c_m = float(crps_hat_from_quantiles(y_t, r_mech.reshape(1, -1), taus)[0]) if r_mech.size == len(taus) else c_u
         crps_per_rule["mechanism"].append(c_m)
 
-        best_idx = int(np.argmin([np.var(reports[j, max(0, t-50):t] - norm[max(0, t-50):t]) for j in range(n)])) if t > 50 else 0
+        # Best single: shared helper (bugfix clause 1.11 / 2.11). The
+        # legacy variance-of-point-error selector is deleted.
+        if t - warmup >= 20:
+            best_idx = best_single_by_crps(agent_rolling_crps, lookback=100)
+        else:
+            best_idx = 0
         c_best = float(crps_hat_from_quantiles(y_t, q_t[best_idx:best_idx+1], taus)[0])
         crps_per_rule["best_single"].append(c_best)
 
@@ -130,6 +220,17 @@ def _run_horizon_comparison(
     final_sigma = res["sigma_hist"][:, -1]
     avg_sigma = np.mean(res["sigma_hist"][:, -1000:], axis=1) if T > 1000 else final_sigma
 
+    # Fallback summary (bugfix clause 1.9 / 2.9 / 2.16). Surfaces each
+    # forecaster's end-of-run fallback_counter so silent ML-training
+    # failures do not pass through unnoticed.
+    fallback_summary = {fc.name: int(fc.fallback_counter) for fc in forecasters}
+    if strict_no_fallback:
+        offenders = {k: v for k, v in fallback_summary.items() if v > 0}
+        if offenders:
+            raise ValueError(
+                f"strict_no_fallback=True: non-zero fallback counters: {offenders}"
+            )
+
     return {
         "config": {
             "T": T, "n_forecasters": n, "warmup": warmup,
@@ -143,6 +244,14 @@ def _run_horizon_comparison(
              "avg_sigma": float(avg_sigma[i])}
             for i in range(n)
         ],
+        "fallback_summary": fallback_summary,
+        # Bugfix clause 1.15 / 2.15: mark this block as a within-run
+        # slice even when _run_horizon_comparison is invoked directly
+        # (not only through run_all_real_experiments). A true
+        # restart-per-season variant is flagged as follow-up in
+        # tasks.md optional item 11.8.
+        "within_run_seasonal_slice": True,
+        "todo": "restart per season (follow-up spec)",
     }
 
 
@@ -161,9 +270,15 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
     daily = df["measured"].resample("1D").mean().dropna().values
     print(f"  Daily series: {len(daily)} points")
     forecasters_daily = get_all_forecasters()
+    # Bugfix clause 1.16 / 2.16: raise the day-ahead warmup to at least
+    # max_required_history + 20 across the forecaster set (≥ 70 for
+    # the current tree/NN models), so XGBoost and MLP are not silently
+    # reduced to persistence for the first ~40 scored rounds.
+    day_ahead_warmup = max(30, min_warmup_for(forecasters_daily))
+    print(f"  Using warmup={day_ahead_warmup} (min_warmup_for bumped from legacy 30)")
     results["day_ahead"] = _run_horizon_comparison(
         daily, horizon=1, forecasters=forecasters_daily,
-        warmup=30, taus=taus, label="day_ahead",
+        warmup=day_ahead_warmup, taus=taus, label="day_ahead",
     )
 
     # === 2. 4h-ahead at 15-min resolution ===
@@ -196,7 +311,10 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
 
     # Run on full series but track per-season performance
     full_hourly = hourly.values
-    norm_full, _, _ = normalize_series(full_hourly)
+    # Causal normalization for per-season indexing only. The actual
+    # normalization used by forecasters is re-applied inside
+    # _run_horizon_comparison with warmup=200 (bugfix clause 1.1 / 2.1).
+    norm_full, _, _ = causal_normalize(full_hourly, warmup_len=200)
 
     # Get month for each hourly point
     months = hourly.index.month.values
@@ -243,6 +361,15 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
     results["regime_shift"] = {
         **full_result,
         "regime_summary": regime_summary,
+        # Bugfix clause 1.15 / 2.15: this block is a per-month-bucketed
+        # slice of a SINGLE online run. Seasons interleave across the
+        # 2024-2025 window and the mechanism's skill state is not
+        # reinitialised between them, so the per-season CRPS reflects
+        # mid-run adaptation rather than regime-shift robustness. A
+        # true restart-per-season evaluation is flagged as follow-up
+        # (tasks.md optional item 11.8).
+        "within_run_seasonal_slice": True,
+        "todo": "restart per season (follow-up spec)",
     }
 
     # Save all results

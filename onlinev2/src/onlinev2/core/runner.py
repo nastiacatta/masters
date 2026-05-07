@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from onlinev2.core.aggregation import aggregate_forecast
+from onlinev2.core.aggregation import aggregate_forecast, _enforce_quantile_monotonicity
 from onlinev2.core.intermittent import michael_predict, michael_update
 from onlinev2.core.metrics import (
     compute_gini,
@@ -262,6 +262,9 @@ def run_round(
 
         new_state.agg_state = {"per_tau": new_per_tau_state}
 
+        # Enforce quantile monotonicity on per-tau Michael aggregate
+        r_hat = _enforce_quantile_monotonicity(r_hat)
+
     # True Michael allocation: utility split from Shapley + oos (bypass Raja)
     if params.allocation_mode == "michael_split":
         U_t = float(params.U)
@@ -411,12 +414,15 @@ def run_round(
     gini = compute_gini(wealth_arr)
 
     pit_val = None
+    pit_skipped = False
     if params.scoring_mode == "quantiles_crps" and params.taus is not None:
         q_hat = np.asarray(r_hat, dtype=np.float64).ravel()
         if q_hat.size == len(params.taus) and validate_quantile_monotonicity(
             q_hat, params.taus, eps=params.eps
         ):
             pit_val = compute_pit(y_t, q_hat, params.taus)
+        else:
+            pit_skipped = True
 
     logs = {
         "t": state.t,
@@ -443,5 +449,7 @@ def run_round(
     }
     if pit_val is not None:
         logs["PIT"] = pit_val
+    if pit_skipped:
+        logs["PIT_skipped"] = True
 
     return new_state, logs

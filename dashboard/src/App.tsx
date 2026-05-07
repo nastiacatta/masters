@@ -12,6 +12,7 @@ import NotesPage from '@/pages/NotesPage';
 import PresentationPage from '@/pages/PresentationPage';
 
 import LabPage from '@/pages/LabPage';
+import AuditPage from '@/pages/AuditPage';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
 
 /** Scroll to top on route change and add a subtle fade transition. */
@@ -60,6 +61,7 @@ function MainLayout() {
               {/* Reference */}
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/explorer" element={<MechanismPage />} />
+              <Route path="/audit" element={<AuditPage />} />
 
               {/* Legacy interactive tools */}
               <Route path="/appendix" element={<LabPage />} />

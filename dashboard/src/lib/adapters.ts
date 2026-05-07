@@ -466,6 +466,14 @@ export interface RealDataResult {
     warmup: number;
     series_name: string;
     forecasters: string[];
+    // Mechanism parameters (present in comparison.json since the runner
+    // emits them). Optional on the type because earlier exports may
+    // predate this field.
+    gamma?: number;
+    rho?: number;
+    lam?: number;
+    series_min?: number;
+    series_max?: number;
   };
   rows: Array<{
     experiment: string;
@@ -619,4 +627,34 @@ export async function loadPanelSizeSensitivity(): Promise<PanelSweepResult | nul
   } catch {
     return null;
   }
+}
+
+// ── Audit adapters ─────────────────────────────────────────────────
+
+import type { BaselinesData, DepositSensitivityData } from './audit/auditTypes';
+
+/** Load baselines.json for the Aggregation Accuracy panel (Vitali OGD comparison). */
+export async function loadBaselines(seriesName: string = 'elia_wind'): Promise<BaselinesData | null> {
+  try {
+    const raw = await fetchJSON<BaselinesData>(
+      `${DATA_BASE}/real_data/${seriesName}/data/baselines.json`,
+    );
+    if (raw?.summary?.length) return raw;
+  } catch {
+    // Not available.
+  }
+  return null;
+}
+
+/** Load deposit_sensitivity.json for the Wager Allocation panel. */
+export async function loadDepositSensitivity(seriesName: string = 'elia_wind'): Promise<DepositSensitivityData | null> {
+  try {
+    const raw = await fetchJSON<DepositSensitivityData>(
+      `${DATA_BASE}/real_data/${seriesName}/data/deposit_sensitivity.json`,
+    );
+    if (raw?.deposit_sensitivity) return raw;
+  } catch {
+    // Not available.
+  }
+  return null;
 }

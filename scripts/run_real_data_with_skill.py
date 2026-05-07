@@ -11,6 +11,10 @@ Outputs to dashboard/public/data/real_data/{elia_wind,elia_electricity}/data/com
 import os
 import sys
 
+# Fix OMP threading issues on macOS
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+
 import numpy as np
 import pandas as pd
 
@@ -27,8 +31,17 @@ def run_wind(gamma=4.0, rho=0.1, lam=0.05):
         return
     df = pd.read_csv(csv_path)
     series = df["measured"].dropna().values.astype(np.float64)
-    series_hourly = series[::4]
-    print(f"Wind: {len(series)} raw points → {len(series_hourly)} hourly points")
+
+    # Clip negative values to 0 (physically impossible for wind generation)
+    n_neg = (series < 0).sum()
+    if n_neg > 0:
+        print(f"  Clipping {n_neg} negative values to 0")
+        series = np.clip(series, 0, None)
+
+    # Hourly averaging (not subsampling) — preserves information from 15-min data
+    n_full = (len(series) // 4) * 4
+    series_hourly = series[:n_full].reshape(-1, 4).mean(axis=1)
+    print(f"Wind: {len(series)} raw 15-min points → {len(series_hourly)} hourly (averaged)")
     outdir = os.path.join(os.path.dirname(__file__), "..", "dashboard", "public", "data")
     run_real_data_comparison(
         series=series_hourly, warmup=200, outdir=outdir,
@@ -41,8 +54,25 @@ def run_electricity(gamma=4.0, rho=0.1, lam=0.05):
     if not os.path.isfile(csv_path):
         print(f"Electricity data not found at {csv_path}")
         return
-    series = load_csv_series(csv_path)
-    print(f"Electricity: {len(series)} points")
+    df = pd.read_csv(csv_path)
+
+    # Use positiveimbalanceprice (€/MWh) — the actual imbalance price
+    # The old loader used netregulationvolume (MW) by mistake
+    col = "positiveimbalanceprice"
+    if col not in df.columns:
+        # Fallback to generic loader
+        series = load_csv_series(csv_path)
+    else:
+        series = df[col].dropna().values.astype(np.float64)
+
+    # Winsorize extreme outliers at 1st/99th percentile
+    p1, p99 = np.percentile(series, [1, 99])
+    n_clipped = ((series < p1) | (series > p99)).sum()
+    if n_clipped > 0:
+        print(f"  Winsorizing {n_clipped} outliers to [{p1:.1f}, {p99:.1f}]")
+        series = np.clip(series, p1, p99)
+
+    print(f"Electricity ({col}): {len(series)} points, range=[{series.min():.1f}, {series.max():.1f}]")
     outdir = os.path.join(os.path.dirname(__file__), "..", "dashboard", "public", "data")
     run_real_data_comparison(
         series=series, warmup=200, outdir=outdir,

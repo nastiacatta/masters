@@ -19,6 +19,83 @@ from scipy.optimize import isotonic_regression
 from scipy.stats import norm
 
 
+def build_feature_row(series: np.ndarray, i: int, n_lags: int) -> np.ndarray:
+    """Build a single engineered feature row for index i in series.
+
+    Shared by XGBoost and MLP to ensure identical feature layouts. The row
+    contains:
+      - n_lags raw lag values
+      - n_lags - 1 first differences of those lags
+      - 12 engineered features: rolling means at 3 scales (5/20/50),
+        rolling stds at 2 scales (5/20), rmin/rmax/pos_in_range over a
+        10-step window, momentum, acceleration, and mean-reversion signals
+        at 20 and 50 scales.
+
+    The caller is responsible for ensuring i >= max(n_lags, 50). Any
+    window that would underflow the start of the series is silently
+    truncated, matching numpy slice semantics.
+    """
+    lags = series[i - n_lags:i]
+    last = lags[-1]
+
+    # First differences of lags
+    diffs = np.diff(lags)
+
+    # Rolling windows at multiple scales
+    w5 = series[max(0, i - 5):i]
+    w10 = series[max(0, i - 10):i]
+    w20 = series[max(0, i - 20):i]
+    w50 = series[max(0, i - 50):i]
+
+    rmean5 = float(np.mean(w5))
+    rmean20 = float(np.mean(w20))
+    rmean50 = float(np.mean(w50))
+    rstd5 = float(np.std(w5)) if len(w5) > 1 else 0.0
+    rstd20 = float(np.std(w20)) if len(w20) > 1 else 0.0
+    rmin10 = float(np.min(w10))
+    rmax10 = float(np.max(w10))
+    rng = rmax10 - rmin10
+    pos_in_range = (last - rmin10) / rng if rng > 1e-12 else 0.5
+
+    # Momentum (mean recent change) and acceleration
+    d5 = np.diff(series[max(0, i - 6):i])
+    momentum = float(np.mean(d5)) if len(d5) > 0 else 0.0
+    d_old = np.diff(series[max(0, i - 12):max(0, i - 6)])
+    acceleration = (momentum - float(np.mean(d_old))) if len(d_old) > 0 else 0.0
+
+    # Mean-reversion signals at two scales
+    mean_rev_20 = last - rmean20
+    mean_rev_50 = last - rmean50
+
+    return np.concatenate([
+        lags, diffs,
+        [rmean5, rmean20, rmean50, rstd5, rstd20,
+         rmin10, rmax10, pos_in_range,
+         momentum, acceleration, mean_rev_20, mean_rev_50],
+    ])
+
+
+def build_feature_matrix(series: np.ndarray, n_lags: int) -> tuple[np.ndarray, np.ndarray]:
+    """Build a feature matrix and residual targets (Δy) from a series.
+
+    Returns (X, y) where X[k] is the feature row for index i = k + min_start
+    and y[k] = series[i] - series[i - 1] is the one-step residual target.
+    """
+    min_start = max(n_lags, 50)
+    X, y = [], []
+    for i in range(min_start, len(series)):
+        X.append(build_feature_row(series, i, n_lags))
+        y.append(series[i] - series[i - 1])
+    return np.array(X), np.array(y)
+
+
+def build_predict_features(history: np.ndarray, n_lags: int) -> np.ndarray | None:
+    """Build a single prediction-time feature row, or None if history is too short."""
+    if len(history) < max(n_lags, 50):
+        return None
+    return build_feature_row(history, len(history), n_lags).reshape(1, -1)
+
+
 class BaseForecaster(ABC):
     """Base class for all forecasters."""
 
@@ -39,6 +116,17 @@ class BaseForecaster(ABC):
         self.default_scale = default_scale
         self._residuals: list[float] = []
         self._fitted = False
+        # Bugfix mechanism-correctness-audit-fix clause 1.14: counter for
+        # silent-fallback branches. Incremented whenever a forecaster
+        # falls back to a simpler path (e.g. XGBoost/MLP per-tau quantile
+        # models failed to fit, ARIMA exception in fit). Audit tests read
+        # this to detect silent training failures.
+        self.fallback_counter: int = 0
+        # Bugfix clause 1.15: flag set by forecasters (e.g. ARIMA) when
+        # predict() returns a persistence (last-observation) fallback
+        # rather than a true model forecast. Optional — absent on
+        # forecasters that do not distinguish the two paths.
+        self.is_persistence: bool = False
 
     @abstractmethod
     def fit(self, history: np.ndarray) -> None:
@@ -174,32 +262,55 @@ class MovingAverageForecaster(BaseForecaster):
 
 
 class ARIMAForecaster(BaseForecaster):
-    """ARIMA(p,d,q) model. Retrains periodically on rolling window."""
+    """ARIMA(p,d,q) model. Retrains periodically on rolling window.
+
+    Between retrains, predict() uses the last observed value (persistence)
+    since the ARIMA model's 1-step forecast becomes stale after 1 round.
+    The ARIMA model's value comes from its residual distribution for
+    quantile estimation, not from multi-step-ahead point forecasts.
+    """
 
     def __init__(self, order: tuple[int, int, int] = (2, 1, 1), residual_window: int = 300):
-        # ARIMA retrains every 50 steps on a 300-point window; a larger
-        # residual_window=300 matches the training window so the bootstrap
-        # covers the same horizon the model was fitted on.
         super().__init__(
             f"ARIMA{order}",
             retrain_every=50,
-            window=300,
+            window=500,
             residual_window=residual_window,
         )
         self.order = order
         self._model = None
         self._last_pred = 0.5
+        self._history: np.ndarray = np.array([])
 
     def fit(self, history: np.ndarray) -> None:
+        self._history = history
         if len(history) < 30:
             self._last_pred = float(history[-1]) if len(history) > 0 else 0.5
             self._fitted = True
             return
         try:
+            import warnings
             from statsmodels.tsa.arima.model import ARIMA
             tail = history[-self.window:]
-            model = ARIMA(tail, order=self.order)
-            self._model = model.fit(method_kwargs={"maxiter": 50})
+            with warnings.catch_warnings():
+                # statsmodels is verbose about non-stationary starting parameters
+                # and convergence hints. These are informational, not actionable:
+                # the MLE still returns a usable fit even when the optimiser
+                # reports non-convergence at maxiter.
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Maximum Likelihood optimization failed to converge",
+                )
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Non-stationary starting autoregressive parameters",
+                )
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Non-invertible starting MA parameters",
+                )
+                model = ARIMA(tail, order=self.order)
+                self._model = model.fit(method_kwargs={"maxiter": 50})
             forecast = self._model.forecast(steps=1)
             self._last_pred = float(forecast.iloc[0]) if hasattr(forecast, 'iloc') else float(forecast[0])
         except Exception:
@@ -207,97 +318,188 @@ class ARIMAForecaster(BaseForecaster):
         self._fitted = True
 
     def predict(self) -> float:
+        # Between retrains, use persistence (last value) since the ARIMA
+        # 1-step forecast is only valid at the fit origin.
+        # Bugfix clause 1.15: set is_persistence=True so callers (and the
+        # audit PBT in tests/audit/test_bug_condition_c_training.py) can
+        # distinguish persistence fallbacks from true ARIMA forecasts.
+        if len(self._history) > 0:
+            self.is_persistence = True
+            return float(self._history[-1])
+        self.is_persistence = False
         return self._last_pred
 
 
 class XGBoostForecaster(BaseForecaster):
-    """XGBoost with lag features. Retrains periodically."""
+    """XGBoost with engineered features and native quantile regression.
 
-    def __init__(self, n_lags: int = 10, taus: np.ndarray | None = None, residual_window: int = 300):
-        # XGBoost retrains every 50 steps on a 300-point window; a larger
-        # residual_window=300 matches the training window so the fallback
-        # bootstrap covers the same data horizon as the fitted model.
+    Key design choices (literature-grounded):
+    - Expanding window: uses ALL available history, not a fixed rolling window.
+      More data = better generalization for tree models (Chen & Guestrin 2016).
+    - Residual modeling: predicts Δy = y[t] - y[t-1], not the level.
+      Avoids mean-regression bias inherent in tree-based level prediction.
+    - Native quantile regression: uses XGBoost's reg:quantileerror objective
+      for each tau level, producing calibrated prediction intervals.
+    - Early stopping: uses last 20% of training data as validation to prevent
+      overfitting on the noisy residual target.
+    """
+
+    def __init__(self, n_lags: int = 24, taus: np.ndarray | None = None,
+                 residual_window: int = 500, val_gap: int = 24):
         super().__init__(
             "XGBoost",
-            retrain_every=50,
-            window=300,
+            retrain_every=20,
+            window=0,  # 0 = expanding window (use all data)
             residual_window=residual_window,
         )
         self.n_lags = n_lags
+        # Temporal gap between the training window and the held-out
+        # validation slice for early stopping (bugfix clause 1.7 / 2.7).
+        # A gap of ~24 (one day at hourly resolution) keeps the validation
+        # loss from being dominated by the immediate autocorrelation
+        # structure of the training tail.
+        self.val_gap = val_gap
         self._model = None
         self._last_pred = 0.5
         self._history: np.ndarray = np.array([])
         self._taus = taus
         self._quantile_models: dict[float, Any] = {}
+        # Last computed (train_end_index, val_start_index) for testability
+        # — set inside fit() whenever expanding-window CV is applied.
+        self._last_cv_split: tuple[int, int] | None = None
+
+    def _build_row(self, series: np.ndarray, i: int) -> np.ndarray:
+        """Build a single feature row for index i in series."""
+        return build_feature_row(series, i, self.n_lags)
 
     def _make_features(self, series: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        """Create lag features from a 1D series."""
-        X, y = [], []
-        for i in range(self.n_lags, len(series)):
-            X.append(series[i - self.n_lags:i])
-            y.append(series[i])
-        return np.array(X), np.array(y)
+        """Build feature matrix + residual targets from a series."""
+        return build_feature_matrix(series, self.n_lags)
+
+    def _make_predict_features(self, history: np.ndarray) -> np.ndarray | None:
+        return build_predict_features(history, self.n_lags)
 
     def fit(self, history: np.ndarray) -> None:
         self._history = history
-        if len(history) < self.n_lags + 10:
+        if len(history) < max(self.n_lags, 50) + 20:
+            # Bugfix clause 1.9 / 2.9: the short-history early return is a
+            # silent fallback to persistence from XGBoost's perspective.
+            # Count it so strict_no_fallback can detect it at end-of-run.
+            self.fallback_counter += 1
             self._last_pred = float(history[-1]) if len(history) > 0 else 0.5
             self._fitted = True
             return
         try:
             import xgboost as xgb
-            tail = history[-self.window:]
+
+            # Use up to 5000 most recent points (expanding up to cap)
+            max_train = 5000
+            tail = history[-max_train:] if len(history) > max_train else history
             X, y = self._make_features(tail)
-            if len(X) < 5:
+            if len(X) < 20:
                 self._last_pred = float(history[-1])
                 self._fitted = True
                 return
+
+            # Train/val split with a temporal gap for early stopping
+            # (bugfix clause 1.7 / 2.7). When there is enough data, use
+            # an expanding-window CV with `val_gap` rows of held-out
+            # time between the training tail and the validation slice.
+            # When the training window is too short, fall back to the
+            # legacy 80/20 tail split with a warning.
+            n = len(X)
+            min_required = self.val_gap + 60  # train + gap + val headroom
+            if n >= min_required:
+                val_size = max(20, n // 5)
+                val_start = n - val_size
+                train_end = val_start - self.val_gap
+                X_train, y_train = X[:train_end], y[:train_end]
+                X_val, y_val = X[val_start:], y[val_start:]
+                self._last_cv_split = (train_end, val_start)
+            else:
+                split = int(n * 0.8)
+                X_train, y_train = X[:split], y[:split]
+                X_val, y_val = X[split:], y[split:]
+                self._last_cv_split = (split, split)  # zero gap — legacy
+
             self._model = xgb.XGBRegressor(
-                n_estimators=50, max_depth=3, learning_rate=0.1,
+                n_estimators=300, max_depth=4, learning_rate=0.05,
+                reg_alpha=0.1, reg_lambda=1.0,
+                subsample=0.8, colsample_bytree=0.8,
+                early_stopping_rounds=20,
                 verbosity=0, n_jobs=1, random_state=0,
             )
-            self._model.fit(X, y)
-            last_features = history[-self.n_lags:].reshape(1, -1)
-            self._last_pred = float(self._model.predict(last_features)[0])
+            self._model.fit(
+                X_train, y_train,
+                eval_set=[(X_val, y_val)],
+                verbose=False,
+            )
 
-            # Train per-tau quantile models
+            features = self._make_predict_features(history)
+            if features is not None:
+                delta = float(self._model.predict(features)[0])
+                self._last_pred = float(np.clip(history[-1] + delta, 0, 1))
+            else:
+                self._last_pred = float(history[-1])
+
+            # Train per-tau quantile models with early stopping
             if self._taus is not None:
                 self._quantile_models = {}
                 for tau in self._taus:
                     try:
                         q_model = xgb.XGBRegressor(
-                            n_estimators=50, max_depth=3, learning_rate=0.1,
+                            n_estimators=300, max_depth=4, learning_rate=0.05,
+                            reg_alpha=0.1, reg_lambda=1.0,
+                            subsample=0.8, colsample_bytree=0.8,
                             objective='reg:quantileerror', quantile_alpha=float(tau),
+                            early_stopping_rounds=20,
                             verbosity=0, n_jobs=1, random_state=0,
                         )
-                        q_model.fit(X, y)
+                        q_model.fit(
+                            X_train, y_train,
+                            eval_set=[(X_val, y_val)],
+                            verbose=False,
+                        )
                         self._quantile_models[float(tau)] = q_model
                     except Exception:
+                        # Bugfix clause 1.14: track silent fallback instead
+                        # of clearing the dict silently. Test can assert
+                        # self.fallback_counter == 0 for a clean fit.
+                        self.fallback_counter += 1
                         self._quantile_models = {}
                         break
         except Exception:
+            # Bugfix clause 1.14: top-level fit failed; count the fallback.
+            self.fallback_counter += 1
             self._last_pred = float(history[-1])
             self._quantile_models = {}
         self._fitted = True
 
     def predict(self) -> float:
-        if self._model is not None and len(self._history) >= self.n_lags:
+        if self._model is not None and len(self._history) >= max(self.n_lags, 50):
             try:
-                last_features = self._history[-self.n_lags:].reshape(1, -1)
-                return float(self._model.predict(last_features)[0])
+                features = self._make_predict_features(self._history)
+                if features is not None:
+                    delta = float(self._model.predict(features)[0])
+                    return float(np.clip(self._history[-1] + delta, 0, 1))
             except Exception:
                 pass
         return self._last_pred
 
     def _generate_quantiles(self, taus: np.ndarray) -> np.ndarray:
-        """Query per-tau XGBoost quantile models. Falls back to residual bootstrap."""
-        if self._quantile_models and len(self._history) >= self.n_lags:
+        """Query per-tau XGBoost quantile models (residual-based)."""
+        if self._quantile_models and len(self._history) >= max(self.n_lags, 50):
             try:
-                features = self._history[-self.n_lags:].reshape(1, -1)
-                return np.array([
-                    float(self._quantile_models[float(tau)].predict(features)[0])
-                    for tau in taus
-                ])
+                features = self._make_predict_features(self._history)
+                if features is not None:
+                    last_val = self._history[-1]
+                    return np.array([
+                        float(np.clip(
+                            last_val + self._quantile_models[float(tau)].predict(features)[0],
+                            0, 1
+                        ))
+                        for tau in taus
+                    ])
             except Exception:
                 pass
         return super()._generate_quantiles(taus)
@@ -306,32 +508,37 @@ class XGBoostForecaster(BaseForecaster):
 class MLPForecaster(BaseForecaster):
     """Small MLP neural network with lag features. Retrains periodically."""
 
-    def __init__(self, n_lags: int = 10, hidden: int = 16, residual_window: int = 300):
-        # MLP retrains every 50 steps on a 300-point window; a larger
-        # residual_window=300 matches the training window so the fallback
-        # bootstrap covers the same data horizon as the fitted model.
+    def __init__(self, n_lags: int = 24, hidden: int = 32, residual_window: int = 300,
+                 seed: int = 42):
+        # MLP retrains every 20 steps on a 500-point window.
         super().__init__(
             "Neural Net (MLP)",
-            retrain_every=50,
-            window=300,
+            retrain_every=20,
+            window=500,
             residual_window=residual_window,
         )
         self.n_lags = n_lags
         self.hidden = hidden
+        # Deterministic seed for torch (bugfix clause 1.8 / 2.8). The
+        # legacy seeding scheme `torch.manual_seed(len(history) % 1000)`
+        # made the MLP component non-reproducible across any change that
+        # shifted the retraining schedule. The runner pipes its own
+        # seed into this attribute via `fc.seed = seed` before training.
+        self.seed = seed
         self._model = None
         self._last_pred = 0.5
         self._history: np.ndarray = np.array([])
 
     def _make_features(self, series: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        X, y = [], []
-        for i in range(self.n_lags, len(series)):
-            X.append(series[i - self.n_lags:i])
-            y.append(series[i])
-        return np.array(X), np.array(y)
+        """Create features for residual modeling (shared with XGBoost)."""
+        return build_feature_matrix(series, self.n_lags)
 
     def fit(self, history: np.ndarray) -> None:
         self._history = history
-        if len(history) < self.n_lags + 10:
+        if len(history) < max(self.n_lags, 50) + 10:
+            # Bugfix clause 1.9 / 2.9: short-history early return is a
+            # silent fallback to persistence; count it.
+            self.fallback_counter += 1
             self._last_pred = float(history[-1]) if len(history) > 0 else 0.5
             self._fitted = True
             return
@@ -349,17 +556,20 @@ class MLPForecaster(BaseForecaster):
             X_t = torch.tensor(X, dtype=torch.float32)
             y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
 
-            torch.manual_seed(0)
+            torch.manual_seed(self.seed)  # bugfix clause 1.8 / 2.8
+            n_input = X_t.shape[1]
             model = nn.Sequential(
-                nn.Linear(self.n_lags, self.hidden),
+                nn.Linear(n_input, self.hidden),
                 nn.ReLU(),
-                nn.Linear(self.hidden, 1),
+                nn.Linear(self.hidden, self.hidden // 2),
+                nn.ReLU(),
+                nn.Linear(self.hidden // 2, 1),
             )
             optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
             loss_fn = nn.MSELoss()
 
             model.train()
-            for _ in range(100):
+            for epoch in range(200):
                 pred = model(X_t)
                 loss = loss_fn(pred, y_t)
                 optimizer.zero_grad()
@@ -369,30 +579,38 @@ class MLPForecaster(BaseForecaster):
             model.eval()
             with torch.no_grad():
                 last_features = torch.tensor(
-                    history[-self.n_lags:].reshape(1, -1), dtype=torch.float32
+                    self._make_predict_features(history), dtype=torch.float32
                 )
-                self._last_pred = float(model(last_features).item())
+                delta = float(model(last_features).item())
+                self._last_pred = float(np.clip(history[-1] + delta, 0, 1))
             self._model = model
         except Exception:
+            # Bugfix clause 1.14: MLP fit failure -> count silent fallback.
+            self.fallback_counter += 1
             self._last_pred = float(history[-1])
         self._fitted = True
 
+    def _make_predict_features(self, history: np.ndarray) -> np.ndarray | None:
+        """Build feature vector for next-step prediction (shared with XGBoost)."""
+        return build_predict_features(history, self.n_lags)
+
     def predict(self) -> float:
-        if self._model is not None and len(self._history) >= self.n_lags:
+        if self._model is not None and len(self._history) >= max(self.n_lags, 50):
             try:
                 import torch
                 with torch.no_grad():
-                    last_features = torch.tensor(
-                        self._history[-self.n_lags:].reshape(1, -1), dtype=torch.float32
-                    )
-                    return float(self._model(last_features).item())
+                    feat = self._make_predict_features(self._history)
+                    if feat is not None:
+                        last_features = torch.tensor(feat, dtype=torch.float32)
+                        delta = float(self._model(last_features).item())
+                        return float(np.clip(self._history[-1] + delta, 0, 1))
             except Exception:
                 pass
         return self._last_pred
 
 
 class ThetaForecaster(BaseForecaster):
-    """Theta method: decompose into trend + seasonality, forecast via SES on the theta line."""
+    """Theta method: SES with drift. Uses persistence between retrains."""
 
     def __init__(self, residual_window: int = 200):
         super().__init__(
@@ -401,33 +619,41 @@ class ThetaForecaster(BaseForecaster):
             window=300,
             residual_window=residual_window,
         )
-        self._alpha = 0.3  # SES smoothing parameter
+        self._alpha = 0.3
         self._level = 0.5
         self._drift = 0.0
         self._history: np.ndarray = np.array([])
+        self._fit_history_len = 0  # length of history at time of last fit
 
     def fit(self, history: np.ndarray) -> None:
         self._history = history
         if len(history) < 3:
             self._level = float(history[-1]) if len(history) > 0 else 0.5
             self._drift = 0.0
+            self._fit_history_len = len(history)
             self._fitted = True
             return
-        # Simple exponential smoothing with drift
         tail = history[-self.window:]
         self._level = float(tail[0])
         for v in tail[1:]:
             self._level = self._alpha * float(v) + (1 - self._alpha) * self._level
-        # Drift = average change over last 50 points
         n_drift = min(50, len(tail) - 1)
         if n_drift > 0:
             self._drift = float(np.mean(np.diff(tail[-n_drift-1:])))
         else:
             self._drift = 0.0
+        self._fit_history_len = len(history)
         self._fitted = True
 
     def predict(self) -> float:
-        return float(np.clip(self._level + self._drift, 0, 1))
+        # Apply SES to any observations that arrived since the last fit.
+        # Right after fit, history length == _fit_history_len, so no catch-up
+        # is applied (avoids double-counting the most recent observation).
+        level = self._level
+        if len(self._history) > self._fit_history_len:
+            for v in self._history[self._fit_history_len:]:
+                level = self._alpha * float(v) + (1 - self._alpha) * level
+        return float(np.clip(level + self._drift, 0, 1))
 
 
 class EnsembleForecaster(BaseForecaster):
@@ -483,12 +709,13 @@ def get_all_forecasters() -> list[BaseForecaster]:
       the 300-point training window with faster adaptation.
     - Ensemble (100): Averages Naive + EWMA; inherits their short buffers.
     """
+    taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     return [
-        NaiveForecaster(residual_window=100),           # fast-adapting, short buffer
-        MovingAverageForecaster(span=5, residual_window=100),  # EWMA(5), fast-adapting
-        ARIMAForecaster(order=(2, 1, 1), residual_window=300),       # matches training window
-        XGBoostForecaster(n_lags=10, residual_window=300),           # matches training window
-        MLPForecaster(n_lags=10, hidden=16, residual_window=300),    # matches training window
-        ThetaForecaster(residual_window=200),            # SES + drift, moderate buffer
-        EnsembleForecaster(),                            # Naive+EWMA average
+        NaiveForecaster(residual_window=100),
+        MovingAverageForecaster(span=5, residual_window=100),
+        ARIMAForecaster(order=(2, 1, 1), residual_window=300),
+        XGBoostForecaster(n_lags=24, taus=taus, residual_window=500),
+        MLPForecaster(n_lags=24, hidden=32, residual_window=300),
+        ThetaForecaster(residual_window=200),
+        EnsembleForecaster(),
     ]

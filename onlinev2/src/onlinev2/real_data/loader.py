@@ -20,6 +20,14 @@ def load_csv_series(path: str, column: str | None = None) -> np.ndarray:
 
     Returns:
         1D numpy array of float values
+
+    Note:
+        The "first numeric column" fallback is a last resort. It can pick
+        the wrong column when the CSV has multiple numeric columns whose
+        natural order doesn't start with the target value (e.g. Elia
+        imbalance CSVs start with `netregulationvolume` in MW, not the
+        actual imbalance price in €/MWh). Prefer passing `column=` or
+        using a domain-specific loader.
     """
     import pandas as pd
 
@@ -36,10 +44,19 @@ def load_csv_series(path: str, column: str | None = None) -> np.ndarray:
     elif 'price' in df.columns:
         series = df['price'].values
     else:
-        # Use first numeric column
+        # Use first numeric column (fallback — may be wrong for
+        # multi-column datasets; prefer an explicit column argument).
         numeric_cols = df.select_dtypes(include=[np.number]).columns
         if len(numeric_cols) == 0:
             raise ValueError(f"No numeric columns found in {path}")
+        if len(numeric_cols) > 1:
+            import warnings
+            warnings.warn(
+                f"{os.path.basename(path)} has {len(numeric_cols)} numeric columns "
+                f"{list(numeric_cols)}; using the first ('{numeric_cols[0]}'). "
+                f"Pass column= explicitly to avoid this warning.",
+                stacklevel=2,
+            )
         series = df[numeric_cols[0]].values
 
     # Drop NaN
