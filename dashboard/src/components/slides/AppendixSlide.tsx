@@ -71,6 +71,9 @@ const QA_ITEMS: QAItem[] = [
 const BASE = import.meta.env.BASE_URL;
 
 const EXTRA_FIGURES = [
+  { label: 'Budget-balance + profit distribution (settlement sanity)', file: 'settlement_sanity.png' },
+  { label: 'Sybil invariance: profit ratio vs number of clones', file: 'sybil.png' },
+  { label: 'Cumulative mean CRPS by method over time', file: 'forecast_aggregation.png' },
   { label: 'Parameter sweep results', file: 'parameter_sweep.png' },
   { label: 'Calibration reliability diagram', file: 'calibration_reliability.png' },
   { label: 'Behaviour matrix (18 presets × 9 families)', file: 'behaviour_concentration.png' },
@@ -490,6 +493,51 @@ export default function AppendixSlide(_props: {
                   </span>
                 </div>
               ))}
+            </div>
+
+            {/* Visual evidence: budget-gap + profit distribution */}
+            <div
+              style={{
+                ...CARD_STYLE,
+                width: '100%',
+                padding: '18px 22px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: PALETTE.navy,
+                  fontFamily: TYPOGRAPHY.fontFamily,
+                  letterSpacing: '0.03em',
+                  textTransform: 'uppercase' as const,
+                }}
+              >
+                Numerical evidence
+              </span>
+              <span
+                style={{
+                  fontSize: '0.95rem',
+                  color: PALETTE.slate,
+                  fontFamily: TYPOGRAPHY.fontFamily,
+                  lineHeight: 1.5,
+                }}
+              >
+                Budget-gap histogram concentrates at zero (max |Σ payouts − Σ wagers| on the order of 10⁻¹⁴); the profit distribution is zero-mean.
+              </span>
+              <img
+                src={`${BASE}presentation-plots/settlement_sanity.png`}
+                alt="Histograms of per-round budget gap and per-forecaster profit distribution, both concentrated at zero"
+                style={{
+                  width: '100%',
+                  maxHeight: 340,
+                  objectFit: 'contain',
+                  borderRadius: 8,
+                }}
+              />
             </div>
           </div>
         )}

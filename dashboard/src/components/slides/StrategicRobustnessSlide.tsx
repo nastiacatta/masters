@@ -1,5 +1,7 @@
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
+import { PALETTE, TYPOGRAPHY, FIGURE_FRAME } from './shared/presentationConstants';
+
+const BASE = import.meta.env.BASE_URL;
 
 /**
  * Slide 15: Strategic Robustness — properly centred layout.
@@ -103,28 +105,6 @@ function WarnIcon() {
   );
 }
 
-/** Shield icon */
-function ShieldIcon() {
-  return (
-    <svg width="60" height="68" viewBox="0 0 80 90" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M40 5 L70 20 V45 C70 65 55 80 40 85 C25 80 10 65 10 45 V20 L40 5Z"
-        fill="rgba(46, 139, 139, 0.1)"
-        stroke={PALETTE.teal}
-        strokeWidth={3.5}
-      />
-      <path
-        d="M27 45 L36 54 L53 35"
-        stroke={PALETTE.teal}
-        strokeWidth={4}
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function StrategicRobustnessSlide() {
   return (
     <SlideShell title="Strategic Robustness" subtitle="Does the mechanism resist manipulation?" refText="Chen et al., 2014" slideNumber={12}>
@@ -210,26 +190,31 @@ export default function StrategicRobustnessSlide() {
           ))}
         </div>
 
-        {/* Shield icon + caption — centred below table */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <ShieldIcon />
-          <p
-            style={{
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              color: PALETTE.teal,
-              fontFamily: TYPOGRAPHY.fontFamily,
-              textAlign: 'center',
-              maxWidth: 420,
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            Resists standard attacks
-          </p>
+        {/* Quantitative evidence — sybil profit-ratio dot plot with CIs */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <p
             style={{
               fontSize: '0.95rem',
+              fontWeight: 700,
+              color: PALETTE.navy,
+              fontFamily: TYPOGRAPHY.fontFamily,
+              letterSpacing: '0.03em',
+              textTransform: 'uppercase' as const,
+              margin: 0,
+            }}
+          >
+            Sybil profit ratio vs number of clones
+          </p>
+          <div style={{ ...FIGURE_FRAME, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src={`${BASE}presentation-plots/sybil.png`}
+              alt="Dot plot of sybil profit ratio against number of clones. Identical clones stay at ratio 1.0; diversified clones sit at approximately 1.065."
+              style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 6 }}
+            />
+          </div>
+          <p
+            style={{
+              fontSize: '0.92rem',
               color: PALETTE.slate,
               fontFamily: TYPOGRAPHY.fontFamily,
               textAlign: 'center',
@@ -237,7 +222,7 @@ export default function StrategicRobustnessSlide() {
               lineHeight: 1.5,
             }}
           >
-            Evaluated across 18 behaviour presets in 9 families
+            Ratio = 1.000 for identical clones across k; ≈ 1.065 for diversified clones. Evaluated across 18 behaviour presets in 9 families.
           </p>
         </div>
       </div>
