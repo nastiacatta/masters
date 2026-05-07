@@ -1,0 +1,30 @@
+{
+  "experiment_name": "sybil_arbitrage",
+  "description": "No description available.",
+  "config": {
+    "dgp_name": "sybil_arbitrage",
+    "T": 1000,
+    "n_forecasters": "N/A",
+    "n_seeds": 20,
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "sybil_arbitrage",
+    "T": 1000,
+    "block": "behaviour",
+    "n_seeds": 20,
+    "k_grid": [
+      1,
+      3,
+      5
+    ]
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": {
+      "mean": 13.01101127210702,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

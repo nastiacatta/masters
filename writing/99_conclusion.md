@@ -1,6 +1,6 @@
 # Conclusion and future work
 
-## 10.1 Summary of contributions
+## Summary of contributions
 
 Mapped to `THESIS_CLAIMS.md`:
 
@@ -24,14 +24,25 @@ Mapped to `THESIS_CLAIMS.md`:
 4. **Wind improvement, electricity null — both statistically clean
    (Claim 4).** On the full-length 17 344-hour Elia wind slice under
    strictly-causal expanding normalisation, the mechanism reduces CRPS
-   by 7.1% vs uniform (DM t = 40.77, p ≈ 0). On the 3000-point audit
-   slice used for all calibration work, the mechanism is within 0.3%
-   of Vitali's pre-rename OGD port. On Elia electricity imbalance
-   prices the mechanism is indistinguishable from uniform
-   (t = 0.008, p = 0.994) — a cleanly-reported null. On both series
-   Vitali's per-τ OGD baseline beats the mechanism; the gap
-   quantifies the CRPS cost of keeping the Lambert budget-balance
-   guarantee.
+   by 7.1% vs uniform (DM t = 40.77, p ≈ 0) at parameters
+   (γ = 16, ρ = 0.5, λ = 0.05); under static normalisation at the
+   sweep-selected parameters (γ = 32, ρ = 0.7, λ = 0.05) the
+   improvement is 7.93% (DM t = 42.23, p ≈ 0) — direction and
+   significance are stable, absolute magnitudes shift sub-percent with
+   the normalisation choice. Parameters come from a held-out split
+   sensitivity sweep, artefact
+   `onlinev2/outputs/sensitivity_sweep.json`, not hand selection. On
+   the 3000-point audit slice used for all calibration work, the
+   mechanism is within 0.3% of Vitali's pre-rename OGD port. On Elia
+   electricity imbalance prices the mechanism is effectively tied with
+   uniform (under expanding normalisation t = 0.008, p = 0.994 at
+   γ = 16, ρ = 0.5; under static normalisation at sweep-selected
+   (γ = 16, ρ = 0.1) the mechanism CRPS is 0.18% below uniform with
+   t = 5.52, p ≈ 0 — DM significant by sample size, economically
+   negligible). The substantive story — electricity null under this
+   forecaster panel — is unchanged. On both series Vitali's per-τ OGD
+   baseline beats the mechanism; the gap quantifies the CRPS cost of
+   keeping the Lambert budget-balance guarantee.
 
 5. **Skill ranking matches forecaster quality on real data (Claim 5).**
    XGBoost dominates the panel on both wind slices and is identified
@@ -45,10 +56,10 @@ Mapped to `THESIS_CLAIMS.md`:
    coverage in the lower tail and over-coverage in the mid-upper
    range, as predicted by Ranjan and Gneiting 2010.
 
-7. **Post-hoc recalibration closes 59% of the tail gap (Claim 7).**
+7. **Post-hoc recalibration closes 41% of the tail gap (Claim 7).**
    Rolling isotonic recalibration (Kuleshov, Fenner and Ermon 2018) in
-   a prequential buffer (Dawid 1984) reduces tail deviation 0.0171 →
-   0.0070 at a 1.3% CRPS cost and 11% sharpness cost, on the
+   a prequential buffer (Dawid 1984) reduces tail deviation 0.0186 →
+   0.0109 at a 1.6% CRPS cost and 12% sharpness cost, on the
    calibration-sharpness tradeoff floor (Gneiting, Balabdaoui, Raftery
    2007).
 
@@ -68,7 +79,7 @@ Mapped to `THESIS_CLAIMS.md`:
    19.1%, τ = 0.90 coverage is 94.6%), motivating the recalibration
    layer as a generic operational tool.
 
-## 10.2 Answer to the research question
+## Answer to the research question
 
 > When predictive information is distributed across many actors, how
 > should we combine their forecasts, and how should we decide whose
@@ -83,13 +94,17 @@ Mapped to `THESIS_CLAIMS.md`:
   1.0) and reconstructs the forecaster CRPS ordering on Elia wind
   (Spearman 1.0).
 - *Does using that reliability improve the aggregate forecast?*
-  Conditionally yes. On the 17 344-hour full-length Elia wind run the
-  mechanism reduces CRPS by 7.1% vs uniform (DM t = 40.77, p ≈ 0);
-  on Elia electricity imbalance prices the mechanism is statistically
-  indistinguishable from uniform (t = 0.008, p = 0.994) — an honest
-  null. Vitali's per-τ OGD baseline beats the mechanism on both
-  series because it drops the Lambert budget-balance constraint.
-  Forecast-combination-puzzle conditions apply.
+  Conditionally yes. On the 17 344-hour full-length Elia wind run
+  under expanding causal normalisation the mechanism reduces CRPS by
+  7.1% vs uniform (DM t = 40.77, p ≈ 0); under static causal
+  normalisation at the sweep-selected parameters the same run gives
+  7.9% (DM t = 42.2, p ≈ 0). On Elia electricity imbalance prices the
+  mechanism is effectively tied with uniform — expanding-mode gives
+  t = 0.008, p = 0.994; static-mode at sweep-selected parameters
+  gives a 0.18% CRPS reduction that is DM-significant by sample size
+  but economically negligible. Vitali's per-τ OGD baseline beats the
+  mechanism on both series because it drops the Lambert budget-
+  balance constraint. Forecast-combination-puzzle conditions apply.
 - *Can it happen while preserving Lambert's economic guarantees?* Yes.
   Budget balance is a construction property; sybil-proofness holds
   under Lambert's scope (identical reports, conserved total wager);
@@ -102,7 +117,7 @@ The honest headline: the skill layer buys a small forecasting
 improvement and adds online adaptivity; the economic structure comes
 essentially for free, which is the real contribution.
 
-## 10.3 Future work
+## Future work
 
 Ordered by estimated value and effort.
 
@@ -119,12 +134,21 @@ Ordered by estimated value and effort.
   receives uncalibrated base members; a per-forecaster conformal pass
   would mean the pool starts from calibrated input, reducing the
   magnitude of the Ranjan–Gneiting gap we have to close post-hoc.
-- **Sensitivity sweep** with held-out split (Open #2). Run
-  `scripts/run_sensitivity_sweep.py` on the full series to populate
-  `onlinev2/outputs/sensitivity_sweep.json` with a real optimum-
-  parameter artefact; the runner already reads from that path when
-  the file exists and otherwise flags a missing sweep (the legacy
-  hardcoded `-27.2` constant was removed by the training-audit spec).
+- **Sensitivity sweep** with held-out split (Open #2 — **DONE**
+  2026-05-07). `scripts/run_sensitivity_sweep_cached.py` replays the
+  shared forecast cache through the mechanism for each (γ, ρ, λ)
+  grid cell, scoring on `[split, T)` disjoint from the train window.
+  Artefact `onlinev2/outputs/sensitivity_sweep.json` now carries
+  held-out optima per series: wind (γ = 32, ρ = 0.7, λ = 0.05)
+  yielding −6.86% vs uniform on the held-out test window;
+  electricity (γ = 16, ρ = 0.1, λ = 0.05) yielding −0.22%. The
+  runner reads `optimal_params` from the artefact via
+  `--sweep-artefact`; the legacy hardcoded `-27.2` constant is
+  removed. Remaining follow-up: re-run the headline under
+  `normalize_mode=expanding` at the sweep-selected parameters so the
+  full-length locked table (§6.1) and the sweep-tuned headline block
+  are directly comparable (currently expanding is locked at γ = 16,
+  ρ = 0.5 and static is at the sweep-selected γ = 32, ρ = 0.7).
 
 ### Medium-term (months)
 
@@ -164,7 +188,7 @@ Ordered by estimated value and effort.
   translate to a smart-contract-style decentralised implementation,
   with additional latency and reporting-round concerns.
 
-## 10.4 Closing
+## Closing
 
 The skill layer is a small addition — one function per round — on top
 of a well-understood mechanism. The value is not in the size of the

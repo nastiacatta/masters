@@ -7,7 +7,7 @@ underlying spec changes.
 Throughout this section, subscript i ∈ {1,...,n} ranges over participants
 and subscript t over rounds. Bold letters are vectors over participants.
 
-## 3.1 Round structure
+## Round structure
 
 Each round has five steps. Every step is a pure function of the
 mechanism's persistent state and the current round's inputs, with no
@@ -183,7 +183,7 @@ agents) via different mechanisms: shrinkage vs robust weight projection.*
 
 Source: `onlinev2/src/onlinev2/core/skill.py`.
 
-## 3.2 The core design decision: same object for influence and exposure
+## The core design decision: same object for influence and exposure
 
 The single most important design choice. Two alternatives that we
 considered and rejected:
@@ -206,7 +206,7 @@ unchanged, (ii) uses a single object to control both influence and
 exposure, and (iii) leaves the truthfulness proof intact up to strict
 risk-neutrality.
 
-## 3.3 Properties preserved, properties extended
+## Properties preserved, properties extended
 
 What Lambert 2008 gives us, unchanged by the skill layer:
 
@@ -245,7 +245,7 @@ What the skill layer does *not* give us:
 - **Calibration of the aggregate.** Inherits the Ranjan–Gneiting
   impossibility; addressed by the orthogonal recalibration layer.
 
-### 3.3.1 Skill-gate truthfulness lemma (sketch)
+### Skill-gate truthfulness lemma (sketch)
 
 **Lemma.** *Let the effective wager at round t be m_{i,t} = b_{i,t} · g(σ_{i,t})
 with both b_{i,t} and σ_{i,t} measurable with respect to the σ-algebra
@@ -296,7 +296,7 @@ steady state. We note this as a scope limit; a formal multi-round
 truthfulness proof under risk-neutral, discounted expected profit is
 an open question.
 
-## 3.4 Why EWMA, specifically
+## Why EWMA, specifically
 
 Three reasons we chose EWMA over OGD-on-simplex (Vitali and Pinson 2025)
 for the skill update:
@@ -326,19 +326,35 @@ expanding-mode run the renamed `michael_ogd_centered_median_fan`
 baseline beats our mechanism by ~7 pp (0.0349 vs 0.0379 CRPS). We
 accept the CRPS cost in exchange for the economic structure.
 
-## 3.5 Parameter tuning
+## Parameter tuning
 
 Defaults (γ = 4, ρ = 0.1) are tuned for synthetic panels with ~10
 participants and T ~ 1000. The Elia wind series has T = 17 544 raw
 hourly points (17 344 evaluation rounds after a 200-round warmup) and
 7 forecasters with stable relative quality, which rewards faster,
 more decisive skill differentiation; hence the tuned values γ = 16,
-ρ = 0.5.
+ρ = 0.5 for the locked expanding-mode headline (Chapter 5.2).
 
 The hyperparameter sweep protocol is the held-out-split design in
-`scripts/run_sensitivity_sweep.py` [PENDING — once the post-B3-fix
-sweep completes, add the chosen values and the sensitivity heatmap
-reference here].
+`scripts/run_sensitivity_sweep_cached.py` (cache-reusing variant
+that replays the shared forecast cache through `run_simulation` for
+each grid cell rather than repeating the 25-minute forecasting pass,
+giving ~5-minute wall clock for a 40-cell × 2-series wide grid).
+Held-out-sweep selections, written to
+`onlinev2/outputs/sensitivity_sweep.json`:
+
+| Series | γ★ | ρ★ | λ★ | Held-out Δ vs uniform |
+|---|---:|---:|---:|---:|
+| elia_wind | 32.0 | 0.7 | 0.05 | −6.86% |
+| elia_electricity | 16.0 | 0.1 | 0.05 | −0.22% |
+
+The wind optimum lands at the high-γ corner of the coarse grid (γ=64
+plateaus at −5.5%; the grid is bounded from above by the γ=64 row).
+λ=0.2 is uniformly worse than λ=0.05 on both series. Electricity
+optima sit in a tight −0.17 to −0.22% band across all top cells,
+matching the forecast-combination-puzzle regime noted in §6.3 — when
+forecasters are undifferentiated the skill signal has nothing to
+extract.
 
 ## Notes for the final write-up
 

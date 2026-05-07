@@ -58,6 +58,13 @@ references and the exact theory used.
   empirical sybil-proofness audit. Results in `outputs/behaviour/
   experiments/sybil_arbitrage/` show the profit is invariant to k,
   matching the Lambert sybilproofness property.
+- **`reputation_reset.py`** — Whitewashing attack (Feldman & Chuang
+  2004). An aggressive manipulator that tracks its own cumulative
+  profit and, when reputation stock collapses, abandons the current
+  ``account_id`` and rejoins under ``account_id__reset_k``. Captures
+  the sequential "rent fresh identity" threat on reputation systems;
+  empirically cuts the attacker's loss from -20 (fixed identity) to
+  -3.5 (whitewashing) over 1000 rounds.
 
 ### Experiment summaries and plots
 

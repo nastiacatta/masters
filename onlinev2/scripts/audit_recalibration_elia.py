@@ -31,7 +31,7 @@ import pandas as pd
 from onlinev2.core.recalibration import RollingRecalibrator
 from onlinev2.core.scoring import crps_hat_from_quantiles
 from onlinev2.real_data.forecasters import get_all_forecasters
-from onlinev2.real_data.runner import causal_normalize
+from onlinev2.real_data.runner import causal_normalize, causal_normalize_expanding
 from onlinev2.simulation import run_simulation
 
 
@@ -51,11 +51,21 @@ def main() -> int:
     series_raw = series_raw[:slice_len]
 
     print(f"Slice: {len(series_raw)} points")
-    # Strictly-causal normalisation: (lo, hi) from warmup-window only.
-    # Replaces the legacy whole-series normalize_series which leaked
-    # evaluation-window extremes into training (bugfix clause 1.1 / 2.1).
+    # Physical clipping: negative wind generation is impossible. Match
+    # the preprocessing of run_real_data_with_skill.py / run_baseline_
+    # comparison.py for comparability.
+    n_neg = (series_raw < 0).sum()
+    if n_neg > 0:
+        print(f"  Clipping {n_neg} negative values to 0")
+        series_raw = np.clip(series_raw, 0, None)
+    # Strictly-causal normalisation with an EXPANDING (lo_t, hi_t) window.
+    # On the 3000-point audit slice the warmup range (Jan winter wind)
+    # is systematically higher than the eval range, so `static` mode
+    # clips ~46% of eval values to 0 and makes per-quantile coverage
+    # uninterpretable. `expanding` avoids clipping while staying strictly
+    # causal (bugfix clause 1.1 / 2.1; post-audit issue #1).
     warmup = 200
-    norm_series, _, _ = causal_normalize(series_raw, warmup_len=warmup)
+    norm_series, _, _ = causal_normalize_expanding(series_raw, warmup_len=warmup)
 
     taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     forecasters = get_all_forecasters()
@@ -72,7 +82,7 @@ def main() -> int:
         y_t = float(y_all[t])
         history = y_all[:t]
         for i, fc in enumerate(forecasters):
-            if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+            if t % fc.retrain_every == 0 and len(history) > 20:
                 fc.fit(history)
             pt = float(np.clip(fc.predict(), 0, 1))
             q_reports[i, t] = fc.predict_quantiles(taus)

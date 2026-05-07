@@ -62,7 +62,7 @@ def main():
         y_t = norm[t]
         y_all[t] = y_t
         for i, fc in enumerate(forecasters):
-            if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+            if t % fc.retrain_every == 0 and len(history) > 20:
                 fc.fit(history)
             q_reports[i, t, :] = fc.predict_quantiles(taus)
             fc.update_residuals(y_t, fc.predict())

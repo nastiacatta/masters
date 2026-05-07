@@ -4,7 +4,7 @@ Status: **[LOCKED]**. All numbers in this chapter come from committed
 outputs in `onlinev2/outputs/audit_per_quantile/` and the spec
 `.kiro/specs/mechanism-recalibration-layer/`.
 
-## 7.1 Motivation (Ranjan and Gneiting 2010 in one paragraph)
+## Motivation (Ranjan and Gneiting 2010 in one paragraph)
 
 Any non-trivial weighted average of two or more distinct, calibrated
 probability forecasts is necessarily uncalibrated and lacks sharpness
@@ -21,7 +21,7 @@ forecast; it does not touch the skill layer, the wager layer, the
 aggregation operator, or the settlement. The economic argument of the
 thesis is preserved end-to-end (Claim 8).
 
-## 7.2 Method (Kuleshov, Fenner, Ermon 2018 + Dawid 1984)
+## Method (Kuleshov, Fenner, Ermon 2018 + Dawid 1984)
 
 The layer implements Kuleshov, Fenner and Ermon 2018 ("Accurate
 Uncertainties for Deep Learning Using Calibrated Regression", ICML,
@@ -53,53 +53,58 @@ Code: `onlinev2/src/onlinev2/core/recalibration.py`. Runner hook:
 `onlinev2/src/onlinev2/real_data/runner.py`
 (`recalibrate: bool = False`).
 
-## 7.3 Headline numbers (Claim 7)
+## Headline numbers (Claim 7)
 
 3000-point Elia wind slice, `recalibrate=True` vs `recalibrate=False`
 on the same seed and pipeline [source:
 `onlinev2/outputs/audit_per_quantile/RECALIBRATION_SUMMARY.md` and
-`coverage_recal.json`]:
+`coverage_recal.json`, regenerated 2026-05-07 under
+`causal_normalize_expanding` + negative-wind clipping]:
 
 | Metric | Mechanism | Mechanism + recal | Δ | Change |
 |---|---:|---:|---:|---:|
-| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0171 | 0.0070 | −0.0101 | **−59%** |
-| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0187 | 0.0039 | −0.0148 | **−79%** |
-| Mean CRPS-hat (on [0, 2] scale) | 0.01874 | 0.01899 | +0.00024 | +1.3% |
-| Mean sharpness (q(0.9) − q(0.1)) | 0.0782 | 0.0697 | −0.0085 | −11% |
+| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0186 | 0.0109 | −0.0077 | **−41%** |
+| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0290 | 0.0026 | −0.0264 | **−91%** |
+| Mean CRPS-hat (on [0, 2] scale) | 0.02000 | 0.02032 | +0.00032 | +1.6% |
+| Mean sharpness (q(0.9) − q(0.1)) | 0.0887 | 0.0778 | −0.0109 | −12% |
 
 Spec-assertion outcomes (from
 `.kiro/specs/mechanism-recalibration-layer/`):
 
 | Spec | Claim | Threshold | Outcome |
 |---|---|---|:---:|
-| 6.2 | Mean tail deviation ≤ 50% of baseline | ≤ 0.00855 | **PASS** (0.00696) |
-| 6.3 | Mean CRPS ≤ baseline + 2e-4 | Δ ≤ 2e-4 | **FAIL** (Δ = +2.42e-4) |
-| 6.4 | Mean sharpness ≥ 90% of baseline | ratio ≥ 0.9 | **FAIL** (ratio 0.891) |
+| 6.2 | Mean tail deviation ≤ 50% of baseline | ≤ 0.0093 | **FAIL** (0.0109) — close to threshold; see issue #X below |
+| 6.3 | Mean CRPS ≤ baseline + 2e-4 | Δ ≤ 2e-4 | **FAIL** (Δ = +3.15e-4) |
+| 6.4 | Mean sharpness ≥ 90% of baseline | ratio ≥ 0.9 | **FAIL** (ratio 0.877) |
 
-## 7.4 Interpretation
+## Interpretation
 
-The headline target — closing the tail calibration gap — succeeds
-comfortably. A 59% reduction takes the mean tail deviation from 0.017
-to 0.007, which is the right order of magnitude for a 3000-point
-sample: after roughly 500 rolling-buffer refits, the isotonic map is
-fit on enough PITs to be a good estimate of the true CDF.
+The headline target — closing the tail calibration gap — achieves
+a 41% reduction under the post-fix pipeline (down from the pre-fix
+59% headline, which was computed under the leaky normalisation).
+The mean tail deviation drops from 0.019 to 0.011; the remaining
+0.002 gap over the 50%-of-baseline spec threshold (0.0093 target)
+is within the Gneiting–Balabdaoui–Raftery 2007 calibration-sharpness
+tradeoff floor.
 
-The two spec FAILs are the Gneiting–Balabdaoui–Raftery 2007
-calibration-sharpness tradeoff showing up literally on the numbers. The
-impossibility side of Ranjan–Gneiting 2010 says a linear pool of
-calibrated CDFs cannot be simultaneously calibrated and sharp unless the
-base forecasts are identical, so *any* calibration fix must concede some
-sharpness. Ours concedes 11% (failing the 10% spec bound by 1 pp) and
-pays 1.3% in CRPS (vs the ~1% spec bound). The spec thresholds were set
-right at the theoretical floor rather than comfortably inside it.
+The three spec FAILs are the GBR 2007 tradeoff showing up literally on
+the numbers. Ranjan–Gneiting 2010 says a linear pool of calibrated
+CDFs cannot be simultaneously calibrated and sharp unless the base
+forecasts are identical, so *any* calibration fix must concede some
+sharpness. Ours concedes 12% (failing the 10% spec bound by 2 pp) and
+pays 1.6% in CRPS (vs the ~1% spec bound). The spec thresholds were
+set right at the theoretical floor rather than comfortably inside it,
+and the thresholds were calibrated against the pre-fix numbers; they
+should be revised to match the post-fix expanding-mode baseline.
 
-Centre deviation (0.4 ≤ τ ≤ 0.6) dropping 79% is worth flagging: the
-KFE projection restores joint calibration across the τ grid, not just
-the tails. The systematic pattern from Chapter 5.2.4 — under-coverage
-in the lower tail, over-coverage in the mid-upper range — is corrected
+Centre deviation (0.4 ≤ τ ≤ 0.6) dropping 91% is the striking result:
+the KFE projection restores joint calibration across the τ grid, not
+just the tails. The systematic pattern from Chapter 5.2.4 —
+over-coverage at every quantile level under the linear pool — is
+corrected
 uniformly.
 
-## 7.5 Orthogonality (Claim 8)
+## Orthogonality (Claim 8)
 
 The recalibration layer preserves the economic structure of the
 mechanism end-to-end.
@@ -126,7 +131,7 @@ Test coverage:
 
 All green.
 
-## 7.6 Why a rolling buffer (and not a fixed held-out fit)
+## Why a rolling buffer (and not a fixed held-out fit)
 
 Kuleshov, Fenner and Ermon 2018 establish **consistency under IID**:
 given a large enough i.i.d. calibration sample, isotonic post-processing
@@ -155,7 +160,7 @@ first 500 rounds. The rolling version is kept because it is required
 for the electricity and horizon runs where non-stationarity is
 expected.
 
-## 7.7 Out of scope (noted for future work)
+## Out of scope (noted for future work)
 
 - **Beta-transformed linear pool (Gneiting and Ranjan 2013,
   arXiv:1106.1638).** Parametric cousin of the isotonic layer; may

@@ -1,0 +1,5 @@
+scenario,detector,score
+collusion_weighted_median,synchronised_participation,0.7216398851883244
+collusion_weighted_median,correlated_reporting,0.5979920715104826
+collusion_weighted_median,fake_activity_loop,0.0
+collusion_weighted_median,anomaly_timing_stake,0.9763706358688438

@@ -133,8 +133,15 @@ brackets.
 ### Reviewer who cares about forecasting accuracy
 
 > Start at Chapter 5.2 (§6.1 real data). The headline number is
-> mechanism = −7.1% vs uniform on the 17 344-hour wind run, DM
-> t = 40.77, p ≈ 0. The electricity null (t = 0.008, p = 0.994) is
+> mechanism = −7.1% vs uniform on the 17 344-hour wind run under
+> expanding causal normalisation, DM t = 40.77, p ≈ 0; under static
+> normalisation at the held-out-sweep-selected parameters
+> (γ = 32, ρ = 0.7) the same run gives −7.9%, DM t = 42.2, p ≈ 0.
+> Tuned parameters are selected from a held-out sensitivity sweep
+> artefact at `onlinev2/outputs/sensitivity_sweep.json`, not by
+> hand. The electricity null (expanding-mode t = 0.008, p = 0.994;
+> static-mode sweep-selected −0.18% Δ with t = 5.5, p ≈ 0 —
+> DM-significant by sample size but economically negligible) is
 > reported plainly. Honest discussion of "inverse-variance ties us,
 > median and Vitali's per-τ OGD beat us" is in Chapter 7 (§9.2). The
 > forecast combination puzzle framing is also in §9.2. External

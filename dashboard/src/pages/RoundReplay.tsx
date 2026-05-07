@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '@/lib/store';
 import { useExperimentData } from '@/lib/useExperimentData';
 import { fmtNum, AGENT_COLORS, ACCENT, agentDisplayName } from '@/lib/formatters';
+import { PALETTE } from '@/lib/palette';
 import {
   getRoundData,
   getMaxRound,
@@ -173,14 +174,14 @@ export default function RoundReplay() {
         <ChartCard title="Effective Wagers This Round" subtitle="Bar height = wager size, colour = agent">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={wagerChartData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-              <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
-              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-              <ReferenceLine y={0} stroke="#94a3b8" />
+              <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke={PALETTE.slate} />
+              <YAxis tick={{ fontSize: 10 }} stroke={PALETTE.slate} />
+              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${PALETTE.border}` }} />
+              <ReferenceLine y={0} stroke={PALETTE.slate} />
               <Bar dataKey="wager" radius={[4, 4, 0, 0]} maxBarSize={40}>
                 {wagerChartData.map((d, i) => (
-                  <Cell key={i} fill={d.active ? AGENT_COLORS[d.idx % AGENT_COLORS.length] : '#e2e8f0'} />
+                  <Cell key={i} fill={d.active ? AGENT_COLORS[d.idx % AGENT_COLORS.length] : PALETTE.border} />
                 ))}
               </Bar>
             </BarChart>
@@ -200,9 +201,9 @@ export default function RoundReplay() {
               <div
                 className="px-3 py-1.5 rounded-lg text-xs font-medium"
                 style={{
-                  background: i <= 4 ? `${ACCENT}15` : i <= 6 ? '#0d948815' : '#10b98115',
-                  color: i <= 4 ? ACCENT : i <= 6 ? '#d97706' : '#059669',
-                  border: `1px solid ${i <= 4 ? ACCENT + '30' : i <= 6 ? '#0d948830' : '#10b98130'}`,
+                  background: i <= 4 ? `${ACCENT}15` : i <= 6 ? `${PALETTE.imperial}15` : `${PALETTE.teal}15`,
+                  color: i <= 4 ? ACCENT : i <= 6 ? PALETTE.imperial : PALETTE.teal,
+                  border: `1px solid ${i <= 4 ? ACCENT + '30' : i <= 6 ? PALETTE.imperial + '30' : PALETTE.teal + '30'}`,
                 }}
               >
                 {step}

@@ -26,6 +26,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PRE_FIX_ROOT = REPO_ROOT / "onlinev2" / "outputs" / "pre_fix_snapshot"
 POST_FIX_ROOT = REPO_ROOT / "dashboard" / "public" / "data" / "real_data"
+# Some pre-fix snapshots (audit_fresh) have their post-fix counterpart
+# under onlinev2/outputs/real_data/ rather than dashboard/public/data/.
+POST_FIX_ONLINEV2_ROOT = REPO_ROOT / "onlinev2" / "outputs" / "real_data"
 OUT_PATH = REPO_ROOT / "onlinev2" / "outputs" / "post_fix_deltas" / "consolidated_deltas.json"
 
 
@@ -102,9 +105,16 @@ def main() -> None:
         pre_dir = PRE_FIX_ROOT / dataset
         post_dir = POST_FIX_ROOT / dataset / "data"
         if not post_dir.exists():
-            print(f"  [{dataset}] WARNING: post-fix dir missing at {post_dir}")
-            missing_post.append(dataset)
-            continue
+            # Some audit datasets (audit_fresh) live under
+            # onlinev2/outputs/real_data/<dataset>/data/ instead of
+            # the dashboard tree. Fall back to that path.
+            alt_post_dir = POST_FIX_ONLINEV2_ROOT / dataset / "data"
+            if alt_post_dir.exists():
+                post_dir = alt_post_dir
+            else:
+                print(f"  [{dataset}] WARNING: post-fix dir missing at {post_dir}")
+                missing_post.append(dataset)
+                continue
         for pre_file in sorted(pre_dir.glob("*.json")):
             block = pre_file.stem
             post_file = post_dir / pre_file.name

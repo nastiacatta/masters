@@ -35,6 +35,14 @@ def main() -> None:
     slice_len = int(os.environ.get("ONLINEV2_AUDIT_SLICE", 3000))
     series = series[:slice_len]
 
+    # Physical clipping: negative wind generation is impossible. Match
+    # the preprocessing of run_real_data_with_skill.py / run_baseline_
+    # comparison.py for comparability.
+    n_neg = int((series < 0).sum())
+    if n_neg > 0:
+        print(f"  Clipping {n_neg} negative values to 0 (physical range)")
+        series = np.clip(series, 0, None)
+
     print(f"Slice: {len(series)} points "
           f"(range {series.min():.1f} – {series.max():.1f} MW, "
           f"mean {series.mean():.1f})")
@@ -47,6 +55,14 @@ def main() -> None:
         gamma=16.0,
         rho=0.5,
         lam=0.05,
+        # Expanding normalisation: on the 3000-point audit slice the
+        # warmup-window range (Jan wind) is systematically higher than
+        # the eval range, so `static` clips ~46% of eval values to 0
+        # and makes CRPS numbers on the audit slice incomparable with
+        # the full-length run. `expanding` avoids clipping while
+        # preserving strict causality (bugfix clause 1.1 / 2.1;
+        # post-audit issue #1).
+        normalize_mode="expanding",
     )
 
     elapsed = time.time() - t0

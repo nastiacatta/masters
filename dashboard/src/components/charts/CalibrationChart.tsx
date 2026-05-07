@@ -3,15 +3,16 @@ import type { CalibrationPoint } from '@/lib/types';
 import ChartCard from '../dashboard/ChartCard';
 import ZoomBadge from './ZoomBadge';
 import { useChartZoom } from '@/hooks/useChartZoom';
+import { PALETTE } from '@/lib/palette';
 
 interface Props {
   data: CalibrationPoint[];
 }
 
-/** Default blue for well-calibrated points */
-const COLOUR_CALIBRATED = '#2563eb';
-/** Amber for miscalibrated points (|pHat - tau| > 0.05) */
-const COLOUR_MISCALIBRATED = '#f59e0b';
+/** Teal for well-calibrated points (matches slide palette). */
+const COLOUR_CALIBRATED = PALETTE.teal;
+/** Coral for miscalibrated points (|pHat - tau| > 0.05). */
+const COLOUR_MISCALIBRATED = PALETTE.coral;
 
 /**
  * Custom shape renderer for scatter points.
@@ -139,7 +140,7 @@ export default function CalibrationChart({ data }: Props) {
             animationDuration={300}
           />
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#1d3461" fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill={PALETTE.navy} fillOpacity={0.1} />
           )}
         </ScatterChart>
       </ResponsiveContainer>

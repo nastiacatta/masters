@@ -1,0 +1,5 @@
+scenario,detector,score
+wash_k5_split,synchronised_participation,0.7947835864366108
+wash_k5_split,correlated_reporting,0.8126863348821309
+wash_k5_split,fake_activity_loop,1.0
+wash_k5_split,anomaly_timing_stake,0.9334941781181161

@@ -27,13 +27,13 @@ limitations"). The numbers quoted below for those blocks are under the
 static warmup-window mode; direction of comparisons is stable, absolute
 magnitudes may shift on refresh.
 
-## 6.1 Elia offshore wind — 17 344-hour full-length run (headline)
+## Elia offshore wind — 17 344-hour full-length run (headline)
 
 T = 17 344 evaluation rounds after a 200-round warmup, seven real
 forecasters, expanding causal normalisation, tuned mechanism
 parameters γ = 16, ρ = 0.5, λ = 0.05, η = 2.0.
 
-### 6.1.1 Aggregate comparison
+### Aggregate comparison
 
 Mean CRPS on the normalised [0, 1] scale [source:
 `dashboard/public/data/real_data/elia_wind/data/comparison.json`].
@@ -60,7 +60,7 @@ DM test, skill vs uniform:
 
 - t = 38.92, p ≈ 0.0 [source: same `dm_test_skill` block].
 
-### 6.1.2 Reading the table
+### Reading the table
 
 - **Mechanism vs inverse_variance (−7.1% vs −7.0%).** Effectively a
   statistical tie. The skill gate's contribution on top of the
@@ -87,7 +87,7 @@ selector (`best_single_by_crps(agent_rolling_crps, lookback=100)` in
 The per-round hindsight row is `oracle`, which uses full-information
 inverse-variance weights.
 
-### 6.1.3 Per-forecaster CRPS and skill ordering (Claim 5)
+### Per-forecaster CRPS and skill ordering (Claim 5)
 
 Steady-state σ (last 20% of rounds) [source:
 `onlinev2/outputs/post_fix_deltas/SUMMARY.md`]:
@@ -107,7 +107,7 @@ Per-forecaster CRPS is indirectly visible through the weight ordering:
 top-skill forecaster. The mechanism reconstructs the per-forecaster
 ranking from data alone without being told which model is best.
 
-### 6.1.4 Elia operational forecast comparison (new)
+### Elia operational forecast comparison (new)
 
 [source: `onlinev2/outputs/elia_forecast_baseline.json` and
 `onlinev2/outputs/post_fix_deltas/SUMMARY.md`, §"Elia operational
@@ -137,67 +137,70 @@ Elia's published interval forecasts are **systematically miscalibrated**:
 operational NWP forecasts and motivates the recalibration layer in
 Chapter 5.3.
 
-## 6.2 Elia offshore wind — 3000-point audit slice (calibration anchor)
+## Elia offshore wind — 3000-point audit slice (calibration anchor)
 
 Used only for calibration and per-quantile diagnostics. Mechanism
 parameters γ = 16, ρ = 0.5, λ = 0.05, η = 2.0; strictly-causal
-warmup-window normalisation (`normalize_mode="static"`), post-fix
-pipeline (negative raw wind values clipped to 0 before normalisation).
+`normalize_mode="expanding"`, post-fix pipeline (negative raw wind
+values clipped to 0 before normalisation). Expanding rather than
+static because the 3000-point audit slice's warmup (Jan winter wind)
+has a systematically higher range than the eval window, which would
+cause static normalisation to clip ~46% of eval values to 0 and
+render per-quantile coverage uninterpretable.
 [source: `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/
 comparison.json`, regenerated 2026-05-07].
 
-### 6.2.1 Aggregate comparison on the audit slice (Claim 4 reference)
+### Aggregate comparison on the audit slice (Claim 4 reference)
 
 | Rule | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
-| oracle (per-round argmin) | 0.01281 | −47.1% |
-| per_round_inv_crps_hindsight | 0.01837 | −24.2% |
-| best_single (rolling 100-step CRPS selector) | 0.01847 | −23.7% |
-| median | 0.02145 | −11.4% |
-| inverse_variance | 0.02246 | −7.3% |
-| **our mechanism** | **0.02251** | **−7.1%** |
-| trimmed_mean | 0.02260 | −6.7% |
-| skill | 0.02301 | −5.0% |
-| **michael_ogd_centered_median_fan** (rename of legacy `michael_ogd`) | **0.02374** | **−2.0%** |
-| uniform | 0.02422 | — |
+| oracle (per-round argmin) | 0.01166 | −44.9% |
+| best_single (rolling 100-step CRPS selector) | 0.01665 | −21.3% |
+| per_round_inv_crps_hindsight | 0.01670 | −21.0% |
+| median | 0.01919 | −9.3% |
+| inverse_variance | 0.01963 | −7.2% |
+| trimmed_mean | 0.01973 | −6.7% |
+| **our mechanism** | **0.02000** | **−5.4%** |
+| **michael_ogd_centered_median_fan** (rename of legacy `michael_ogd`) | **0.02030** | **−4.0%** |
+| skill | 0.02043 | −3.4% |
+| uniform | 0.02115 | — |
 
 **Ratio mechanism / michael_ogd_centered_median_fan** =
-0.02251 / 0.02374 = **0.948×** (mechanism beats the centered-median
-fan by 5.2% on this slice).
+0.02000 / 0.02030 = **0.985×** (mechanism beats the centered-median
+fan by 1.5% on this slice).
 
-DM test (mechanism vs uniform) on this slice: **+12.41, p < 1e-6**
+DM test (mechanism vs uniform) on this slice: **+15.43, p < 1e-6**
 [source: `dm_test.statistic` in the regenerated `comparison.json`].
 
 _Earlier revisions of this table cited 0.01874 / 0.01869 with ratio
 1.003×. Those numbers were produced before the audit script clipped
-negative raw wind values (`series_min = −8.23` MW, physically
-impossible for generation). The post-fix numbers use the clipped
-series (`series_min = 1105.93` warmup min). See
+negative raw wind values and under static warmup-window normalisation
+that clipped 46% of eval values to 0. See
 `onlinev2/outputs/pre_fix_snapshot/elia_wind_audit_fresh/
 comparison.json` for the archived pre-fix values._
 
-### 6.2.2 Per-forecaster CRPS on the audit slice (Claim 5)
+### Per-forecaster CRPS on the audit slice (Claim 5)
 
 [source: same `comparison.json`, `per_agent_crps` block,
 post-fix 2026-05-07]:
 
 | Rank | Forecaster | CRPS | vs best |
 |---:|---|---:|---:|
-| 1 | XGBoost | 0.02203 | — |
-| 2 | Naive (last value) | 0.02351 | +6.7% |
-| 3 | ARIMA(2,1,1) | 0.02373 | +7.7% |
-| 4 | Ensemble (Naive+EWMA) | 0.02859 | +29.8% |
-| 5 | Neural Net (MLP) | 0.03230 | +46.6% |
-| 6 | EWMA(5) | 0.03646 | +65.5% |
-| 7 | Theta | 0.04023 | +82.6% |
+| 1 | XGBoost | 0.01777 | — |
+| 2 | ARIMA(2,1,1) | 0.01925 | +8.4% |
+| 3 | Naive (last value) | 0.01943 | +9.3% |
+| 4 | Neural Net (MLP) | 0.02435 | +37.0% |
+| 5 | Ensemble (Naive+EWMA) | 0.02458 | +38.3% |
+| 6 | EWMA(5) | 0.03224 | +81.4% |
+| 7 | Theta | 0.03577 | +101.3% |
 
 Steady-state σ (last 20% of rounds):
 
 | Forecaster | σ_final |
 |---|---:|
 | XGBoost | 0.910 |
-| MLP | 0.902 |
 | ARIMA | 0.896 |
+| Naive | 0.893 |
 | Naive | 0.893 |
 | Ensemble | 0.856 |
 | EWMA | 0.814 |
@@ -209,52 +212,59 @@ The σ values are systematically larger than on the full-length run
 3000-point slice produces tighter losses than the expanding
 normalisation on 17 344 points; both runs agree on the *ordering*.
 
-### 6.2.3 Tail calibration (Claim 6)
+### Tail calibration (Claim 6)
 
 Per-τ empirical coverage on the audit slice [source:
-`onlinev2/outputs/audit_per_quantile/coverage.json`;
-`coverage_recal.json` has the same table alongside recalibrated
-coverage].
+`onlinev2/outputs/audit_per_quantile/coverage.json`,
+regenerated 2026-05-07 under `causal_normalize_expanding` + negative-
+wind clipping; `coverage_recal.json` has the same table alongside
+recalibrated coverage].
 
 | τ | Nominal | Mechanism empirical | Gap |
 |---:|---:|---:|---:|
-| 0.10 | 0.100 | 0.087 | −0.013 |
-| 0.20 | 0.200 | 0.179 | −0.021 |
-| 0.30 | 0.300 | 0.285 | −0.015 |
-| 0.40 | 0.400 | 0.408 | +0.008 |
-| 0.50 | 0.500 | 0.521 | +0.021 |
-| 0.60 | 0.600 | 0.627 | +0.027 |
-| 0.70 | 0.700 | 0.734 | +0.034 |
-| 0.80 | 0.800 | 0.823 | +0.022 |
-| 0.90 | 0.900 | 0.912 | +0.012 |
+| 0.10 | 0.100 | 0.110 | +0.010 |
+| 0.20 | 0.200 | 0.202 | +0.002 |
+| 0.30 | 0.300 | 0.306 | +0.006 |
+| 0.40 | 0.400 | 0.418 | +0.018 |
+| 0.50 | 0.500 | 0.535 | +0.035 |
+| 0.60 | 0.600 | 0.634 | +0.034 |
+| 0.70 | 0.700 | 0.742 | +0.042 |
+| 0.80 | 0.800 | 0.835 | +0.035 |
+| 0.90 | 0.900 | 0.927 | +0.027 |
 
-- **Mean tail deviation** (τ ∈ {0.1, 0.2, 0.8, 0.9}): 0.0171.
-- **Mean centre deviation** (0.4 ≤ τ ≤ 0.6): 0.0187.
-- **Pattern.** Systematic: under-coverage in the lower tail,
-  over-coverage in the mid-upper range.
+- **Mean tail deviation** (τ ∈ {0.1, 0.2, 0.8, 0.9}): 0.019.
+- **Mean centre deviation** (0.4 ≤ τ ≤ 0.6): 0.029.
+- **Pattern.** Systematic over-coverage at every quantile level. The
+  aggregate quantile function is too aggressive (right-shifted). This
+  differs from the pre-fix pipeline which showed mixed
+  under/over-coverage; the new pattern reflects the shift from the
+  buggy whole-series normalisation that had clipped low eval values.
 
 Closed by the recalibration layer; see Chapter 5.3 /
 `writing/70_recalibration_layer.md`.
 
-### 6.3.4 Mechanism vs Vitali per-τ OGD on the audit slice
+### Mechanism vs Vitali per-τ OGD on the audit slice
 
 The same per-τ coverage file stores a Vitali per-τ OGD baseline
-[source: `onlinev2/outputs/audit_per_quantile/coverage.json`]:
+[source: `onlinev2/outputs/audit_per_quantile/coverage.json`,
+regenerated 2026-05-07 under `causal_normalize_expanding` + negative-
+wind clipping]:
 
 | Metric | Mechanism | Vitali per-τ OGD | Δ |
 |---|---:|---:|---:|
-| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0171 | 0.0105 | −0.0066 |
-| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0187 | 0.0154 | −0.0034 |
-| Mean CRPS-hat | 0.01874 | 0.01651 | −0.00223 |
+| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.019 | 0.019 | ≈0 |
+| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.029 | 0.027 | −0.002 |
+| Mean CRPS-hat | 0.02000 | 0.01775 | −0.00225 |
 
-Vitali's aggregator is both better-calibrated (tail gap 0.0105 vs
-0.0171) and lower-CRPS (0.01651 vs 0.01874) on this slice — it
-relaxes the Lambert budget-balance constraint and learns per-τ
-weights directly, which pays off. The thesis's recalibration layer
-closes most of the calibration gap (Chapter 5.3) without relaxing
-budget balance, at a small CRPS cost relative to Vitali.
+Vitali's aggregator is about as calibrated as ours on this slice
+(mean |emp − nominal| tail = 0.019 for both) and lower-CRPS
+(0.01775 vs 0.02000, gap ≈ 11%). Vitali's advantage on CRPS comes
+from relaxing the Lambert budget-balance constraint and learning
+per-τ weights directly. The thesis's recalibration layer closes
+most of the centre deviation (Chapter 5.3) without relaxing budget
+balance.
 
-### 6.2.4 Skill trajectory figure
+### Skill trajectory figure
 
 Rendered in `dashboard/public/presentation-plots/skill_wager.png` and
 `skill_signal_clean.png`. Reuse; do not regenerate. Interpretation:
@@ -262,7 +272,7 @@ warmup (t < 200) all σ at prior; fast adaptation (t ∈ [200, 800])
 XGBoost and MLP pull away and Theta and EWMA drop fast; steady state
 (t > 1500) σ ordering stable and matches final CRPS.
 
-## 6.3 Elia electricity imbalance — null result
+## Elia electricity imbalance — null result
 
 [source: `dashboard/public/data/real_data/elia_electricity/data/
 comparison.json`, dated 2026-05-07;
@@ -305,14 +315,14 @@ The oracle gap on electricity is ~35 pp (mechanism 0.09052, oracle
 but not via an EWMA or OGD on this forecaster panel, because the
 forecasters themselves are undifferentiated.
 
-## 6.4 Horizon experiments (static-mode, pending expanding re-run)
+## Horizon experiments (static-mode, pending expanding re-run)
 
 [source: `onlinev2/outputs/post_fix_deltas/SUMMARY.md` + individual
 `day_ahead.json`, `4h_ahead.json`, `regime_shift.json`. These still
 reflect the static warmup-window pipeline; expanding-mode refresh
 [PENDING] per SUMMARY §"Remaining documented limitations".]
 
-### 6.4.1 Day-ahead (h = 24, warmup ≥ 70)
+### Day-ahead (h = 24, warmup ≥ 70)
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
@@ -321,7 +331,7 @@ reflect the static warmup-window pipeline; expanding-mode refresh
 | **mechanism** | **0.19220** | **−0.08%** |
 | best_single | 0.18866 | −1.92% |
 
-### 6.4.2 4h-ahead (h = 16 steps on 15-minute series, T = 20 000)
+### 4h-ahead (h = 16 steps on 15-minute series, T = 20 000)
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
@@ -330,7 +340,7 @@ reflect the static warmup-window pipeline; expanding-mode refresh
 | **mechanism** | **0.10808** | **−0.61%** |
 | best_single | 0.10388 | −4.48% |
 
-### 6.4.3 Within-run seasonal slice (B13 fix, flagged `within_run_seasonal_slice: true`)
+### Within-run seasonal slice (B13 fix, flagged `within_run_seasonal_slice: true`)
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
@@ -350,7 +360,7 @@ Per-season breakdown [source: `regime_shift.json` `regime_summary`]:
 
 Restart-per-season evaluation is listed as follow-up work (B13.8).
 
-## 6.5 Published-OGD head-to-head (static-mode baselines.json, pending expanding re-run)
+## Published-OGD head-to-head (static-mode baselines.json, pending expanding re-run)
 
 [source: `dashboard/public/data/real_data/elia_wind/data/baselines.json`
 and `elia_electricity/data/baselines.json`, dated 2026-05-07. The
@@ -359,7 +369,7 @@ baselines runner has not yet been re-run under
 static-mode output (matches the file currently on disk). Direction of
 comparisons is stable; absolute magnitudes may shift on refresh.]
 
-### 6.5.1 Wind
+### Wind
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
@@ -368,7 +378,7 @@ comparisons is stable; absolute magnitudes may shift on refresh.]
 | raja_history_free | 0.04134 | −1.53% |
 | uniform | 0.04198 | — |
 
-### 6.5.2 Electricity
+### Electricity
 
 | Method | Mean CRPS | Δ vs uniform |
 |---|---:|---:|
@@ -387,22 +397,72 @@ because it ignores all inter-round state; on electricity the mechanism
 lands in the same tied band (+0.05%), consistent with the electricity
 null result in §6.3.
 
-## 6.6 Sensitivity block (honest placeholder)
+## Sensitivity sweep and parameter provenance
 
-The `sensitivity` block in `comparison.json` reads:
+Tuned parameters now come from a cache-reusing held-out sweep
+(`scripts/run_sensitivity_sweep_cached.py`, produced 2026-05-07),
+not from hand selection. Protocol: each (γ, ρ, λ) cell replays the
+shared forecast cache through `run_simulation` and scores the
+mechanism on the last 40% of each series (`[split, T)`), disjoint
+from the burn-in window `[warmup, split)` used by the train metric.
+Grid = `wide` (γ ∈ {4, 8, 16, 32, 64}; ρ ∈ {0.1, 0.3, 0.5, 0.7};
+λ ∈ {0.05, 0.2}), 40 cells × 2 series, ~5 minutes total wall clock.
+
+Artefact: `onlinev2/outputs/sensitivity_sweep.json`.
+
+| Series | γ★ | ρ★ | λ★ | Held-out Δ vs uniform |
+|---|---:|---:|---:|---:|
+| elia_wind | 32.0 | 0.7 | 0.05 | −6.86% |
+| elia_electricity | 16.0 | 0.1 | 0.05 | −0.22% |
+
+The wind optimum pushes the γ corner (the γ=64 row plateaus at
+−5.5% max, so the top of the grid is bounded). λ=0.2 is uniformly
+worse than λ=0.05 across both series. Electricity results land in a
+tight band of −0.17 to −0.22% across the top cells — consistent with
+the null finding in §6.3.
+
+### Static-mode headline at sweep-selected parameters
+
+Regenerated with `scripts/run_real_data_with_skill.py --tuned
+--sweep-artefact onlinev2/outputs/sensitivity_sweep.json` on
+2026-05-07, `normalize_mode=static`. These are the numbers the
+runner currently emits into `comparison.json`:
+
+| Rule | Wind CRPS | Δ vs uniform | Electricity CRPS | Δ vs uniform |
+|---|---:|---:|---:|---:|
+| uniform | 0.04248 | — | 0.09316 | — |
+| skill | 0.03938 | −7.28% | 0.09304 | −0.13% |
+| **mechanism** | **0.03911** | **−7.93%** | **0.09299** | **−0.18%** |
+| best_single | 0.03226 | −24.04% | 0.08868 | −4.81% |
+| inverse_variance | 0.03946 | −7.11% | 0.09285 | −0.32% |
+| trimmed_mean | 0.03940 | −7.25% | 0.09243 | −0.78% |
+| median | 0.03812 | −10.25% | 0.09271 | −0.48% |
+
+DM tests (static-mode, sweep-selected):
+
+- Wind, mechanism vs uniform: **t = +42.23, p ≈ 0**.
+- Electricity, mechanism vs uniform: **t = +5.52, p ≈ 0** — statistically
+  significant but Δ = −0.18% of uniform CRPS (economically negligible;
+  the DM rejection is sample-size driven on T = 9 800 paired rounds).
+
+The `comparison.json` `sensitivity` block now carries:
 
 ```
-  "default_improvement_pct": -7.1,
-  "note": "sensitivity_sweep.json not found — run
-     scripts/run_sensitivity_sweep.py to populate optimal_params and
-     optimal_improvement_pct."
+"sensitivity": {
+  "source": "onlinev2/outputs/sensitivity_sweep.json",
+  "optimal_params": {"gamma": 32.0, "rho": 0.7, "lam": 0.05},
+  "optimal_improvement_pct": -6.859,
+  "note": "Recomputed on a held-out split; see scripts/run_sensitivity_sweep.py."
+}
 ```
 
-[PENDING] Run `scripts/run_sensitivity_sweep.py` (Open #2 in the
-training-audit summary) to replace the constant with a real sweep
-artefact.
+[PENDING] Re-run the headline block under `normalize_mode=expanding`
+at sweep-selected parameters so the full-length table above becomes
+directly comparable to the locked expanding-mode table at the top of
+this section. Expected shift: sub-percent CRPS in either direction;
+direction of DM and method ranking are stable.
 
-## 6.7 Summary for the final write-up
+## Summary for the final write-up
 
 The canonical real-data headline is:
 

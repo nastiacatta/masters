@@ -46,7 +46,8 @@ Our `onlinev2/src/onlinev2/mechanism/michael_port.py` is a Python port
 of their Julia `michael/main_rewards.jl`.
 
 - On the 3000-point Elia wind **audit slice**, mechanism /
-  `michael_ogd` CRPS ratio = 0.01874 / 0.01869 = **1.003**
+  `michael_ogd_centered_median_fan` CRPS ratio = 0.02000 / 0.02030 =
+  **0.985** (mechanism beats the centered-median fan by 1.5%)
   [source: `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/
   comparison.json`].
 - On the 17 344-hour **full-length expanding-mode run**, the renamed

@@ -1,6 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { ForecastSeriesPoint } from '@/lib/types';
 import { WEIGHTING_COLORS, metricLabel } from '@/lib/formatters';
+import { PALETTE } from '@/lib/palette';
 import ChartCard from '../dashboard/ChartCard';
 import ZoomBadge from './ZoomBadge';
 import { useState, useCallback } from 'react';
@@ -102,7 +103,7 @@ export default function ForecastQualityChart({ data }: Props) {
             />
           ))}
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill="#1d3461" fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill={PALETTE.navy} fillOpacity={0.1} />
           )}
         </LineChart>
       </ResponsiveContainer>

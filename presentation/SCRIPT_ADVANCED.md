@@ -547,7 +547,7 @@ $$
 \gamma = -\frac{1}{L_{\text{ref}}} \log\!\left( \frac{\sigma_{\text{ref}} - \sigma_{\min}}{1 - \sigma_{\min}} \right).
 $$
 
-Code: `skill.calibrate_gamma`. For the Elia experiments we used $\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$ (tuned by grid search; reported at `real_data/runner.py:357`).
+Code: `skill.calibrate_gamma`. For the Elia experiments we use $\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$ for the locked expanding-mode headline (selected by hand for interpretability). A held-out sensitivity sweep at `onlinev2/outputs/sensitivity_sweep.json` (`scripts/run_sensitivity_sweep_cached.py`) finds the static-mode optima $\gamma = 32$, $\rho = 0.7$ on wind and $\gamma = 16$, $\rho = 0.1$ on electricity; the runner reads `optimal_params` from the artefact when `--sweep-artefact` is supplied.
 
 ### The R figure (`presentation/R/plot_skill_signal.R`)
 
@@ -1218,10 +1218,10 @@ The score $s = 1 - |y - r|$ is only in $[0,1]$ when $y, r \in [0,1]$. For CRPS-h
 
 - $\lambda$: "fraction of wager that enters regardless of skill". Interpretation: minimum participation floor. We use $\lambda = 0.05$.
 - $\eta$: shape of the gate. $\eta = 2$ convexifies the gate, so high-skill forecasters get disproportionately more weight. $\eta = 1$ is linear.
-- $\rho$: EWMA learning rate. Small $\rho$ = slow, smooth; large $\rho$ = fast, noisy. Tuned $\rho = 0.5$.
-- $\gamma$: sensitivity of $\sigma$ to $L$. Tuned $\gamma = 16$.
+- $\rho$: EWMA learning rate. Small $\rho$ = slow, smooth; large $\rho$ = fast, noisy. Held-out-sweep optimum: wind $\rho = 0.7$, electricity $\rho = 0.1$; the locked expanding-mode headline uses $\rho = 0.5$.
+- $\gamma$: sensitivity of $\sigma$ to $L$. Held-out-sweep optimum: wind $\gamma = 32$, electricity $\gamma = 16$; the locked expanding-mode headline uses $\gamma = 16$.
 
-All via grid search on a validation split. See `scripts/run_sensitivity_experiments.py`.
+All via cache-reusing held-out sweep on 60/40 train/test partitions per series. See `scripts/run_sensitivity_sweep_cached.py` and the artefact `onlinev2/outputs/sensitivity_sweep.json`.
 
 ### E8. "What happens when all participants are absent or all wagers are zero?"
 

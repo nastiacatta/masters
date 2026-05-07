@@ -1,0 +1,26 @@
+{
+  "experiment_name": "preference_stress_test",
+  "config": {
+    "T": 1000,
+    "n_users": 10,
+    "n_seeds": 20,
+    "scoring_mode": "quantiles_crps",
+    "block": "behaviour"
+  },
+  "scenarios": {
+    "truthful": {
+      "mean_total_profit": -2.2738755323103987e-15,
+      "se_total_profit": 3.506682005066439e-15,
+      "ci_low": -9.146972262240619e-15,
+      "ci_high": 4.5992211976198224e-15,
+      "n_seeds": 20
+    },
+    "hedged": {
+      "mean_total_profit": 8.40924552214517e-15,
+      "se_total_profit": 4.917838822355941e-15,
+      "ci_low": -1.2297185696724729e-15,
+      "ci_high": 1.8048209613962816e-14,
+      "n_seeds": 20
+    }
+  }
+}

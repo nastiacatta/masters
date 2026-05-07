@@ -1,6 +1,6 @@
 # Discussion, limitations, threats to validity
 
-## 9.1 What the mechanism does well
+## What the mechanism does well
 
 - **Economic structure preserved.** Budget balance holds to machine
   precision (~1e-13). Lambert's narrow sybil invariance holds with
@@ -32,7 +32,7 @@
   worse than Elia's operational forecast because it averages in
   weaker models. No external weather inputs are used.
 
-## 9.2 What the mechanism does not do
+## What the mechanism does not do
 
 This list is deliberately on the long side. Understating limitations is
 the easiest way to lose a reviewer.
@@ -130,7 +130,7 @@ the easiest way to lose a reviewer.
   contribution on electricity is the preserved economic structure,
   not CRPS.
 
-## 9.3 Threats to validity
+## Threats to validity
 
 ### Internal validity
 
@@ -188,7 +188,7 @@ the easiest way to lose a reviewer.
   inside any reasonable Bonferroni-adjusted threshold, but finer
   comparisons across methods should be read with that caveat.
 
-## 9.4 What this is not
+## What this is not
 
 - This is not a new scoring rule. CRPS and pinball loss are
   standard; we use them unchanged.
@@ -202,7 +202,7 @@ the easiest way to lose a reviewer.
   grid-scale forecasting markets. It is a methodology paper with
   real-data validation on two Elia series.
 
-## 9.5 The honest headline
+## The honest headline
 
 When distributed information is combined through a self-financed
 wagering mechanism and that mechanism learns participant reliability

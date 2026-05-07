@@ -190,7 +190,7 @@ def run_forecasters(
         y_t = y_all[t]
         history = y_all[:t]
         for i, fc in enumerate(forecasters):
-            if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+            if t % fc.retrain_every == 0 and len(history) > 20:
                 fc.fit(history)
             point = float(np.clip(fc.predict(), 0.0, 1.0))
             q_reports[i, t, :] = fc.predict_quantiles(taus)

@@ -1,0 +1,29 @@
+{
+  "experiment_name": "reputation_reset",
+  "description": "No description available.",
+  "config": {
+    "dgp_name": "reputation_reset",
+    "T": 1000,
+    "n_forecasters": "N/A",
+    "n_seeds": 5,
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "reputation_reset",
+    "T": 1000,
+    "block": "behaviour",
+    "n_seeds": 5,
+    "kappa": 0.05,
+    "warmup": 20,
+    "cooldown": 50,
+    "reset_threshold": -3.0
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": {
+      "mean": -3.492468041557649,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

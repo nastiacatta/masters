@@ -540,3 +540,58 @@ def test_michael_predict_matches_julia_port_predict():
         f"michael_predict ({y_hat_ours}) must match Julia port y_hat "
         f"({y_hat_port}) to 1e-9"
     )
+
+
+# ---------------------------------------------------------------------------
+# (8) Runner must not trigger a spurious fallback at t=0 on empty history.
+# The old behaviour called fc.fit(np.array([])) at t=0, which made every
+# XGBoost/MLP forecaster silently bump its fallback_counter before any real
+# training data existed. With strict_no_fallback=True this caused legitimate
+# long-history runs to falsely raise ValueError. Fix: skip the t=0 fit and
+# rely on the normal retrain schedule (which gates on len(history) > 20).
+# ---------------------------------------------------------------------------
+def test_runner_does_not_bump_fallback_counter_at_t0():
+    """Fit is no longer forced at t=0 on empty history; ML forecasters do
+    not trip their fallback counters before their first legitimate retrain
+    opportunity."""
+    import tempfile
+    from onlinev2.real_data.runner import run_real_data_comparison
+    from onlinev2.real_data.forecasters import NaiveForecaster, MovingAverageForecaster
+
+    # Use a short, cheap panel: two trivial forecasters that never fall back.
+    # A fresh panel exposes the t=0 behaviour cleanly.
+    T = 80
+    rng = np.random.default_rng(7)
+    series = np.clip(0.5 + 0.02 * np.cumsum(rng.standard_normal(T)), 0.0, 1.0)
+
+    forecasters = [
+        NaiveForecaster(residual_window=50),
+        MovingAverageForecaster(span=5, residual_window=50),
+    ]
+
+    with tempfile.TemporaryDirectory() as td:
+        result = run_real_data_comparison(
+            series=series,
+            forecasters=forecasters,
+            warmup=30,
+            outdir=td,
+            series_name="t0_fallback_probe",
+            gamma=4.0,
+            rho=0.1,
+            lam=0.05,
+            seed=42,
+            strict_no_fallback=False,
+        )
+
+    # Neither trivial forecaster should have recorded a fallback; the t=0
+    # bug previously caused one bump per ML forecaster on the first round.
+    # With trivial forecasters, the bump should be zero.
+    for fc in forecasters:
+        assert fc.fallback_counter == 0, (
+            f"{fc.name} fallback_counter = {fc.fallback_counter}; expected 0 "
+            f"(naive/EWMA should never trip the counter)."
+        )
+
+    # Runner surfaces the fallback summary unchanged.
+    assert result["fallback_summary"][forecasters[0].name] == 0
+    assert result["fallback_summary"][forecasters[1].name] == 0

@@ -83,6 +83,10 @@ export default function Behaviour() {
     identityAttackData: experimentData.identityAttackData,
     driftAdaptationData: experimentData.driftAdaptationData,
     stakePolicyData: experimentData.stakePolicyData,
+    sybilArbitrageData: experimentData.sybilArbitrageData,
+    arbitrageCrowdSizeData: experimentData.arbitrageCrowdSizeData,
+    informedCollusionData: experimentData.informedCollusionData,
+    reputationResetData: experimentData.reputationResetData,
   };
 
   return <Renderer data={rendererData} header={header} />;

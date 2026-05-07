@@ -1,6 +1,6 @@
 # Methodology
 
-## 4.1 Three-layer architecture
+## Three-layer architecture
 
 The simulation and analysis platform is split into three layers with
 a strict interface. Each layer can be swapped without touching the
@@ -44,7 +44,7 @@ The cleanness of this separation is how we can claim the mechanism is
 agnostic to the panel and the data. Every experiment in Chapter 5
 reuses the same platform layer.
 
-## 4.2 Datasets
+## Datasets
 
 ### Synthetic DGPs (Chapter 5.1)
 
@@ -110,7 +110,7 @@ Three families, all committed in `onlinev2/src/onlinev2/dgps/`:
 - Used in Chapter 5.2 §6.1.4 as an external sanity check against a
   published operational forecast.
 
-## 4.3 Forecaster panel (real data)
+## Forecaster panel (real data)
 
 Seven models. All strictly causal: they use only data up to time t−1 to
 predict time t. Retrained on rolling windows every 50 steps (wind) or
@@ -162,7 +162,7 @@ Post-audit training protocol (bugfix spec
   audit slice and older outputs use static. Both satisfy the no-
   future-leakage property.
 
-## 4.4 Experiment protocol — the validity ladder
+## Experiment protocol — the validity ladder
 
 Experiments follow the strict ladder from `NEXT_STEPS.md`. Each rung
 must pass before the next is treated as meaningful.
@@ -205,7 +205,7 @@ must pass before the next is treated as meaningful.
   1000 rounds; attacker weight share where relevant.
 - Multi-seed aggregation (≥ 10 seeds per experiment).
 
-## 4.5 Standard output format
+## Standard output format
 
 Every experiment emits a canonical four-panel report:
 
@@ -221,7 +221,7 @@ Master comparison rows are keyed by
 `master_comparison.json` / `.csv`. This is what the dashboard and the
 thesis both read.
 
-## 4.6 Statistical testing
+## Statistical testing
 
 - **Diebold–Mariano** (Diebold and Mariano 1995) for method vs method
   on per-round CRPS. HAC-corrected standard errors.
@@ -242,7 +242,7 @@ Headline DM numbers:
 - Mechanism vs uniform, 3000-point audit slice: t = +15.92, p < 1e-6
   [source: `THESIS_CLAIMS.md` Claim 4 body].
 
-## 4.7 Reproducibility
+## Reproducibility
 
 - `AUDIT_SEEDS = [0, 1, 2, 42, 2024]` — canonical set for property-based
   tests.
@@ -255,7 +255,7 @@ Headline DM numbers:
   `cd onlinev2 && OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE \
      python -m pytest -m audit tests/audit/`.
 
-## 4.8 Pre-fix snapshot
+## Pre-fix snapshot
 
 A pre-fix JSON snapshot is committed at
 `onlinev2/outputs/pre_fix_snapshot/` so post-fix numbers remain
@@ -265,11 +265,19 @@ pre-fix baseline.
 
 ## Things still to document (pending runs)
 
-- [PENDING] Hyperparameter sweep output with held-out split (B3 fix,
-  Open #2 in `onlinev2/outputs/post_fix_deltas/SUMMARY.md`).
+- [DONE 2026-05-07] Hyperparameter sweep output with held-out split
+  (B3 fix, Open #2 in `onlinev2/outputs/post_fix_deltas/SUMMARY.md`):
+  see `writing/30_mechanism_design.md` sweep table and
+  `writing/60_results_real_data.md` §"Sensitivity sweep and parameter
+  provenance". Artefact: `onlinev2/outputs/sensitivity_sweep.json`.
 - [PENDING] Horizon runs (`day_ahead`, `4h_ahead`, `regime_shift`)
   re-run under expanding normalisation. Current numbers are static
   mode.
 - [PENDING] `baselines.json` Vitali OGD / Raja head-to-head re-run
   under expanding normalisation. Current numbers are static mode.
 - [PENDING] Restart-per-season regime evaluation (B13.8 follow-up).
+- [PENDING, optional] Expanding-mode headline at sweep-selected
+  parameters (Task 17.1). Would resolve the residual inconsistency
+  where the locked wind table uses expanding + (γ=16, ρ=0.5) and the
+  sweep-provenance block uses static + (γ=32, ρ=0.7). Expected
+  shift: sub-percent CRPS.

@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import PageShell from '@/components/dashboard/PageShell';
+import { PALETTE } from '@/lib/palette';
 
 /* ────────────────────────────────────────────────────────────────
    HomePage — academic redesign.
@@ -17,19 +18,19 @@ const STAGES = [
     mark: 'D',
     title: 'Data-generating process',
     body: 'The world the forecasters face. Latent states evolve; outcomes are drawn round by round.',
-    color: '#1d3461',
+    color: PALETTE.navy,
   },
   {
     mark: 'B',
     title: 'Forecaster behaviour',
     body: 'How each forecaster reports and wagers. Honest, risk-averse, adversarial — all covered by the same interface.',
-    color: '#5b21b6',
+    color: PALETTE.purple,
   },
   {
     mark: 'C',
     title: 'Core mechanism',
     body: 'Scores each forecast with CRPS, settles payoffs from the pooled deposits, and updates every forecaster\u2019s skill estimate.',
-    color: '#0f766e',
+    color: PALETTE.teal,
   },
 ] as const;
 
@@ -46,28 +47,28 @@ const FINDINGS = [
     title: 'Modest CRPS reduction on Elia wind; essentially flat on electricity',
     body:
       'Across 17,344 evaluation rounds on Elia offshore wind with seven forecasting models (Naive, EWMA, ARIMA, XGBoost, MLP, Theta, Ensemble), the skill \u00D7 stake aggregate reduces mean CRPS by about 7% relative to equal weighting under strictly-causal expanding normalisation (Diebold\u2013Mariano t = 40.77, p < 0.001). On Elia electricity imbalance prices (10,000 rounds) the mechanism is statistically indistinguishable from equal weighting (t = 0.008, p = 0.99) \u2014 an honest null that reflects the near-identical quality of the forecaster panel on that series. best_single (the per-round oracle of the best forecaster) still outperforms the mechanism by roughly 16 percentage points on wind; the contribution is economic structure preserved, not universal accuracy dominance.',
-    accent: '#0f766e',
+    accent: PALETTE.teal,
   },
   {
     kicker: 'Key lever',
     title: 'Deposit policy controls how much value the mechanism adds',
     body:
       'With informative deposits, correlated with skill, the blended rule approaches the oracle benchmark. With random or noisy deposits, equal weighting is hard to beat. The deposit regime, not the aggregator alone, determines outcomes.',
-    accent: '#1d3461',
+    accent: PALETTE.navy,
   },
   {
     kicker: 'Theoretical',
     title: 'Budget-balanced and sybil-resistant (Lambert narrow sense)',
     body:
       'Total payouts equal total effective wagers to machine precision (residual < 10\u207B\u00B9\u2074). Sybil-resistant against identical clones with conserved total wager (Lambert 2008): splitting identity provides zero advantage even when the underlying attack extracts arbitrage profit. Diversified sybil strategies can extract a small advantage (\u224B6%). The Chen-Devanur-Pennock-Vaughan (2014) arbitrage interval applies: a theory-grounded arbitrage seeker earns a positive expected profit, as predicted.',
-    accent: '#b45309',
+    accent: PALETTE.coral,
   },
   {
     kicker: 'Caveat',
     title: 'Equal weighting remains a strong baseline',
     body:
       'Uniform weights are hard to beat under non-stationarity or small panels. The skill layer helps most when forecasters have heterogeneous quality and the panel runs long enough for the online estimator to converge (roughly 50 rounds with N \u2265 6).',
-    accent: '#5a6175',
+    accent: PALETTE.slate,
   },
 ] as const;
 

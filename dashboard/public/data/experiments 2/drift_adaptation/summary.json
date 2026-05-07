@@ -1,0 +1,17 @@
+{
+  "experiment_name": "drift_adaptation",
+  "description": "Compares fast vs slow adaptor to drift in the outcome process.",
+  "config": {
+    "dgp_name": "drift_adaptation",
+    "T": 1000,
+    "n_forecasters": "N/A",
+    "n_seeds": "N/A",
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "drift_adaptation",
+    "T": 1000,
+    "block": "behaviour"
+  },
+  "headline_results": {}
+}

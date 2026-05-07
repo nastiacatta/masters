@@ -13,6 +13,7 @@ import ChartCard from '@/components/dashboard/ChartCard';
 import MetricCard from '@/components/dashboard/MetricCard';
 import MathBlock from '@/components/dashboard/MathBlock';
 import { fmtNum, fmtPct } from '@/lib/formatters';
+import { PALETTE } from '@/lib/palette';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell,
@@ -114,13 +115,13 @@ export default function Diagnostics() {
                   data={calibrationData.map(d => ({ tau: d.tau.toFixed(2), deviation: Math.abs(d.pHat - d.tau) }))}
                   margin={{ top: 5, right: 10, bottom: 20, left: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="tau" tick={{ fontSize: 10 }} stroke="#94a3b8" label={{ value: 'τ', position: 'insideBottom', offset: -5, fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" label={{ value: '|p̂ − τ|', angle: -90, position: 'insideLeft', fontSize: 10 }} />
-                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
+                  <XAxis dataKey="tau" tick={{ fontSize: 10 }} stroke={PALETTE.slate} label={{ value: 'τ', position: 'insideBottom', offset: -5, fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} stroke={PALETTE.slate} label={{ value: '|p̂ − τ|', angle: -90, position: 'insideLeft', fontSize: 10 }} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${PALETTE.border}` }} />
                   <Bar dataKey="deviation" radius={[4, 4, 0, 0]} maxBarSize={40}>
                     {calibrationData.map((d, i) => (
-                      <Cell key={i} fill={Math.abs(d.pHat - d.tau) < 0.05 ? '#10b981' : Math.abs(d.pHat - d.tau) < 0.1 ? '#0d9488' : '#ef4444'} />
+                      <Cell key={i} fill={Math.abs(d.pHat - d.tau) < 0.05 ? PALETTE.teal : Math.abs(d.pHat - d.tau) < 0.1 ? PALETTE.imperial : PALETTE.coral} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -142,11 +143,11 @@ export default function Diagnostics() {
             <ChartCard title="Active Forecasters over Time" subtitle="Number of agents participating each round">
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={sampled} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, nAgents]} />
-                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-                  <Line type="stepAfter" dataKey="activeCount" stroke="#2563eb" strokeWidth={1.5} dot={false} name="Active agents" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
+                  <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke={PALETTE.slate} />
+                  <YAxis tick={{ fontSize: 10 }} stroke={PALETTE.slate} domain={[0, nAgents]} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${PALETTE.border}` }} />
+                  <Line type="stepAfter" dataKey="activeCount" stroke={PALETTE.imperial} strokeWidth={1.5} dot={false} name="Active agents" />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -154,11 +155,11 @@ export default function Diagnostics() {
             <ChartCard title="Participation Rate over Time" subtitle="Fraction of agents active each round">
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={sampled} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[0, 1]} />
-                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }} formatter={(v: unknown) => typeof v === 'number' ? fmtPct(v) : String(v ?? '')} />
-                  <Line type="monotone" dataKey="activeRate" stroke="#8b5cf6" strokeWidth={1.5} dot={false} name="Participation rate" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} />
+                  <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke={PALETTE.slate} />
+                  <YAxis tick={{ fontSize: 10 }} stroke={PALETTE.slate} domain={[0, 1]} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${PALETTE.border}` }} formatter={(v: unknown) => typeof v === 'number' ? fmtPct(v) : String(v ?? '')} />
+                  <Line type="monotone" dataKey="activeRate" stroke={PALETTE.purple} strokeWidth={1.5} dot={false} name="Participation rate" />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>

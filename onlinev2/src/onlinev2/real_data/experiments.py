@@ -127,7 +127,12 @@ def _run_horizon_comparison(
                 if len(history) < 5:
                     point = 0.5
                 else:
-                    if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+                    # Retrain policy: retrain only when we have enough history
+                    # to fit meaningfully (> 20 points). The legacy ``t == 0``
+                    # trigger wasted a call on an empty history and bumped
+                    # fallback_counter on ML forecasters; see sibling fix in
+                    # runner.py and tests/audit/test_theory_alignment.py.
+                    if t % fc.retrain_every == 0 and len(history) > 20:
                         fc.fit(history)
                     raw_point = fc.predict()
                     # NaN guard: np.clip preserves NaN so a degenerate
@@ -485,3 +490,186 @@ def _cli_main() -> None:
 
 if __name__ == "__main__":
     _cli_main()
+
+
+# ---------------------------------------------------------------------------
+# Restart-per-season regime-shift evaluation (follow-up for task 11.8).
+# ---------------------------------------------------------------------------
+#
+# The regime_shift block produced by run_all_real_experiments is a
+# single online pass over the 2024-2025 hourly series with per-month
+# bucketing (the `within_run_seasonal_slice: true` flag makes this
+# explicit). A stronger test reinitialises forecaster state and
+# mechanism state at each seasonal boundary so each evaluation is a
+# true out-of-regime test.
+#
+# This function is the scaffolding for that evaluation. It is not
+# wired into run_all_real_experiments because the full-series run
+# takes O(hours) per dataset; to activate it, call directly:
+#
+#   onlinev2/.venv/bin/python -c "
+#   from onlinev2.real_data.experiments import run_regime_shift_restart_per_season
+#   import pandas as pd, numpy as np
+#   df = pd.read_csv('data/elia_offshore_wind_2024_2025.csv')
+#   df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
+#   df = df.set_index('datetime')
+#   hourly = df['measured'].resample('1h').mean().dropna()
+#   out = run_regime_shift_restart_per_season(hourly)
+#   "
+# or replace the results['regime_shift'] assembly inside
+# run_all_real_experiments with a call to this function.
+
+
+def run_regime_shift_restart_per_season(
+    hourly: "pd.Series",
+    horizon: int = 1,
+    warmup: int = 200,
+    taus: np.ndarray | None = None,
+    seed: int = 42,
+    strict_no_fallback: bool = False,
+    normalize_mode: str = "static",
+    min_season_len: int = 400,
+) -> dict:
+    """Run per-season horizon comparisons with fresh forecaster / mechanism
+    state at each seasonal boundary.
+
+    Each season (winter / spring / summer / autumn) is extracted as a
+    contiguous slice of the hourly series, then ``_run_horizon_comparison``
+    is invoked on that slice with a fresh ``get_all_forecasters()`` panel
+    so no forecaster carries residual bootstrap history across seasons.
+
+    Parameters
+    ----------
+    hourly : pd.Series
+        DatetimeIndex'd hourly wind series (``measured`` column from
+        Elia). Must be monotonically increasing in time.
+    horizon : int
+        Forecast horizon in rounds, forwarded to
+        ``_run_horizon_comparison``. Default 1 (1-hour-ahead).
+    warmup : int
+        Warmup length per season, forwarded to
+        ``_run_horizon_comparison``. Must be strictly less than
+        ``min_season_len``.
+    taus : np.ndarray, optional
+        Quantile grid. Defaults to 9-level equidistant.
+    seed, strict_no_fallback, normalize_mode :
+        Forwarded to ``_run_horizon_comparison``.
+    min_season_len : int
+        Skip any season slice shorter than this. Default 400 rounds.
+
+    Returns
+    -------
+    dict with the shape::
+
+        {
+            "restart_per_season": True,
+            "horizon": <int>,
+            "warmup": <int>,
+            "per_season": {
+                "winter": {<_run_horizon_comparison result>},
+                "spring": {...},
+                "summer": {...},
+                "autumn": {...},
+            },
+            "season_summary": {
+                "winter": {"n_rounds": ..., "uniform": ...,
+                           "mechanism": ..., "skill": ...,
+                           "pct_mechanism": ..., "pct_skill": ...},
+                ...
+            },
+        }
+
+    Missing or too-short seasons are listed under ``"skipped_seasons"``.
+
+    Examples
+    --------
+    On a synthetic panel the scaffolding runs end-to-end in seconds;
+    see ``onlinev2/tests/test_regime_shift_restart_per_season.py``.
+    The full Elia wind series (T ≈ 17000) with 4 seasons takes roughly
+    an hour on a laptop; the existing ``within_run_seasonal_slice``
+    block is retained as the default in ``run_all_real_experiments``.
+    """
+    if taus is None:
+        taus = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    if warmup >= min_season_len:
+        raise ValueError(
+            f"warmup={warmup} must be strictly less than "
+            f"min_season_len={min_season_len}."
+        )
+
+    months = hourly.index.month
+    season_map = {
+        12: "winter", 1: "winter", 2: "winter",
+        3: "spring", 4: "spring", 5: "spring",
+        6: "summer", 7: "summer", 8: "summer",
+        9: "autumn", 10: "autumn", 11: "autumn",
+    }
+    season_order = ["winter", "spring", "summer", "autumn"]
+
+    # Build a per-season boolean mask.
+    seasons: dict[str, np.ndarray] = {
+        s: np.array([season_map.get(int(m), None) == s for m in months], dtype=bool)
+        for s in season_order
+    }
+
+    per_season: dict[str, dict] = {}
+    season_summary: dict[str, dict] = {}
+    skipped: list[dict] = []
+
+    values = hourly.values.astype(np.float64)
+
+    for season in season_order:
+        mask = seasons[season]
+        n_rounds = int(mask.sum())
+        if n_rounds < min_season_len:
+            skipped.append(
+                {"season": season, "n_rounds": n_rounds,
+                 "reason": f"fewer than min_season_len={min_season_len} rounds"}
+            )
+            continue
+        series_s = values[mask]
+        forecasters_s = get_all_forecasters()
+        print(f"  [restart_per_season] {season}: {n_rounds} rounds")
+        result_s = _run_horizon_comparison(
+            series_s,
+            horizon=horizon,
+            forecasters=forecasters_s,
+            warmup=warmup,
+            taus=taus,
+            label=f"regime_shift_restart_{season}",
+            seed=seed,
+            strict_no_fallback=strict_no_fallback,
+            normalize_mode=normalize_mode,
+        )
+        per_season[season] = result_s
+
+        rows = {r["method"]: r["mean_crps"] for r in result_s.get("rows", [])}
+        mu = rows.get("uniform", float("nan"))
+        mm = rows.get("mechanism", float("nan"))
+        ms = rows.get("skill", float("nan"))
+        pct_mech = (
+            float(-(mm - mu) / mu * 100) if mu and mu > 1e-12 else 0.0
+        )
+        pct_skill = (
+            float(-(ms - mu) / mu * 100) if mu and mu > 1e-12 else 0.0
+        )
+        season_summary[season] = {
+            "n_rounds": n_rounds,
+            "uniform": float(mu),
+            "mechanism": float(mm),
+            "skill": float(ms),
+            "delta_mechanism": float(mm - mu),
+            "pct_mechanism": pct_mech,
+            "delta_skill": float(ms - mu),
+            "pct_skill": pct_skill,
+        }
+
+    return {
+        "restart_per_season": True,
+        "horizon": int(horizon),
+        "warmup": int(warmup),
+        "min_season_len": int(min_season_len),
+        "per_season": per_season,
+        "season_summary": season_summary,
+        "skipped_seasons": skipped,
+    }

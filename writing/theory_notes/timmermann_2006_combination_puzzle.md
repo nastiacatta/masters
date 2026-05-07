@@ -35,19 +35,18 @@ error sources to beat equal weights.
 
 - Our mechanism's conditional-improvement framing (Chapter 7) is
   framed around this puzzle.
-- When our mechanism ties uniform on electricity (post-fix t = 0.008,
-  p = 0.994), the combination puzzle bites: the seven forecasters
-  are undifferentiated, the skill signal has nothing to extract, and
-  our Δ collapses to zero.
 - When our mechanism beats uniform by a meaningful margin on wind
-  (audit slice Δ = −5.3%, full-length expanding-mode Δ = −7.1% at
-  t = 40.77, p ≈ 0), that is a real signal against the combination
-  puzzle: we have extracted enough skill information to separate
-  from uniform.
-- When our mechanism ties uniform on electricity (t = 0.008,
-  p = 0.994), the combination puzzle bites: the seven forecasters
+  (audit slice Δ = −5.4%, full-length expanding-mode Δ = −7.1% at
+  t = 40.77, p ≈ 0; static-mode at sweep-selected parameters Δ =
+  −7.9% at t = 42.2, p ≈ 0), that is a real signal against the
+  combination puzzle: we have extracted enough skill information to
+  separate from uniform.
+- When our mechanism ties uniform on electricity (expanding-mode
+  t = 0.008, p = 0.994; static-mode sweep-selected Δ = −0.18% with
+  t = 5.5, p ≈ 0 — DM-significant by sample size but economically
+  negligible), the combination puzzle bites: the seven forecasters
   are undifferentiated, the skill signal has nothing to extract, and
-  our Δ collapses to zero.
+  our Δ collapses to within half a percent of uniform.
 
 ## Where we use it
 

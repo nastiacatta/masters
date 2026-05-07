@@ -1,0 +1,36 @@
+{
+  "experiment_name": "arbitrage_crowd_size",
+  "description": "No description available.",
+  "config": {
+    "dgp_name": "arbitrage_crowd_size",
+    "T": 500,
+    "n_forecasters": "N/A",
+    "n_seeds": 10,
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "arbitrage_crowd_size",
+    "T": 500,
+    "block": "behaviour",
+    "n_seeds": 10,
+    "lam_grid": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "n_grid": [
+      4,
+      8,
+      16,
+      32
+    ]
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": {
+      "mean": 18.458476546109612,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

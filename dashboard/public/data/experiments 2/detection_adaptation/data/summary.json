@@ -1,0 +1,31 @@
+{
+  "experiment_name": "detection_adaptation",
+  "config": {
+    "T": 1000,
+    "n_benign": 8,
+    "n_seeds": 20,
+    "attacker_initial_wealth": 50.0,
+    "attacker_noise": 0.02,
+    "block": "behaviour"
+  },
+  "attacker_types": {
+    "fixed_manipulator": {
+      "mean_total_profit": -50.016830121569726,
+      "se_total_profit": 0.0029995815608731707,
+      "ci_low": -50.02270930142904,
+      "ci_high": -50.01095094171041,
+      "mean_detector_score": 0.49034403841968216,
+      "mean_detector_flag_rate": 0.11082829657634316,
+      "n_seeds": 20
+    },
+    "adaptive_evader": {
+      "mean_total_profit": -49.7765256735934,
+      "se_total_profit": 0.12895566528696797,
+      "ci_low": -50.02927877755585,
+      "ci_high": -49.52377256963094,
+      "mean_detector_score": 0.4782601526775235,
+      "mean_detector_flag_rate": 0.11642103860714759,
+      "n_seeds": 20
+    }
+  }
+}

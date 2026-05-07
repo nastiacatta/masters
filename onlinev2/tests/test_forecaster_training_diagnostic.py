@@ -39,7 +39,7 @@ def _drive_forecaster_online(fc, series: np.ndarray, warmup: int,
 
     for t in range(T):
         history = series[:t]
-        if t == 0 or (t % fc.retrain_every == 0 and len(history) > 20):
+        if t % fc.retrain_every == 0 and len(history) > 20:
             fc.fit(history)
         point = float(np.clip(fc.predict(), 0.0, 1.0))
         point_preds[t] = point

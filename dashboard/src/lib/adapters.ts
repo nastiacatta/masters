@@ -20,6 +20,10 @@ import type {
   IdentityAttackRow,
   DriftAdaptationRow,
   StakePolicyRow,
+  SybilArbitrageRow,
+  ArbitrageCrowdSizeRow,
+  InformedCollusionRow,
+  ReputationResetRow,
   DetectionMetricsRow,
   MasterComparisonRow,
   BankrollAblationRow,
@@ -595,6 +599,102 @@ export async function loadDetectionMetrics(exp: ExperimentMeta): Promise<Detecti
   return raw.map((r) => ({
     detector: String(r.detector),
     score: Number(r.score),
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Theory-grounded adversary adapters (multi-seed summaries with 95% CIs)
+// ---------------------------------------------------------------------------
+
+export async function loadSybilArbitrage(exp: ExperimentMeta): Promise<SybilArbitrageRow[]> {
+  const raw = await fetchCSV<{
+    k: number;
+    mean_profit: number;
+    se_profit: number;
+    ci_low: number;
+    ci_high: number;
+    mean_n_eff: number;
+    se_n_eff: number;
+    n_seeds: number;
+  }>(
+    `${expPath(exp)}/data/${dataFile(exp, 'sybil_arbitrage', 'sybil_arbitrage_summary.csv')}`,
+  );
+  return raw.map((r) => ({
+    k: Number(r.k),
+    meanProfit: Number(r.mean_profit),
+    seProfit: Number(r.se_profit),
+    ciLow: Number(r.ci_low),
+    ciHigh: Number(r.ci_high),
+    meanNEff: Number(r.mean_n_eff),
+    seNEff: Number(r.se_n_eff),
+    nSeeds: Number(r.n_seeds),
+  }));
+}
+
+export async function loadArbitrageCrowdSize(exp: ExperimentMeta): Promise<ArbitrageCrowdSizeRow[]> {
+  const raw = await fetchCSV<{
+    lam: number;
+    n_benign: number;
+    mean_profit: number;
+    se_profit: number;
+    ci_low: number;
+    ci_high: number;
+    n_seeds: number;
+  }>(
+    `${expPath(exp)}/data/${dataFile(exp, 'arbitrage_crowd_size', 'arbitrage_crowd_size_summary.csv')}`,
+  );
+  return raw.map((r) => ({
+    lam: Number(r.lam),
+    nBenign: Number(r.n_benign),
+    meanProfit: Number(r.mean_profit),
+    seProfit: Number(r.se_profit),
+    ciLow: Number(r.ci_low),
+    ciHigh: Number(r.ci_high),
+    nSeeds: Number(r.n_seeds),
+  }));
+}
+
+export async function loadInformedCollusion(exp: ExperimentMeta): Promise<InformedCollusionRow[]> {
+  const raw = await fetchCSV<{
+    scenario: string;
+    mean_coalition_profit: number;
+    se_coalition_profit: number;
+    ci_low: number;
+    ci_high: number;
+    n_seeds: number;
+  }>(
+    `${expPath(exp)}/data/${dataFile(exp, 'informed_collusion', 'informed_collusion_summary.csv')}`,
+  );
+  return raw.map((r) => ({
+    scenario: String(r.scenario),
+    meanCoalitionProfit: Number(r.mean_coalition_profit),
+    seCoalitionProfit: Number(r.se_coalition_profit),
+    ciLow: Number(r.ci_low),
+    ciHigh: Number(r.ci_high),
+    nSeeds: Number(r.n_seeds),
+  }));
+}
+
+export async function loadReputationReset(exp: ExperimentMeta): Promise<ReputationResetRow[]> {
+  const raw = await fetchCSV<{
+    scenario: string;
+    mean_attacker_profit: number;
+    se_attacker_profit: number;
+    ci_low: number;
+    ci_high: number;
+    mean_n_resets: number;
+    n_seeds: number;
+  }>(
+    `${expPath(exp)}/data/${dataFile(exp, 'reputation_reset', 'reputation_reset_summary.csv')}`,
+  );
+  return raw.map((r) => ({
+    scenario: String(r.scenario),
+    meanAttackerProfit: Number(r.mean_attacker_profit),
+    seAttackerProfit: Number(r.se_attacker_profit),
+    ciLow: Number(r.ci_low),
+    ciHigh: Number(r.ci_high),
+    meanNResets: Number(r.mean_n_resets),
+    nSeeds: Number(r.n_seeds),
   }));
 }
 

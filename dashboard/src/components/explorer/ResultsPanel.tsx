@@ -21,6 +21,7 @@ import { useExplorer } from '@/lib/explorerStore';
 import { runPipeline } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import { fmtNum, fmtPct, agentDisplayName } from '@/lib/formatters';
+import { PALETTE } from '@/lib/palette';
 
 export default function ResultsPanel() {
   const {
@@ -192,9 +193,9 @@ export default function ResultsPanel() {
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v) => (typeof v === 'number' ? fmtNum(v, 4) : String(v))} />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Line type="monotone" dataKey="error" name="Error" stroke="#2563eb" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="participation" name="Participation" stroke="#0d9488" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="nEff" name="N_eff" stroke="#64748b" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="error" name="Error" stroke={PALETTE.imperial} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="participation" name="Participation" stroke={PALETTE.teal} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="nEff" name="N_eff" stroke={PALETTE.slate} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>

@@ -20,6 +20,10 @@ import type {
   IdentityAttackRow,
   DriftAdaptationRow,
   StakePolicyRow,
+  SybilArbitrageRow,
+  ArbitrageCrowdSizeRow,
+  InformedCollusionRow,
+  ReputationResetRow,
   DetectionMetricsRow,
 } from './types';
 import {
@@ -31,11 +35,15 @@ import {
   loadPreferenceStress,
   loadIntermittencyStress,
   loadArbitrageScan,
+  loadArbitrageCrowdSize,
   loadDetectionAdaptation,
   loadCollusionStress,
+  loadInformedCollusion,
   loadInsiderAdvantage,
   loadWashActivity,
   loadStrategicReporting,
+  loadSybilArbitrage,
+  loadReputationReset,
   loadIdentityAttack,
   loadDriftAdaptation,
   loadStakePolicy,
@@ -75,6 +83,10 @@ interface ExperimentDataResult {
   identityAttackData: IdentityAttackRow[];
   driftAdaptationData: DriftAdaptationRow[];
   stakePolicyData: StakePolicyRow[];
+  sybilArbitrageData: SybilArbitrageRow[];
+  arbitrageCrowdSizeData: ArbitrageCrowdSizeRow[];
+  informedCollusionData: InformedCollusionRow[];
+  reputationResetData: ReputationResetRow[];
   detectionMetricsData: DetectionMetricsRow[];
   loading: boolean;
   error: Error | null;
@@ -103,6 +115,10 @@ export function useExperimentData(): ExperimentDataResult {
     identityAttackData: [],
     driftAdaptationData: [],
     stakePolicyData: [],
+    sybilArbitrageData: [],
+    arbitrageCrowdSizeData: [],
+    informedCollusionData: [],
+    reputationResetData: [],
     detectionMetricsData: [],
     loading: true,
     error: null,
@@ -138,6 +154,10 @@ export function useExperimentData(): ExperimentDataResult {
       identityAttackData: [],
       driftAdaptationData: [],
       stakePolicyData: [],
+      sybilArbitrageData: [],
+      arbitrageCrowdSizeData: [],
+      informedCollusionData: [],
+      reputationResetData: [],
       detectionMetricsData: [],
       loading: false,
       error: null,
@@ -182,6 +202,10 @@ export function useExperimentData(): ExperimentDataResult {
           identityAttackData,
           driftAdaptationData,
           stakePolicyData,
+          sybilArbitrageData,
+          arbitrageCrowdSizeData,
+          informedCollusionData,
+          reputationResetData,
           detectionMetricsData,
           sweepData,
           settlementSeries,
@@ -203,6 +227,10 @@ export function useExperimentData(): ExperimentDataResult {
           exp.name === 'identity_attack_matrix' ? loadIdentityAttack(exp) : Promise.resolve([]),
           exp.name === 'drift_adaptation' ? loadDriftAdaptation(exp) : Promise.resolve([]),
           exp.name === 'stake_policy_matrix' ? loadStakePolicy(exp) : Promise.resolve([]),
+          exp.name === 'sybil_arbitrage' ? loadSybilArbitrage(exp) : Promise.resolve([]),
+          exp.name === 'arbitrage_crowd_size' ? loadArbitrageCrowdSize(exp) : Promise.resolve([]),
+          exp.name === 'informed_collusion' ? loadInformedCollusion(exp) : Promise.resolve([]),
+          exp.name === 'reputation_reset' ? loadReputationReset(exp) : Promise.resolve([]),
           exp.name === 'collusion_stress' ? loadDetectionMetrics(exp) : Promise.resolve([]),
           exp.name === 'parameter_sweep' ? loadSweepData(exp) : Promise.resolve([]),
           exp.name === 'settlement_sanity' ? loadSettlementSeries(exp) : Promise.resolve([]),
@@ -228,6 +256,10 @@ export function useExperimentData(): ExperimentDataResult {
           identityAttackData,
           driftAdaptationData,
           stakePolicyData,
+          sybilArbitrageData,
+          arbitrageCrowdSizeData,
+          informedCollusionData,
+          reputationResetData,
           detectionMetricsData,
           sweepData,
           settlementSeries,

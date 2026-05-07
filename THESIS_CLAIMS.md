@@ -94,42 +94,42 @@ swallowing, and without masquerading persistence as model output.
 
 On identical forecaster panels, the wager-weighted linear pool beats
 the shifted-median fan baseline (`michael_ogd_centered_median_fan`, the
-rename of the legacy `michael_ogd` row per B10) by about 5 % CRPS on
-the 3000-point stationary Elia wind slice.
+rename of the legacy `michael_ogd` row per B10) by about 1–2 % CRPS
+on the 3000-point Elia wind audit slice under `expanding` normalisation.
 
-**Scope note.** This claim is explicitly on the 3000-point audit slice
-under `normalize_mode="static"`. On the full-length 17 344-hour run
-(Claim 9 below), the `michael_ogd_centered_median_fan` baseline is
-slightly weaker than the mechanism under the same normalisation.
+**Scope note.** This claim is on the 3000-point audit slice under
+`normalize_mode="expanding"` with negative wind values clipped to 0.
+On the full-length 17 344-hour run (Claim 9), under the same
+normalisation the mechanism still beats the centered-median fan
+baseline — see `dashboard/public/data/real_data/elia_wind/data/
+comparison.json`.
 
-### Evidence (3000-point Elia wind slice, post-fix `static` normalisation)
+### Evidence (3000-point Elia wind slice, post-fix `expanding` normalisation)
 
 | Rule | Mean CRPS | vs uniform |
 |---|---:|---:|
-| oracle (per-round argmin) | 0.01281 | −47.1% |
-| per_round_inv_crps_hindsight | 0.01837 | −24.2% |
-| best_single (oracle-of-best over last 100 per-agent CRPS) | 0.01847 | −23.7% |
-| median | 0.02145 | −11.4% |
-| inverse_variance | 0.02246 | −7.3% |
-| **our mechanism** | **0.02251** | **−7.1%** |
-| trimmed_mean | 0.02260 | −6.7% |
-| skill | 0.02301 | −5.0% |
-| **michael_ogd_centered_median_fan** (rename of legacy `michael_ogd`) | **0.02374** | **−2.0%** |
-| uniform | 0.02422 | — |
+| oracle (per-round argmin) | 0.01166 | −44.9% |
+| best_single (oracle-of-best over last 100 per-agent CRPS) | 0.01665 | −21.3% |
+| per_round_inv_crps_hindsight | 0.01670 | −21.0% |
+| median | 0.01919 | −9.3% |
+| inverse_variance | 0.01963 | −7.2% |
+| trimmed_mean | 0.01973 | −6.7% |
+| **our mechanism** | **0.02000** | **−5.4%** |
+| **michael_ogd_centered_median_fan** (rename of legacy `michael_ogd`) | **0.02030** | **−4.0%** |
+| skill | 0.02043 | −3.4% |
+| uniform | 0.02115 | — |
 
-Diebold-Mariano test (mechanism vs uniform): DM = +12.41, p < 1e-6.
-Ratio mechanism / michael_ogd_centered_median_fan = **0.948×**
-(mechanism beats the centered-median fan by 5.2% on this slice).
+Diebold-Mariano test (mechanism vs uniform): DM = +15.43, p < 1e-6.
+Ratio mechanism / michael_ogd_centered_median_fan = **0.985×**
+(mechanism beats the centered-median fan by 1.5% on this slice).
 
 _Earlier revisions of this claim cited 0.01874 mechanism / 0.01869
-michael_ogd, with ratio 1.003×. Those numbers were produced under the
-pre-fix pipeline where the audit script did not clip negative raw
-wind values before normalisation; the series_min was −8.23 MW
-(physically impossible) rather than the warmup-window min of
-1105.93 MW. The post-fix numbers above are from
-`outputs/real_data/elia_wind_audit_fresh/data/comparison.json`
-(May 2026), regenerated with causal normalisation in `static` mode on
-the clipped (≥ 0) series._
+michael_ogd with ratio 1.003× and DM +15.92. Those numbers were
+produced under the pre-fix pipeline (no negative-value clipping
+of raw wind + whole-series normalisation). The numbers above are
+from `outputs/real_data/elia_wind_audit_fresh/data/comparison.json`
+(May 2026), regenerated with the clipped-non-negative series and
+`normalize_mode="expanding"` (strictly-causal)._
 
 ### Sources
 
@@ -154,20 +154,20 @@ full-length run than on the audit slice (XGBoost 0.808 vs 0.910) because
 expanding normalisation produces larger normalised losses than
 warmup-window normalisation on a 3000-point slice.
 
-### Evidence (3000-point Elia wind slice, post-fix 2026-05-07)
+### Evidence (3000-point Elia wind slice, post-fix `expanding` normalisation, 2026-05-07)
 
 | Rank | Forecaster | CRPS | vs best |
 |---:|---|---:|---:|
-| 1 | **XGBoost** | **0.02203** | — |
-| 2 | Naive (last value) | 0.02351 | +6.7% |
-| 3 | ARIMA(2,1,1) | 0.02373 | +7.7% |
-| 4 | Ensemble (Naive+EWMA) | 0.02859 | +29.8% |
-| 5 | Neural Net (MLP) | 0.03230 | +46.6% |
-| 6 | EWMA(5) | 0.03646 | +65.5% |
-| 7 | Theta | 0.04023 | +82.6% |
+| 1 | **XGBoost** | **0.01777** | — |
+| 2 | ARIMA(2,1,1) | 0.01925 | +8.4% |
+| 3 | Naive (last value) | 0.01943 | +9.3% |
+| 4 | Neural Net (MLP) | 0.02435 | +37.0% |
+| 5 | Ensemble (Naive+EWMA) | 0.02458 | +38.3% |
+| 6 | EWMA(5) | 0.03224 | +81.4% |
+| 7 | Theta | 0.03577 | +101.3% |
 
-Steady-state σ ranking (last 20% of rounds): XGBoost 0.930, Naive 0.914,
-ARIMA 0.912, Ensemble 0.889, MLP 0.880, EWMA 0.865, Theta 0.850 —
+Steady-state σ ranking (last 20% of rounds): XGBoost 0.910, ARIMA 0.896,
+Naive 0.893, MLP 0.891, Ensemble 0.856, EWMA 0.814, Theta 0.796 —
 **identical to the CRPS ordering** (Spearman rank correlation = 1.0).
 
 ### Sources
@@ -184,21 +184,32 @@ The mechanism's linear-pool aggregate is miscalibrated by the Ranjan &
 Gneiting limit, but the observed deviation is small in magnitude on
 stationary Elia wind data.
 
-### Evidence (3000-point Elia wind slice)
+### Evidence (3000-point Elia wind slice, post-fix expanding-mode 2026-05-07)
 
 | τ | Nominal | Mechanism empirical | Gap |
 |---:|---:|---:|---:|
-| 0.10 | 0.100 | 0.087 | −0.013 |
-| 0.20 | 0.200 | 0.179 | −0.021 |
-| 0.30 | 0.300 | 0.285 | −0.015 |
-| 0.50 | 0.500 | 0.521 | +0.021 |
-| 0.70 | 0.700 | 0.734 | +0.034 |
-| 0.80 | 0.800 | 0.823 | +0.022 |
-| 0.90 | 0.900 | 0.912 | +0.012 |
+| 0.10 | 0.100 | 0.110 | +0.010 |
+| 0.20 | 0.200 | 0.202 | +0.002 |
+| 0.30 | 0.300 | 0.306 | +0.006 |
+| 0.40 | 0.400 | 0.418 | +0.018 |
+| 0.50 | 0.500 | 0.535 | +0.035 |
+| 0.60 | 0.600 | 0.634 | +0.034 |
+| 0.70 | 0.700 | 0.742 | +0.042 |
+| 0.80 | 0.800 | 0.835 | +0.035 |
+| 0.90 | 0.900 | 0.927 | +0.027 |
 
-Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}): 0.017. Pattern is
-systematic: under-coverage in the lower tail, over-coverage in the
-mid-upper range.
+Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}): 0.019. Mean centre
+deviation (0.4 ≤ τ ≤ 0.6): 0.029. Pattern is systematic over-coverage
+at every quantile level — the aggregate quantile function is too
+aggressive / right-shifted.
+
+_Earlier revisions of this table cited mean tail 0.017 with mixed
+under/over-coverage. Those numbers were from the pre-fix pipeline
+(no negative-value clipping + static warmup-window normalisation,
+which clipped 46% of eval values to 0). The post-fix numbers above
+are from the regenerated `coverage.json`, using clipped negatives +
+`causal_normalize_expanding` (bugfix clauses 1.1 / 2.1 + post-audit
+issue #1)._
 
 ### Theory
 
@@ -221,14 +232,20 @@ Adding a rolling isotonic recalibration layer (Kuleshov, Fenner & Ermon
 deviation without touching the mechanism's skill, wager, or settlement
 layers.
 
-### Evidence (3000-point Elia wind slice, `recalibrate=True`)
+### Evidence (3000-point Elia wind slice, `recalibrate=True`, post-fix expanding-mode 2026-05-07)
 
 | Metric | Mechanism | Mechanism + recalibration | Change |
 |---|---:|---:|---:|
-| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0171 | **0.0070** | **−59%** |
-| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0187 | **0.0039** | **−79%** |
-| Mean CRPS-hat | 0.01874 | 0.01899 | +1.3% |
-| Mean sharpness (q(0.9) − q(0.1)) | 0.0782 | 0.0697 | −11% |
+| Mean tail deviation (τ ∈ {0.1, 0.2, 0.8, 0.9}) | 0.0186 | **0.0109** | **−41%** |
+| Mean centre deviation (0.4 ≤ τ ≤ 0.6) | 0.0290 | **0.0026** | **−91%** |
+| Mean CRPS-hat | 0.02000 | 0.02032 | +1.6% |
+| Mean sharpness (q(0.9) − q(0.1)) | 0.0887 | 0.0778 | −12% |
+
+_Earlier revisions cited tail 0.0171 → 0.0070 (−59%). Those numbers
+were from the pre-fix pipeline with leaky normalisation (see Claim 6
+scope note). The post-fix recalibration layer still closes most of
+the centre deviation (−91%) and a substantial part of the tail
+deviation (−41%) at a near-identical CRPS cost._
 
 The CRPS and sharpness costs are near the Gneiting–Balabdaoui–Raftery
 (2007) calibration-sharpness tradeoff floor: any calibration fix on a
@@ -483,6 +500,18 @@ all blocks; every other forecaster = 0.
    `michael_ogd` / `regime_shift.regime_summary`); grep sweep on
    `dashboard/src/**` returned zero hits. The renamed runner output is
    consumed through the new keys only.
+4. **Per-τ Michael OGD scaffolding landed (task 11.7).**
+   `onlinev2.mechanism.michael_port_per_tau.run_main_rewards_per_tau`
+   exists with 8 passing smoke tests; not wired into `runner.py` so
+   the current `michael_ogd_centered_median_fan` row is still the
+   shifted-median fan. Enabling it is a ~1–3 hour pipeline rerun.
+5. **Restart-per-season regime-shift scaffolding landed (task 11.8).**
+   `run_regime_shift_restart_per_season` in
+   `onlinev2.real_data.experiments` runs fresh forecaster + mechanism
+   state per season with 2 passing smoke tests; not wired into
+   `run_all_real_experiments` so the current `regime_shift.json` is
+   still the within-run seasonal slice (correctly labelled). Enabling
+   it is a ~1 hour pipeline rerun per dataset.
 
 ---
 

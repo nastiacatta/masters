@@ -8,7 +8,7 @@ This chapter is the foundation the real-data chapter stands on: if any
 of these results failed, the mechanism would not be trustworthy and the
 rest of the thesis would be moot. All three pass.
 
-## 5.1.1 Mechanism correctness (Rung 1)
+## Mechanism correctness (Rung 1)
 
 All 13 active Lambert combinatorial payoff invariants pass on current
 code (clauses 1.24, 1.25, 1.26, 1.27, 1.28, 1.29, 1.30, 1.31, 1.32,
@@ -41,7 +41,7 @@ the seventeenth decimal confirms redistribution rather than creation of
 value. The sybil ratio is exactly 1.000000 with residuals at floating-
 point noise — the narrow Lambert invariance holds as proved.
 
-## 5.1.2 Skill layer recovers the true ordering (Claim 2)
+## Skill layer recovers the true ordering (Claim 2)
 
 On the known-noise panel DGP (`dgps.known_sigma_panel`, 2000 rounds, ρ
 retuned to 0.05 so the EWMA saturates on the short horizon):
@@ -78,7 +78,7 @@ what the recorded σ trajectory looks like qualitatively: a fast initial
 adaptation phase of ~100–500 rounds, followed by a slow refinement
 that tightens the ordering between forecasters of similar quality.
 
-## 5.1.3 Forecasters train without silent failure (Claim 3)
+## Forecasters train without silent failure (Claim 3)
 
 All seven base forecasters (Naive, EWMA(5), ARIMA(2,1,1), XGBoost, MLP,
 Theta, Ensemble) satisfy three properties post-audit:
@@ -103,7 +103,7 @@ fallback_summary = {name: 0 for name in forecasters}   # verified
 `run_real_data_comparison` per B7 fix in
 `.kiro/specs/model-training-testing-audit/`].
 
-## 5.1.4 Deposit policy ablation
+## Deposit policy ablation
 
 Four deposit regimes, same weight rule (`mechanism`), twenty seeds
 [source: `onlinev2/outputs/core/experiments/deposit_policy_comparison/
@@ -129,7 +129,7 @@ ceiling.
 This table is the single clearest empirical statement the thesis makes:
 **how stake enters the system matters more than the weighting rule**.
 
-## 5.1.5 Weight rule comparison
+## Weight rule comparison
 
 Fresh means from 20 seeds, two deposit regimes
 [source: `onlinev2/outputs/core/experiments/weight_rule_comparison/
@@ -173,7 +173,7 @@ the weights can be simpler. The thesis's contribution is to package
 both levers into a single mechanism that remains self-financed
 regardless of which channel carries the information.
 
-## 5.1.6 Five-step bankroll pipeline ablation
+## Five-step bankroll pipeline ablation
 
 Pipeline steps (Chapter 3):
 

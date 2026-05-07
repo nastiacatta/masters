@@ -1,0 +1,31 @@
+{
+  "experiment_name": "intermittency_stress_test",
+  "description": "Compares IID vs bursty vs edge-threshold vs avoid-skill-decay participation, and compares missingness handling settings.",
+  "config": {
+    "dgp_name": "intermittency_stress_test",
+    "T": 1000,
+    "n_forecasters": 10,
+    "n_seeds": "N/A",
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "intermittency_stress_test",
+    "T": 1000,
+    "n_users": 10,
+    "block": "behaviour"
+  },
+  "headline_results": {
+    "mean_N_t": {
+      "mean": 4.574750000000001,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "mean_N_eff": {
+      "mean": 2.2605454431523033,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

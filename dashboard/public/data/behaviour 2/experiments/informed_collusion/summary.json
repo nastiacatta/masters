@@ -1,0 +1,26 @@
+{
+  "experiment_name": "informed_collusion",
+  "description": "No description available.",
+  "config": {
+    "dgp_name": "informed_collusion",
+    "T": 1000,
+    "n_forecasters": "N/A",
+    "n_seeds": 10,
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "informed_collusion",
+    "T": 1000,
+    "block": "behaviour",
+    "n_seeds": 10,
+    "dgp": "AR(1) phi=0.7"
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": {
+      "mean": 33.84286490822643,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

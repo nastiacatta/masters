@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { useExplorer } from '@/lib/explorerStore';
 import { DGP_OPTIONS, generateDGP, type DGPId } from '@/lib/coreMechanism/dgpSimulator';
+import { PALETTE } from '@/lib/palette';
 import VariantSelector from '@/components/thesis/VariantSelector';
 import FormulaCallout from '@/components/thesis/FormulaCallout';
 import ObjectInspector from '@/components/thesis/ObjectInspector';
@@ -71,8 +72,8 @@ export default function DGPPanel() {
               <XAxis dataKey="t" tick={{ fontSize: 9 }} />
               <YAxis tick={{ fontSize: 9 }} domain={[0, 1]} />
               <Tooltip formatter={(v) => (typeof v === 'number' ? fmtNum(v, 4) : String(v))} />
-              <Line type="monotone" dataKey="y" name="y" stroke="#64748b" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="meanReport" name="mean r" stroke="#2563eb" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+              <Line type="monotone" dataKey="y" name="y" stroke={PALETTE.slate} strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="meanReport" name="mean r" stroke={PALETTE.imperial} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
             </LineChart>
           </ResponsiveContainer>
         </div>

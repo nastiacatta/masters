@@ -233,6 +233,46 @@ export interface StakePolicyRow {
   finalGini: number;
 }
 
+export interface SybilArbitrageRow {
+  k: number;
+  meanProfit: number;
+  seProfit: number;
+  ciLow: number;
+  ciHigh: number;
+  meanNEff: number;
+  seNEff: number;
+  nSeeds: number;
+}
+
+export interface ArbitrageCrowdSizeRow {
+  lam: number;
+  nBenign: number;
+  meanProfit: number;
+  seProfit: number;
+  ciLow: number;
+  ciHigh: number;
+  nSeeds: number;
+}
+
+export interface InformedCollusionRow {
+  scenario: string;
+  meanCoalitionProfit: number;
+  seCoalitionProfit: number;
+  ciLow: number;
+  ciHigh: number;
+  nSeeds: number;
+}
+
+export interface ReputationResetRow {
+  scenario: string;
+  meanAttackerProfit: number;
+  seAttackerProfit: number;
+  ciLow: number;
+  ciHigh: number;
+  meanNResets: number;
+  nSeeds: number;
+}
+
 export interface DetectionMetricsRow {
   detector: string;
   score: number;
@@ -259,6 +299,10 @@ export interface ExperimentData {
   identityAttack?: IdentityAttackRow[];
   driftAdaptation?: DriftAdaptationRow[];
   stakePolicy?: StakePolicyRow[];
+  sybilArbitrage?: SybilArbitrageRow[];
+  arbitrageCrowdSize?: ArbitrageCrowdSizeRow[];
+  informedCollusion?: InformedCollusionRow[];
+  reputationReset?: ReputationResetRow[];
   detectionMetrics?: DetectionMetricsRow[];
 }
 

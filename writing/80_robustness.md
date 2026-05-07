@@ -9,7 +9,7 @@ catalogue that has been superseded by the adversary-focused rebuild
 (ANALYSIS.md §4 explains the changes). All numbers below are from the
 current committed run unless flagged.
 
-## 8.1 Adversary-focused framing
+## Adversary-focused framing
 
 The behaviour suite has been rebuilt around named threat models from
 the wagering-mechanism literature. Every adversary has a cited
@@ -35,7 +35,7 @@ boundary-violating attacker is `privileged_information` in
 `leaked_future` mode, which requires an explicit `allow_leakage=True`
 and is treated as an audit check rather than a realistic adversary.
 
-## 8.2 Arbitrage scan (Chen et al. 2014)
+## Arbitrage scan (Chen et al. 2014)
 
 Arbitrageur profit over 20 seeds, T = 1000, versus floor parameter λ
 [source: `onlinev2/outputs/behaviour/experiments/arbitrage_scan/
@@ -70,7 +70,7 @@ Profit scales roughly linearly with crowd size. A lone arbitrageur in
 32 benign agents extracts ~4× the profit of one in 4 benign agents at
 the same λ — more disagreement means more wager pool to access.
 
-## 8.3 Collusion (Chun & Shachter 2011)
+## Collusion (Chun & Shachter 2011)
 
 Three-member coalition, 20 seeds [source:
 `collusion_stress/data/collusion_stress_summary.csv`]:
@@ -85,7 +85,7 @@ Both coalition variants extract strictly positive profit. The weighted-
 mean variant is marginally better in expectation than the weighted-
 median variant.
 
-## 8.4 Informed collusion (new)
+## Informed collusion (new)
 
 Three insiders with AR(1) DGP, 10 seeds [source:
 `informed_collusion/data/informed_collusion_summary.csv`]:
@@ -101,7 +101,7 @@ arbitrage from residual member disagreement *plus* each member's
 privileged lagged signal. Combined profit (+33.84) exceeds pure
 collusion (+24.12) by ~40%.
 
-## 8.5 Insider advantage (Lambert et al. 2008; Johnstone 2007)
+## Insider advantage (Lambert et al. 2008; Johnstone 2007)
 
 AR(1) DGP with φ = 0.7, σ_eps = 0.18, 20 seeds [source:
 `insider_advantage/data/insider_advantage_summary.csv`]:
@@ -117,11 +117,11 @@ cost of making the information boundary honest. The effect requires an
 AR(1) DGP; under IID uniform y the lagged insider degenerates to a
 truthful baseline.
 
-## 8.6 Sybil-proofness (Lambert et al. 2008)
+## Sybil-proofness (Lambert et al. 2008)
 
 Two separate audits.
 
-### 8.6.1 Sybil split with identical reports (`onlinev2/outputs/core/experiments/sybil/`)
+### Sybil split with identical reports (`onlinev2/outputs/core/experiments/sybil/`)
 
 [source: `onlinev2/outputs/core/experiments/sybil/summary.md`].
 
@@ -136,7 +136,7 @@ delta at floating-point noise). Diversified-report sybils break the
 invariance by ~6.5% — Lambert's proof requires r_i = r_j, so this
 is not a defect but an honest scope limitation.
 
-### 8.6.2 Sybil-arbitrage audit (combined with Chen et al. 2014)
+### Sybil-arbitrage audit (combined with Chen et al. 2014)
 
 Sybilproofness *for the arbitrage attack*, k clones fanning the
 arbitrage behaviour with equal total stake, 20 paired seeds [source:
@@ -154,7 +154,7 @@ splitting the arbitrageur into k identities with equal total stake
 gives the same profit. N_eff inflates (which is an artefact of
 counting identities, not influence) but has no payoff consequence.
 
-## 8.7 Wash trading / activity gaming (parimutuel wash)
+## Wash trading / activity gaming (parimutuel wash)
 
 10 seeds [source:
 `wash_activity_gaming/data/wash_activity_gaming_summary.csv`,
@@ -170,7 +170,7 @@ inflation reported as ratio so 0.67 ≈ +67%]:
 60% inflation). **Split-bet style** inflates more but pays a large
 score-rule cost — attackers are usually bankrupt by T = 1000.
 
-## 8.8 Strategic reporting frontier
+## Strategic reporting frontier
 
 Pull sweep towards target = 0.9, 20 seeds [source:
 `strategic_reporting/data/strategic_reporting_summary.csv`]:
@@ -188,7 +188,7 @@ Aggressive pulls are self-defeating: σ collapses, the effective wager
 goes to zero before the attacker can move r̂. The mechanism
 automatically punishes extreme strategic reporting.
 
-## 8.9 Detection adaptation
+## Detection adaptation
 
 20 seeds, online z-score detector, target μ = 0.2 against uniform-y
 DGP [source:
@@ -246,7 +246,7 @@ period for new accounts (newcomer penalty — Feldman & Chuang 2004
 Section 4), or proof-of-identity gating to make identity creation
 costly.
 
-## 8.10 Headline invariants (ANALYSIS.md §3)
+## Headline invariants (ANALYSIS.md §3)
 
 Invariants the adversary suite is expected to satisfy:
 
@@ -264,7 +264,7 @@ Invariants the adversary suite is expected to satisfy:
 
 All invariants hold on current code.
 
-## 8.11 Headline summary
+## Headline summary
 
 What the mechanism does **well**:
 

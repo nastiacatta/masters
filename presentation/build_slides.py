@@ -354,10 +354,10 @@ def build():
             tf = ph.text_frame
             tf.clear()
             lines = [
-                "IID Exponential:     0.0456 ± 0.0003",
-                "Fixed Unit:            0.0423 ± 0.0002",
-                "Bankroll+Conf:      0.0375 ± 0.0001  (−11.3%)",
-                "Oracle Precision:   0.0227 ± 0.0001  (−46.3%)",
+                "IID Exponential:     0.04549 ± 0.00023  (+7.4%)",
+                "Fixed Unit:            0.04237 ± 0.00011",
+                "Bankroll+Conf:      0.03796 ± 0.00012  (−10.4%)",
+                "Oracle Precision:   0.02271 ± 0.00007  (−46.4%)",
                 "",
                 "How stake enters the system matters",
                 "more than the weighting rule.",

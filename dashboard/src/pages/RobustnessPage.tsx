@@ -10,6 +10,7 @@ import TornadoChart from '@/components/charts/TornadoChart';
 import type { TornadoDatum } from '@/components/charts/TornadoChart';
 import MathBlock from '@/components/dashboard/MathBlock';
 import SectionHeader from '@/components/dashboard/SectionHeader';
+import PageShell from '@/components/dashboard/PageShell';
 import { FigureProvider } from '@/contexts/FigureContext';
 import { EquationProvider } from '@/contexts/EquationContext';
 import {
@@ -79,10 +80,9 @@ export default function RobustnessPage() {
   }, []);
 
   return (
-    <div className="flex-1 overflow-y-auto">
     <FigureProvider>
     <EquationProvider>
-    <div className="max-w-[1360px] mx-auto px-6 sm:px-10 pt-12 pb-20 space-y-12">
+    <PageShell width="wide">
       <Breadcrumb activeTab={SECTIONS.find(s => s.id === activeSection)?.label} />
       <div>
         <p className="eyebrow mb-3" style={{ color: 'var(--navy)' }}>
@@ -182,10 +182,9 @@ export default function RobustnessPage() {
       {activeSection === 'sensitivity' && (
         <SensitivitySection data={sweepData} />
       )}
-    </div>
+    </PageShell>
     </EquationProvider>
     </FigureProvider>
-    </div>
   );
 }
 

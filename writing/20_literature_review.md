@@ -132,19 +132,21 @@ weights. Introduces an in-sample + out-of-sample payoff allocation.
 
 **What we take:** the framing of prediction markets with online learning
 and intermittency, and their OGD port as our published reference
-aggregator — `michael_port.py` in the codebase, `michael_ogd` in the
-3000-point audit `comparison.json` and
-`michael_ogd_centered_median_fan` in the full-length expanding-mode
-JSONs. The ratio mechanism / michael_ogd = 1.003× on the 3000-point
-audit slice [source:
+aggregator — `michael_port.py` in the codebase, renamed to
+`michael_ogd_centered_median_fan` in both the 3000-point audit
+`comparison.json` and the full-length expanding-mode JSONs (the
+legacy `michael_ogd` label implied a per-τ OGD fan; what the code
+actually produces is a shifted-median fan — see B10 in the training-
+testing audit spec). The ratio mechanism /
+`michael_ogd_centered_median_fan` = 0.985× on the 3000-point audit
+slice [source:
 `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/comparison.json`]
-is the empirical statement that our self-financed design pays
-effectively no CRPS cost relative to a state-of-the-art online learner
-on that slice. On the full-length 17 344-hour run the
-centered-median-fan baseline beats our mechanism by ~7 pp CRPS (0.0349
-vs 0.0379) and Vitali's per-τ OGD from `baselines.json` beats us by
-~11 pp; both gaps quantify the CRPS cost of keeping the Lambert
-budget-balance guarantee.
+is the empirical statement that our self-financed design beats the
+reference by 1.5% CRPS on that slice. On the full-length 17 344-hour
+run under expanding normalisation the two are within 1% of each other,
+and Vitali's true per-τ OGD from `baselines.json` beats us by ~11 pp
+on wind; the latter gap quantifies the CRPS cost of keeping the
+Lambert budget-balance guarantee vs a per-τ OGD on the simplex.
 
 Sources: `theory/intermittentcontributions_michael.md`,
 [arXiv:2510.13385](https://arxiv.org/abs/2510.13385).
@@ -161,8 +163,8 @@ hindsight.
 interpreting our results. The `best_single` row in `comparison.json`
 operationalises this as a rolling 100-step CRPS selector — the best
 forecaster over the most recent 100 per-agent rounds, not a per-round
-oracle. Our mechanism achieves −5.3% vs uniform on the 3000-point
-slice where `best_single` achieves −22.1%; that gap quantifies the
+oracle. Our mechanism achieves −5.4% vs uniform on the 3000-point
+slice where `best_single` achieves −21.3%; that gap quantifies the
 regret we pay for not tracking the lookback-best forecaster exactly.
 The per-round hindsight row is `oracle`.
 
@@ -196,7 +198,7 @@ claim. We are *not* claiming universal dominance over equal weighting.
 We claim that when (i) there is enough heterogeneity between
 forecasters and (ii) we run long enough for the EWMA to converge, the
 adaptive skill-weighting improves CRPS. On the 3000-point Elia wind
-audit slice we see a −5.3% mechanism gain vs uniform; on the full-
+audit slice we see a −5.4% mechanism gain vs uniform; on the full-
 length 17 344-hour run under expanding normalisation we see −7.1%
 (t = 40.77, p ≈ 0); on Elia electricity imbalance prices we see a
 clean null (t = 0.008, p = 0.994), which is inside the puzzle regime
@@ -247,7 +249,7 @@ pool.
 
 **What we take:** this is the theoretical reason the mechanism's linear
 pool is miscalibrated. We report the observed deviation explicitly
-(mean tail deviation 0.0171 before recalibration, 0.0070 after). We
+(mean tail deviation 0.019 before recalibration, 0.011 after). We
 also cite this paper to justify why a calibration fix is needed
 *and* why any such fix must concede some sharpness.
 

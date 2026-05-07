@@ -76,8 +76,8 @@ Source: `writing/50_results_synthetic.md`.
 
 - Full-length 17 344-hour Elia wind run under expanding
   normalisation: mechanism −7.1% vs uniform, DM t = 40.77, p ≈ 0.
-- 3000-point audit slice: mechanism vs `michael_ogd` ratio 1.003
-  (Claim 4 reference), mean tail deviation 0.0171 (Claim 6
+- 3000-point audit slice: mechanism vs `michael_ogd_centered_median_fan`
+  ratio 0.985× (Claim 4 reference), mean tail deviation 0.019 (Claim 6
   reference).
 - Elia electricity: null result (t = 0.008, p = 0.994), seven
   forecasters indistinguishable.
@@ -94,8 +94,8 @@ Source: `writing/60_results_real_data.md`.
 ### 5.3 Recalibration layer
 
 - Rolling isotonic post-processing (Kuleshov–Fenner–Ermon).
-- Tail deviation −59%, centre deviation −79%.
-- CRPS +1.3%, sharpness −11% (calibration-sharpness floor).
+- Tail deviation −41%, centre deviation −91%.
+- Mean CRPS +1.6%, sharpness −12% (calibration-sharpness floor).
 - Orthogonality: economic structure preserved, byte-identical at
   `recalibrate=False`.
 

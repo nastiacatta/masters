@@ -5,11 +5,13 @@ checklist so nothing slips between the results and the manuscript.
 
 ## Waiting on runs
 
-- [ ] **Sensitivity sweep with held-out split** (B3 fix, Open #2 in
-  `onlinev2/outputs/post_fix_deltas/SUMMARY.md`,
-  `scripts/run_sensitivity_sweep.py`). Need the chosen (γ, ρ, λ)
-  values and the 2-D sensitivity heatmap. Updates Chapter 3.5,
-  Appendix B, and T18.
+- [x] **Sensitivity sweep with held-out split** (B3 fix, Open #2 in
+  `onlinev2/outputs/post_fix_deltas/SUMMARY.md`) — done 2026-05-07.
+  Held-out optima from `scripts/run_sensitivity_sweep_cached.py`
+  (artefact `onlinev2/outputs/sensitivity_sweep.json`): wind
+  (γ = 32, ρ = 0.7, λ = 0.05), electricity (γ = 16, ρ = 0.1,
+  λ = 0.05). Chapter 3.5 table and Chapter 5.2 sensitivity block
+  updated accordingly.
 - [ ] **Horizon runs re-run under expanding normalisation.** Current
   `day_ahead.json`, `4h_ahead.json`, `regime_shift.json` are static-
   mode. The body of §6.4 uses them; the thesis should flag this
@@ -42,13 +44,17 @@ checklist so nothing slips between the results and the manuscript.
   `onlinev2/outputs/post_fix_deltas/SUMMARY.md`.
 - [x] Electricity mechanism CRPS 0.09052 — matches
   `dashboard/public/data/real_data/elia_electricity/data/comparison.json`.
-- [x] Mechanism CRPS 0.01874 on 3000-point audit slice — matches
-  `audit_fresh/data/comparison.json` to six decimals.
-- [x] Ratio mechanism / michael_ogd = 1.003 (audit slice).
-- [ ] DM statistic +15.92 on the 3000-point audit slice — still in
-  THESIS_CLAIMS.md Claim 4 body; re-derive from the per-round series
-  in comparison.json using `onlinev2/src/onlinev2/real_data/stats.py`
-  at write-time and confirm.
+- [x] Mechanism CRPS 0.02000 on 3000-point audit slice (post-fix
+  expanding-mode, 2026-05-07) — matches regenerated
+  `audit_fresh/data/comparison.json` to five decimals. Earlier draft
+  cited 0.01874 under pre-fix leaky normalisation.
+- [x] Ratio mechanism / `michael_ogd_centered_median_fan` = 0.985
+  (audit slice, post-fix). Earlier draft cited ratio 1.003 under the
+  pre-rename + pre-fix pipeline.
+- [x] DM statistic +15.43 on the 3000-point audit slice
+  (post-fix), matches `dm_test.statistic` in the regenerated
+  `comparison.json`. Earlier draft cited +15.92 under the pre-fix
+  pipeline.
 - [x] Synthetic skill recovery σ values — match `skill_recovery/data/
   quantiles_crps_summary.csv` to 3 decimals.
 - [x] Deposit policy comparison means — match

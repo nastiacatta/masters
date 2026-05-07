@@ -1,0 +1,16 @@
+scenario,seed,attacker_profit,n_resets
+baseline,0,0.0,0
+manipulator_no_reset,0,-20.00000000000001,0
+reputation_reset,0,-3.275196357820433,1
+baseline,1,0.0,0
+manipulator_no_reset,1,-20.000000000000007,0
+reputation_reset,1,-3.507834691234209,1
+baseline,2,0.0,0
+manipulator_no_reset,2,-19.999999999999964,0
+reputation_reset,2,-3.2623362089428576,1
+baseline,3,0.0,0
+manipulator_no_reset,3,-20.00000000000001,0
+reputation_reset,3,-4.0366217606628805,1
+baseline,4,0.0,0
+manipulator_no_reset,4,-20.000000000000014,0
+reputation_reset,4,-3.3803511891278633,1

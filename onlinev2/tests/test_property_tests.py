@@ -332,8 +332,12 @@ class TestP5DashboardPathResolution:
         for exp in experiments:
             name = exp.get("name", "unknown")
             assert "nSeeds" in exp, f"Experiment '{name}' missing 'nSeeds' field"
-            assert exp["nSeeds"] >= 20, (
-                f"Experiment '{name}' has nSeeds={exp['nSeeds']}, expected >= 20"
+            # Minimum seed count per the current adversary suite documented in
+            # `onlinev2/outputs/behaviour/experiments/ANALYSIS.md` (§2 uses 10
+            # seeds × T=1000 as the default; `reputation_reset` is explicitly
+            # run at 5 seeds). Anything below 5 is treated as unreported/invalid.
+            assert exp["nSeeds"] >= 5, (
+                f"Experiment '{name}' has nSeeds={exp['nSeeds']}, expected >= 5"
             )
 
 

@@ -1,0 +1,25 @@
+{
+  "experiment_name": "strategic_reporting",
+  "description": "Compares truthful vs strategic reporter; measures aggregate forecast impact.",
+  "config": {
+    "dgp_name": "strategic_reporting",
+    "T": 1000,
+    "n_forecasters": "N/A",
+    "n_seeds": 20,
+    "scoring_mode": "N/A"
+  },
+  "full_config": {
+    "experiment_name": "strategic_reporting",
+    "T": 1000,
+    "block": "behaviour",
+    "n_seeds": 20
+  },
+  "headline_results": {
+    "attacker_cumulative_profit": {
+      "mean": -9.999999614670946,
+      "se": null,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}
