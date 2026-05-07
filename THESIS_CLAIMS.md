@@ -367,29 +367,32 @@ into every training round).
 
 ### Post-fix headline numbers (regenerated under the full fixed pipeline)
 
-Main runner, `comparison.json`, γ=16, ρ=0.5, λ=0.05:
+Main runner, `comparison.json`, γ=16, ρ=0.5, λ=0.05 (current, T=17,544):
 
 | Series | Method | Mean CRPS | Δ% vs uniform |
 | --- | --- | ---: | ---: |
-| Elia wind (T=17344) | uniform | 0.042648 | — |
-| Elia wind (T=17344) | skill | 0.040154 | −5.85% |
-| Elia wind (T=17344) | **mechanism** | **0.039297** | **−7.86%** |
-| Elia wind (T=17344) | best_single | 0.032261 | −24.35% |
-| Elia wind (T=17344) | oracle (per-round) | 0.020801 | −51.23% |
-| Elia electricity (T≈70k) | uniform | 0.093452 | — |
-| Elia electricity (T≈70k) | **mechanism** | **0.093198** | **−0.27%** |
-| Elia electricity (T≈70k) | best_single | 0.088720 | −5.06% |
+| Elia wind (T=17,544) | uniform | 0.04079 | — |
+| Elia wind (T=17,544) | skill | 0.03869 | −5.2% |
+| Elia wind (T=17,544) | **mechanism** | **0.03788** | **−7.1%** |
+| Elia wind (T=17,544) | best_single | 0.03145 | −22.9% |
+| Elia wind (T=17,544) | per_round_inv_crps_hindsight | 0.03175 | −22.2% |
+| Elia wind (T=17,544) | michael_ogd_centered_median_fan | 0.03487 | −14.5% |
+| Elia wind (T=17,544) | oracle (per-round) | 0.02176 | −46.7% |
+| Elia electricity (T=10,000) | uniform | 0.09052 | — |
+| Elia electricity (T=10,000) | **mechanism** | **0.09052** | **0.0%** |
+| Elia electricity (T=10,000) | best_single | 0.08606 | −4.9% |
+| Elia electricity (T=10,000) | per_round_inv_crps_hindsight | 0.08026 | −11.3% |
 
 Baseline head-to-head (`baselines.json`):
 
 | Series | Method | Mean CRPS | Δ% vs uniform |
 | --- | --- | ---: | ---: |
-| Elia wind | raja_history_free | 0.043373 | −1.53% |
-| Elia wind | **mechanism** | **0.040709** | **−7.58%** |
-| Elia wind | vitali_ogd_per_quantile | 0.035992 | −18.29% |
-| Elia electricity | raja_history_free | 0.096107 | +0.02% |
-| Elia electricity | **mechanism** | **0.095906** | **−0.19%** |
-| Elia electricity | vitali_ogd_per_quantile | 0.093862 | −2.31% |
+| Elia wind | raja_history_free | 0.04134 | −1.53% |
+| Elia wind | **mechanism** | **0.03905** | **−6.99%** |
+| Elia wind | vitali_ogd_per_quantile | 0.03442 | −18.01% |
+| Elia electricity | raja_history_free | 0.09611 | +0.02% |
+| Elia electricity | **mechanism** | **0.09591** | **−0.19%** |
+| Elia electricity | vitali_ogd_per_quantile | 0.09386 | −2.31% |
 
 Horizon experiments (wind only):
 
