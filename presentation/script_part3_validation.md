@@ -35,13 +35,14 @@ All scoring tests pass: pinball loss is non-negative, CRPS is non-negative, a pe
 ## SLIDE 10 — Deposit Design Is the Strongest Lever
 
 **ON SLIDE:**
-- Deposit policy comparison (mechanism weight rule, 20 seeds):
+- Deposit policy comparison (mechanism weight rule, 20 seeds; source:
+  `onlinev2/outputs/core/experiments/deposit_policy_comparison/data/deposit_policy_comparison.csv`):
   | Deposit policy | CRPS | vs Fixed |
   |---|---|---|
-  | IID Exponential (random) | 0.0456 ± 0.0003 | — |
-  | Fixed Unit (b=1) | 0.0423 ± 0.0002 | baseline |
-  | Bankroll + Confidence | 0.0375 ± 0.0001 | −11.3% |
-  | Oracle Precision (true τ) | 0.0227 ± 0.0001 | −46.3% |
+  | IID Exponential (random) | 0.04549 ± 0.00023 | +7.4% |
+  | Fixed Unit (b=1) | 0.04237 ± 0.00011 | baseline |
+  | Bankroll + Confidence | 0.03796 ± 0.00012 | −10.4% |
+  | Oracle Precision (true τ) | 0.02271 ± 0.00007 | −46.4% |
 - Ordering: Oracle < Bankroll < Fixed < Random
 - Key insight: "How stake enters the system matters more than the weighting rule"
 
@@ -49,7 +50,7 @@ All scoring tests pass: pinball loss is non-negative, CRPS is non-negative, a pe
 
 The single strongest empirical finding: how stake enters the system matters more than the weighting rule.
 
-Four deposit regimes, same weight rule, twenty seeds each. Random exponential deposits — pure noise — give the worst CRPS at zero point zero four five six. Fixed unit deposits — everyone stakes one — come in at zero point zero four two three. Bankroll-confidence deposits — where stake comes from wealth and the forecaster's own confidence — achieve zero point zero three seven five, an 11.3 per cent improvement over fixed. Oracle-precision deposits — using the true signal precision, which no real system could access — reach zero point zero two two seven, a 46.3 per cent improvement over fixed.
+Four deposit regimes, same weight rule, twenty seeds each. Random exponential deposits — pure noise — give the worst CRPS at zero point zero four five five. Fixed unit deposits — everyone stakes one — come in at zero point zero four two four. Bankroll-confidence deposits — where stake comes from wealth and the forecaster's own confidence — achieve zero point zero three eight, a 10.4 per cent improvement over fixed. Oracle-precision deposits — using the true signal precision, which no real system could access — reach zero point zero two three, a 46.4 per cent improvement over fixed.
 
 A practical deposit rule based only on observable quantities — wealth and forecast width — captures a meaningful portion of the available gain. The oracle remains the ceiling, but bankroll-confidence gets a real fraction of the way there.
 

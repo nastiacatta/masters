@@ -696,19 +696,25 @@ Code: `staking.confidence_from_quantiles` (staking.py:17–58), `staking.choose_
 
 The oracle has access to true precision and uses inverse-variance-optimal weighting. It bounds the best possible improvement from any deposit policy.
 
-### Experimental result (from `fixed_unit=0.0424`, `bankroll_conf=0.0279`)
+### Experimental result
 
-Relative CRPS improvement over the fixed-deposit baseline:
+Relative CRPS improvement over the fixed-deposit baseline (20 seeds,
+T=1000, 6 forecasters, quantile-CRPS, mechanism weight rule; source:
+`onlinev2/outputs/core/experiments/deposit_policy_comparison/data/deposit_policy_comparison.csv`):
 
 | Policy | CRPS | $\Delta$ vs fixed | % |
 |--------|------|-------------------|----|
-| Fixed | 0.0424 | — | 0 % |
-| Random | ≈ 0.042 | near 0 | near 0 % |
-| Bankroll | 0.035 | −0.007 | −17 % |
-| **Bankroll × Conf** | **0.0279** | **−0.0145** | **−34 %** |
-| Oracle (upper bound) | 0.024 | −0.0184 | −43 % |
+| Random (iid exponential) | 0.04549 | +0.00312 | +7.4 % |
+| Fixed (b=1) | 0.04237 | — | 0 % |
+| **Bankroll × Conf** | **0.03796** | **−0.00441** | **−10.4 %** |
+| Oracle (upper bound) | 0.02271 | −0.01966 | −46.4 % |
 
-**Takeaway.** Bankroll × Confidence closes most of the oracle gap; the mechanism "looks good" only when deposits themselves carry useful signal. The slide badge therefore reads "Bankroll+Conf: −34% relative to Fixed".
+**Takeaway.** Bankroll × Confidence captures about 22% of the way
+from fixed to the oracle ceiling using only observable quantities
+(wealth and forecast width). The slide badge therefore reads
+"Bankroll+Conf: −10.4% relative to Fixed". Earlier revisions of this
+script cited "−34%" from a superseded benchmark with different
+seeds and DGP parameters.
 
 ### Truthfulness caveat (important)
 
@@ -881,7 +887,7 @@ A repeated self-financed wagering market that:
 
 - Synthetic: $\rho = 1$ rank recovery, reward aligned with true ordering.
 - Guarantees: machine-precision budget balance, zero mean profit, exact identical-report sybilproofness.
-- Deposit design: bankroll × confidence closes ~75 % of the oracle gap over fixed deposits.
+- Deposit design: bankroll × confidence captures ~22 % of the oracle gap over fixed deposits (−10.4 % vs fixed, oracle at −46.4 %).
 - Real data (Elia, post-fix pipeline): **−7.1 %** CRPS on wind, **0.0 %** on electricity vs uniform.
 - Benchmark (same forecasts, three mechanisms): Raja −1.5 %, This project −7.0 %, Vitali −18.0 % on wind. The three trade-offs are now quantified.
 

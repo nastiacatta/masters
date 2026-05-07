@@ -39,7 +39,6 @@ import { generateLatentFixed } from '@/lib/coreMechanism/dgpSimulator';
 import { runComposableRound, type ComposableParams, type RoundTrace } from '@/lib/coreMechanism/runRoundComposable';
 import type { AgentState } from '@/lib/coreMechanism/runRound';
 import { METHOD, SEM } from '@/lib/tokens';
-import InfoToggle from '@/components/dashboard/InfoToggle';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import {
   AGENT_PALETTE,
@@ -63,6 +62,7 @@ import ForecasterSelector from '@/components/charts/ForecasterSelector';
 import type { TradeOffPoint } from '@/components/charts/TradeOffScatter';
 import WaterfallChart from '@/components/charts/WaterfallChart';
 import type { WaterfallDatum } from '@/components/charts/WaterfallChart';
+import CalibrationChart from '@/components/charts/CalibrationChart';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChartLinkingProvider } from '@/contexts/ChartLinkingContext';
 import type { InfluenceRule, DepositPolicy } from '@/lib/coreMechanism/runRoundComposable';
@@ -1632,27 +1632,25 @@ export default function ResultsPage() {
           )}
 
           {useExp && activeTab === 'Calibration' && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <h3 className="text-sm font-semibold text-slate-800">Calibration</h3>
-                <InfoToggle term="Reliability diagram" definition="Compares nominal quantile τ against empirical coverage p̂(τ)." interpretation="Perfect calibration lies on the diagonal." axes={{ x: 'nominal τ', y: 'empirical p̂' }} />
+            calibrationData.length === 0 ? (
+              <div
+                className="p-5"
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="panel-heading">Calibration</h3>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--ink-faint)' }}>Calibration data not available.</p>
               </div>
-              {calibrationData.length === 0 ? (
-                <p className="text-[11px] text-slate-500">Calibration data not available.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={360}>
-                  <LineChart data={calibrationData} margin={CHART_MARGIN_LABELED}>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="tau" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                    <YAxis dataKey="pHat" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                    <Line type="monotone" dataKey="ideal" name="Ideal (p̂=τ)" stroke="#94a3b8" strokeDasharray="4 4" dot={false} />
-                    <Line type="monotone" dataKey="pHat" name="Empirical p̂" stroke="#0d9488" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+            ) : (
+              <CalibrationChart
+                data={calibration}
+              />
+            )
           )}
 
           {useExp && activeTab === 'Ablation' && (

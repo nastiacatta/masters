@@ -251,6 +251,30 @@ Convention for every entry:
   settlement could be made adversarially robust by a peer-prediction
   verifier.
 
+### Feldman, Chuang 2004
+
+```bibtex
+@inproceedings{feldman2004freeriding,
+  title     = {Free-Riding and Whitewashing in Peer-to-Peer Systems},
+  author    = {Feldman, Michal and Chuang, John},
+  booktitle = {Proceedings of the ACM SIGCOMM workshop on Practice and
+               Theory of Incentives in Networked Systems (PINS '04)},
+  year      = {2004},
+  pages     = {228--235},
+  doi       = {10.1145/1016527.1016539}
+}
+```
+
+- Used in: Chapter 2 (adversary catalogue), Chapter 8.11 (reputation
+  reset attack).
+- What we take: the "whitewashing" threat model -- opportunistic
+  users abandoning a degraded reputation and re-entering with a fresh
+  identity to escape past losses. Our
+  `ReputationResetBehaviour` implements this attack. Feldman and
+  Chuang's main recommendation -- impose a penalty on every newcomer
+  -- is roughly what our κ > 0 staleness decay and non-unit σ_init
+  prior jointly achieve.
+
 ### Johnstone 2007
 
 ```bibtex

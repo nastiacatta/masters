@@ -117,7 +117,7 @@ def _evaluate_cell(
     burns in on), ``test`` is ``[split, T)`` (held out from the
     selection metric).
     """
-    T, n_forecasters, _ = q_reports.shape
+    n_forecasters, T, _K = q_reports.shape
     t0 = time.time()
     res = run_simulation(
         T=T,
