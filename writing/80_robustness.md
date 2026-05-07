@@ -205,6 +205,47 @@ losses (+0.24) but cannot flip the sign. The result is decisive: on a
 uniform-y DGP where the manipulator has no information edge, neither
 fixed nor adaptive manipulation is economically viable.
 
+## 8.9a Whitewashing / reputation reset (Feldman-Chuang 2004)
+
+**Theory.** Feldman and Chuang (2004) catalogue the *whitewashing*
+attack on reputation systems: a participant who has accumulated a
+degraded reputation abandons the identity and re-joins as a newcomer.
+In our skill layer this maps to an agent with a collapsed σ dropping
+the current `account_id` and creating a new one, which the mechanism's
+`default_initial_loss` restarts from the prior L0.
+
+**Implementation.** `ReputationResetBehaviour` plays an aggressive
+manipulation (target = 0.9) and tracks its cumulative profit. When
+the profit falls below `reset_threshold`, it increments an identity
+counter so the parent's next action carries a fresh
+`account_id__reset_k` suffix. Cooldown and warmup parameters prevent
+pathological churn and let fresh identities build a reputation stock
+before manipulating.
+
+**Result (5 seeds, T = 1000, κ = 0.05, warmup = 20, cooldown = 50)**
+[source:
+`outputs/behaviour/experiments/reputation_reset/data/reputation_reset_summary.csv`]:
+
+| Scenario | Mean attacker profit ± SE | Mean resets |
+|---|---:|---:|
+| baseline | +0.00 ± 0.00 | 0.0 |
+| manipulator_no_reset (fixed identity) | −20.00 ± 0.00 | 0.0 |
+| reputation_reset (whitewashing) | **−3.49 ± 0.14** | 1.0 |
+
+**Interpretation.** The whitewashing attack dramatically reduces the
+attacker's loss. A fixed-identity manipulator bankrupts itself to
+zero (−20 ≈ full loss of its initial wealth). A reset-capable
+attacker abandons the collapsed identity after the first deep loss
+and restarts from the prior, cutting its cumulative loss to −3.49.
+The κ > 0 staleness decay partly discounts newcomers but does not
+fully offset the whitewash. This is a real measurable vulnerability
+that the current mechanism does not close.
+
+**Mitigations not currently implemented:** a mandatory hold-out
+period for new accounts (newcomer penalty — Feldman & Chuang 2004
+Section 4), or proof-of-identity gating to make identity creation
+costly.
+
 ## 8.10 Headline invariants (ANALYSIS.md §3)
 
 Invariants the adversary suite is expected to satisfy:

@@ -145,7 +145,7 @@ The overall picture: the mechanism resists the standard attacks. Sybil splitting
 - Contributions:
   1. Mechanism coupling self-financed wagering with online skill learning; skill is absolute, pre-round, handles intermittency
   2. Empirical verification: budget balance (< 10⁻¹⁴), sybilproofness (ratio = 1.000000), bounded loss
-  3. Deposit design is the strongest lever: bankroll-confidence achieves 11.3% improvement over fixed
+  3. Deposit design is the strongest lever: bankroll-confidence achieves 10.4% improvement over fixed
   4. Skill recovery: Spearman rank correlation = 1.0000 (T=20000, 6 forecasters)
   5. Real data validation: −7.1% CRPS on Elia wind with 7 forecasters under strictly-causal normalisation (pre-audit deck cited −34%)
   6. Modular simulation platform (onlinev2) with test suite and dashboard
@@ -159,7 +159,7 @@ The overall picture: the mechanism resists the standard attacks. Sybil splitting
 
 I designed a self-financed wagering mechanism that couples weighted-score settlement with online skill learning. The skill signal is absolute, computed before each round, and handles intermittent participation. The core properties are verified empirically: budget balance to machine precision, sybilproofness with profit ratios of exactly one, and bounded loss.
 
-The strongest empirical finding is that deposit design matters more than the weighting rule. Bankroll-confidence deposits achieve an 11.3 per cent improvement over fixed deposits. The skill signal recovers the correct forecaster ordering perfectly — Spearman correlation of one point zero zero zero zero over twenty thousand rounds.
+The strongest empirical finding is that deposit design matters more than the weighting rule. Bankroll-confidence deposits achieve a 10.4 per cent improvement over fixed deposits. The skill signal recovers the correct forecaster ordering perfectly — Spearman correlation of one point zero zero zero zero over twenty thousand rounds.
 
 Critically, this is not just synthetic. On real Elia wind power data — seventeen thousand five hundred and forty-four hourly observations, seven real forecasters including ARIMA, XGBoost, and a neural network — the mechanism achieves a seven-point-one per cent CRPS improvement over equal weights under strictly-causal normalisation. On electricity data the improvement is essentially zero, confirming that gains are conditional on forecaster heterogeneity.
 

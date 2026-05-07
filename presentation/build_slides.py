@@ -529,7 +529,7 @@ def build():
                 ("2. Verified: budget balance < 10⁻¹⁴,", False, 11),
                 ("    sybilproofness ratio = 1.000000", False, 10),
                 ("3. Deposit design strongest lever:", False, 11),
-                ("    bankroll-confidence −11.3% vs fixed", False, 10),
+                ("    bankroll-confidence −10.4% vs fixed", False, 10),
                 ("4. Skill recovery: ρ = 1.0000", False, 11),
                 ("5. Sybil-resistant, no arbitrage profit", False, 11),
                 ("6. onlinev2 platform + dashboard", False, 11),
