@@ -6,7 +6,7 @@ const EXPERIMENTS = [
     id: 'deposit-sensitivity',
     title: 'Deposit policy determines whether skill helps',
     status: 'confirmed' as const,
-    finding: 'On synthetic data, exponential deposits drown out the skill signal (mechanism +0.0%). On real wind data the mechanism improves under every deposit regime tested \u2014 fixed (+21.0%), exponential (+15.5%), and bankroll (+5.3%) \u2014 showing that the ranking between rules is robust even when the absolute gain shrinks. These percentages come from an earlier deposit-sensitivity pipeline that used the pre-audit normalisation, so they are larger than the current post-audit headline (\u22487.9% on the 1h-ahead comparison run). The <em>ordering</em> of the three rules, not the raw percentages, is the persistent finding.',
+    finding: 'On synthetic data, exponential deposits drown out the skill signal (mechanism +0.0%). On real wind data the mechanism improves under every deposit regime tested \u2014 fixed (+21.0%), exponential (+15.5%), and bankroll (+5.3%) \u2014 showing that the ranking between rules is robust even when the absolute gain shrinks. These percentages come from an earlier deposit-sensitivity pipeline that used the pre-audit normalisation, but are larger than the current post-audit headline (\u22487.1% on the 1h-ahead comparison run). The <em>ordering</em> of the three rules, not the raw percentages, is the persistent finding.',
     implication: 'Deposit sensitivity is real but less severe on real data than on synthetic data. The skill signal is stronger when forecasters have genuinely heterogeneous, time-varying quality.',
     data: [
       { label: 'Real: Fixed deposits (pre-audit scale)', delta: '-0.019562', pct: '+21.0%', sig: true },
@@ -79,15 +79,15 @@ const EXPERIMENTS = [
   },
   {
     id: 'real-data-wind',
-    title: 'Real data: Elia offshore wind, mechanism \u22127.9% CRPS (1h-ahead, post-audit)',
+    title: 'Real data: Elia offshore wind, mechanism \u22127.1% CRPS (1h-ahead, post-audit)',
     status: 'confirmed' as const,
-    finding: 'Seven forecasting models (Naive, EWMA-5, ARIMA(2,1,1), XGBoost, MLP, Theta, and a Naive+EWMA ensemble) run on Elia Belgian offshore wind power (17,544 hourly points, 2024\u20132025). After the strictly-causal normalisation audit, the mechanism reduces mean CRPS by 7.9% versus equal weighting; skill-only reduces it by 5.9%. The improvement is genuine and significant, but materially smaller than the pre-audit figure (\u224821%) that assumed an incorrect normalisation.',
+    finding: 'Seven forecasting models (Naive, EWMA-5, ARIMA(2,1,1), XGBoost, MLP, Theta, and a Naive+EWMA ensemble) run on Elia Belgian offshore wind power (17,544 hourly points, 2024\u20132025). After the strictly-causal normalisation audit, the mechanism reduces mean CRPS by 7.1% versus equal weighting; skill-only reduces it by 5.2%. The improvement is genuine and significant, but materially smaller than the pre-audit figure (\u224821%) that assumed an incorrect normalisation.',
     implication: 'The mechanism still adds value on real data, but its headline advantage is in the single-digit-percent range on this series, not the tens of percent. Best-single remains a strong individual benchmark.',
     data: [
-      { label: 'Mechanism (skill \u00d7 stake)', delta: '-0.003351', pct: '+7.9%', sig: true },
-      { label: 'Skill-only', delta: '-0.002494', pct: '+5.9%', sig: true },
+      { label: 'Mechanism (skill \u00d7 stake)', delta: '-0.002905', pct: '+7.1%', sig: true },
+      { label: 'Skill-only', delta: '-0.002100', pct: '+5.2%', sig: true },
       { label: 'Equal (uniform)', delta: '0.000000', pct: '0.0%', sig: false },
-      { label: 'Best single model', delta: '-0.010387', pct: '+24.4%', sig: true },
+      { label: 'Best single model', delta: '-0.009336', pct: '+22.9%', sig: true },
     ],
   },
   {
@@ -506,7 +506,7 @@ export default function NotesPage() {
               </thead>
               <tbody>
                 {[
-                  { ds: 'Wind 1h-ahead',  delta: '-0.0034', pct: '+7.9%',  dm: '\u2014', p: '< 0.001' },
+                  { ds: 'Wind 1h-ahead',  delta: '-0.0029', pct: '+7.1%',  dm: '\u2014', p: '< 0.001' },
                   { ds: 'Wind 4h-ahead',  delta: '-0.0007', pct: '+0.6%',  dm: '\u2014', p: '< 0.001' },
                   { ds: 'Wind day-ahead', delta: '-0.0002', pct: '+0.08%', dm: '\u2014', p: 'n.s.'    },
                   { ds: 'Wind regime-shift', delta: '-0.0007', pct: '+1.1%', dm: '\u2014', p: '< 0.001' },
