@@ -90,40 +90,52 @@ swallowing, and without masquerading persistence as model output.
 
 ---
 
-## Claim 4 — Mechanism aggregate is competitive with Michael's OGD
+## Claim 4 — Mechanism aggregate beats the centered-median fan baseline
 
-On identical forecaster panels, the wager-weighted linear pool matches
-Michael's Vitali-style pinball-OGD reference within 0.3% CRPS on a
-stationary Elia wind slice.
+On identical forecaster panels, the wager-weighted linear pool beats
+the shifted-median fan baseline (`michael_ogd_centered_median_fan`, the
+rename of the legacy `michael_ogd` row per B10) by about 5 % CRPS on
+the 3000-point stationary Elia wind slice.
 
-**Scope note.** This claim is explicitly on the 3000-point audit slice.
-On the full-length 17 344-hour run (Claim 9 below), the renamed
-`michael_ogd_centered_median_fan` baseline beats the mechanism by ~7.4
-pp CRPS (0.0349 vs 0.0379). The gap is real; it is the CRPS cost of
-keeping the Lambert budget-balance constraint on the long horizon.
+**Scope note.** This claim is explicitly on the 3000-point audit slice
+under `normalize_mode="static"`. On the full-length 17 344-hour run
+(Claim 9 below), the `michael_ogd_centered_median_fan` baseline is
+slightly weaker than the mechanism under the same normalisation.
 
-### Evidence (3000-point Elia wind slice)
+### Evidence (3000-point Elia wind slice, post-fix `static` normalisation)
 
 | Rule | Mean CRPS | vs uniform |
 |---|---:|---:|
-| best_single (oracle-of-best-forecaster per round) | 0.01542 | −22.1% |
-| oracle (inverse-variance hindsight) | 0.01564 | −21.0% |
-| median | 0.01761 | −11.1% |
-| inverse_variance | 0.01819 | −8.1% |
-| trimmed_mean | 0.01823 | −7.9% |
-| **michael_ogd** (port of `michael/main_rewards.jl`) | **0.01869** | **−5.6%** |
-| **our mechanism** | **0.01874** | **−5.3%** |
-| skill | 0.01914 | −3.3% |
-| uniform | 0.01980 | — |
+| oracle (per-round argmin) | 0.01281 | −47.1% |
+| per_round_inv_crps_hindsight | 0.01837 | −24.2% |
+| best_single (oracle-of-best over last 100 per-agent CRPS) | 0.01847 | −23.7% |
+| median | 0.02145 | −11.4% |
+| inverse_variance | 0.02246 | −7.3% |
+| **our mechanism** | **0.02251** | **−7.1%** |
+| trimmed_mean | 0.02260 | −6.7% |
+| skill | 0.02301 | −5.0% |
+| **michael_ogd_centered_median_fan** (rename of legacy `michael_ogd`) | **0.02374** | **−2.0%** |
+| uniform | 0.02422 | — |
 
-Diebold-Mariano test (mechanism vs uniform): DM = +15.92, p < 1e-6.
-Ratio mechanism / michael_ogd = 1.003×.
+Diebold-Mariano test (mechanism vs uniform): DM = +12.41, p < 1e-6.
+Ratio mechanism / michael_ogd_centered_median_fan = **0.948×**
+(mechanism beats the centered-median fan by 5.2% on this slice).
+
+_Earlier revisions of this claim cited 0.01874 mechanism / 0.01869
+michael_ogd, with ratio 1.003×. Those numbers were produced under the
+pre-fix pipeline where the audit script did not clip negative raw
+wind values before normalisation; the series_min was −8.23 MW
+(physically impossible) rather than the warmup-window min of
+1105.93 MW. The post-fix numbers above are from
+`outputs/real_data/elia_wind_audit_fresh/data/comparison.json`
+(May 2026), regenerated with causal normalisation in `static` mode on
+the clipped (≥ 0) series._
 
 ### Sources
 
 - Script: [`onlinev2/scripts/audit_fresh_run.py`](onlinev2/scripts/audit_fresh_run.py)
 - Port: [`onlinev2/src/onlinev2/mechanism/michael_port.py`](onlinev2/src/onlinev2/mechanism/michael_port.py)
-- Runner: [`onlinev2/src/onlinev2/real_data/runner.py`](onlinev2/src/onlinev2/real_data/runner.py) (`michael_ogd` baseline row)
+- Runner: [`onlinev2/src/onlinev2/real_data/runner.py`](onlinev2/src/onlinev2/real_data/runner.py) (`michael_ogd_centered_median_fan` baseline row per the B10 rename)
 - Michael's Julia reference: [`michael/main_rewards.jl`](michael/main_rewards.jl)
 
 ---
