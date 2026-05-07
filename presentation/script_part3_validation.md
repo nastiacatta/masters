@@ -146,7 +146,7 @@ The overall picture: the mechanism resists the standard attacks. Sybil splitting
   2. Empirical verification: budget balance (< 10⁻¹⁴), sybilproofness (ratio = 1.000000), bounded loss
   3. Deposit design is the strongest lever: bankroll-confidence achieves 11.3% improvement over fixed
   4. Skill recovery: Spearman rank correlation = 1.0000 (T=20000, 6 forecasters)
-  5. Real data validation: −7.6% CRPS on Elia wind with 7 forecasters under strictly-causal normalisation (pre-audit deck cited −34%)
+  5. Real data validation: −7.1% CRPS on Elia wind with 7 forecasters under strictly-causal normalisation (pre-audit deck cited −34%)
   6. Modular simulation platform (onlinev2) with test suite and dashboard
 - Limitations:
   - Tail calibration: under-dispersion ~5 pp in tails (inherent to quantile averaging)

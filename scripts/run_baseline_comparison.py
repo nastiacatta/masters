@@ -593,6 +593,7 @@ def run_dataset(
             "mechanism_params": {"gamma": gamma, "rho": rho, "lam": lam, "eta": eta},
             "vitali_lr": vitali_lr,
             "taus": taus.tolist(),
+            "normalize_mode": normalize_mode,
         },
         "summary": summary_rows,
         "rolling_crps": rolling,

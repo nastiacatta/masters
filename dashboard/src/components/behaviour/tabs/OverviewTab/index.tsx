@@ -25,15 +25,15 @@ type Tab = (typeof TABS)[number];
 // ── Family colours ─────────────────────────────────────────────────────────
 
 const FAMILY_BADGE_CLASSES: Record<BehaviourFamily, string> = {
-  participation: 'bg-sky-100 text-sky-700 border-sky-200',
-  information: 'bg-blue-100 text-blue-700 border-blue-200',
-  reporting: 'bg-violet-100 text-violet-700 border-violet-200',
-  staking: 'bg-teal-100 text-teal-700 border-teal-200',
-  objectives: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-  identity: 'bg-amber-100 text-amber-700 border-amber-200',
-  learning: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  adversarial: 'bg-red-100 text-red-700 border-red-200',
-  operational: 'bg-slate-100 text-slate-700 border-slate-200',
+  participation: 'bg-sky-50 text-sky-800 border-sky-200',
+  information:   'bg-blue-50 text-blue-800 border-blue-200',
+  reporting:     'bg-violet-50 text-violet-800 border-violet-200',
+  staking:       'bg-teal-50 text-teal-800 border-teal-200',
+  objectives:    'bg-indigo-50 text-indigo-800 border-indigo-200',
+  identity:      'bg-amber-50 text-amber-800 border-amber-200',
+  learning:      'bg-emerald-50 text-emerald-800 border-emerald-200',
+  adversarial:   'bg-red-50 text-red-800 border-red-200',
+  operational:   'bg-slate-50 text-slate-700 border-slate-200',
 };
 
 const FAMILY_DESCRIPTIONS: Record<BehaviourFamily, string> = {
@@ -112,7 +112,16 @@ export default function OverviewTab({ summary, familyImpact, setTab }: {
   if (summary.length === 0) {
     return (
       <div className="space-y-8">
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-500">
+        <div
+          className="p-8"
+          style={{
+            background: 'var(--card)',
+            border: '1px dashed var(--border-strong)',
+            borderRadius: 6,
+            fontSize: 14,
+            color: 'var(--ink-soft)',
+          }}
+        >
           Simulation failed — no behaviour preset data available. Try refreshing the page.
         </div>
       </div>
@@ -120,18 +129,29 @@ export default function OverviewTab({ summary, familyImpact, setTab }: {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* (1) Summary sentence */}
-      <p className="text-sm text-slate-600">
-        The mechanism observes deposits, reports, and participation, never motives. Each behaviour below is tested in isolation against the truthful baseline.
+      <p
+        className="font-serif"
+        style={{ fontSize: 16, color: 'var(--ink-muted)', lineHeight: 1.55, maxWidth: 720 }}
+      >
+        The mechanism observes deposits, reports, and participation, never motives.
+        Each behaviour below is tested in isolation against the truthful baseline.
       </p>
 
-      {/* (2) Cross-behaviour comparison table — promoted to top */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-slate-800">Cross-behaviour comparison</h3>
-        <p className="text-xs text-slate-500">
-          Sorted by CRPS impact (worst first). Green = beneficial, red = harmful.
-          All runs use {T} rounds, {N} agents, seed {SEED}, and the baseline data-generating process, paired against the truthful baseline. 18 presets total; reinforcement-learning agents are excluded at the mechanism layer.
+      {/* (2) Cross-behaviour comparison table */}
+      <section className="space-y-3">
+        <h3
+          className="font-serif tracking-tight"
+          style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          Cross-behaviour comparison
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.55 }}>
+          Sorted by CRPS impact (worst first). Green is beneficial, red is harmful.
+          All runs use {T} rounds, {N} agents, seed {SEED}, and the baseline data-generating
+          process, paired against the truthful baseline. 18 presets total; reinforcement-learning
+          agents are excluded at the mechanism layer.
         </p>
         <EnhancedComparisonTable
           rows={summary}
@@ -139,12 +159,12 @@ export default function OverviewTab({ summary, familyImpact, setTab }: {
           grouped
           onRowClick={handleRowClick}
         />
-      </div>
+      </section>
 
-      {/* (3) Threat classification — data-driven */}
+      {/* (3) Threat classification */}
       <ThreatClassification summary={summary} />
 
-      {/* (4) Structural insights — data-driven */}
+      {/* (4) Structural insights */}
       <StructuralInsights summary={summary} familyImpact={familyImpact} />
 
       {/* (5) 9 FamilyCards grid */}
@@ -169,19 +189,32 @@ export default function OverviewTab({ summary, familyImpact, setTab }: {
         }}
       />
 
-      {/* (7) Architecture diagram — moved to bottom */}
+      {/* (7) Architecture diagram */}
       <ArchitectureDiagram />
 
       {/* (8) Family impact chart + tornado */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-slate-800">Worst-case impact by family</h3>
-        <p className="text-xs text-slate-500">
-          Worst-case Δ CRPS (%) from each behaviour family. Larger bars = more damaging.
+      <section className="space-y-3">
+        <h3
+          className="font-serif tracking-tight"
+          style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}
+        >
+          Worst-case impact by family
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.55 }}>
+          Worst-case Δ CRPS (%) from each behaviour family. Larger bars mean more damaging.
         </p>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div
+          className="p-4"
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
           <FamilyImpactChart data={familyImpact} />
         </div>
-      </div>
+      </section>
 
       <TornadoChart
         data={
