@@ -30,10 +30,16 @@ Every figure and table that will appear in the thesis. Each entry has:
 | T13 | 4h-ahead horizon comparison (h = 16 on 15-minute series) | `dashboard/public/data/real_data/elia_wind/data/4h_ahead.json` | 60_results_real_data | LOCKED (static) |
 | T13a | Within-run seasonal slice + per-season table | `dashboard/public/data/real_data/elia_wind/data/regime_shift.json` | 60_results_real_data | LOCKED (static) |
 | T13b | Elia electricity baselines head-to-head (static-mode) | `dashboard/public/data/real_data/elia_electricity/data/baselines.json` | 60_results_real_data | LOCKED (static) |
-| T14 | Critical behaviour presets (Δ CRPS > 10%) | `dashboard/docs/MECHANISM_ANALYSIS.md` §7 | 80_robustness | LOCKED (pre-audit) |
-| T15 | Contained behaviour presets (Δ CRPS < 2%) | same | 80_robustness | LOCKED (pre-audit) |
+| T14 | Attacker profit vs λ (multi-seed Chen-Devanur arbitrage) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/data/arbitrage_scan_by_lam.csv` | 80_robustness | LOCKED |
+| T15 | Attacker profit vs crowd size (λ × n_benign) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv` | 80_robustness | LOCKED |
 | T16 | Sybil regimes (identical vs diversified) | `experiments.py --exp sybil` output | 80_robustness | LOCKED |
+| T16a | Sybil-arbitrage profit invariance (k ∈ {1,3,5}) | `onlinev2/outputs/behaviour/experiments/sybil_arbitrage/data/sybil_arbitrage_summary.csv` | 80_robustness | LOCKED |
 | T17 | Full 18-preset table (Appendix C) | `dashboard/docs/BEHAVIOUR_COVERAGE.md` | 80_robustness | LOCKED |
+| T17a | Chun-Shachter coalition profit (weighted_mean vs weighted_median) | `onlinev2/outputs/behaviour/experiments/collusion_stress/data/collusion_stress_summary.csv` | 80_robustness | LOCKED |
+| T17b | Informed collusion (coalition × privileged information) | `onlinev2/outputs/behaviour/experiments/informed_collusion/data/informed_collusion_summary.csv` | 80_robustness | LOCKED |
+| T17c | Insider advantage (lagged vs leaked, AR(1) DGP) | `onlinev2/outputs/behaviour/experiments/insider_advantage/data/insider_advantage_summary.csv` | 80_robustness | LOCKED |
+| T17d | Wash / activity gaming (inflation vs profit cost) | `onlinev2/outputs/behaviour/experiments/wash_activity_gaming/data/wash_activity_gaming_summary.csv` | 80_robustness | LOCKED |
+| T17e | Strategic reporter (pull sweep, shift vs profit) | `onlinev2/outputs/behaviour/experiments/strategic_reporting/data/strategic_reporting_summary.csv` | 80_robustness | LOCKED |
 | T18 | Hyperparameter table (γ, ρ, λ, η per dataset) | tuning notes | 30_mechanism_design | PARTIAL |
 
 ## Figures
@@ -52,8 +58,17 @@ Every figure and table that will appear in the thesis. Each entry has:
 | F10 | Reliability diagram before/after recalibration | to render from `coverage.json` + `coverage_recal.json` | 70_recalibration_layer | PARTIAL |
 | F11 | CRPS calibration panel | `dashboard/public/presentation-plots/crps_calibration.png` | 70_recalibration_layer | LOCKED |
 | F12 | Bankroll ablation four-panel | `dashboard/public/presentation-plots/bankroll_ablation_four_panel.png` | 50_results_synthetic | LOCKED (pre-audit) |
-| F13 | Arbitrage heatmap (γ × λ) | `dashboard/public/presentation-plots/arbitrage_heatmap.png` | 80_robustness | LOCKED |
-| F14 | Sybil profit ratio (identical vs diversified) | `dashboard/public/presentation-plots/sybil.png` | 80_robustness | LOCKED |
+| F13 | Arbitrage profit vs λ (multi-seed, 95% CI bars) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_profit_by_lam.png` | 80_robustness | LOCKED |
+| F13a | Arbitrageur wealth trajectory (seed 0, six λ values) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_wealth_trajectories.png` | 80_robustness | LOCKED |
+| F13b | Attack scaling (λ × n_benign heatmap-style bars) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/plots/arbitrage_crowd_size.png` | 80_robustness | LOCKED |
+| F13c | Arbitrage margin heatmap (legacy, pre-theory) | `dashboard/public/presentation-plots/arbitrage_heatmap.png` | 80_robustness | LOCKED (reference) |
+| F14 | Sybil profit ratio (identical vs diversified, legacy) | `dashboard/public/presentation-plots/sybil.png` | 80_robustness | LOCKED |
+| F14a | Sybil-arbitrage profit invariance across k | `onlinev2/outputs/behaviour/experiments/sybil_arbitrage/plots/sybil_arbitrage_profit.png` | 80_robustness | LOCKED |
+| F14b | Chun-Shachter coalition profit (weighted_mean vs weighted_median) | `onlinev2/outputs/behaviour/experiments/collusion_stress/plots/coalition_profit.png` | 80_robustness | LOCKED |
+| F14c | Informed-coalition profit (baseline / collusion / informed) | `onlinev2/outputs/behaviour/experiments/informed_collusion/plots/informed_collusion.png` | 80_robustness | LOCKED |
+| F14d | Insider advantage (no insider / lagged / leaked audit) | `onlinev2/outputs/behaviour/experiments/insider_advantage/plots/insider_profit.png` | 80_robustness | LOCKED |
+| F14e | Wash / activity gaming (inflation vs profit dual-axis) | `onlinev2/outputs/behaviour/experiments/wash_activity_gaming/plots/wash_activity.png` | 80_robustness | LOCKED |
+| F14f | Strategic reporter frontier (profit vs r̂ shift) | `onlinev2/outputs/behaviour/experiments/strategic_reporting/plots/strategic_reporting_frontier.png` | 80_robustness | LOCKED |
 | F15 | Behaviour concentration | `dashboard/public/presentation-plots/behaviour_concentration.png` | 80_robustness | LOCKED |
 | F16 | Behaviour wealth distribution | `dashboard/public/presentation-plots/behaviour_wealth.png` | 80_robustness | LOCKED |
 | F17 | Baseline comparison vs equal weights | `dashboard/public/presentation-plots/baseline_comparison.png` | 60_results_real_data | LOCKED |

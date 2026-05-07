@@ -28,13 +28,7 @@ interface WhenDoesSkillHelpPanelProps {
 export default function WhenDoesSkillHelpPanel({ data }: WhenDoesSkillHelpPanelProps) {
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-        <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block w-1 h-4 rounded bg-teal-500" />
-          When Does Skill Help?
-        </h3>
-        <p className="text-xs text-slate-400">No conditioning data available.</p>
-      </div>
+      <PanelShell title="When does skill help?" accent="var(--teal)" emptyState="No conditioning data available." />
     );
   }
 

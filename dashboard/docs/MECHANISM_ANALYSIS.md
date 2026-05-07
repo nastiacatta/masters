@@ -295,7 +295,7 @@ The mechanism was tested against 18 strategic behaviour presets:
 - Correctly identifies and upweights skilled forecasters (perfect rank correlation on real data)
 - Budget-balanced, sybil-proof, and arbitrage-free by construction
 - Robust to point-forecast manipulation (EWMA detects within ~7 rounds)
-- 7.6% CRPS reduction on real wind data; near-tied on electricity (post-audit, strictly-causal)
+- 7.1% CRPS reduction on real wind data; near-tied on electricity (post-audit, strictly-causal)
 
 ### What the mechanism does NOT do:
 - It does not consistently beat simpler methods (median, inverse-variance) on pure CRPS
