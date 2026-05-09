@@ -11,11 +11,13 @@
 
 # -- front matter --
 front_matter/01_abstract.md
-front_matter/03_acknowledgments.md
 
 # -- main body --
+# Canonical academic structure (introduction → related work → methods
+# → results → discussion → conclusion), with the DESE-required
+# project-management and personal-reflection sections placed after
+# the conclusion so they do not interrupt the technical argument.
 10_introduction.md
-15_project_management.md
 20_literature_review.md
 30_mechanism_design.md
 40_methodology.md
@@ -24,8 +26,9 @@ front_matter/03_acknowledgments.md
 70_recalibration_layer.md
 80_robustness.md
 90_discussion_and_limits.md
-95_reflection.md
 99_conclusion.md
+15_project_management.md
+95_reflection.md
 
 # -- back matter --
 back_matter/90_references.md

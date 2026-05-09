@@ -138,7 +138,7 @@ truthfulness.
 
 ## Online learning for forecast combination
 
-The closest direct antecedent is \citet{vitali2025intermittent}, who
+The closest direct reference work is \citet{vitali2025intermittent}, who
 proposed a prediction market that tracks historical performance,
 adapts to time-varying conditions, and allows agents to join and
 leave. They use robust regression with online gradient descent on
@@ -199,9 +199,9 @@ deposit, and aggregation-weight are three independent quantities
 rather than being unified through an effective wager.
 \citet{guillot2023adaptive} apply residual-quantile online gradient
 descent with multi-learning-rate expert aggregation to regional net-load
-in Great Britain and city demand in the United States, and constitute
+in Great Britain and city demand in the United States, and are
 the closest methodological
-predecessor to the per-quantile OGD baseline used throughout the
+reference for the per-quantile OGD baseline used throughout the
 present empirical chapters. The isotonic-QRA post-processor of
 \citet{kostrzewski2025iqra} goes the other way, imposing stochastic
 order constraints on quantile ensembles without online weight
