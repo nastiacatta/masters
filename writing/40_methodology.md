@@ -60,12 +60,12 @@ as the wind headline. The mechanism's behaviour on this series is a
 statistical null, reported without adjustment in Chapter 6.
 
 \paragraph{Elia operational-forecast baseline.} For external
-validation, we extract Elia's own published forecasts---
-\texttt{mostrecentforecast}, \texttt{dayaheadforecast},
-\texttt{dayahead11hforecast}, and \texttt{weekaheadforecast}---and
-convert our own normalised CRPS to a CRPS-megawatt-equivalent scale
-using the observed $[\min, \max]$ range of the series. This provides
-a head-to-head comparison against an operational, weather-driven
+validation, we extract Elia's own published forecasts --- \emph{most
+recent forecast}, \emph{day-ahead forecast}, \emph{day-ahead 11h
+forecast}, and \emph{week-ahead forecast} --- and convert our own
+normalised CRPS to a CRPS-megawatt-equivalent scale using the
+observed $[\min, \max]$ range of the series. This provides a
+head-to-head comparison against an operational, weather-driven
 forecast rather than against internal baselines only.
 
 ## Forecaster panel
@@ -105,15 +105,12 @@ Ensemble & Equal-weighted mean of Naive and EWMA(5)
 \label{tab:forecaster-panel}
 \end{table}
 
-All forecasters implement a common fit-predict interface and expose
-a fallback counter that surfaces any reduction to persistence, so
-that a model silently degrading to the naive baseline cannot
-masquerade as a legitimate output. The forecast cache is versioned
-and invalidated on pipeline changes, which prevents a cached
-artefact from an earlier protocol from being reused unchanged.
-A strict-no-fallback mode is available for clean comparison runs:
-when enabled, the runner raises on any forecaster-level fallback
-event.
+All forecasters implement a common fit-predict interface and report
+an explicit indicator whenever a model falls back to persistence,
+so that a silent degradation cannot be mistaken for a legitimate
+forecast. Cached forecaster outputs are tagged with a pipeline
+version, so that an artefact produced under an earlier protocol
+cannot be reused unchanged.
 
 Hyperparameter tuning for XGBoost and the multilayer perceptron
 uses expanding-window cross-validation with a 24-step embargo
@@ -121,9 +118,10 @@ between the training and validation windows, following
 \citet{bergmeir2018note}. The multilayer perceptron uses $z$-score
 feature standardisation on the training window, early stopping with
 a patience of twenty rounds, and a weight-decay regulariser of
-$10^{-4}$. Random seeds are propagated from the runner into every
-stochastic component, so that the full pipeline is reproducible
-from the top-level configuration.
+$10^{-4}$. Random seeds are propagated from the experiment runner
+into every stochastic component. Full training details for both
+parametric forecasters are in
+Appendix~\ref{app:training-details}.
 
 ## Validity ladder
 
@@ -133,42 +131,40 @@ before the next is treated as meaningful.
 Rung~1, \emph{mechanism correctness}, checks the invariants of the
 mechanism itself: budget balance, non-negative payouts, zero profit
 under equal scores, score bounds, permutation invariance, and
-score-shift invariance. The Lambert combinatorial payoff invariants
-are tested in full, with eighty golden-value snapshots across
-sixteen payoff-module functions and five seeds acting as a
-regression guard.
+score-shift invariance. The full set of thirteen active Lambert
+combinatorial payoff invariants is exercised with a regression
+guard of eighty reference values across the payoff-module functions
+and five seeds.
 
 Rung~2, \emph{pure forecasting gain}, holds seeds, data-generating
-process, horizon, participation pattern, and agent panel fixed across
-all methods in a batch. Each comparison reports paired deltas against
-a set of mandatory baselines: uniform averaging, stake-only,
+process, horizon, participation pattern, and agent panel fixed
+across all methods in a batch. Each comparison reports paired deltas
+against a set of mandatory baselines: uniform averaging, stake-only,
 skill-only, the mechanism, inverse-variance weighting, trimmed mean,
 median, the rolling best-single selector, the per-round
 inverse-variance hindsight oracle, and the published OGD reference.
 
 Rung~3, \emph{dynamic robustness}, evaluates performance under
-drift (non-stationary noise scales), missingness (i.i.d.\ and bursty
-absence), and selective participation.
+drift (non-stationary noise scales), missingness (i.i.d.\ and
+bursty absence), and selective participation.
 
-Rung~4, \emph{strategic robustness}, evaluates the mechanism against
-the theory-grounded adversary catalogue developed in Chapter 8.
-Attacker profit is reported with standard errors and $95\%$
-confidence intervals, scaled per 1000 rounds, together with attacker
-weight share where relevant. Multi-seed aggregation uses at least
-ten seeds per experiment.
+Rung~4, \emph{strategic robustness}, evaluates the mechanism
+against the theory-grounded adversary catalogue developed in
+Chapter~\ref{ch:robustness}. Attacker profit is reported with
+standard errors and $95\%$ confidence intervals, scaled per
+$1{,}000$ rounds, together with attacker weight share where
+relevant. Multi-seed aggregation uses at least ten seeds per
+experiment.
 
-## Output format
-
-Every experiment emits a canonical four-panel report. The first panel
-reports the primary outcome: paired $\Delta$ CRPS relative to
-uniform, per seed and per method. The second reports calibration,
-typically as a probability integral transform (PIT) histogram or
-reliability diagram. The third reports market structure (Gini
-coefficient, Herfindahl--Hirschman index, effective-participant count
-$N_\mathrm{eff}$) of the wealth or influence distribution. The fourth
-isolates a plausible failure mode for the method under test. Master
-comparison rows are keyed by experiment, method, seed, data-generating
-process, and behavioural preset.
+Every experiment emits a canonical four-panel report: a primary
+outcome panel (paired $\Delta$ CRPS relative to uniform), a
+calibration panel (PIT histogram or reliability diagram), a market
+structure panel (Gini, Herfindahl--Hirschman index, effective
+participant count $N_{\mathrm{eff}}$ of the wealth or influence
+distribution), and a failure-mode panel isolating a plausible
+weakness of the method under test. Master comparison rows are keyed
+by experiment, method, seed, data-generating process, and
+behavioural preset.
 
 ## Statistical testing
 
@@ -190,10 +186,10 @@ outperforms uniform with $t = +15.92$ and $p < 10^{-6}$.
 ## Reproducibility
 
 All experiments are driven from deterministic random seeds, with
-the canonical property-based test set
-$\{0, 1, 2, 42, 2024\}$. Forecaster training runs under
-single-threaded BLAS to eliminate non-determinism in floating-point
-reductions. The software stack is Python 3.12 with NumPy, SciPy,
-XGBoost, and PyTorch. A pre-fix JSON snapshot of every headline
-table is retained so that post-audit numbers remain auditable
-against their pre-audit counterparts.
+the canonical set $\{0, 1, 2, 42, 2024\}$. Forecaster training runs
+under single-threaded BLAS to eliminate non-determinism in
+floating-point reductions. The software stack is Python 3.12 with
+NumPy, SciPy, XGBoost, and PyTorch. A snapshot of every headline
+table from before the post-ESG pipeline audit is retained so that
+post-audit numbers remain comparable against the pre-audit
+counterparts.

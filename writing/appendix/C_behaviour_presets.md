@@ -4,7 +4,8 @@ The robustness chapter tests eight theory-grounded adversaries,
 each with a published theoretical basis. This appendix gives the
 one-line theoretical framing for each and the headline empirical
 result. The full confidence intervals, paired-seed comparisons, and
-per-preset figures are in the main body (§6.1 to §6.10).
+per-preset figures are in the main body
+(Chapter~\ref{ch:robustness}).
 
 ## 1. Arbitrage-seeking
 
@@ -78,9 +79,9 @@ per-preset figures are in the main body (§6.1 to §6.10).
   diversified-report leakage is approximately $6.5\%$.
 
 Bursty participation is not part of the theory-grounded catalogue;
-the earlier "$+934\%$ bursty" preset from the legacy presentation
-is superseded and not cited in the main body.
+the earlier ``$+934\%$ bursty'' preset from the legacy presentation
+is superseded and is not cited in the main body.
 
-All presets are re-runnable from `experiments.py --exp behaviour`
-with the per-preset YAML under `onlinev2/src/onlinev2/behaviour/`.
-Outputs are seed-indexed and idempotent under `PIPELINE_VERSION`.
+Each preset is evaluated by a dedicated runner configuration that
+seeds the attack, records per-seed profit, and aggregates confidence
+intervals across the seed grid.

@@ -145,11 +145,11 @@ observed series range ($0$ to $2\,208.7$\,MW).
 \toprule
 Forecast source & CRPS (MW eq.) & Notes \\
 \midrule
-Elia \texttt{mostrecentforecast} & $74.0$
+Elia most-recent forecast & $74.0$
   & Elia's real-time NWP-driven forecast \\
-Elia \texttt{dayaheadforecast} & $98.6$
+Elia day-ahead forecast & $98.6$
   & Elia's day-ahead NWP-driven forecast \\
-Elia \texttt{weekaheadforecast} & $372.4$
+Elia week-ahead forecast & $372.4$
   & Elia's week-ahead forecast (weak) \\
 \textbf{Best single (online XGBoost)} & $\mathbf{69.5}$
   & Online-only, no weather input \\

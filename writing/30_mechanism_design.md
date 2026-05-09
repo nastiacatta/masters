@@ -639,38 +639,21 @@ The Elia wind series contains $T = 17\,544$ raw hourly points
 forecasters of stable relative quality, which rewards faster, more
 decisive skill differentiation. Tuned values are
 $(\gamma, \rho) = (16, 0.5)$ for the locked expanding-mode headline
-(Chapter 6).
+(Chapter~\ref{ch:real}).
 
 Hyperparameter selection follows a held-out-split protocol. A
 cache-reusing sweep replays the shared forecast cache through the
-simulation runner for each grid cell and scores the mechanism
-on the last $40\%$ of each series, disjoint from the burn-in window
+simulation runner for each grid cell and scores the mechanism on
+the last $40\%$ of each series, disjoint from the burn-in window
 used by the training metric. The grid spans
 $\gamma \in \{4, 8, 16, 32, 64\}$, $\rho \in \{0.1, 0.3, 0.5, 0.7\}$,
 and $\lambda \in \{0.05, 0.2\}$, producing $40$ cells per series.
-Table~\ref{tab:sweep-optima} lists the held-out optima.
-
-\begin{table}[h]
-\centering
-\small
-\begin{tabular}{lrrrr}
-\toprule
-Series & $\gamma^\star$ & $\rho^\star$ & $\lambda^\star$
-  & Held-out $\Delta$ vs uniform \\
-\midrule
-elia\_wind & $32.0$ & $0.7$ & $0.05$ & $-6.86\%$ \\
-elia\_electricity & $16.0$ & $0.1$ & $0.05$ & $-0.22\%$ \\
-\bottomrule
-\end{tabular}
-\caption{Held-out sensitivity-sweep optima.}
-\label{tab:sweep-optima}
-\end{table}
-
-The wind optimum sits at the high-$\gamma$ corner of the coarse grid;
-the next row at $\gamma = 64$ plateaus at $-5.5\%$, so the grid is
-bounded from above. A higher floor $\lambda = 0.2$ is uniformly worse
-than $\lambda = 0.05$ on both series. Electricity optima lie in a
-tight band of $-0.17$ to $-0.22\%$, consistent with the
-forecast-combination-puzzle regime discussed in Chapter 6: when
-forecasters are undifferentiated, the skill signal has nothing to
-extract.
+The held-out optima themselves are reported alongside the
+real-data results in Chapter~\ref{ch:real}
+(Table~\ref{tab:sensitivity-sweep}). A higher floor $\lambda = 0.2$
+is uniformly worse than $\lambda = 0.05$ on both series, and the
+$\gamma$ optimum on wind pushes the top of the grid. Electricity
+optima lie in a tight band of $-0.17$ to $-0.22\%$, consistent with
+the forecast-combination-puzzle regime discussed in Chapter 6:
+when forecasters are undifferentiated, the skill signal has
+nothing to extract.

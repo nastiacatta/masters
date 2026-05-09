@@ -10,12 +10,9 @@ are compiled plots from the presentation pipeline.
 ## Mechanism correctness
 
 All thirteen active Lambert combinatorial payoff invariants pass on
-the reference implementation. The remaining clause, which covers an
+the reference simulator. The remaining clause, which covers an
 externally supplied split-based mechanism, is skipped pending the
-external fixtures required to test it. Eighty golden-value snapshots
-across sixteen payoff-module functions and five seeds act as a
-regression guard. Thirty-five unit tests on
-the core simulation module are green.
+external fixtures required to test it.
 
 Table~\ref{tab:correctness} summarises the headline numerical
 invariants over $1\,000$ rounds and $20$ seeds.
@@ -107,18 +104,13 @@ this is the experiment that establishes that convergence.
 
 ## Forecaster panel integrity
 
-Every forecaster in the real-data panel satisfies three structural
-properties. No forecaster admits future-data leakage: a
-sentinel-injection property test passes across all seven models. No
-forecaster produces a degenerate constant output: the post-warmup
-point-forecast standard deviation exceeds $10^{-4}$ and the quantile
-interval width exceeds $10^{-4}$ on non-constant data-generating
-processes. No forecaster silently substitutes a persistence fallback
-for its model output: a fallback counter on the base class records
-every fallback event, and the ARIMA and neural-network paths track
-fallbacks explicitly rather than swallowing them. On the
-post-fix $3\,000$-point Elia wind slice, the fallback summary is
-zero for all seven forecasters.
+The seven real-data forecasters are subject to three standing checks
+before any headline comparison is used: no future-data leakage, no
+degenerate constant output, and no silent substitution of a
+persistence fallback for the model's own output. On the post-audit
+$3{,}000$-point Elia wind audit slice all three checks pass for all
+seven forecasters; the detailed protocols and diagnostics are in
+Appendix~\ref{app:training-details}.
 
 ## Deposit-policy ablation
 

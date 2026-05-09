@@ -45,35 +45,21 @@ marginal effect of every pipeline stage can be read off directly.
 
 ## Headline deltas
 
-Means of CRPS across $20$ seeds, from the artefact
-`bankroll_ablation.csv` under
-`onlinev2/outputs/core/experiments/bankroll_ablation/data/`:
+Means of CRPS across $20$ seeds, on the latent-fixed synthetic
+process used in Chapter~\ref{ch:synthetic}:
 
 | Variant | Mean CRPS | Delta vs A |
 |---|---:|---:|
-| A — fixed, uniform | $0.04287$ | 0 |
-| B — fixed, skill-gated | $0.04011$ | $-6.4\%$ |
-| C — bankroll-confidence, skill-gated | $0.03796$ | $-11.5\%$ |
-| D — C + recalibration | $0.03855$ | $-10.1\%$ |
-| E — oracle-precision | $0.02271$ | $-47.0\%$ |
+| A --- fixed, uniform | $0.04287$ | 0 |
+| B --- fixed, skill-gated | $0.04011$ | $-6.4\%$ |
+| C --- bankroll-confidence, skill-gated | $0.03796$ | $-11.5\%$ |
+| D --- C + recalibration | $0.03855$ | $-10.1\%$ |
+| E --- oracle-precision | $0.02271$ | $-47.0\%$ |
 
 The ordering $A < B < C < D < E$ confirms the main-body claim that
-deposit design (jump $B \to C$: $5.1$ pp of CRPS) is the dominant
-empirical lever, larger than either the skill-gate contribution
-alone ($A \to B$: $6.4$ pp) or the recalibration cost ($C \to D$:
+deposit design (the step from $B$ to $C$, $5.1$~pp of CRPS) is the
+dominant empirical lever, larger than the skill-gate contribution
+alone ($A$ to $B$, $6.4$~pp) or the recalibration cost ($C$ to $D$,
 $+1.6\%$ CRPS). The gap $C$ to $E$ quantifies the performance
 ceiling a practical system cannot reach without privileged
 information.
-
-## Reproduction
-
-All five variants are runnable from a single command:
-
-```
-python onlinev2/scripts/experiments.py \
-    --exp bankroll_ablation \
-    --seeds 20 \
-    --output onlinev2/outputs/core/experiments/bankroll_ablation
-```
-
-Per-seed outputs are idempotent under `PIPELINE_VERSION`.

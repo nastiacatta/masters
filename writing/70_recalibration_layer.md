@@ -125,14 +125,15 @@ linear-pool form.}
 \label{fig:calibration}
 \end{figure}
 
-Three spec-assertion outcomes correspond to these numbers. The
-assertion that the mean tail deviation fall to at most $50\%$ of the
-baseline fails narrowly (observed $0.0109$ against a threshold of
-$0.0093$); the $41\%$ reduction is substantial but short of the
-$50\%$ target. The assertion that the mean CRPS increase by at most
-$2 \times 10^{-4}$ also fails narrowly (observed
-$\Delta = +3.2 \times 10^{-4}$). The assertion that the mean
-sharpness be at least $90\%$ of the baseline fails at $0.877$.
+The layer's targets were set in advance of the run: halve the mean
+tail deviation, keep the CRPS cost under $2 \times 10^{-4}$, and
+retain at least $90\%$ of the baseline sharpness. The observed
+tail deviation falls by $41\%$ (target $50\%$), the CRPS cost is
+$+3.2 \times 10^{-4}$ (target $+2 \times 10^{-4}$), and the
+sharpness is $87.7\%$ of baseline (target $90\%$). Each target is
+missed narrowly, not by a factor of two or more; the next section
+argues that this margin is the theoretical floor, not an
+implementation shortfall.
 
 ## Interpretation
 
@@ -207,17 +208,13 @@ over-coverage above is corrected uniformly.
 ## Orthogonality to the economic layers
 
 The recalibration layer preserves the economic structure of the
-mechanism end-to-end. Its implementation adds a single module and a
-conditional branch in the real-data runner; the aggregation,
-settlement, staking, weighting, skill, and forecaster modules are
-unchanged. When the recalibration is disabled, the output is
-byte-identical to the pre-feature baseline; the schema change is
-strictly additive, introducing new optional keys for the
-recalibrated forecast and its coverage statistics without renaming,
-retyping, or removing any existing field. The corresponding test
-suite comprises thirty-five simulation unit tests, ten
-quantile-pipeline tests, and ninety-two audit tests, of which
-eighteen are property tests for the recalibrator itself.
+mechanism end-to-end. Its implementation is a single module that
+sits downstream of the aggregation step; the skill gate, wager
+rule, aggregation operator, and settlement algebra are unchanged.
+When the recalibration flag is disabled, the output of the runner
+matches the pre-feature baseline exactly, so the recalibration
+is a pure post-processor and not a partial re-parameterisation of
+the economic layers.
 
 ## Design choice: rolling buffer
 

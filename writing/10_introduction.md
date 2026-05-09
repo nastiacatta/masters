@@ -91,7 +91,7 @@ forecaster panel and the underlying data-generating process.
 
 ## Contributions
 
-The thesis makes five primary contributions.
+The thesis makes four primary contributions.
 
 First, a self-financed wagering mechanism that couples
 weighted-score settlement with an online, absolute, pre-round skill
@@ -102,23 +102,17 @@ truthfulness proof \citep{lambert2008selffinanced} is preserved
 under the substitution $m_i \leftarrow b_i$, and budget balance
 holds by construction.
 
-Second, empirical verification of correctness. The mechanism
-satisfies all thirteen active Lambert combinatorial payoff
-invariants on the reference implementation, supported by eighty
-golden-value regression snapshots across sixteen payoff-module
-functions. Budget balance holds to machine precision (maximum
-absolute gap $2.84 \times 10^{-14}$ across 1000 synthetic rounds);
-the narrow Lambert sybil invariance holds with mean profit ratio
-$1.000000$ and maximum absolute deviation $2.07 \times 10^{-17}$.
-
-Third, skill recovery on controlled data. On a known-noise synthetic
+Second, skill recovery on controlled data. On a known-noise synthetic
 panel (six forecasters, $T = 20{,}000$ rounds, twenty seeds), the
 Spearman rank correlation between the true noise scale and the
 learned skill estimate $\sigma$ equals one in both point-forecast
-and quantile-forecast modes. The learned $\sigma$ values are
-monotone in the true noise scale across the range $[0.15, 1.00]$.
+and quantile-forecast modes. Budget balance holds to machine
+precision (maximum absolute gap $2.84 \times 10^{-14}$ across $1000$
+synthetic rounds) and the narrow Lambert sybil invariance holds with
+mean profit ratio $1.000000$ and maximum absolute deviation
+$2.07 \times 10^{-17}$.
 
-Fourth, identification of deposit design as the dominant empirical
+Third, identification of deposit design as the dominant empirical
 lever. A four-way deposit-policy ablation shows that
 bankroll-confidence deposits, computed from observable quantities
 alone, reduce CRPS by $10.4\%$ against fixed-unit deposits,
@@ -127,8 +121,8 @@ an oracle-precision deposit. Holding the deposit policy fixed, the
 choice of weighting rule moves CRPS by at most a few percent, while
 the deposit policy moves it by tens of percent.
 
-Fifth, real-data validation on two Elia series. On the full
-17{,}344-hour offshore-wind series under strictly-causal expanding
+Fourth, real-data validation on two Elia series. On the full
+$17{,}344$-hour offshore-wind series under strictly-causal expanding
 normalisation, the mechanism reduces CRPS by $7.1\%$ relative to
 uniform averaging (Diebold--Mariano $t = 40.77$, $p \approx 0$). On
 electricity-imbalance prices ($T = 10{,}000$), the mechanism is
@@ -136,29 +130,26 @@ statistically indistinguishable from uniform ($t = 0.008$,
 $p = 0.994$) because the seven forecasters produce near-identical
 CRPS; this null result is reported rather than suppressed. Against
 Elia's published real-time operational forecast, which attains
-74.0~MW in CRPS-megawatt-equivalent units, the mechanism reaches
-83.7~MW and the best single forecaster, an online gradient-boosted
-tree model trained on the observed series with no weather inputs,
-reaches 69.5~MW.
+$74.0$~MW in CRPS-megawatt-equivalent units, the mechanism reaches
+$83.7$~MW, while the best single forecaster --- an online
+gradient-boosted tree trained on the observed series with no weather
+inputs --- reaches $69.5$~MW.
 
-In addition, the quantile-averaged aggregate is miscalibrated in the
-manner analogous to \citet{ranjan2010combining}'s linear-pool
-impossibility, with a mean tail deviation of $0.019$ on the audit
-slice, exhibiting under-coverage in the lower tail and over-coverage
-in the mid-upper range. A rolling isotonic recalibration following
-\citet{kuleshov2018accurate} closes $41\%$ of the tail deviation at
-a CRPS cost of $1.6\%$ and a sharpness cost of $12\%$, without
-modifying the skill, wager, aggregation, or settlement layers. Eight theory-grounded
-adversaries, arbitrage \citep{chen2014arbitrage}, Chun--Shachter
-coalitions \citep{chun2011cooperating}, informed collusion, a
-lagged insider \citep{johnstone2007economic}, wash trading,
-strategic reporting, detector-aware evasion, and sybil
-arbitrage, are evaluated across ten to twenty paired seeds with
-$95\%$ confidence intervals. The narrow Lambert sybil invariance
-holds to floating-point noise; diversified-report sybils break the
-invariance by approximately $6.5\%$; arbitrage profit scales
-monotonically with $\lambda$, from $+11.68$ at $\lambda = 0$ to
-$+24.22$ at $\lambda = 1$ over 1000 rounds.
+Two secondary contributions support the core result. The aggregate
+is miscalibrated in the manner analogous to the
+\citet{ranjan2010combining} linear-pool impossibility; a rolling
+isotonic recalibration following \citet{kuleshov2018accurate} closes
+$41\%$ of the tail deviation at a $1.6\%$ CRPS cost and a $12\%$
+sharpness cost, without modifying the skill, wager, aggregation, or
+settlement layers. Eight theory-grounded adversaries (arbitrage
+\citep{chen2014arbitrage}, Chun--Shachter coalitions
+\citep{chun2011cooperating}, informed collusion, a lagged insider
+\citep{johnstone2007economic}, wash trading, strategic reporting,
+detector-aware evasion, and sybil arbitrage) are evaluated across
+ten to twenty paired seeds; the narrow Lambert sybil invariance
+holds to floating-point noise, diversified-report sybils break it by
+approximately $6.5\%$, and arbitrage profit scales monotonically
+with $\lambda$.
 
 ## Structure of the thesis
 
@@ -184,26 +175,3 @@ Chapter~\ref{ch:robustness} evaluates the mechanism against the
 theory-grounded adversary catalogue. Chapter~\ref{ch:discussion}
 discusses limitations, scope, and threats to validity, and
 Chapter~\ref{ch:conclusion} concludes.
-
-## Scope
-
-For clarity, the following are out of scope. We do not propose a new
-scoring rule: CRPS and the pinball loss, both strictly proper
-\citep{gneiting2007strictly}, are used unchanged. We do not replace
-Lambert's settlement algebra; the skill layer is a pre-round
-multiplicative modulator on the wager, with no post-round
-re-normalisation, no side payments, and no change to the
-redistribution law. We do not overturn the
-\citet{ranjan2010combining} impossibility: the aggregate is
-uncalibrated for the reason their theorem predicts, and the
-recalibration layer closes part of the gap post-hoc without
-claiming to remove the underlying obstruction. We do not claim
-sybil-proofness under arbitrary report diversity; the Lambert axiom
-applies to identical reports with conserved total wager, and we
-verify the narrow invariance numerically while measuring the
-empirical leakage under small report-diversification attacks.
-Finally, we do not characterise coalition equilibria or
-best-response dynamics: the robustness chapter tests eight named
-adversary strategies with published theoretical bases and reports
-attacker profit with confidence intervals, without computing Nash
-or correlated equilibria.

@@ -14,8 +14,8 @@ what the proof says it does under the messy conditions of a real
 data stream.
 
 Three capabilities were stretched. First, the discipline of
-source-linked claims: every number in this report maps back to a
-committed artefact, which forced an experiment-management habit I
+source-linked claims: every number in this report maps back to an
+experimental output, which forced an experiment-management habit I
 did not have at the start of the year. Second, reading proofs
 adversarially: the temptation to use Ranjan and Gneiting 2010 as a
 black-box negative result was strong, but the linear-pool

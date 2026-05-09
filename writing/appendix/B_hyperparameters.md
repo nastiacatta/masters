@@ -1,13 +1,10 @@
-# Hyperparameter tuning table
+# Hyperparameter tuning
 
 <!--
 Referenced from:
 - Chapter 3 (Mechanism design), §3.5 (sensitivity sweep).
 - Chapter 4 (Methodology), §4.3 (held-out tuning protocol).
 - Chapter 5 (Results — real data), §5.2 (Elia wind and electricity).
-
-Source artefact: onlinev2/outputs/sensitivity_sweep.json
-(reproduced by scripts/run_sensitivity_sweep_cached.py).
 -->
 
 All hyperparameters reported in the main body are selected on
@@ -19,9 +16,9 @@ optima are given below.
 
 The skill layer has four free parameters: the EWMA learning rate
 $\rho$, the loss-to-skill scale $\gamma$, the skill-gate floor
-$\lambda$, and the skill-exponent $\eta$. The $\eta$ default is
-fixed at the runner level at $\eta = 2.0$ and is not tuned per
-dataset; the other three are swept on a held-out prefix.
+$\lambda$, and the skill-exponent $\eta$. The exponent is fixed at
+$\eta = 2$ across datasets; the other three are swept on a
+held-out prefix.
 
 ### Sweep grid
 

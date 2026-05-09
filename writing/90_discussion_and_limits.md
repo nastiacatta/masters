@@ -120,19 +120,22 @@ and no Nash or correlated equilibria are computed.
 
 ## Threats to validity
 
-\paragraph{Internal validity.} Pre-audit Elia numbers used a
-pipeline with whole-series min-max normalisation, a non-reproducible
-neural-network seed, tail-adjacent XGBoost validation, and a
-silently-swallowed fallback path. Post-audit headline numbers may
-shift by small but measurable amounts; a pre-fix snapshot is
-retained for accountability. Single-seed real-data runs are the norm
-because the data themselves are fixed; variance arises from
-stochastic forecaster components and is reported as a range across
-five canonical seeds on synthetic data and three seeds on real
-data. The finite-grid CRPS approximation uses a nine-level grid,
-with small but non-zero approximation bias for smooth distributions.
-Pointwise quantile coverage is reported in Chapter 6 and is not
-subject to the same approximation.
+\paragraph{Internal validity.} Pre-audit Elia numbers used a pipeline
+with whole-series min-max normalisation, a non-reproducible
+neural-network seed, tail-adjacent XGBoost validation, and a silent
+persistence-fallback path. The post-audit runs use strictly-causal
+expanding normalisation, a fixed neural-network seed, embargoed
+cross-validation per \citet{bergmeir2018note}, and an explicit
+fallback indicator; headline numbers may therefore differ from
+pre-audit presentations by small but measurable amounts, and the
+pre-audit snapshot is retained for comparison. Single-seed real-data
+runs are the norm because the data themselves are fixed; variance
+arises from stochastic forecaster components and is reported as a
+range across five canonical seeds on synthetic data and three seeds
+on real data. The finite-grid CRPS approximation uses a nine-level
+grid, with small but non-zero approximation bias for smooth
+distributions; pointwise quantile coverage is reported in
+Chapter~\ref{ch:real} and is not subject to the same approximation.
 
 \paragraph{External validity.} The evaluation uses two real-data
 series, both from the same European transmission system operator.

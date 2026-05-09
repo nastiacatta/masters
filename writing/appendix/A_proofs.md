@@ -63,23 +63,22 @@ sense as the \citet{lambert2008selffinanced} truthfulness theorem.
 \end{lemma}
 
 \begin{proof}[Proof sketch]
-The Lambert 2008 truthfulness theorem (their §4.2) assumes the
+The Lambert 2008 truthfulness theorem (their \S 4.2) assumes the
 participant's wager is fixed at the moment the report is chosen.
 Our construction makes $m_{i,t}$ an $\mathcal{F}_{t-1}$-measurable
 quantity: the skill estimate depends only on historical losses,
 and the deposit rule $b_{i,t}$ depends only on historical bankroll
-and historical forecast width (the lag requirement; see
-`onlinev2/src/onlinev2/core/staking.py` for the implementation).
-With $m_{i,t}$ fixed before the round-$t$ report, the Lambert
-argument applies verbatim with $m_{i,t}$ in place of the original
-deposit, because the payout formula $\Pi_i$ is linear in $m_i$ and
-the score $s_i$ is strictly proper on the pinball loss
+and historical forecast width. With $m_{i,t}$ fixed before the
+round-$t$ report, the Lambert argument applies verbatim with
+$m_{i,t}$ in place of the original deposit, because the payout
+formula $\Pi_i$ is linear in $m_i$ and the score $s_i$ is strictly
+proper on the pinball loss
 \citep{gneiting2007strictly, steinwart2011estimating}.
 
 The argument is per-round; a multi-round extension requires bounding
 the cross-round shaping incentive on the EWMA trajectory. That bound
-is informal in this thesis (§3.3.1, "Multi-round scope") and remains
-an open theoretical question.
+is informal in this thesis (\S\ref{ch:mechanism}, ``EWMA-shaping
+incentive'') and remains an open theoretical question.
 \end{proof}
 
 ## Narrow Lambert sybil invariance (referenced from §6.4)

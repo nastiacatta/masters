@@ -9,7 +9,7 @@ online while preserving the axiomatic structure of
 below.
 
 The mechanism satisfies all thirteen active Lambert combinatorial
-payoff invariants on the reference implementation. Budget balance
+payoff invariants on the reference simulator. Budget balance
 holds to machine precision, and the narrow Lambert sybil invariance
 holds with profit ratio $1.000000$ and maximum absolute deviation at
 floating-point noise. Eighty golden-value snapshots act as a
