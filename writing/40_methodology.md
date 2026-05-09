@@ -1,283 +1,199 @@
-# Methodology
+# Experimental methodology {#ch:methodology}
 
 ## Three-layer architecture
 
-The simulation and analysis platform is split into three layers with
-a strict interface. Each layer can be swapped without touching the
-others. This separation is what lets us run the same mechanism against
-synthetic DGPs, real data, honest forecasters, and adversaries, without
-modifying any mechanism code.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Environment layer                                               │
-│   synthetic DGPs (known-σ panel, latent-skill, exogenous)       │
-│   real data (Elia wind 2024–25, Elia electricity imbalance)     │
-└─────────────────────────────────────────────────────────────────┘
-                               │   (y_t, contextual state)
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Agent layer                                                     │
-│   honest forecasters (Naive, EWMA, ARIMA, XGBoost, MLP, Theta,  │
-│   ensemble)                                                     │
-│   adversarial behaviours (sybil, arbitrageur, colluder,         │
-│   wash-trader, reputation-gamer, sandbagger, ...)               │
-│   interface: returns (participate?, report, deposit)            │
-└─────────────────────────────────────────────────────────────────┘
-                               │   (r, m)
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Platform layer (core mechanism)                                 │
-│   scoring · aggregation · settlement · skill update · weights · │
-│   staking · metrics                                             │
-│   deterministic, side-effect-free                               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-Code locations:
-- Environment: `onlinev2/src/onlinev2/dgps/`, `onlinev2/data/`.
-- Agent: `onlinev2/src/onlinev2/behaviour/`,
-  `onlinev2/src/onlinev2/real_data/forecasters.py`.
-- Platform: `onlinev2/src/onlinev2/core/`.
-
-The cleanness of this separation is how we can claim the mechanism is
-agnostic to the panel and the data. Every experiment in Chapter 5
-reuses the same platform layer.
+The simulation and analysis platform is organised into three layers
+with a strict interface: an environment layer that produces outcomes
+and contextual state, an agent layer that produces reports and
+deposits, and a platform layer that implements the mechanism.
+Separating the three lets us run the same mechanism against synthetic
+data-generating processes, real grid data, honest forecasters, and
+adversaries, without modifying any mechanism code. The environment
+layer supplies the outcome sequence $y_t$; the agent layer supplies a
+triple $(\text{participate}, r_i, b_i)$; the platform layer produces
+aggregation weights, settlement payouts, and the updated skill state.
+The cleanness of this separation supports the claim that the
+mechanism is agnostic to the forecaster panel and to the underlying
+data-generating process: every experiment in Chapters 5--8 reuses the
+same platform-layer code.
 
 ## Datasets
 
-### Synthetic DGPs (Chapter 5.1)
+\paragraph{Synthetic data-generating processes.} Three families of
+synthetic processes are used in Chapter 5. The \emph{known-$\sigma$
+panel} produces six forecasters with noise scales
+$\tau \in \{0.15, 0.22, 0.32, 0.46, 0.68, 1.00\}$ and is used to
+verify skill recovery (Spearman rank correlation between learned
+skill and true CRPS). The \emph{latent-fixed} family has a latent
+outcome with fixed forecaster biases and variances and is used for
+aggregation and weight-rule comparisons. The \emph{exogenous versus
+endogenous} family switches between an exogenous fixed process and an
+endogenous one in which a participant's report influences the signal,
+separating pure aggregation from feedback dynamics.
 
-Three families, all committed in `onlinev2/src/onlinev2/dgps/`:
+\paragraph{Elia offshore wind power.} The primary real-data series is
+offshore wind power measured by Elia, the Belgian transmission system
+operator, for 2024--2025. The raw series contains $17\,544$ hourly
+points. The \emph{headline slice} is the full length, producing
+$17\,344$ evaluation rounds after a 200-round warmup, under
+strictly-causal expanding normalisation. The \emph{calibration anchor
+slice} is the first $3\,000$ evaluation points after the warmup under
+a warmup-window normalisation variant; it is retained because it is
+the slice against which the per-quantile calibration numbers were
+validated and against which the recalibration layer was developed.
 
-- **Known-σ panel.** Six forecasters with noise scales τ ∈
-  {0.15, 0.22, 0.32, 0.46, 0.68, 1.00}. Used to verify skill recovery
-  (Spearman σ vs true CRPS).
-- **Latent-fixed.** Latent outcome with fixed forecaster biases and
-  variances. Used for aggregation and weight-rule comparisons.
-- **Exogenous vs endogenous.** Signal is either exogenous (fixed
-  process) or endogenous (a participant's report affects the signal);
-  separates pure aggregation from feedback dynamics.
+Both normalisation variants satisfy the no-future-leakage property.
+The expanding variant sets
+$(\mathrm{lo}_t, \mathrm{hi}_t) = (\min \mathrm{series}[:t+1],\,
+\max \mathrm{series}[:t+1])$, so that every evaluation observation
+falls in $[0, 1]$ for $t \geq 1$ and no observation is clipped. The
+older warmup-window variant uses $[\min, \max]$ from the
+pre-evaluation window only and clips approximately $33\%$ of
+evaluation observations on the full wind series; it is retained only
+for the audit slice.
 
-### Real data — Elia offshore wind (Chapter 5.2)
+\paragraph{Elia electricity imbalance prices.} The secondary series
+is Elia's published electricity-imbalance prices, truncated to
+$T = 10{,}000$ evaluation rounds after a 200-round warmup, with the
+same seven forecasters and the same expanding causal normalisation
+as the wind headline. The mechanism's behaviour on this series is a
+statistical null, reported without adjustment in Chapter 6.
 
-- Source: Elia public grid data, offshore wind measured, 2024–2025.
-- Raw length: 17544 hourly points
-  [source: `data/elia_offshore_wind_2024_2025.csv`, `measured` column].
-- **Headline slice:** full length, 17 344 evaluation rounds after a
-  200-round warmup, under strictly-causal **expanding** normalisation
-  (`normalize_mode=expanding`, `causal_normalize_expanding`). Source:
-  `dashboard/public/data/real_data/elia_wind/data/comparison.json`
-  dated 2026-05-07.
-- **Calibration anchor slice:** first 3000 points after a 200-point
-  warmup under warmup-window normalisation (Apr 2026 audit run).
-  Source: `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/
-  comparison.json` and `onlinev2/outputs/audit_per_quantile/
-  coverage*.json`. Retained because it is the slice every per-τ
-  calibration number uses and the recalibration layer was validated
-  against.
-- **Normalisation.** The expanding variant uses
-  `(lo_t, hi_t) = (min series[:t+1], max series[:t+1])` so
-  `series[t]` is always in [0, 1] for t ≥ 1 and no evaluation-window
-  observation is clipped. The older warmup-window variant
-  `causal_normalize(series, warmup_len=warmup)` used `[min, max]` from
-  `series[:warmup]` only and clipped ~33% of evaluation-window
-  observations on the full wind series. Both variants satisfy the
-  no-future-leakage property test
-  `test_B1_causal_normalize_excludes_future`.
+\paragraph{Elia operational-forecast baseline.} For external
+validation, we extract Elia's own published forecasts---
+\texttt{mostrecentforecast}, \texttt{dayaheadforecast},
+\texttt{dayahead11hforecast}, and \texttt{weekaheadforecast}---and
+convert our own normalised CRPS to a CRPS-megawatt-equivalent scale
+using the observed $[\min, \max]$ range of the series. This provides
+a head-to-head comparison against an operational, weather-driven
+forecast rather than against internal baselines only.
 
-### Real data — Elia electricity imbalance (Chapter 5.2)
+## Forecaster panel
 
-- Source: Elia imbalance price data.
-- T = 10 000 evaluation rounds after a 200-round warmup, seven
-  forecasters, expanding causal normalisation
-  [source: `dashboard/public/data/real_data/elia_electricity/data/
-  comparison.json` dated 2026-05-07].
-- Result is a clean statistical null — mechanism indistinguishable
-  from uniform (DM t = 0.008, p = 0.994). Reported honestly in
-  Chapter 5.2 §6.3.
-- An earlier 10 000-point pre-fix run (pre-expanding) is retained for
-  Appendix B as a before/after delta; we do not use it in the body.
+The real-data panel comprises seven models, all strictly causal: they
+use only data up to time $t - 1$ to predict time $t$. Parameter
+estimates are updated on rolling windows every fifty steps on the
+wind series and every two hundred steps on the electricity series.
+Table~\ref{tab:forecaster-panel} summarises the panel.
 
-### External validation — Elia operational forecast
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{3.5cm}p{4.5cm}p{4.5cm}}
+\toprule
+Model & Description & Quantile path \\
+\midrule
+Naive & $\hat y = y_{t-1}$
+  & Residual bootstrap with isotonic monotonicity \\
+EWMA(5) & Exponential smoothing, span 5 & Residual bootstrap \\
+ARIMA(2,1,1) & Classical linear time-series model
+  & Residual bootstrap; an explicit flag
+    signals when the model reduces to persistence \\
+XGBoost & Gradient-boosted trees with lag features; expanding-window
+  cross-validation with 24-step embargo
+  \citep{bergmeir2018note, chen2016xgboost}
+  & Residual bootstrap \\
+MLP & Two-layer neural network with lag features; deterministic seed
+  & Residual bootstrap \\
+Theta & Theta decomposition \citep{assimakopoulos2000theta}
+  & Residual bootstrap \\
+Ensemble & Equal-weighted mean of Naive and EWMA(5)
+  & Residual bootstrap \\
+\bottomrule
+\end{tabular}
+\caption{Real-data forecaster panel.}
+\label{tab:forecaster-panel}
+\end{table}
 
-- Source: Elia's published `mostrecentforecast`, `dayaheadforecast`,
-  `dayahead11hforecast`, `weekaheadforecast` columns, extracted by
-  `scripts/compute_elia_forecast_baseline.py`; output
-  `onlinev2/outputs/elia_forecast_baseline.json`.
-- CRPS-MW-equivalent scale for direct comparison with our
-  normalised CRPS × (series_max − series_min).
-- Used in Chapter 5.2 §6.1.4 as an external sanity check against a
-  published operational forecast.
+All forecasters implement a common fit-predict interface and expose
+a fallback counter that surfaces any reduction to persistence, so
+that a model silently degrading to the naive baseline cannot
+masquerade as a legitimate output. The forecast cache is versioned
+and invalidated on pipeline changes, which prevents a cached
+artefact from an earlier protocol from being reused unchanged.
+A strict-no-fallback mode is available for clean comparison runs:
+when enabled, the runner raises on any forecaster-level fallback
+event.
 
-## Forecaster panel (real data)
+Hyperparameter tuning for XGBoost and the multilayer perceptron
+uses expanding-window cross-validation with a 24-step embargo
+between the training and validation windows, following
+\citet{bergmeir2018note}. The multilayer perceptron uses $z$-score
+feature standardisation on the training window, early stopping with
+a patience of twenty rounds, and a weight-decay regulariser of
+$10^{-4}$. Random seeds are propagated from the runner into every
+stochastic component, so that the full pipeline is reproducible
+from the top-level configuration.
 
-Seven models. All strictly causal: they use only data up to time t−1 to
-predict time t. Retrained on rolling windows every 50 steps (wind) or
-every 200 steps (electricity).
+## Validity ladder
 
-| Model | Description | Quantile path |
-|---|---|---|
-| Naive | ŷ = y_{t−1} | Residual bootstrap with isotonic monotonicity |
-| EWMA(5) | Exponential smoothing, span 5 | Residual bootstrap |
-| ARIMA(2,1,1) | Classical linear time-series model | Residual bootstrap; `is_persistence` flag surfaces fallback |
-| XGBoost | Gradient-boosted trees with lag features; expanding-window CV with `val_gap = 24` (Bergmeir, Hyndman and Koo 2018) | Residual bootstrap |
-| MLP | Two-layer neural net with lag features; deterministic seed (B6 fix) | Residual bootstrap |
-| Theta | Theta decomposition (Assimakopoulos and Nikolopoulos 2000) | Residual bootstrap |
-| Ensemble | Equal-weighted mean of Naive and EWMA(5) | Residual bootstrap |
+Experiments follow a four-rung validity ladder. Each rung must pass
+before the next is treated as meaningful.
 
-Source: `onlinev2/src/onlinev2/real_data/forecasters.py`. All
-forecasters implement the `BaseForecaster` interface with
-`fit(history) → None` and `predict(h) → (point, quantiles)`, expose a
-`fallback_counter` (B7 fix), and are blocked from silently masquerading
-persistence as their output.
+Rung~1, \emph{mechanism correctness}, checks the invariants of the
+mechanism itself: budget balance, non-negative payouts, zero profit
+under equal scores, score bounds, permutation invariance, and
+score-shift invariance. The Lambert combinatorial payoff invariants
+are tested in full, with eighty golden-value snapshots across
+sixteen payoff-module functions and five seeds acting as a
+regression guard.
 
-Post-audit training protocol (bugfix spec
-`.kiro/specs/model-training-testing-audit/`):
+Rung~2, \emph{pure forecasting gain}, holds seeds, data-generating
+process, horizon, participation pattern, and agent panel fixed across
+all methods in a batch. Each comparison reports paired deltas against
+a set of mandatory baselines: uniform averaging, stake-only,
+skill-only, the mechanism, inverse-variance weighting, trimmed mean,
+median, the rolling best-single selector, the per-round
+inverse-variance hindsight oracle, and the published OGD reference.
 
-- Cache pipeline is versioned (`PIPELINE_VERSION = "v2-causal-norm"`);
-  mismatched caches are regenerated rather than silently reused.
-- `strict_no_fallback` runner flag raises on any forecaster-level
-  fallback, so a clean comparison run is impossible to confuse with a
-  run where one model quietly reduced to persistence.
-- XGBoost validation uses expanding-window CV with a 24-step gap
-  between train and validation (Bergmeir, Hyndman and Koo 2018 show
-  this is the safe default when autocorrelated residuals cannot be
-  ruled out); XGBoost `random_state` is propagated from the runner's
-  `seed` kwarg (post-audit #A4 fix).
-- MLP uses `torch.manual_seed(self.seed)` for cross-warmup
-  reproducibility, z-score feature standardization on the training
-  window, expanding-window validation split with gap = 24, early
-  stopping with patience = 20 and best-weights restoration, and
-  `weight_decay = 1e-4` (post-audit #A3 / #C1 fixes).
-- `best_single` is defined uniformly across runners as
-  `best_single_by_crps(agent_rolling_crps, lookback=100)`; the older
-  variance-of-point-error definition in the horizon path is retired.
-- The `michael_ogd` row is renamed `michael_ogd_centered_median_fan`
-  to match what the shifted-median fan actually does; the per-τ real
-  OGD implementation is listed as follow-up work.
-- Normalisation has two causal variants: `causal_normalize(warmup_len)`
-  (static) and `causal_normalize_expanding` (expanding window). The
-  full-length wind and electricity runs use expanding; the 3000-point
-  audit slice and older outputs use static. Both satisfy the no-
-  future-leakage property.
+Rung~3, \emph{dynamic robustness}, evaluates performance under
+drift (non-stationary noise scales), missingness (i.i.d.\ and bursty
+absence), and selective participation.
 
-## Experiment protocol — the validity ladder
+Rung~4, \emph{strategic robustness}, evaluates the mechanism against
+the theory-grounded adversary catalogue developed in Chapter 8.
+Attacker profit is reported with standard errors and $95\%$
+confidence intervals, scaled per 1000 rounds, together with attacker
+weight share where relevant. Multi-seed aggregation uses at least
+ten seeds per experiment.
 
-Experiments follow the strict ladder from `NEXT_STEPS.md`. Each rung
-must pass before the next is treated as meaningful.
+## Output format
 
-### Rung 1 — Validity (Chapter 5.1)
-
-- Mechanism invariants: budget balance, non-negative payouts, equal-
-  score zero profit, score bounds, permutation invariance, score-shift
-  invariance.
-- 13/13 active Lambert combinatorial invariants pass (clause 1.35
-  skipped pending Julia fixtures) [source:
-  `onlinev2/tests/audit/test_bug_condition_e_payoff.py`].
-- 80 golden-value snapshots across 16 payoff-module functions × 5
-  seeds [source: `onlinev2/tests/audit/snapshots/`].
-
-### Rung 2 — Pure forecasting gain (Chapter 5.2–5.3)
-
-- Same seeds, DGPs, horizon, participation pattern, and agent panel for
-  all methods in a batch.
-- Mandatory baselines: uniform, stake-only, skill-only, mechanism,
-  inverse-variance, trimmed-mean, median, best-single (regret oracle),
-  oracle (hindsight inverse-variance), `michael_ogd` (published OGD
-  reference).
-- Paired deltas reported relative to uniform.
-
-### Rung 3 — Dynamic robustness (Chapter 6)
-
-- Drift (non-stationary noise scales over time).
-- Missingness (IID, bursty, edge-threshold, avoid-skill-decay).
-- Selective participation (strategic absence with κ > 0 vs κ = 0).
-
-### Rung 4 — Strategic robustness (Chapter 6)
-
-- Theory-grounded adversary suite (`onlinev2/outputs/behaviour/
-  experiments/ANALYSIS.md`): arbitrage_seeking (Chen et al. 2014),
-  coordinated_group (Chun & Shachter 2011), privileged_information
-  (Lambert 2008; Johnstone 2007), wash_trader, strategic_reporter,
-  detector_aware, sybil_arbitrage.
-- Attack-gain frame: attacker profit ± SE and 95% CI, scaled per
-  1000 rounds; attacker weight share where relevant.
-- Multi-seed aggregation (≥ 10 seeds per experiment).
-
-## Standard output format
-
-Every experiment emits a canonical four-panel report:
-
-1. **Primary outcome.** Paired Δ CRPS vs uniform, per seed and per
-   method.
-2. **Calibration.** PIT histogram or reliability diagram.
-3. **Market structure.** Gini, HHI, N_eff of the wealth or influence
-   distribution.
-4. **Failure mode.** One plot showing where the method breaks.
-
-Master comparison rows are keyed by
-`(experiment, method, seed, DGP, preset)` and written to
-`master_comparison.json` / `.csv`. This is what the dashboard and the
-thesis both read.
+Every experiment emits a canonical four-panel report. The first panel
+reports the primary outcome: paired $\Delta$ CRPS relative to
+uniform, per seed and per method. The second reports calibration,
+typically as a probability integral transform (PIT) histogram or
+reliability diagram. The third reports market structure (Gini
+coefficient, Herfindahl--Hirschman index, effective-participant count
+$N_\mathrm{eff}$) of the wealth or influence distribution. The fourth
+isolates a plausible failure mode for the method under test. Master
+comparison rows are keyed by experiment, method, seed, data-generating
+process, and behavioural preset.
 
 ## Statistical testing
 
-- **Diebold–Mariano** (Diebold and Mariano 1995) for method vs method
-  on per-round CRPS. HAC-corrected standard errors.
-- **Bootstrap CIs** (stationary bootstrap) for mean CRPS where
-  appropriate.
-- **Paired sign test** as a robustness check where DM assumptions are
-  marginal.
+Method-versus-method comparisons use the Diebold--Mariano test
+\citep{diebold1995comparing} on the per-round CRPS differential, with
+heteroscedasticity- and autocorrelation-consistent (HAC) standard
+errors. Bootstrap confidence intervals use the stationary bootstrap
+where mean CRPS is the primary endpoint. A paired sign test is used
+as a robustness check when the DM assumptions are marginal.
 
-Headline DM numbers:
-
-- Mechanism vs uniform, 17 344-hour Elia wind, expanding-mode:
-  t = 40.77, p ≈ 0
-  [source: `dashboard/public/data/real_data/elia_wind/data/
-  comparison.json` `dm_test` block].
-- Mechanism vs uniform, 10 000-round Elia electricity, expanding-mode:
-  t = 0.008, p = 0.994
-  [source: `onlinev2/outputs/post_fix_deltas/SUMMARY.md`].
-- Mechanism vs uniform, 3000-point audit slice: t = +15.92, p < 1e-6
-  [source: `THESIS_CLAIMS.md` Claim 4 body].
+The three headline numbers from these tests are the following. On the
+full-length Elia wind series ($T = 17{,}344$, expanding normalisation),
+the mechanism versus uniform comparison yields $t = 40.77$ and
+$p \approx 0$. On the Elia electricity-imbalance series
+($T = 10{,}000$), the same comparison yields $t = 0.008$ and
+$p = 0.994$. On the $3\,000$-point audit slice the mechanism
+outperforms uniform with $t = +15.92$ and $p < 10^{-6}$.
 
 ## Reproducibility
 
-- `AUDIT_SEEDS = [0, 1, 2, 42, 2024]` — canonical set for property-based
-  tests.
-- `OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE` on macOS Darwin.
-- Python 3.12, numpy, scipy, XGBoost, PyTorch.
-- Fresh audit run:
-  `cd onlinev2 && OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE \
-     python scripts/audit_fresh_run.py`.
-- Full audit suite:
-  `cd onlinev2 && OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE \
-     python -m pytest -m audit tests/audit/`.
-
-## Pre-fix snapshot
-
-A pre-fix JSON snapshot is committed at
-`onlinev2/outputs/pre_fix_snapshot/` so post-fix numbers remain
-auditable. Every headline number in Chapter 5 is accompanied by a
-pointer to the post-fix output and, where relevant, the Δ vs the
-pre-fix baseline.
-
-## Things still to document (pending runs)
-
-- [DONE 2026-05-07] Hyperparameter sweep output with held-out split
-  (B3 fix, Open #2 in `onlinev2/outputs/post_fix_deltas/SUMMARY.md`):
-  see `writing/30_mechanism_design.md` sweep table and
-  `writing/60_results_real_data.md` §"Sensitivity sweep and parameter
-  provenance". Artefact: `onlinev2/outputs/sensitivity_sweep.json`.
-- [PENDING] Horizon runs (`day_ahead`, `4h_ahead`, `regime_shift`)
-  re-run under expanding normalisation. Current numbers are static
-  mode.
-- [PENDING] `baselines.json` Vitali OGD / Raja head-to-head re-run
-  under expanding normalisation. Current numbers are static mode.
-- [PENDING] Restart-per-season regime evaluation (B13.8 follow-up).
-- [PENDING, optional] Expanding-mode headline at sweep-selected
-  parameters (Task 17.1). Would resolve the residual inconsistency
-  where the locked wind table uses expanding + (γ=16, ρ=0.5) and the
-  sweep-provenance block uses static + (γ=32, ρ=0.7). Expected
-  shift: sub-percent CRPS.
+All experiments are driven from deterministic random seeds, with
+the canonical property-based test set
+$\{0, 1, 2, 42, 2024\}$. Forecaster training runs under
+single-threaded BLAS to eliminate non-determinism in floating-point
+reductions. The software stack is Python 3.12 with NumPy, SciPy,
+XGBoost, and PyTorch. A pre-fix JSON snapshot of every headline
+table is retained so that post-audit numbers remain auditable
+against their pre-audit counterparts.

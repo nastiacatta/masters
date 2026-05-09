@@ -174,16 +174,14 @@ export default function MechanismImprovementSlide() {
       {!anyLoading && (
         <div className="mt-8 flex flex-col gap-4">
           <InsightCard
-            icon="⚡"
             color="amber"
-            title="Electricity vs Wind improvement gap"
-            description="Electricity improvement is modest (ΔCRPS ≈ −0.00064, ~3.77%) while wind improvement is substantial (ΔCRPS ≈ −0.0229, ~33.7%). The mechanism adds less value when forecasters are more similar in quality."
+            title="Electricity vs wind improvement gap"
+            description="The wind panel has more variance in forecaster quality, so the mechanism has more to redistribute; the electricity panel does not."
           />
           <InsightCard
-            icon="🔬"
             color="blue"
-            title="DGP shows reliable improvement"
-            description="DGP shows reliable improvement because the latent truth is identifiable in the simulation. Skill weights converge correctly, allowing the mechanism to consistently outperform equal weighting."
+            title="DGP: larger and more stable improvement"
+            description="Under the simulation, the latent state is identifiable and skill estimates converge, so the mechanism separates from equal weighting more cleanly than on real data."
           />
         </div>
       )}

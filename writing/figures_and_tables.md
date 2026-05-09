@@ -21,8 +21,8 @@ Every figure and table that will appear in the thesis. Each entry has:
 | T6a | Elia wind audit slice: aggregate comparison (static-mode, calibration anchor) | `onlinev2/outputs/real_data/elia_wind_audit_fresh/data/comparison.json` | 60_results_real_data | LOCKED |
 | T6b | Elia wind baselines head-to-head (vitali_ogd, raja, mechanism) — static-mode | `dashboard/public/data/real_data/elia_wind/data/baselines.json` | 60_results_real_data | LOCKED (static) |
 | T6c | Elia operational forecast comparison (mostrecent, dayahead, weekahead) | `onlinev2/outputs/elia_forecast_baseline.json` | 60_results_real_data | LOCKED |
-| T7 | Elia wind: per-forecaster CRPS and σ | same comparison.json, `per_agent_crps` | 60_results_real_data | LOCKED |
-| T8 | Elia wind: per-τ coverage (mechanism) | `onlinev2/outputs/audit_per_quantile/coverage.json` | 60_results_real_data | LOCKED |
+| T7 | Elia wind: per-forecaster CRPS and $\sigma$ | same comparison.json, `per_agent_crps` | 60_results_real_data | LOCKED |
+| T8 | Elia wind: per-$\tau$ coverage (mechanism) | `onlinev2/outputs/audit_per_quantile/coverage.json` | 60_results_real_data | LOCKED |
 | T9 | Elia wind: recalibration headline | `onlinev2/outputs/audit_per_quantile/RECALIBRATION_SUMMARY.md` | 70_recalibration_layer | LOCKED |
 | T10 | Elia wind: recalibration spec assertions | same source | 70_recalibration_layer | LOCKED |
 | T11 | Elia electricity: aggregate comparison (post-fix, expanding-mode) | `dashboard/public/data/real_data/elia_electricity/data/comparison.json` | 60_results_real_data | LOCKED |
@@ -30,8 +30,8 @@ Every figure and table that will appear in the thesis. Each entry has:
 | T13 | 4h-ahead horizon comparison (h = 16 on 15-minute series) | `dashboard/public/data/real_data/elia_wind/data/4h_ahead.json` | 60_results_real_data | LOCKED (static) |
 | T13a | Within-run seasonal slice + per-season table | `dashboard/public/data/real_data/elia_wind/data/regime_shift.json` | 60_results_real_data | LOCKED (static) |
 | T13b | Elia electricity baselines head-to-head (static-mode) | `dashboard/public/data/real_data/elia_electricity/data/baselines.json` | 60_results_real_data | LOCKED (static) |
-| T14 | Attacker profit vs λ (multi-seed Chen-Devanur arbitrage) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/data/arbitrage_scan_by_lam.csv` | 80_robustness | LOCKED |
-| T15 | Attacker profit vs crowd size (λ × n_benign) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv` | 80_robustness | LOCKED |
+| T14 | Attacker profit vs $\lambda$ (multi-seed Chen-Devanur arbitrage) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/data/arbitrage_scan_by_lam.csv` | 80_robustness | LOCKED |
+| T15 | Attacker profit vs crowd size ($\lambda$ × n_benign) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv` | 80_robustness | LOCKED |
 | T16 | Sybil regimes (identical vs diversified) | `experiments.py --exp sybil` output | 80_robustness | LOCKED |
 | T16a | Sybil-arbitrage profit invariance (k ∈ {1,3,5}) | `onlinev2/outputs/behaviour/experiments/sybil_arbitrage/data/sybil_arbitrage_summary.csv` | 80_robustness | LOCKED |
 | T17 | Detection-adaptation (fixed vs adaptive manipulator) | `onlinev2/outputs/behaviour/experiments/detection_adaptation/data/detection_adaptation_summary.csv` | 80_robustness | LOCKED |
@@ -40,7 +40,7 @@ Every figure and table that will appear in the thesis. Each entry has:
 | T17c | Insider advantage (lagged vs leaked, AR(1) DGP) | `onlinev2/outputs/behaviour/experiments/insider_advantage/data/insider_advantage_summary.csv` | 80_robustness | LOCKED |
 | T17d | Wash / activity gaming (inflation vs profit cost) | `onlinev2/outputs/behaviour/experiments/wash_activity_gaming/data/wash_activity_gaming_summary.csv` | 80_robustness | LOCKED |
 | T17e | Strategic reporter (pull sweep, shift vs profit) | `onlinev2/outputs/behaviour/experiments/strategic_reporting/data/strategic_reporting_summary.csv` | 80_robustness | LOCKED |
-| T18 | Hyperparameter table (γ, ρ, λ, η per dataset) | tuning notes | 30_mechanism_design | PARTIAL |
+| T18 | Hyperparameter table ($\gamma$, $\rho$, $\lambda$, $\eta$ per dataset) | tuning notes | 30_mechanism_design | PARTIAL |
 
 ## Figures
 
@@ -49,18 +49,18 @@ Every figure and table that will appear in the thesis. Each entry has:
 | F1 | Five-step round diagram | tikz, based on `dashboard/docs/MECHANISM_ANALYSIS.md` §2 | 30_mechanism_design | to draw |
 | F2 | Three-layer architecture diagram | tikz | 40_methodology | to draw |
 | F3 | Skill layer — loss-to-skill mapping | `dashboard/public/presentation-plots/skill_signal_clean.png` | 30_mechanism_design | LOCKED |
-| F4 | σ trajectory on known-noise panel | `dashboard/public/presentation-plots/skill_wager.png` | 50_results_synthetic | LOCKED |
+| F4 | $\sigma$ trajectory on known-noise panel | `dashboard/public/presentation-plots/skill_wager.png` | 50_results_synthetic | LOCKED |
 | F5 | Forecast aggregation four-panel (primary, calibration, concentration, failure mode) | `dashboard/public/presentation-plots/forecast_aggregation_four_panel.png` | 50_results_synthetic | LOCKED |
 | F6 | Master comparison (9 methods on Elia wind) | `dashboard/public/presentation-plots/master_comparison.png` | 60_results_real_data | LOCKED |
 | F7 | Master comparison four-panel | `dashboard/public/presentation-plots/master_comparison_four_panel.png` | 60_results_real_data | LOCKED |
-| F8 | Per-forecaster σ trajectory (wind) | to render | 60_results_real_data | PARTIAL |
+| F8 | Per-forecaster $\sigma$ trajectory (wind) | to render | 60_results_real_data | PARTIAL |
 | F9 | PIT histogram (mechanism vs uniform) | `dashboard/public/presentation-plots/calibration_reliability.png` | 60_results_real_data | LOCKED |
 | F10 | Reliability diagram before/after recalibration | to render from `coverage.json` + `coverage_recal.json` | 70_recalibration_layer | PARTIAL |
 | F11 | CRPS calibration panel | `dashboard/public/presentation-plots/crps_calibration.png` | 70_recalibration_layer | LOCKED |
 | F12 | Bankroll ablation four-panel | `dashboard/public/presentation-plots/bankroll_ablation_four_panel.png` | 50_results_synthetic | LOCKED (pre-audit) |
-| F13 | Arbitrage profit vs λ (multi-seed, 95% CI bars) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_profit_by_lam.png` | 80_robustness | LOCKED |
-| F13a | Arbitrageur wealth trajectory (seed 0, six λ values) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_wealth_trajectories.png` | 80_robustness | LOCKED |
-| F13b | Attack scaling (λ × n_benign heatmap-style bars) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/plots/arbitrage_crowd_size.png` | 80_robustness | LOCKED |
+| F13 | Arbitrage profit vs $\lambda$ (multi-seed, 95% CI bars) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_profit_by_lam.png` | 80_robustness | LOCKED |
+| F13a | Arbitrageur wealth trajectory (seed 0, six $\lambda$ values) | `onlinev2/outputs/behaviour/experiments/arbitrage_scan/plots/arbitrage_wealth_trajectories.png` | 80_robustness | LOCKED |
+| F13b | Attack scaling ($\lambda$ × n_benign heatmap-style bars) | `onlinev2/outputs/behaviour/experiments/arbitrage_crowd_size/plots/arbitrage_crowd_size.png` | 80_robustness | LOCKED |
 | F13c | Arbitrage margin heatmap (legacy, pre-theory) | `dashboard/public/presentation-plots/arbitrage_heatmap.png` | 80_robustness | LOCKED (reference) |
 | F14 | Sybil profit ratio (identical vs diversified, legacy) | `dashboard/public/presentation-plots/sybil.png` | 80_robustness | LOCKED |
 | F14a | Sybil-arbitrage profit invariance across k | `onlinev2/outputs/behaviour/experiments/sybil_arbitrage/plots/sybil_arbitrage_profit.png` | 80_robustness | LOCKED |
@@ -73,7 +73,7 @@ Every figure and table that will appear in the thesis. Each entry has:
 | F16 | Behaviour wealth distribution | `dashboard/public/presentation-plots/behaviour_wealth.png` | 80_robustness | LOCKED |
 | F17 | Baseline comparison vs equal weights | `dashboard/public/presentation-plots/baseline_comparison.png` | 60_results_real_data | LOCKED |
 | F18 | Weight-rule comparison under two deposit policies | `dashboard/public/presentation-plots/weight_rule_comparison.png` | 50_results_synthetic | LOCKED |
-| F19 | Selective participation vs σ | `dashboard/public/presentation-plots/selective_participation.png` | 80_robustness | LOCKED |
+| F19 | Selective participation vs $\sigma$ | `dashboard/public/presentation-plots/selective_participation.png` | 80_robustness | LOCKED |
 | F20 | Real-data validation summary | `dashboard/public/presentation-plots/real_data_validation.png` | 60_results_real_data | LOCKED |
 | F21 | Settlement sanity (budget balance histogram) | `dashboard/public/presentation-plots/settlement_sanity.png` | 50_results_synthetic | LOCKED |
 | F22 | Scoring validation (pinball, CRPS) | `dashboard/public/presentation-plots/scoring_validation.png` | 50_results_synthetic | LOCKED |

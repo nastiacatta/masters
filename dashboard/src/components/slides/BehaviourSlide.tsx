@@ -14,15 +14,15 @@ import SlideWrapper from './SlideWrapper';
 /* ── Shared data ────────────────────────────────────────────── */
 
 const FAMILIES = [
-  { name: 'Participation', icon: '🎯', desc: 'When and whether agents submit forecasts', example: 'Bursty: agents go offline in waves' },
-  { name: 'Information', icon: '🧠', desc: 'Quality of the private signal each agent receives', example: 'Bias: persistent directional error in reports' },
-  { name: 'Reporting', icon: '📝', desc: 'How agents transform their belief into a submitted forecast', example: 'Hedging: shrinking reports toward 0.5' },
-  { name: 'Staking', icon: '💰', desc: 'How agents decide how much wealth to risk each round', example: 'Kelly: deposit proportional to estimated edge' },
-  { name: 'Objectives', icon: '📐', desc: 'What utility function agents maximise', example: 'CRRA: concave utility reduces staking' },
-  { name: 'Identity', icon: '👤', desc: 'Whether agents operate one or multiple accounts', example: 'Sybil: one agent splits into two identities' },
-  { name: 'Learning', icon: '📈', desc: 'How agents adapt their strategy based on past outcomes', example: 'Reinforcement: participate more after profits' },
-  { name: 'Adversarial', icon: '⚔️', desc: 'Strategies optimised to exploit the mechanism rules', example: 'Arbitrage: report mean of others for guaranteed payoff' },
-  { name: 'Operational', icon: '⚙️', desc: 'Real-world frictions in the submission process', example: 'Latency: partial outcome info leaks into report' },
+  { name: 'Participation', desc: 'When and whether agents submit forecasts', example: 'Bursty: agents go offline in waves' },
+  { name: 'Information', desc: 'Quality of the private signal each agent receives', example: 'Bias: persistent directional error in reports' },
+  { name: 'Reporting', desc: 'How agents transform their belief into a submitted forecast', example: 'Hedging: shrinking reports toward 0.5' },
+  { name: 'Staking', desc: 'How agents decide how much wealth to risk each round', example: 'Kelly: deposit proportional to estimated edge' },
+  { name: 'Objectives', desc: 'What utility function agents maximise', example: 'CRRA: concave utility reduces staking' },
+  { name: 'Identity', desc: 'Whether agents operate one or multiple accounts', example: 'Sybil: one agent splits into two identities' },
+  { name: 'Learning', desc: 'How agents adapt their strategy based on past outcomes', example: 'Reinforcement: participate more after profits' },
+  { name: 'Adversarial', desc: 'Strategies optimised to exploit the mechanism rules', example: 'Arbitrage: report mean of others for guaranteed payoff' },
+  { name: 'Operational', desc: 'Real-world frictions in the submission process', example: 'Latency: partial outcome info leaks into report' },
 ];
 
 /* ── Slide 1: Architecture & Taxonomy ───────────────────────── */
@@ -119,8 +119,11 @@ export function BehaviourArchitectureSlide() {
         <div className="grid grid-cols-3 gap-2">
           {FAMILIES.map(f => (
             <div key={f.name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm">{f.icon}</span>
+              <div className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0"
+                />
                 <span className="text-xs font-semibold text-slate-800">{f.name}</span>
               </div>
               <p className="text-[10px] text-slate-500 mt-0.5">{f.desc}</p>
@@ -464,7 +467,8 @@ interface ThreatPreset {
 
 interface ThreatTier {
   tier: string;
-  emoji: string;
+  /** Tailwind bg class for the small colour chip replacing the legacy emoji. */
+  chip: string;
   rule: string;
   border: string;
   bg: string;
@@ -474,7 +478,7 @@ interface ThreatTier {
 
 const THREAT_TIERS: ThreatTier[] = [
   {
-    tier: 'CRITICAL', emoji: '🔴', rule: 'Δ CRPS > +10%',
+    tier: 'CRITICAL', chip: 'bg-red-500', rule: 'Δ CRPS > +10%',
     border: 'border-l-red-500', bg: 'bg-red-50', text: 'text-red-700',
     presets: [
       { label: 'Bursty', delta: '+934%', derivation: 'Participation drops to ~54% → fewer signals → aggregate error explodes' },
@@ -488,7 +492,7 @@ const THREAT_TIERS: ThreatTier[] = [
     ],
   },
   {
-    tier: 'MODERATE', emoji: '🟠', rule: 'Δ CRPS 2–10%',
+    tier: 'MODERATE', chip: 'bg-orange-400', rule: 'Δ CRPS 2–10%',
     border: 'border-l-orange-400', bg: 'bg-orange-50', text: 'text-orange-700',
     presets: [
       { label: 'Collusion', delta: '+8%', derivation: '2 agents coordinate participation + reports → amplified combined influence' },
@@ -496,7 +500,7 @@ const THREAT_TIERS: ThreatTier[] = [
     ],
   },
   {
-    tier: 'MILD', emoji: '🟡', rule: 'Δ CRPS 0.5–2%',
+    tier: 'MILD', chip: 'bg-yellow-400', rule: 'Δ CRPS 0.5–2%',
     border: 'border-l-yellow-400', bg: 'bg-yellow-50', text: 'text-yellow-700',
     presets: [
       { label: 'Rep. reset', delta: '+1.3%', derivation: '100 rounds honest → manipulate → EWMA detects within ~20 rounds' },
@@ -505,7 +509,7 @@ const THREAT_TIERS: ThreatTier[] = [
     ],
   },
   {
-    tier: 'NEGLIGIBLE', emoji: '⚪', rule: '|Δ CRPS| ≤ 0.5%',
+    tier: 'NEGLIGIBLE', chip: 'bg-slate-300', rule: '|Δ CRPS| ≤ 0.5%',
     border: 'border-l-slate-300', bg: 'bg-slate-50', text: 'text-slate-600',
     presets: [
       { label: 'Budget', delta: '+0.5%', derivation: 'No ruin in 300 rounds — pool compensates for lower-wealth agents' },
@@ -514,7 +518,7 @@ const THREAT_TIERS: ThreatTier[] = [
     ],
   },
   {
-    tier: 'BENEFICIAL', emoji: '🟢', rule: 'Δ CRPS < −0.5%',
+    tier: 'BENEFICIAL', chip: 'bg-emerald-500', rule: 'Δ CRPS < −0.5%',
     border: 'border-l-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700',
     presets: [
       { label: 'House-money', delta: '−1.1%', derivation: 'Winners stake more → accurate agents get more influence → aggregate improves' },
@@ -544,7 +548,10 @@ export function BehaviourThreatSlide() {
         {THREAT_TIERS.map(tier => (
           <div key={tier.tier} className={`rounded-xl border border-slate-200 border-l-4 ${tier.border} ${tier.bg} p-4`}>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm">{tier.emoji}</span>
+              <span
+                aria-hidden="true"
+                className={`inline-block h-2.5 w-2.5 rounded-full shrink-0 ${tier.chip}`}
+              />
               <span className={`text-xs font-bold uppercase tracking-wider ${tier.text}`}>{tier.tier}</span>
               <span className="text-[10px] text-slate-400 ml-1">({tier.rule})</span>
             </div>

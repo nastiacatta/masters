@@ -81,6 +81,7 @@ export default function LabPage() {
 
   useEffect(() => {
     setLastPipelineResult(pipeline);
+    return () => setLastPipelineResult(null);
   }, [pipeline, setLastPipelineResult]);
 
   const currentRound = Math.max(0, Math.min(selectedRound, pipeline.traces.length - 1));

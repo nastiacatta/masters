@@ -88,7 +88,9 @@ export default function PageHeader({
             lineHeight: 1.55,
             color: 'var(--ink-muted)',
             marginTop: 14,
-            maxWidth: 680,
+            // Measure-based cap: ~75ch keeps line length readable without
+            // forcing awkward early wraps on wide viewports.
+            maxWidth: '75ch',
           }}
         >
           {subtitle}
@@ -102,7 +104,7 @@ export default function PageHeader({
             lineHeight: 1.6,
             color: 'var(--ink-soft)',
             marginTop: 10,
-            maxWidth: 680,
+            maxWidth: '78ch',
           }}
         >
           {description}

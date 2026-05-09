@@ -1,122 +1,239 @@
-"""Generate detailed mechanism system diagram."""
+"""Generate the five-step per-round pipeline diagram.
+
+The figure mirrors the thesis text (Chapter 3, §3.1): each round runs
+submission → skill gate → aggregation → scoring & settlement →
+state update, with a single feedback arrow carrying σ to the next
+round's skill gate.
+
+Output: dashboard/public/presentation-plots/mechanism_steps.png
+        writing/figures/mechanism_steps.png
+        writing/overleaf/figures/mechanism_steps.png
+"""
 from pathlib import Path
 
 import matplotlib
-import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import FancyBboxPatch  # noqa: E402
+REPO_ROOT = Path(__file__).resolve().parents[2]
+OUT_PATHS = [
+    REPO_ROOT / 'dashboard' / 'public' / 'presentation-plots' / 'mechanism_steps.png',
+    REPO_ROOT / 'writing' / 'figures' / 'mechanism_steps.png',
+    REPO_ROOT / 'writing' / 'overleaf' / 'figures' / 'mechanism_steps.png',
+]
 
-OUT = Path(__file__).resolve().parent.parent.parent / 'dashboard' / 'public' / 'presentation-plots'
-NAVY = '#002147'; CYAN = '#0091D5'; GREEN = '#16a34a'; RED = '#dc2626'
-GREY = '#64748b'; ORANGE = '#f59e0b'
+# Palette lifted from the slide deck (presentationConstants.ts).
+NAVY = '#1b2a4a'
+TEAL = '#2e8b8b'
+SLATE = '#475569'
+BORDER = '#d6dce4'
+OFF_WHITE = '#fafafa'
+TEAL_SOFT = '#e8f2f2'
 
 plt.rcParams.update({
     'font.family': 'sans-serif',
     'font.sans-serif': ['Avenir Next', 'Avenir', 'Helvetica Neue', 'Arial'],
 })
 
-fig, ax = plt.subplots(figsize=(14, 7))
-ax.set_xlim(-0.5, 15)
-ax.set_ylim(-0.5, 8.5)
-ax.axis('off')
+STEPS = [
+    {
+        'label': '1. Submission',
+        'formula': r'$q_i(\tau),\ b_i$',
+        'caption': 'Each forecaster\nsubmits quantile\nforecast and deposit',
+        'emph': False,
+    },
+    {
+        'label': '2. Skill gate',
+        'formula': r'$m_i = b_i \cdot g(\sigma_i)$',
+        'caption': 'Deposit modulated\nby pre-round skill;\nremainder refunded',
+        'emph': True,
+    },
+    {
+        'label': '3. Aggregation',
+        'formula': r'$\hat q(\tau)=\sum_i w_i\, q_i(\tau)$',
+        'caption': r'Weighted quantile' '\n' r'average; weights' '\n' r'$w_i=m_i/\sum_j m_j$',
+        'emph': False,
+    },
+    {
+        'label': '4. Settlement',
+        'formula': r'$\pi_i = m_i\,(1 + s_i - \bar s)$',
+        'caption': 'Outcome scored;\nLambert payoff —\nbudget balanced',
+        'emph': False,
+    },
+    {
+        'label': '5. State update',
+        'formula': r'$\sigma_{i,t+1} = \sigma_{\min} + (1-\sigma_{\min})e^{-\gamma L_i}$',
+        'caption': 'EWMA of loss maps\nto bounded skill\nfor next round',
+        'emph': True,
+    },
+]
+
+# ── Layout ────────────────────────────────────────────────────────────────
+# Canvas is 16 wide by 8 tall; box row is centred at y=4.8 with feedback
+# arrow looping beneath. Box width chosen so arrows between them have a
+# small but clear gap.
+FIG_W, FIG_H = 16.0, 7.0
+BOX_W, BOX_H = 2.75, 2.8
+BOX_Y = 3.0          # bottom of box
+GAP = 0.35           # arrow gap between boxes
+N = len(STEPS)
+TOTAL_W = N * BOX_W + (N - 1) * GAP
+X0 = (FIG_W - TOTAL_W) / 2  # left edge of first box
+
+fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
+ax.set_xlim(0, FIG_W)
+ax.set_ylim(0, FIG_H)
+ax.set_axis_off()
 fig.patch.set_facecolor('white')
 
-ax.text(7.25, 8.0, 'Mechanism: Round-by-Round Pipeline', ha='center', fontsize=16, fontweight='bold', color=NAVY)
+# Title
+ax.text(
+    FIG_W / 2, FIG_H - 0.45,
+    'Round-by-round pipeline',
+    ha='center', va='center',
+    fontsize=17, fontweight='bold', color=NAVY,
+)
+ax.text(
+    FIG_W / 2, FIG_H - 0.95,
+    'Every step is a pure function of the mechanism state and current-round inputs',
+    ha='center', va='center',
+    fontsize=10.5, color=SLATE, style='italic',
+)
 
-# Step 1: Input
-rect = FancyBboxPatch((0.3, 5.2), 2.4, 1.8, boxstyle='round,pad=0.1', facecolor='#f1f5f9', edgecolor='#94a3b8', linewidth=1)
-ax.add_patch(rect)
-ax.text(1.5, 6.6, '1. Input', ha='center', fontsize=12, fontweight='bold', color=NAVY)
-ax.text(1.5, 6.05, 'quantile forecast', ha='center', fontsize=9.5, color='#334155')
-ax.text(1.5, 5.65, 'participation flag', ha='center', fontsize=9.5, color='#334155')
-ax.text(1.5, 5.35, '(from behaviour block)', ha='center', fontsize=8.5, color=GREY)
+# ── Step boxes ────────────────────────────────────────────────────────────
+box_centres = []
+for i, step in enumerate(STEPS):
+    x = X0 + i * (BOX_W + GAP)
+    cx = x + BOX_W / 2
+    cy = BOX_Y + BOX_H / 2
+    box_centres.append((cx, cy))
 
-# Step 2: Deposit
-rect = FancyBboxPatch((3.5, 5.2), 2.4, 1.8, boxstyle='round,pad=0.1', facecolor='#fef3c7', edgecolor=ORANGE, linewidth=1)
-ax.add_patch(rect)
-ax.text(4.7, 6.6, '2. Deposit', ha='center', fontsize=12, fontweight='bold', color=NAVY)
-ax.text(4.7, 6.05, 'b = min(W, f*W*c, b_max)', ha='center', fontsize=9, color=ORANGE, fontweight='bold')
-ax.text(4.7, 5.65, 'c = confidence(width)', ha='center', fontsize=9, color='#334155')
-ax.text(4.7, 5.35, 'W = current wealth', ha='center', fontsize=9, color='#334155')
+    face = TEAL_SOFT if step['emph'] else OFF_WHITE
+    edge = TEAL if step['emph'] else BORDER
+    lw = 2.0 if step['emph'] else 1.2
 
-# Step 3: Skill Gate (KEY)
-rect = FancyBboxPatch((6.7, 4.9), 2.6, 2.2, boxstyle='round,pad=0.12', facecolor='#e0f2fe', edgecolor=CYAN, linewidth=2)
-ax.add_patch(rect)
-ax.text(8.0, 6.7, '3. Skill Gate', ha='center', fontsize=13, fontweight='bold', color=NAVY)
-ax.text(8.0, 6.15, 'm = b * (lam + (1-lam)*sig^eta)', ha='center', fontsize=9.5, color=CYAN, fontweight='bold')
-ax.text(8.0, 5.7, 'refund = b - m (returned)', ha='center', fontsize=9, color='#334155')
-ax.text(8.0, 5.3, 'sig fixed before round', ha='center', fontsize=9, color=GREEN, fontweight='bold')
+    ax.add_patch(FancyBboxPatch(
+        (x, BOX_Y), BOX_W, BOX_H,
+        boxstyle='round,pad=0.02,rounding_size=0.18',
+        facecolor=face, edgecolor=edge, linewidth=lw,
+    ))
 
-# Step 4: Aggregate
-rect = FancyBboxPatch((10.2, 5.2), 2.2, 1.8, boxstyle='round,pad=0.1', facecolor='#f1f5f9', edgecolor='#94a3b8', linewidth=1)
-ax.add_patch(rect)
-ax.text(11.3, 6.6, '4. Aggregate', ha='center', fontsize=12, fontweight='bold', color=NAVY)
-ax.text(11.3, 6.05, 'r_hat = sum(m*r)/sum(m)', ha='center', fontsize=9, color='#334155')
-ax.text(11.3, 5.65, 'quantile averaging', ha='center', fontsize=9, color='#334155')
-ax.text(11.3, 5.35, 'delivered to client', ha='center', fontsize=8.5, color=GREY)
+    # Label (step title)
+    ax.text(
+        cx, BOX_Y + BOX_H - 0.35,
+        step['label'],
+        ha='center', va='top',
+        fontsize=12.5, fontweight='bold', color=NAVY,
+    )
 
-# Step 5: Settle
-rect = FancyBboxPatch((10.2, 3.0), 2.2, 1.8, boxstyle='round,pad=0.1', facecolor='#f1f5f9', edgecolor='#94a3b8', linewidth=1)
-ax.add_patch(rect)
-ax.text(11.3, 4.4, '5. Settle', ha='center', fontsize=12, fontweight='bold', color=NAVY)
-ax.text(11.3, 3.85, 'Pi = m*(1 + s - s_bar)', ha='center', fontsize=9, color='#334155')
-ax.text(11.3, 3.45, 'sum(Pi) = sum(m)', ha='center', fontsize=9, color=GREEN, fontweight='bold')
-ax.text(11.3, 3.15, '(budget balanced)', ha='center', fontsize=8.5, color=GREY)
+    # Formula — centred
+    ax.text(
+        cx, BOX_Y + BOX_H - 1.15,
+        step['formula'],
+        ha='center', va='top',
+        fontsize=11.5, color=NAVY,
+    )
 
-# Step 6: Skill Update
-rect = FancyBboxPatch((4.5, 1.0), 3.0, 1.8, boxstyle='round,pad=0.1', facecolor='#dcfce7', edgecolor=GREEN, linewidth=1.2)
-ax.add_patch(rect)
-ax.text(6.0, 2.4, '6. Skill Update', ha='center', fontsize=12, fontweight='bold', color=NAVY)
-ax.text(6.0, 1.85, 'L = (1-rho)*L + rho*loss', ha='center', fontsize=9, color=GREEN, fontweight='bold')
-ax.text(6.0, 1.45, 'sig = sig_min + (1-sig_min)*exp(-gam*L)', ha='center', fontsize=8.5, color='#334155')
-ax.text(6.0, 1.1, 'absent: staleness decay', ha='center', fontsize=8.5, color=GREY)
+    # Caption (plain-English)
+    ax.text(
+        cx, BOX_Y + 0.55,
+        step['caption'],
+        ha='center', va='bottom',
+        fontsize=9.5, color=SLATE, style='italic', linespacing=1.25,
+    )
 
-# Step 7: Wealth
-rect = FancyBboxPatch((0.5, 1.0), 2.4, 1.8, boxstyle='round,pad=0.1', facecolor='#f1f5f9', edgecolor='#94a3b8', linewidth=1)
-ax.add_patch(rect)
-ax.text(1.7, 2.4, '7. Wealth', ha='center', fontsize=12, fontweight='bold', color=NAVY)
-ax.text(1.7, 1.85, 'W = max(0, W + profit)', ha='center', fontsize=9, color='#334155')
-ax.text(1.7, 1.45, 'path dependence', ha='center', fontsize=9, color=GREY)
+# ── Forward arrows between boxes ──────────────────────────────────────────
+for i in range(N - 1):
+    x0 = X0 + i * (BOX_W + GAP) + BOX_W
+    x1 = X0 + (i + 1) * (BOX_W + GAP)
+    y = BOX_Y + BOX_H / 2
+    # Highlight the arrow exiting the skill gate (carries m_i onward).
+    is_wager_edge = (i == 1)
+    colour = TEAL if is_wager_edge else SLATE
+    lw = 2.3 if is_wager_edge else 1.6
+    arrow = FancyArrowPatch(
+        (x0 + 0.02, y), (x1 - 0.02, y),
+        arrowstyle='-|>', mutation_scale=18,
+        color=colour, linewidth=lw,
+    )
+    ax.add_patch(arrow)
+    if is_wager_edge:
+        ax.text(
+            (x0 + x1) / 2, y + 0.25,
+            r'$m_i$',
+            ha='center', va='bottom',
+            fontsize=11, color=TEAL, fontweight='bold',
+        )
 
-# ARROWS - main flow
-ax.annotate('', xy=(3.5, 6.1), xytext=(2.7, 6.1), arrowprops=dict(arrowstyle='->', color=GREY, lw=1.5))
-ax.annotate('', xy=(6.7, 6.1), xytext=(5.9, 6.1), arrowprops=dict(arrowstyle='->', color=GREY, lw=1.5))
-ax.annotate('', xy=(10.2, 6.1), xytext=(9.3, 6.1), arrowprops=dict(arrowstyle='->', color=CYAN, lw=2.5))
-ax.text(9.75, 6.5, 'm', ha='center', fontsize=11, color=CYAN, fontweight='bold')
+# ── Outcome input into settlement ─────────────────────────────────────────
+settle_cx, settle_cy = box_centres[3]
+ax.annotate(
+    '',
+    xy=(settle_cx, BOX_Y + BOX_H + 0.02),
+    xytext=(settle_cx, BOX_Y + BOX_H + 0.65),
+    arrowprops=dict(arrowstyle='-|>', color=SLATE, lw=1.4),
+)
+ax.text(
+    settle_cx, BOX_Y + BOX_H + 0.80,
+    r'outcome  $y_t$',
+    ha='center', va='bottom',
+    fontsize=9.5, color=SLATE, style='italic',
+)
 
-# m also goes to settle
-ax.annotate('', xy=(10.2, 3.9), xytext=(9.3, 5.3), arrowprops=dict(arrowstyle='->', color=CYAN, lw=2, connectionstyle='arc3,rad=-0.15'))
-ax.text(9.3, 4.4, 'm', ha='center', fontsize=10, color=CYAN, fontweight='bold')
+# ── Feedback arrow: state update → skill gate (next round) ────────────────
+gate_cx, _ = box_centres[1]
+update_cx, _ = box_centres[4]
+feedback_y = BOX_Y - 1.1
+# Descend out of step 5
+arrow_down = FancyArrowPatch(
+    (update_cx, BOX_Y), (update_cx, feedback_y),
+    arrowstyle='-', color=TEAL, linewidth=1.8,
+    linestyle=(0, (6, 4)),
+)
+# Horizontal run back to step 2
+arrow_across = FancyArrowPatch(
+    (update_cx, feedback_y), (gate_cx, feedback_y),
+    arrowstyle='-', color=TEAL, linewidth=1.8,
+    linestyle=(0, (6, 4)),
+)
+# Up into step 2 with arrowhead
+arrow_up = FancyArrowPatch(
+    (gate_cx, feedback_y), (gate_cx, BOX_Y - 0.02),
+    arrowstyle='-|>', mutation_scale=16,
+    color=TEAL, linewidth=1.8,
+    linestyle=(0, (6, 4)),
+)
+for p in (arrow_down, arrow_across, arrow_up):
+    ax.add_patch(p)
+ax.text(
+    (gate_cx + update_cx) / 2, feedback_y - 0.30,
+    r'skill $\sigma_{i,t+1}$ feeds forward to the next round',
+    ha='center', va='top',
+    fontsize=10, color=TEAL, style='italic', fontweight='bold',
+)
 
-# Outcome -> Settle
-ax.annotate('', xy=(12.4, 4.8), xytext=(13.5, 5.8), arrowprops=dict(arrowstyle='->', color=RED, lw=1.5))
-ax.text(13.7, 6.0, 'outcome', ha='left', fontsize=10, color=RED, fontstyle='italic')
+# ── Insight banner ────────────────────────────────────────────────────────
+banner_y = 0.35
+ax.add_patch(FancyBboxPatch(
+    (X0, banner_y), TOTAL_W, 0.55,
+    boxstyle='round,pad=0.02,rounding_size=0.1',
+    facecolor=TEAL_SOFT, edgecolor=TEAL, linewidth=1.0,
+))
+ax.text(
+    X0 + TOTAL_W / 2, banner_y + 0.28,
+    'The effective wager $m_i$ is the single object that controls both aggregation weight and financial exposure',
+    ha='center', va='center',
+    fontsize=10.5, color=NAVY, fontweight='bold',
+)
 
-# Settle -> Skill Update (loss)
-ax.annotate('', xy=(7.5, 2.0), xytext=(10.2, 3.5), arrowprops=dict(arrowstyle='->', color=GREEN, lw=1.5, linestyle='dashed'))
-ax.text(9.0, 2.5, 'loss', ha='center', fontsize=10, color=GREEN, fontstyle='italic')
+plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
-# Settle -> Wealth (profit)
-ax.annotate('', xy=(2.9, 1.9), xytext=(10.2, 3.2), arrowprops=dict(arrowstyle='->', color=GREY, lw=1.2, linestyle='dashed'))
-ax.text(6.8, 2.9, 'profit', ha='center', fontsize=9, color=GREY, fontstyle='italic')
+for out in OUT_PATHS:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=220, bbox_inches='tight', facecolor='white')
+plt.close(fig)
 
-# Skill Update -> Skill Gate (sigma next round)
-ax.annotate('', xy=(8.0, 4.9), xytext=(7.0, 2.8), arrowprops=dict(arrowstyle='->', color=GREEN, lw=2.5))
-ax.text(7.0, 3.7, 'sig\n(next round)', ha='center', fontsize=9.5, color=GREEN, fontweight='bold', linespacing=0.9)
-
-# Wealth -> Deposit (next round)
-ax.annotate('', xy=(3.5, 5.5), xytext=(1.7, 2.8), arrowprops=dict(arrowstyle='->', color=GREY, lw=1.5, linestyle='dotted'))
-ax.text(2.2, 4.0, 'W\n(next round)', ha='center', fontsize=9, color=GREY, fontstyle='italic', linespacing=0.9)
-
-# KEY INSIGHT
-ax.text(7.25, -0.1, 'KEY: Same effective wager m determines both aggregation weight and financial exposure',
-        ha='center', va='center', fontsize=11.5, fontweight='bold', color=NAVY,
-        bbox=dict(boxstyle='round,pad=0.5', facecolor='#e0f2fe', edgecolor=CYAN, lw=1.5))
-
-plt.tight_layout(pad=0.3)
-plt.savefig(OUT / 'mechanism_steps.png', dpi=200, bbox_inches='tight', facecolor='white')
-plt.close()
-print('Done: mechanism_steps.png')
+for out in OUT_PATHS:
+    print(f'Done: {out.relative_to(REPO_ROOT)}')

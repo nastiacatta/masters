@@ -14,7 +14,7 @@ us honest about which chapters pay the rent.
 - Contributions (5 bullets, source-linked to `THESIS_CLAIMS.md`).
 - Thesis roadmap.
 
-Source files: `writing/10_abstract_and_question.md`,
+Source files: `writing/10_introduction.md`,
 `writing/20_literature_review.md`.
 
 ## Chapter 2 — Background and related work (≈3000 words)
@@ -66,7 +66,7 @@ Source files: `writing/40_methodology.md`, `onlinev2/README.md`,
 
 - Budget balance, sybil invariance, scoring bounds.
 - 13/13 Lambert invariants and 60-snapshot golden-value suite.
-- Known-noise-panel skill recovery (Spearman σ vs CRPS = 1.0).
+- Known-noise-panel skill recovery (Spearman $\sigma$ vs CRPS = 1.0).
 - Deposit policy ablation (fixed < bankroll-confidence < oracle).
 - Bankroll pipeline ablation (A–E), 20 seeds, fresh from the CSV.
 
@@ -108,7 +108,7 @@ Source: `writing/70_recalibration_layer.md`.
   privileged_information, detector_aware, wash_trader,
   sybil_arbitrage.
 - Arbitrage scan (Chen et al. 2014): profit +12 to +24 over 1000
-  rounds as λ rises 0 → 1.
+  rounds as $\lambda$ rises 0 → 1.
 - Collusion (Chun & Shachter 2011): +19.9 weighted-mean, +16.9
   weighted-median; informed collusion +33.8 under AR(1).
 - Insider advantage (Lambert 2008; Johnstone 2007): +57.1 with
@@ -149,7 +149,7 @@ Source: `writing/99_conclusion.md`.
 - A. Proofs of invariants (budget balance, sybil invariance, skill
   monotonicity).
 - B. Hyperparameter tuning table.
-- C. Full table of behaviour presets and resulting Δ CRPS.
+- C. Full table of behaviour presets and resulting $\Delta$ CRPS.
 - D. Full XGBoost / MLP training details.
 - E. Code listing for the five-step bankroll pipeline.
 

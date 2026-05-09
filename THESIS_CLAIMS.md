@@ -228,9 +228,9 @@ issue #1)._
 ## Claim 7 — Post-hoc recalibration closes the miscalibration gap
 
 Adding a rolling isotonic recalibration layer (Kuleshov, Fenner & Ermon
-2018) as an *additive* post-processing step closes ~60% of the tail
-deviation without touching the mechanism's skill, wager, or settlement
-layers.
+2018) as an *additive* post-processing step closes ~41% of the tail
+deviation (and ~91% of the centre deviation) without touching the
+mechanism's skill, wager, or settlement layers.
 
 ### Evidence (3000-point Elia wind slice, `recalibrate=True`, post-fix expanding-mode 2026-05-07)
 

@@ -42,9 +42,8 @@ error sources to beat equal weights.
   combination puzzle: we have extracted enough skill information to
   separate from uniform.
 - When our mechanism ties uniform on electricity (expanding-mode
-  t = 0.008, p = 0.994; static-mode sweep-selected Δ = −0.18% with
-  t = 5.5, p ≈ 0 — DM-significant by sample size but economically
-  negligible), the combination puzzle bites: the seven forecasters
+  t = 0.008, p = 0.994), the combination puzzle bites: the seven
+  forecasters forecasters
   are undifferentiated, the skill signal has nothing to extract, and
   our Δ collapses to within half a percent of uniform.
 

@@ -34,6 +34,17 @@ dashboard/public/data/behaviour
 !theory/**/*.pdf
 !game-theory copy/**/*.pdf
 
+# LaTeX build artefacts (writing/thesis_draft.tex is the canonical output
+# of writing/build_pdf.py; .log/.aux/.bbl/.blg/.out/.toc are per-build and
+# must not be committed).
+writing/thesis_draft.tex
+writing/thesis_draft.log
+writing/thesis_draft.aux
+writing/thesis_draft.bbl
+writing/thesis_draft.blg
+writing/thesis_draft.out
+writing/thesis_draft.toc
+
 # Local editor state
 .vscode/
 .idea/

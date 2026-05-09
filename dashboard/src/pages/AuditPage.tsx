@@ -36,7 +36,7 @@ export default function AuditPage() {
           hero
           eyebrow="Performance review"
           title="Performance audit"
-          subtitle="Theory-grounded review of the mechanism’s empirical performance: model quality, how skill is allocated across forecasters, how wagers are distributed, aggregation accuracy versus baselines, and recommended improvements."
+          subtitle="Empirical review of the mechanism against theory: model quality, skill and wager allocation, aggregation accuracy versus baselines, and proposed improvements."
         />
 
         {/* ── Tab bar ──────────────────────────────────────────────── */}

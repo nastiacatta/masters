@@ -289,14 +289,13 @@ export default function WindExtendedSlide() {
               <RegimeTable data={regime.data} />
               <div className="mt-4">
                 <InsightCard
-                  icon="🔄"
                   color="green"
-                  title="Mechanism improves under non-stationarity"
-                  description={`Even with regime shifts, the mechanism achieves a ΔCRPS of ${
+                  title="Mechanism still wins under a regime shift"
+                  description={`Under the regime-shifted draw the mechanism runs at ΔCRPS ${
                     findRow(regime.data.rows, 'mechanism')
                       ? formatDelta(findRow(regime.data.rows, 'mechanism')!.delta_crps_vs_equal)
                       : '—'
-                  } vs equal weighting, confirming robustness to distributional change.`}
+                  } versus equal weighting, so the skill layer continues to separate forecasters when the panel composition moves.`}
                 />
               </div>
             </section>

@@ -355,8 +355,8 @@ The original self-financed wagering mechanism. Agents submit point forecasts and
 - Online skill estimation via EWMA
 - Skill-gated effective wagers
 
-### Raja and Pinson (2022)
-Extended Lambert to the energy forecasting context with CRPS scoring. This thesis adds:
+### Raja et al. (2024)
+Market-for-trading-forecasts wagering mechanism (Raja, Pinson, Kazempour, Grammatico 2024, *International Journal of Forecasting*). Provides a history-free per-round market as the closest related work. This thesis adds:
 - The online skill layer (EWMA + exponential mapping)
 - Systematic robustness testing (18 behaviour presets)
 - Real-data validation on Elia wind and electricity

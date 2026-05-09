@@ -174,15 +174,15 @@ export function useExperimentData(): ExperimentDataResult {
       try {
         const loadTimeseries =
           exp.dataFiles?.timeseries
-            ? loadSkillWagerData(exp, exp.dataFiles.timeseries)
+            ? loadSkillWagerData(exp, exp.dataFiles.timeseries).catch(() => [])
             : (exp.block === 'core' || exp.block === 'experiments')
-              ? loadSkillWagerData(exp, 'timeseries.csv')
+              ? loadSkillWagerData(exp, 'timeseries.csv').catch(() => [])
               : Promise.resolve([]);
         const loadCrps =
           exp.dataFiles?.crps_timeseries
-            ? loadForecastSeries(exp, exp.dataFiles.crps_timeseries)
+            ? loadForecastSeries(exp, exp.dataFiles.crps_timeseries).catch(() => [])
             : (exp.block === 'core' || exp.block === 'experiments')
-              ? loadForecastSeries(exp, 'crps_timeseries.csv')
+              ? loadForecastSeries(exp, 'crps_timeseries.csv').catch(() => [])
               : Promise.resolve([]);
 
         const [

@@ -48,6 +48,6 @@ over-coverage around τ ∈ {0.5, 0.7}.
 
 ## Open questions
 
-- None blocking. The recalibration layer closes 59% of the tail
-  deviation; the remaining 41% is partly the theoretical floor and
+- None blocking. The recalibration layer closes 41% of the tail
+  deviation; the remaining 59% is partly the theoretical floor and
   partly finite-sample buffer noise. A longer series would close more.

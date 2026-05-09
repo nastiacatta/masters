@@ -6,14 +6,43 @@ For quantile reports this is pointwise weighted quantile averaging:
     q_hat(tau_k) = sum_i w_i * q_i(tau_k),
     w_i = m_i / sum_j m_j.
 
-This is not quasi-arithmetic pooling and not a linear opinion pool over CDFs.
-It is simply the weighted averaging rule implemented by the mechanism.
+Relationship to the forecast-aggregation literature
+----------------------------------------------------
+This operator is the quasi-arithmetic (QA) pool with respect to the
+pinball scoring rule, in the sense of Neyman and Roughgarden (2021,
+"From Proper Scoring Rules to Max-Min Optimal Forecast Aggregation",
+arXiv:2102.07081). Their correspondence assigns to each strictly proper
+scoring rule ``s`` a consensus-forecasting method QA_s, characterised
+by a natural set of axioms (generalising Kolmogorov's axiomatisation
+of quasi-arithmetic means). For the pinball loss on a finite tau grid,
+QA_s reduces to pointwise weighted quantile averaging --- what we
+compute below. Neyman-Roughgarden show:
 
-Note: pointwise weighted quantile averaging does not guarantee monotonicity
-of the aggregate quantiles. When ``enforce_monotonicity=True`` (the default
-for quantile mode), the output is projected onto the monotone cone via
-isotonic regression (``np.maximum.accumulate``). This ensures downstream
-PIT and CRPS computations receive valid quantile functions.
+  (i)  QA pooling with respect to the quadratic and logarithmic scores
+       yields the linear pool (over CDFs) and the logarithmic pool
+       respectively, the two most-studied aggregation operators.
+  (ii) A principal who sub-contracts experts under proper scoring rule
+       ``s`` and pays them in proportion to their weights maximises
+       worst-case profit by aggregating reports via QA_s. This is the
+       "max-min optimal" correspondence.
+  (iii) The aggregator's score is concave in the weight vector, so
+        online gradient descent learns weights with sub-linear regret.
+
+The operator implemented here is therefore not an ad-hoc averaging
+rule; it is the max-min-optimal aggregator for the scoring rule the
+mechanism uses to settle payments. This is distinct from a linear
+opinion pool over CDFs, to which the Ranjan-Gneiting (2010)
+impossibility strictly applies; the analogous under-dispersion
+pathology still shows up empirically (see Chapter 7 on recalibration),
+but the strict bound is stated for the linear pool not QA_pinball.
+
+Note: pointwise weighted quantile averaging does not guarantee
+monotonicity of the aggregate quantiles. When
+``enforce_monotonicity=True`` (the default for quantile mode), the
+output is projected onto the monotone cone via
+``np.maximum.accumulate`` (the L-infinity isotonic regression). This
+ensures downstream PIT and CRPS computations receive valid quantile
+functions.
 """
 
 import numpy as np

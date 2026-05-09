@@ -219,7 +219,7 @@ The noise-skill correlation is minus zero point nine eight — the mechanism rel
 
 * Conditional improvement, not universal dominance
 * Best single can still win
-* Tail calibration: mean deviation ≈ 0.017 before recalibration; recalibration closes ≈ 59%
+* Tail calibration: mean deviation ≈ 0.019 before recalibration; recalibration closes ≈ 41%
 * Truthfulness holds under risk neutrality
 * Richer adversaries remain open
 * Influence depends on earned reliability

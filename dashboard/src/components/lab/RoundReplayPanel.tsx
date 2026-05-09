@@ -198,7 +198,7 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
           </ResponsiveContainer>
         </ChartSection>
 
-        <ChartSection title="Score & Accuracy" subtitle="Per-agent score sᵢ = 1 − |yᵢ − y| (higher is better)">
+        <ChartSection title="Score & Accuracy" subtitle="Per-agent score sᵢ = 1 − CRPS-hat(y, qᵢ)/2 (higher is better)">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={scoreBarData} margin={CHART_MARGIN}>
               <CartesianGrid {...GRID_PROPS} />

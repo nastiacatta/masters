@@ -36,8 +36,8 @@ fixes generally cost sharpness and vice versa.
 ## What we take
 
 The calibration-sharpness tradeoff is the *shape* of our recalibration
-layer's cost. Tail deviation drops 59%, sharpness drops 11%, CRPS rises
-1.3%. The 11% sharpness concession is the price of the 59%
+layer's cost. Tail deviation drops 41%, sharpness drops 12%, CRPS rises
+1.6%. The 12% sharpness concession is the price of the 41%
 calibration gain; both sit on the tradeoff frontier.
 
 ## Where we use it

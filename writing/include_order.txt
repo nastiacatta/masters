@@ -1,9 +1,21 @@
 # One filename per line, in the order they appear in the compiled PDF.
 # Blank lines and lines starting with '#' are ignored.
 # Remove a line to exclude that file from the build.
+#
+# The build script uses the section markers below to emit the
+# matching LaTeX structural commands:
+#   \frontmatter  — roman-numeral page numbers, not page-counted
+#   \mainmatter   — arabic page numbers, 35-page cap at 12pt
+#   \backmatter   — not page-counted (references, AI declaration)
+#   \appendix     — not page-counted (supplementary material)
 
-00_outline.md
-10_abstract_and_question.md
+# -- front matter --
+front_matter/01_abstract.md
+front_matter/03_acknowledgments.md
+
+# -- main body --
+10_introduction.md
+15_project_management.md
 20_literature_review.md
 30_mechanism_design.md
 40_methodology.md
@@ -12,8 +24,18 @@
 70_recalibration_layer.md
 80_robustness.md
 90_discussion_and_limits.md
+95_reflection.md
 99_conclusion.md
-bibliography.md
-figures_and_tables.md
-open_questions.md
-quotes_and_snippets.md
+
+# -- back matter --
+back_matter/90_references.md
+back_matter/91_declaration_ai_use.md
+
+# -- appendices --
+# Every appendix must be referenced from the main body. Handbook
+# note: appendices are not guaranteed to be read.
+appendix/A_proofs.md
+appendix/B_hyperparameters.md
+appendix/C_behaviour_presets.md
+appendix/D_training_details.md
+appendix/E_bankroll_pipeline.md

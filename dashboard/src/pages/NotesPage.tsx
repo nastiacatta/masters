@@ -218,33 +218,6 @@ export default function NotesPage() {
           </div>
         </header>
 
-        {/* ── Sticky mini ToC ── */}
-        <nav
-          className="sticky top-0 z-10 -mx-8 px-8 py-3"
-          aria-label="Experiments"
-          style={{
-            background: 'rgba(251, 249, 244, 0.9)',
-            backdropFilter: 'saturate(180%) blur(8px)',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
-              Jump to
-            </span>
-            {EXPERIMENTS.map((exp, i) => (
-              <a
-                key={exp.id}
-                href={`#${exp.id}`}
-                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 text-[11px] text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
-              >
-                <span className="font-mono text-[10px] text-slate-400">{String(i + 1).padStart(2, '0')}</span>
-                <span className={`inline-block w-1 h-1 rounded-full ${STATUS_META[exp.status].dot}`} />
-              </a>
-            ))}
-          </div>
-        </nav>
-
         <div className="space-y-5">
           {EXPERIMENTS.map((exp, i) => (
             <section

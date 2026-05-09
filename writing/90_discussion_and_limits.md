@@ -1,233 +1,199 @@
-# Discussion, limitations, threats to validity
+# Discussion {#ch:discussion}
 
-## What the mechanism does well
+## Contributions in review
 
-- **Economic structure preserved.** Budget balance holds to machine
-  precision (~1e-13). Lambert's narrow sybil invariance holds with
-  profit ratio = 1.000000. Truthfulness from Lambert's §4.2 carries
-  over — the skill gate modulates m_i pre-round, so the proof applies
-  verbatim with m_i in place of the original wager.
-- **Skill recovery is clean on clean data.** On the known-noise
-  synthetic panel the mechanism's σ ordering matches the true CRPS
-  ordering exactly (Spearman 1.0). On the 3000-point Elia wind audit
-  slice the σ ranking of the seven forecasters also matches their
-  mean CRPS ranking exactly (Spearman 1.0). On the 17 344-hour full-
-  length run the σ *ordering* is identical to the audit slice though
-  the σ *levels* are lower (XGBoost 0.808 vs 0.910) because the
-  expanding normalisation produces larger normalised losses.
-- **Deposit-design lever identified.** The deposit policy is the
-  strongest empirical lever. Bankroll-confidence deposits achieve a
-  11.3% CRPS improvement over fixed deposits on the synthetic panel;
-  on real wind data the effect compounds with the skill gate.
-- **Orthogonal calibration fix.** The rolling-isotonic recalibration
-  layer closes 59% of the Ranjan–Gneiting tail-calibration gap at
-  modest CRPS and sharpness cost, without touching any economic
-  layer.
-- **Wind improvement is statistically strong.** DM t = 40.77 for the
-  mechanism-vs-uniform comparison on the full-length wind run — well
-  inside any Bonferroni-adjusted threshold.
-- **Competitive with Elia's operational forecast.** Best_single
-  (XGBoost on observed series only) beats Elia's real-time forecast
-  by ~6% CRPS-MW-eq (69.5 vs 74.0 MW); the mechanism ends up ~13%
-  worse than Elia's operational forecast because it averages in
-  weaker models. No external weather inputs are used.
+\paragraph{Preserved economic structure.} Budget balance holds to
+machine precision, with maximum absolute gap of order $10^{-13}$
+across all reported runs. The narrow Lambert sybil invariance holds
+with profit ratio $1.000000$. The Lambert truthfulness proof carries
+over under the skill-gate substitution because the gate is
+$\mathcal{F}_{t-1}$-measurable: it is fixed before the participant's
+current-round report is observed.
 
-## What the mechanism does not do
+\paragraph{Skill recovery.} On the known-noise synthetic panel the
+mechanism's learned $\sigma$ ordering matches the ground-truth CRPS
+ordering exactly, with Spearman rank correlation of one across all
+five canonical seeds. On the 3{,}000-point audit slice of Elia
+offshore-wind power the same relation holds for the seven real
+forecasters. On the full 17{,}344-hour run the ordering is
+unchanged, though the absolute $\sigma$ values are lower because
+expanding normalisation produces larger normalised losses.
 
-This list is deliberately on the long side. Understating limitations is
-the easiest way to lose a reviewer.
+\paragraph{Deposit design as the primary lever.} The deposit policy
+carries most of the information about participant quality.
+Bankroll-confidence deposits improve CRPS by $11\%$ over fixed-unit
+deposits on the synthetic panel; the effect compounds with the
+skill gate on real data.
 
-- **No universal dominance over simple baselines.** On the Elia wind
-  17 344-hour full-length run, inverse-variance weighting (−7.0% vs
-  uniform) is effectively tied with our mechanism (−7.1%); median
-  (−9.3%) and trimmed_mean (−7.2%) beat us. Vitali's per-τ OGD
-  baseline (−18.0% on `baselines.json`) and the rolling
-  100-step best_single (−22.9%) both beat the mechanism by large
-  margins. The thesis's contribution is *conditional* forecasting
-  improvement plus preserved economic structure, not raw CRPS
-  dominance.
-- **Electricity imbalance prices produce a null result.** The
-  mechanism is statistically indistinguishable from uniform on
-  electricity (t = 0.008, p = 0.994) because the seven forecasters
-  produce near-identical CRPS (all within 0.8% of uniform). No
-  persistent skill signal to exploit. This is reported honestly as a
-  null and is not a defect of the mechanism; it is a limit of what
-  the EWMA skill layer can do when the forecasters are
-  undifferentiated.
-- **Performance depends on parameter tuning.** Defaults (γ = 4,
-  ρ = 0.1) are tuned for ~10 forecasters and T ~ 1000. Wind-data
-  tuned values (γ = 16, ρ = 0.5) are more aggressive. A poorly tuned
-  γ or ρ can make the mechanism marginal vs uniform. The sensitivity
-  sweep with held-out split is [PENDING] per
-  `onlinev2/outputs/post_fix_deltas/SUMMARY.md` Open #2.
-- **Best single forecaster can win.** XGBoost alone (best_single
-  0.03145 CRPS on the full-length run) beats the mechanism (0.03788)
-  by 16.9% CRPS because wind power is highly autocorrelated and the
-  single best model captures most of the structure. This is an honest
-  ceiling on what any aggregator can achieve. In CRPS-MW-equivalent
-  terms, best_single reaches 69.5 MW while the mechanism averages to
-  83.7 MW.
-- **Linear-pool tail miscalibration is inevitable.** Ranjan and
-  Gneiting 2010: any non-trivial weighted average of distinct
-  calibrated forecasts is necessarily uncalibrated. The mechanism's
-  aggregate shows ~2pp systematic tail deviation. The recalibration
-  layer closes 59% of this; 41% remains.
-- **Sybil-proofness only holds for identical reports.** The Lambert
-  invariance is narrow. Diversified-report sybils (clones submitting
-  slightly different forecasts) break the invariance by ~6.5%
-  empirically. This is not a regression of our design; it is an
-  artefact of the Lambert framework. Mentioning it is standard
-  scientific practice.
-- **Truthfulness only under risk neutrality.** Inherits Lambert's
-  linear-utility assumption. For large stakes or risk-averse agents
-  the truthfulness argument does not go through.
-- **Quantile-level attacks are harder to contain than point-level
-  ones.** On the current adversary suite, Chen et al. 2014 arbitrage
-  extracts +12 to +24 profit per 1000 rounds as λ rises from 0 to 1,
-  Chun–Shachter coalition extracts +19.9 (weighted-mean) or +16.9
-  (weighted-median), and a legitimate lagged insider under AR(1)
-  extracts +57.1. The skill gate does not eliminate any of these;
-  it only modestly constrains arbitrage. See Chapter 6 §8.2–8.5 for
-  the full tables.
-- **Participation is expected to be a vulnerability, but the specific
-  "+934% bursty" number from the earlier draft is from a legacy
-  preset and is not present in the current adversary suite.** Re-run
-  the participation-specific experiments before citing a number.
-- **Arbitrage is empirically profitable, as predicted by theory.**
-  The Chen-Devanur-Pennock-Vaughan (2014) arbitrage interval applies
-  to every WSWM, including ours. Post-revamp experiments confirm a
-  theory-grounded arbitrage seeker earns +11 to +24 cumulative profit
-  over 1000 rounds across the λ grid, and the profit scales roughly
-  linearly with crowd size (see §8.3–8.4). The mechanism is still
-  budget-balanced — the attacker's gains come from other
-  participants, not from the mechanism's reserves. Fully removing the
-  arbitrage requires moving to the no-arbitrage wagering family
-  (Chen et al. 2014 §4–5), which is outside this thesis's scope.
-- **Chun-Shachter coalitions are profitable.** A 3-member coalition
-  broadcasting the wager-weighted mean of its members' beliefs earns
-  +16.9 to +19.9 over 1000 rounds (§8.6). Combining coalition with
-  privileged lagged information (§8.7) compounds the two channels
-  and extracts ≈ 40% more than pure collusion (+33.84 vs +24.12).
-- **Sybil-proofness holds in the Lambert narrow sense.** The
-  `sybil_arbitrage` audit (§8.5) shows arbitrage profit is invariant
-  to k ∈ {1, 3, 5} to within Monte-Carlo error, empirically
-  validating the Lambert invariance on top of an actively exploited
-  attack. The narrow sense is the only one the theorem covers;
-  diversified-report sybils remain a real open vulnerability.
-- **Collusion equilibria not formally analysed; named strategies
-  extract substantial profit.** We test `coordinated_group` (Chun–
-  Shachter 2011) and `informed_collusion` (coalition + AR(1)
-  insiders). Three-member coalition extracts +19.9 (weighted-mean);
-  informed collusion extracts +33.8. Neither is contained by the
-  skill gate. The full best-response space is not characterised.
-- **Electricity data gives a clean null.** On the 10 000-round
-  electricity imbalance slice the mechanism's Δ vs uniform is
-  statistically zero (t = 0.008, p = 0.994). Seven forecasters within
-  0.8% of each other leaves the EWMA skill layer no signal to
-  exploit. The earlier pre-fix "−3.8% on electricity" claim was an
-  artefact of whole-series min/max normalisation; under strictly-
-  causal expanding normalisation the effect vanishes. Our
-  contribution on electricity is the preserved economic structure,
-  not CRPS.
+\paragraph{Orthogonal calibration fix.} The rolling isotonic
+recalibration layer closes $41\%$ of the tail calibration gap at a
+$1.6\%$ CRPS cost and a $12\%$ sharpness cost, without modifying
+any of the economic layers.
+
+\paragraph{Statistical evidence on wind.} The Diebold--Mariano
+statistic for the mechanism-versus-uniform comparison is
+$t = 40.77$ on the full-length wind run, well inside any
+Bonferroni-adjusted threshold.
+
+\paragraph{External benchmark.} The best single forecaster, an
+online gradient-boosted tree model trained on the observed series
+alone, reaches $69.5$~MW CRPS-megawatt-equivalent against Elia's
+published real-time forecast of $74.0$~MW, without using weather
+inputs. The mechanism, aggregating a panel that mixes the best
+forecaster with weaker models, reaches $83.7$~MW, approximately
+$13\%$ above Elia's operational forecast.
+
+## Limitations
+
+\paragraph{No universal dominance over simple baselines.} On the
+full-length wind run, inverse-variance weighting (\,$-7.0\%$ vs
+uniform) is statistically tied with the mechanism (\,$-7.1\%$), and
+the median (\,$-9.3\%$) and trimmed mean (\,$-7.2\%$) both improve
+on it. The per-quantile OGD baseline of \citet{vitali2025intermittent}
+(\,$-18.0\%$) and the rolling best-single selector (\,$-22.9\%$)
+beat it by larger margins. The contribution is conditional
+improvement together with preserved economic structure, not raw
+CRPS dominance.
+
+\paragraph{Null result on electricity imbalance.} The mechanism is
+statistically indistinguishable from uniform averaging on the
+electricity series ($t = 0.008$, $p = 0.994$). The seven forecasters
+produce CRPS values within $0.8\%$ of each other, leaving no
+persistent skill signal to exploit. This is the forecast-combination
+puzzle regime documented by \citet{bates1969combination} and
+\citet{timmermann2006forecast}.
+
+\paragraph{Sensitivity to hyperparameters.} Default parameters are
+tuned for synthetic panels with approximately ten forecasters and
+$T \approx 1\,000$. The wind-data tuned values are more aggressive;
+a poorly tuned $(\gamma, \rho)$ can render the mechanism marginal
+against uniform. Chapter 3 and Chapter 6 report the held-out
+sensitivity sweep that selects these parameters; an expanding-mode
+headline at the sweep-selected parameters is identified as
+follow-up work in Chapter 10.
+
+\paragraph{Best-single ceiling.} Online XGBoost alone beats the
+mechanism by $16.9\%$ CRPS on the full-length wind run, because wind
+power is highly autocorrelated and a single well-tuned model
+captures most of the structure. This is a ceiling on any aggregator
+that mixes in weaker models.
+
+\paragraph{Linear-pool tail miscalibration.} The
+\citet{ranjan2010combining} impossibility implies that any
+non-trivial weighted average of distinct calibrated forecasts is
+necessarily uncalibrated. The aggregate shows approximately two
+percentage points of systematic tail deviation. The recalibration
+layer closes $41\%$; the remaining $59\%$ is the calibration-sharpness
+floor discussed in Chapter~\ref{ch:recalibration}.
+
+\paragraph{Narrow sybil-proofness only.} Diversified-report sybils
+break the Lambert invariance by approximately $6.5\%$ empirically.
+This is a scope limitation of the Lambert framework rather than a
+property of the skill layer.
+
+\paragraph{Truthfulness under risk-neutrality only.} The linear
+utility assumption is inherited from \citet{lambert2008selffinanced}.
+For risk-averse participants or large stakes relative to wealth, the
+truthfulness argument does not go through.
+
+\paragraph{Residual arbitrage.} The \citet{chen2014arbitrage}
+arbitrage interval applies to every weighted-score wagering
+mechanism, including the present one. Our multi-seed scan confirms
+an arbitrageur extracts $+11$ to $+24$ profit over $1\,000$ rounds as
+$\lambda$ rises from $0$ to $1$; the profit scales roughly linearly
+with benign crowd size. The mechanism remains budget-balanced, the
+attacker's gains come from other participants, not from a reserve.
+Fully removing the arbitrage requires moving to the no-arbitrage
+wagering family of \citet{chen2014arbitrage}, which is outside the
+scope of this thesis.
+
+\paragraph{Profitable coalitions.} A three-member coalition
+broadcasting the wager-weighted mean of its members' beliefs
+extracts $+16.9$ to $+19.9$ profit over $1\,000$ rounds. Combining
+the coalition with a privileged lagged signal compounds the two
+channels, yielding $+33.8$ profit. Neither is contained by the skill
+gate.
+
+\paragraph{No equilibrium analysis.} Only named adversary strategies
+are evaluated. The full best-response space is not characterised,
+and no Nash or correlated equilibria are computed.
 
 ## Threats to validity
 
-### Internal validity
+\paragraph{Internal validity.} Pre-audit Elia numbers used a
+pipeline with whole-series min-max normalisation, a non-reproducible
+neural-network seed, tail-adjacent XGBoost validation, and a
+silently-swallowed fallback path. Post-audit headline numbers may
+shift by small but measurable amounts; a pre-fix snapshot is
+retained for accountability. Single-seed real-data runs are the norm
+because the data themselves are fixed; variance arises from
+stochastic forecaster components and is reported as a range across
+five canonical seeds on synthetic data and three seeds on real
+data. The finite-grid CRPS approximation uses a nine-level grid,
+with small but non-zero approximation bias for smooth distributions.
+Pointwise quantile coverage is reported in Chapter 6 and is not
+subject to the same approximation.
 
-- **Training-audit dependency.** All Elia headline numbers before the
-  training-audit spec (`model-training-testing-audit`) used a pipeline
-  with whole-series min/max normalisation, a non-reproducible MLP
-  seed, tail-adjacent XGBoost validation, and a silently-swallowed
-  fallback path. After the audit, headline numbers may shift by small
-  but measurable amounts. We pin a pre-fix snapshot
-  (`onlinev2/outputs/pre_fix_snapshot/`) and report the delta in
-  Appendix B.
-- **Seed-to-seed variance.** Single-seed real-data runs are the norm
-  because the data itself is fixed; variance comes from stochastic
-  forecaster components (XGBoost, MLP). We repeat with five
-  `AUDIT_SEEDS` on synthetic and with three seeds on real data and
-  report the range.
-- **CRPS-hat vs true CRPS.** We use a 9-level finite-grid pinball
-  approximation. The approximation bias is small for smooth
-  distributions but non-zero. We also check pointwise quantile
-  coverage (Chapter 5.3) which is not subject to the same
-  approximation.
+\paragraph{External validity.} The evaluation uses two real-data
+series, both from the same European transmission system operator.
+Transfer to solar, load, or non-European systems cannot be claimed
+without further experiments. The audit slice spans a few months and
+is roughly stationary; full-year drift is not tested in the
+headline. The forecaster panel has seven members; results at
+$n = 50$ or $n = 500$ are not directly extrapolatable.
 
-### External validity
+\paragraph{Construct validity.} CRPS is strictly proper
+\citep{gneiting2007strictly} but weights calibration and sharpness in
+a specific way. A mechanism optimised for CRPS may not be optimal
+for a decision problem that weights tail coverage or point
+accuracy differently. Uniform averaging is a strong baseline
+\citep{timmermann2006forecast}; Chapter 6 also reports deltas against
+the rolling best-single selector (regret) and against
+\citet{vitali2025intermittent} so that the headline is not anchored
+to a single baseline.
 
-- **Two real datasets.** Elia wind and Elia electricity imbalance.
-  Both are single-site European grid data. Results may not transfer
-  to solar, load, or non-European systems without additional tuning.
-- **Stationary test slice.** The 3000-point audit slice spans a few
-  months and is roughly stationary. Full-year drift is not tested on
-  the audit headline numbers.
-- **Seven forecasters.** The panel is intentionally diverse but it is
-  still a small panel. Results at n = 50 or n = 500 are not
-  extrapolatable without testing.
+\paragraph{Statistical validity.} The Diebold--Mariano test assumes
+covariance stationarity of the loss-differential series.
+Heteroscedasticity- and autocorrelation-consistent standard errors
+are used, but residual non-stationarity is not ruled out.
+Family-wise error across approximately ten methods, two datasets,
+and two horizons is not controlled. The headline
+mechanism-versus-uniform $p$-value of $p < 10^{-6}$ is well inside
+any reasonable Bonferroni-adjusted threshold, but finer comparisons
+across methods should be read with this caveat.
 
-### Construct validity
+## Scope
 
-- **CRPS as "aggregate quality".** CRPS is strictly proper (Gneiting
-  and Raftery 2007), but it rewards calibration plus sharpness in a
-  specific way. A mechanism optimised for CRPS may not be optimal for
-  a decision problem that cares primarily about tail coverage or
-  about point accuracy.
-- **Δ vs uniform as the comparison metric.** Uniform is a strong
-  baseline (the forecast combination puzzle). We also report Δ vs
-  `best_single` (regret) and vs `michael_ogd` (published OGD
-  reference) so the headline is not anchored to a single baseline.
+This thesis does not propose a new scoring rule. CRPS and pinball
+loss are used unchanged. It does not propose a new forecasting
+model: the seven base forecasters are standard implementations. It
+does not present a game-theoretic analysis; strategic behaviours are
+studied via simulation, not by computing equilibria. It is not a
+conformal-prediction paper: the recalibration layer is the
+post-hoc isotonic method of \citet{kuleshov2018accurate}, not a
+conformal wrapper. It is a methodology paper with real-data
+validation on two Elia series, not a full-scale empirical study of
+grid-scale prediction markets.
 
-### Statistical validity
+## Summary
 
-- **DM test assumptions.** Diebold–Mariano assumes covariance
-  stationarity of the loss-differential series. We HAC-correct the
-  standard errors but residual non-stationarity is not ruled out.
-- **Multiple comparisons.** We report ~10 methods × 2 datasets × 2
-  horizons. Family-wise error is not controlled. The DM p-value on
-  the headline mechanism-vs-uniform comparison (p < 1e-6) is well
-  inside any reasonable Bonferroni-adjusted threshold, but finer
-  comparisons across methods should be read with that caveat.
-
-## What this is not
-
-- This is not a new scoring rule. CRPS and pinball loss are
-  standard; we use them unchanged.
-- This is not a new forecasting model. The seven base forecasters
-  are standard implementations.
-- This is not a game-theoretic analysis. We test behaviours via
-  simulation presets, not via computing Nash or correlated equilibria.
-- This is not a conformal prediction paper. The recalibration layer is
-  post-hoc isotonic (Kuleshov–Fenner–Ermon), not a conformal wrapper.
-- This is not a full-scale empirical study of Amazon-scale or
-  grid-scale forecasting markets. It is a methodology paper with
-  real-data validation on two Elia series.
-
-## The honest headline
-
-When distributed information is combined through a self-financed
-wagering mechanism and that mechanism learns participant reliability
-online, the aggregate forecast improves vs uniform in the conditions
-where any forecast combination helps: enough forecaster heterogeneity,
-enough rounds for the EWMA to converge, and enough signal in the
-underlying series. Those conditions hold on Elia wind — a 7.1% CRPS
-reduction, t = 40.77, p ≈ 0 over 17 344 evaluation rounds — and do not
-hold on Elia electricity imbalance prices, where the mechanism is
-statistically indistinguishable from uniform. Under both conditions
-the economic structure of Lambert's framework survives the addition
-of online learning. A simple online XGBoost beats Elia's operational
-real-time forecast by ~6% CRPS-MW-eq (69.5 vs 74.0 MW), and the
-mechanism lands ~13% worse than Elia's forecast without using any
-weather inputs.
-The CRPS-only picture is not a win; the combination-puzzle regime is
-real. The contribution is the preserved economic structure and the
-online adaptivity, both demonstrated on real grid data.
-
-## Notes for the write-up
-
-- This chapter is the one reviewers read most carefully. Do not
-  hedge where the evidence is strong; do not over-claim where it is
-  weak. The balance is the point.
-- The "what this is not" subsection is unusual but it prevents
-  reviewer 2 from asking for things that are not in scope.
-- Keep cross-references back to `THESIS_CLAIMS.md` Claims 1–8
-  sharp.
+When predictive information is combined through a self-financed
+wagering mechanism that learns participant reliability online, the
+aggregate forecast improves against uniform averaging in the
+regimes where forecast combination helps generally: sufficient
+forecaster heterogeneity, enough rounds for the EWMA to converge,
+and sufficient signal in the underlying series. These regimes are
+realised on Elia offshore-wind power, where the mechanism delivers
+a $7.1\%$ CRPS reduction ($t = 40.77$, $p \approx 0$) over $17{,}344$
+evaluation rounds; they are not realised on Elia
+electricity-imbalance prices, where the mechanism is
+statistically indistinguishable from uniform. Under both regimes
+the economic structure of the Lambert framework survives the
+addition of online learning. The best single forecaster in the
+panel outperforms Elia's published real-time forecast by
+approximately $6\%$ CRPS-megawatt-equivalent without weather
+inputs; the mechanism, averaging the panel, sits $13\%$ below that
+baseline because it mixes in weaker models. The CRPS picture is
+therefore regime-dependent; the contribution is the preservation of
+economic structure under online adaptivity, demonstrated on
+real grid data.

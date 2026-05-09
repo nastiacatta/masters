@@ -190,22 +190,19 @@ export default function BestSingleAnomalySlide() {
       {!anyLoading && (
         <div className="mt-8 flex flex-col gap-4">
           <InsightCard
-            icon="🎯"
             color="red"
-            title="Wind: best_single dominates aggregation"
-            description="In wind data, best_single (CRPS ≈ 0.033) dominates all aggregation methods (mechanism CRPS ≈ 0.073) — a pattern not observed in the DGP."
+            title="Wind: best single dominates the aggregates"
+            description="On wind the per-round oracle of the best forecaster beats every aggregation rule by a wide margin; the DGP does not show this gap."
           />
           <InsightCard
-            icon="🔬"
             color="green"
-            title="DGP: aggregation can match best_single"
-            description="In the DGP, aggregation methods can approach or beat best_single because the latent truth is identifiable and skill weights converge correctly."
+            title="DGP: aggregates catch the best single"
+            description="On the DGP the latent state is identifiable, skill weights converge, and the mechanism ties or beats the best single."
           />
           <InsightCard
-            icon="⚡"
             color="amber"
-            title="Electricity: smaller gap than wind"
-            description="In electricity data, best_single also beats aggregation methods but the gap between mechanism and best_single is smaller than in wind, suggesting forecasters are more evenly skilled."
+            title="Electricity: narrower gap"
+            description="On electricity the best single still beats the aggregates but the gap is small, consistent with a more uniformly skilled panel."
           />
         </div>
       )}

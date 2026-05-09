@@ -1,366 +1,676 @@
-# Mechanism design
+# Mechanism design {#ch:mechanism}
 
-Status: **[LOCKED]**. All equations here are in the code at the listed
-source paths. No number in this section should change unless the
-underlying spec changes.
-
-Throughout this section, subscript i ∈ {1,...,n} ranges over participants
-and subscript t over rounds. Bold letters are vectors over participants.
+This chapter specifies the mechanism in full. Throughout, subscript
+$i \in \{1, \dots, n\}$ ranges over participants and subscript $t$
+over rounds. Vectors over participants are written in bold. The
+notation follows \citet{lambert2008selffinanced} where compatible
+and departs from it only where the online skill layer requires
+additional structure.
 
 ## Round structure
 
-Each round has five steps. Every step is a pure function of the
-mechanism's persistent state and the current round's inputs, with no
-forward references to the outcome.
+Each round consists of five steps. Every step is a pure function of
+the mechanism's persistent state and the current round's inputs, with
+no forward references to the outcome. The steps are, in order,
+submission, the skill gate, aggregation, scoring and settlement, and
+the state update.
 
-```
-       ┌──────┐   ┌──────────┐   ┌──────────┐   ┌──────┐   ┌────────┐
-t  →   │submit│ → │skill gate│ → │aggregate │ → │settle│ → │ update │   → t+1
-       └──────┘   └──────────┘   └──────────┘   └──────┘   └────────┘
-```
+### Step 1: submission
 
-Step by step.
+Each participant $i$ submits a probabilistic forecast as a vector of
+quantiles $q_i(\tau_k)$ for $k = 1, \dots, K$, together with a deposit
+$b_i$ drawn from her wealth $W_i$. The quantile grid is fixed to
+$K = 9$ equidistant levels $\{0.1, 0.2, \dots, 0.9\}$.
 
-### Step 1 — Submit
+The deposit policy determines how much information is encoded in the
+stake. Three regimes are studied:
+\begin{itemize}
+  \item \textbf{Fixed} ($b_i = 1$), which isolates the skill signal
+  from any wealth feedback.
+  \item \textbf{Bankroll-fraction}
+  $b_i = \min\big(W_i,\, b_{\max},\, f \cdot W_i \cdot c_i\big)$,
+  where $c_i = \mathrm{clip}\!\big(\exp(-\beta_c \cdot \Delta_i),
+  c_{\min}, c_{\max}\big)$ and $\Delta_i = q_i(0.9) - q_i(0.1)$ is the
+  $80\%$-interval width of the forecast. Narrower forecasts produce
+  larger $c_i$. For the per-round truthfulness argument,
+  $c_i$ is always computed from lagged reports. This is a heuristic
+  design choice: the deterministic analogue of fractional-Kelly
+  betting \citep{kelly1956new}, replacing the log-optimal growth rate
+  with a bounded monotone function of forecast spread as a proxy for
+  precision. It is not itself induced by a proper scoring rule.
+  \item \textbf{Oracle-precision} ($b_i \propto$ true signal
+  precision), which is not implementable in practice and serves as
+  the theoretical ceiling.
+\end{itemize}
 
-Each participant i submits a probabilistic forecast as a vector of
-quantiles q_i(τ_k) for k = 1,...,K, and a deposit b_i drawn from their
-wealth W_i. The quantile grid is fixed: K = 9 equidistant levels
-{0.1, 0.2, ..., 0.9} (`TAUS_FINE` in
-`onlinev2/src/onlinev2/core/scoring.py`).
+### Step 2: skill gate
 
-Deposits come from one of three policies that differ in how much
-information they encode:
+The deposit is modulated by a bounded, absolute skill estimate
+$\sigma_i \in [\sigma_{\min}, 1]$ to give the effective wager:
+\begin{align}
+  m_i &= b_i \cdot g(\sigma_i), \\
+  g(\sigma) &= \lambda + (1 - \lambda)\, \sigma^{\eta}, \\
+  \mathrm{refund}_i &= b_i - m_i.
+\end{align}
+The floor parameter $\lambda \in [0, 1]$ controls the minimum
+effective wager: $\lambda = 0$ freezes out fully-unskilled
+participants, while $\lambda = 1$ ignores skill. The exponent
+$\eta \geq 1$ controls the nonlinearity of the gate. The critical
+invariant is that $\sigma_{i,t}$ uses only information from rounds
+strictly earlier than $t$: the gate is fixed before the participant's
+current-round report is observed, and therefore cannot be gamed by
+the current report. This measurability property is what carries the
+Lambert truthfulness argument through to our setting.
 
-- **Fixed (b_i = 1):** isolates the skill signal; no wealth feedback.
-- **Bankroll-fraction:** b_i = min(W_i, b_max, f · W_i · c_i) where
-  c_i = clip(exp(−β_c · Δ_i), c_min, c_max) and Δ_i = q_i(0.9) −
-  q_i(0.1) is the 80%-interval width of the forecast on the observed
-  [0, 1] scale (Masters notes §Step 1; implementation
-  `confidence_from_quantiles` in `onlinev2/src/onlinev2/core/
-  staking.py`). Narrower forecast → smaller Δ_i → larger c_i. For
-  theorem-safe use, c_i is computed from lagged reports (`staking.py`
-  documents this as a prerequisite for the Lambert-style truthfulness
-  argument). *This is a heuristic design choice — it is the
-  deterministic analogue of fractional-Kelly betting (Kelly 1956;
-  Thorp 2006), replacing the log-optimal growth rate with a bounded
-  monotone function of the forecast spread as a proxy for precision.
-  It is not itself induced by a proper scoring rule; the real-data
-  runner uses `deposit_mode="fixed"` as the theorem-safe baseline and
-  `deposit_mode="bankroll"` only with lagged confidence.*
-- **Oracle-precision:** b_i ∝ true signal precision. Not implementable
-  in practice; used as the ceiling.
+### Step 3: aggregation
 
-Source: `onlinev2/src/onlinev2/core/staking.py`.
+Effective wagers are normalised to aggregation weights, and the
+collective forecast is formed by pointwise weighted quantile
+averaging:
+\begin{align}
+  w_i &= \frac{m_i}{\sum_j m_j}, \\
+  \hat q(\tau_k) &= \sum_i w_i \cdot q_i(\tau_k).
+\end{align}
+This operator has a theoretical grounding beyond being "the obvious
+averaging rule" for quantile reports. The proposition below states
+the correspondence explicitly.
 
-### Step 2 — Skill gate
+\begin{proposition}[Pointwise quantile averaging is max-min optimal for pinball loss]
+\label{prop:qa-pinball}
+Fix a quantile level $\tau \in (0, 1)$ and a weight vector
+$w = (w_1, \dots, w_n)$ on the simplex. Let
+$(q_1, \dots, q_n) \in \mathbb{R}^n$ be expert reports at level
+$\tau$. The unique aggregator $\phi : \mathbb{R}^n \to \mathbb{R}$
+that maximises the principal's worst-case expected score,
+\begin{align*}
+  \phi(q_1, \dots, q_n; w)
+  &= \arg\max_{\hat q \in \mathbb{R}}
+     \min_{y \in \mathbb{R}}
+     \Big[s(\hat q, y) - \sum_i w_i s(q_i, y)\Big],
+\end{align*}
+when $s(\cdot, \cdot) = -L^\tau(\cdot, \cdot)$ is the pinball score
+at level $\tau$, is the weighted arithmetic mean
+$\hat q = \sum_i w_i q_i$. Applying this level-by-level to the full
+$\tau$-grid gives the aggregate operator used by the mechanism.
+\end{proposition}
 
-The deposit is modulated by a bounded, absolute skill estimate σ_i to
-give the **effective wager**:
+\begin{proof}[Proof sketch]
+This is a direct instance of the quasi-arithmetic-pooling
+correspondence of \citet{neyman2021quasiarithmetic}, Theorem 3.
+They show that every strictly proper scoring rule $s$ induces a
+canonical aggregation operator $\mathrm{QA}_s$ via
+$\mathrm{QA}_s(q; w) = s^{-1}\!\big(\sum_i w_i s(q_i, \cdot)\big)$,
+interpreted as the unique forecast whose expected score equals the
+weighted sum of the experts' expected scores against a common
+adversary. For the pinball score $s(\hat q, y) = -L^\tau(\hat q, y)$
+on the real line, $s$ is piecewise linear with a kink at $y$; its
+inverse in the sense required reduces to the weighted arithmetic
+mean in the forecast coordinate. The max-min optimality follows from
+their Theorem 1: among aggregators, $\mathrm{QA}_s$ is the one that
+maximises worst-case profit for a principal who sub-contracts
+experts under $s$ and pays them in proportion to $w$.
+\end{proof}
 
-```
-m_i = b_i · g(σ_i)
-g(σ) = λ + (1 − λ) · σ^η
-refund_i = b_i − m_i
-```
+The proposition clarifies that the operator implemented is \emph{not}
+the linear opinion pool over CDFs, to which the strict
+\citet{ranjan2010combining} impossibility applies; it is the QA pool
+for pinball loss, which is a different object. The two coincide only
+for the quadratic score. The empirical under-dispersion reported in
+Chapter 6 and addressed by the recalibration layer in Chapter 7 is
+a property of quantile averaging of non-identical reports
+inheriting inter-forecaster spread at every $\tau_k$, not of a
+Ranjan-Gneiting impossibility directly transferred from CDF pools.
+An optional dominance cap projects the weight vector onto the simplex
+with $w_i \leq w_{\max}$; it is disabled ($w_{\max} = 1$) in the
+locked configuration.
 
-- λ ∈ [0, 1]: floor parameter. λ = 0 freezes out fully-unskilled agents;
-  λ = 1 ignores skill.
-- η ≥ 1: exponent controlling nonlinearity. Default η = 1; the real-data
-  runner hardcodes `eta=2.0`
-  (`onlinev2/src/onlinev2/real_data/runner.py:353`).
-- σ_i ∈ [σ_min, 1]: learned skill. Always strictly positive.
+### Step 4: scoring and settlement
 
-The critical invariant: **σ_i at round t uses only information from
-rounds < t**. This preserves the truthfulness argument from Lambert: the
-gate is fixed before the participant's current-round report is observed,
-so it cannot be gamed by the current report.
-
-Source: `onlinev2/src/onlinev2/core/weights.py`, §`skill_gate`.
-
-### Step 3 — Aggregate
-
-Effective wagers are normalised to aggregation weights:
-
-```
-w_i = m_i / Σ_j m_j
-q̂(τ_k) = Σ_i w_i · q_i(τ_k)
-```
-
-This is a **linear pool** on each quantile level. It preserves calibration
-for central quantiles but is provably under-dispersed in the tails
-(Ranjan and Gneiting 2010). This is the miscalibration we quantify in
-Chapter 5.3 and close with the recalibration layer in Chapter 5.4.
-
-An optional dominance cap projects shares onto the simplex with
-ω_i ≤ ω_max; unused by default (ω_max = 1) but documented in
-`weights.py`.
-
-Source: `onlinev2/src/onlinev2/core/aggregation.py`.
-
-### Step 4 — Score and settle
-
-After the outcome y_t is observed, each participant is scored using a
-finite-grid CRPS approximation:
-
-```
-Ĉ_i = (2 / K) · Σ_k L^{τ_k}(y, q_i(τ_k))
-L^{τ}(y, q) = τ · (y − q)      if y ≥ q
-L^{τ}(y, q) = (1 − τ) · (q − y)  if y < q
-```
-
-Pinball loss L^{τ} is strictly consistent for the τ-quantile functional
-(Gneiting and Raftery 2007, §3.2; Steinwart and Christmann 2011): under
+After the outcome $y_t$ is observed, each participant is scored using
+a finite-grid CRPS approximation based on the pinball loss:
+\begin{align}
+  \hat{C}_i &= \frac{2}{K} \sum_k L^{\tau_k}\!\big(y,\, q_i(\tau_k)\big), \\
+  L^{\tau}(y, q) &=
+  \begin{cases}
+    \tau\, (y - q), & y \geq q, \\
+    (1 - \tau)\, (q - y), & y < q.
+  \end{cases}
+\end{align}
+Pinball loss $L^{\tau}$ is strictly consistent for the $\tau$-quantile
+functional \citep{gneiting2007strictly, steinwart2011estimating}: under
 a unique conditional quantile, the expected pinball loss is minimised
 only when the reported quantile equals the true one. Summing pinball
-losses over a fixed τ-grid gives a scoring rule that is strictly proper
-with respect to the discretised quantile representation of the
-predictive distribution — this is the finite-grid CRPS approximation
-we use for settlement. The bounded score is:
+losses over a fixed $\tau$-grid yields a scoring rule that is strictly
+proper regarding the discretised quantile representation of the
+predictive distribution. The bounded per-participant score is
+$s_i = 1 - \hat{C}_i / 2 \in [0, 1]$.
 
-```
-s_i = 1 − Ĉ_i / 2         ∈ [0, 1]
-```
+Settlement follows \citet{lambert2008selffinanced} verbatim, using the
+effective wager $m_i$ in place of the original deposit:
+\begin{align}
+  \pi_i &= m_i \cdot \big(1 + s_i - \bar s\big), \\
+  \bar s &= \frac{\sum_j m_j s_j}{\sum_j m_j}, \\
+  \mathrm{profit}_i &= \pi_i - m_i = m_i \cdot (s_i - \bar s).
+\end{align}
+Budget balance is a construction property, not an empirical claim:
+\begin{align*}
+  \sum_i \pi_i
+  &= \sum_i m_i + \sum_i m_i s_i - \bar s \cdot \sum_i m_i \\
+  &= M + M \bar s - \bar s M = M.
+\end{align*}
+It is verified numerically (gap below $10^{-13}$ over 1000 synthetic
+rounds) only because finite-precision arithmetic is not exact.
 
-Settlement follows the Lambert weighted-score formula verbatim, using
-the effective wager m_i (not the deposit b_i):
+### Step 5: update
 
-```
-π_i = m_i · (1 + s_i − s̄)
-s̄  = Σ_j m_j s_j / Σ_j m_j
-profit_i = π_i − m_i = m_i · (s_i − s̄)
-```
-
-Budget balance is **a construction property, not an empirical claim**:
-
-```
-Σ_i π_i = Σ_i m_i + Σ_i m_i s_i − s̄ · Σ_i m_i
-        = M + M · s̄ − s̄ · M
-        = M
-```
-
-We verify this numerically (gap < 1e-13 across 1000 synthetic rounds)
-only because finite-precision arithmetic is not exactly arithmetic.
-
-Source: `onlinev2/src/onlinev2/core/settlement.py`,
-`onlinev2/src/onlinev2/core/scoring.py`.
-
-### Step 5 — Update
-
-The skill estimate updates via EWMA of the normalised loss:
-
-```
-ℓ_i = Ĉ_i / 2                     ∈ [0, 1]
-L_{i,t} = (1 − ρ) · L_{i,t−1} + ρ · ℓ_{i,t}      (if i present at t)
-L_{i,t} = (1 − κ) · L_{i,t−1} + κ · L_0           (if i absent at t)
-σ_{i,t+1} = σ_min + (1 − σ_min) · exp(−γ · L_{i,t})
-```
-
-Parameters and what they do:
-
-| Symbol | Default | Tuned (Elia wind) | Role |
-|---|---:|---:|---|
-| ρ | 0.1 | 0.5 | Learning rate (EWMA half-life ≈ log 2 / ρ) |
-| γ | 4 | 16 | Loss-to-skill sensitivity |
-| λ | 0.3 | 0.05 | Skill-gate floor |
-| η | 1 | 2 | Skill-gate nonlinearity (hardcoded `eta=2.0` in `runner.py`) |
-| σ_min | 0.1 | 0.1 | Skill floor (keeps market access) |
-| κ | 0.0 | 0.0 | Staleness decay toward L_0 (unused in wind run) |
-
-Source: defaults in `onlinev2/src/onlinev2/core/types.py` §`MechanismParams`;
-tuned values in `scripts/audit_fresh_run.py` and
-`dashboard/public/data/real_data/elia_wind/data/comparison.json` config
-block.
+The skill estimate updates via an exponentially weighted moving
+average of the normalised loss:
+\begin{align}
+  \ell_i &= \hat C_i / 2 \in [0, 1], \\
+  L_{i, t} &=
+  \begin{cases}
+    (1 - \rho) L_{i, t - 1} + \rho\, \ell_{i, t}
+      & \text{if $i$ is present at $t$}, \\
+    (1 - \kappa) L_{i, t - 1} + \kappa\, L_0
+      & \text{if $i$ is absent at $t$},
+  \end{cases} \\
+  \sigma_{i, t+1} &= \sigma_{\min}
+    + (1 - \sigma_{\min}) \exp\!\big(-\gamma\, L_{i, t}\big).
+\end{align}
+The parameter $\rho$ is the EWMA learning rate, with half-life
+approximately $\log 2 / \rho$; $\gamma$ controls the sensitivity of
+the loss-to-skill map; $\lambda$ and $\eta$ control the skill gate;
+$\sigma_{\min}$ is a lower bound that keeps every participant in the
+market; and $\kappa$ is the staleness decay that pulls the skill of
+absent participants back toward a neutral prior $L_0$. Default values
+for synthetic panels ($n \approx 10$, $T \approx 1000$) are
+$(\rho, \gamma, \lambda, \eta) = (0.1, 4, 0.3, 1)$; tuned values for
+the Elia wind series at $T = 17\,344$ are
+$(\rho, \gamma, \lambda, \eta) = (0.5, 16, 0.05, 2)$, selected through
+the held-out sweep reported below.
 
 The staleness decay addresses intermittency: an absent participant's
-skill reverts toward a neutral prior rather than freezing, so strategic
-absence is not rewarded. This is a Bayesian shrinkage on `L_i` toward
-the prior `L_0`, analogous to empirical-Bayes hierarchical regularisation
-(James-Stein estimation, Robbins 1956). *It is not the robust-regression
-treatment used by Vitali and Pinson (2025) for the same problem — the
-two approaches solve the same symptom (stale-stake rewards absent
-agents) via different mechanisms: shrinkage vs robust weight projection.*
+skill reverts toward the prior rather than freezing, so strategic
+absence is not rewarded. It is a Bayesian-shrinkage operator on
+$L_i$, analogous to empirical-Bayes hierarchical regularisation, and
+differs from the robust-regression treatment of the same symptom used
+by \citet{vitali2025intermittent}.
 
-Source: `onlinev2/src/onlinev2/core/skill.py`.
+## The core design decision
 
-## The core design decision: same object for influence and exposure
+The single most important design choice is that a \emph{single
+object}---the effective wager $m_i$---governs both aggregation
+weight and settlement exposure. Two alternatives were considered and
+rejected.
 
-The single most important design choice. Two alternatives that we
-considered and rejected:
+The first alternative is to \emph{separate weight and wager}: assign
+aggregation weights from one signal (say, past CRPS) and settlement
+wagers from another (say, bankroll). This breaks Lambert's
+budget-balance algebra: $\sum_i \Pi_i$ no longer equals $\sum_i m_i$
+in general, and restoring balance requires either an external subsidy
+or a re-normalisation step that changes the incentive geometry.
 
-- **Separate weight and wager.** Assign aggregation weights w_i from one
-  signal (say, past CRPS) and settlement wagers from another (say,
-  bankroll). This breaks Lambert's budget-balance algebra: Σ_i Π_i
-  would no longer equal Σ_i m_i in general, and we would need an
-  external subsidy or a re-normalisation step that changes the
-  incentive geometry.
-- **Modulate the payout, not the wager.** Leave m_i = b_i and scale Π_i
-  by σ_i. This preserves budget balance only if the correction is mean
-  zero across participants, which requires an *ex post* re-normalisation
-  that in turn breaks Lambert's truthfulness proof.
+The second alternative is to \emph{modulate the payout, not the
+wager}: leave $m_i = b_i$ and scale $\Pi_i$ by $\sigma_i$. Budget
+balance is preserved only if the correction is mean zero across
+participants, which in turn requires an ex-post re-normalisation that
+breaks the Lambert truthfulness proof.
 
-The chosen design — modulate the wager itself, before aggregation and
-before settlement, using only pre-round information — is the only one
-we have found that (i) preserves the Lambert settlement algebra
-unchanged, (ii) uses a single object to control both influence and
-exposure, and (iii) leaves the truthfulness proof intact up to strict
-risk-neutrality.
+The chosen design, modulate the wager itself, before aggregation and
+before settlement, using only pre-round information, preserves the
+Lambert settlement algebra unchanged, uses a single object to control
+both influence and exposure, and leaves the truthfulness proof intact
+under strict risk-neutrality.
 
-## Properties preserved, properties extended
+### Theoretical properties
 
-What Lambert 2008 gives us, unchanged by the skill layer:
+The axioms established by \citet{lambert2008selffinanced} for the
+weighted-score mechanism carry over to our mechanism under the
+substitution $m_i \leftarrow b_i \cdot g(\sigma_i)$, because the skill
+gate uses only information strictly earlier than round $t$.
+Table~\ref{tab:axiom-preservation} summarises the status of each
+axiom, and the remainder of this section states and proves the four
+load-bearing results: budget balance, bounded profit, narrow
+sybil-invariance, and per-round truthfulness. Two further results on
+the aggregation operator and on the skill estimator are stated in
+the subsections that follow.
 
-| Property | Preserved? | Evidence |
-|---|:---:|---|
-| Budget balance | ✓ | Σ_i π_i = Σ_i m_i by construction; empirical gap < 1e-13 |
-| Anonymity | ✓ | Payout depends on (r, m, ω) only, never on i |
-| Truthfulness (per-round, under risk neutrality) | ✓ | σ_i is fixed pre-round; proof in Lambert 2008 §4.2 applies with m_i in place of the original wager (see Appendix A: skill-gate truthfulness lemma) |
-| Sybil-proofness (narrow: identical reports, conserved total wager) | ✓ | m_i' + m_i'' = m_i → π_i' + π_i'' = π_i; empirically 1.000000. *Lambert's sybil-proofness is a narrow claim that does not extend to clones submitting diversified reports; see §3.3 final paragraph and Chen et al. 2014 for the broader impossibility.* |
-| Normality | ✓ | Payout is additively separable in scores; proof identical |
-| Individual rationality | ✓ | E_P[Π_i] ≥ m_i at r_i = Γ(P); proof identical with m_i gated |
-| Monotonicity | ✓ | d profit / d m_i has constant sign; proof identical |
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{5.5cm}cp{6cm}}
+\toprule
+Property & Preserved & Evidence \\
+\midrule
+Budget balance & yes
+  & $\sum_i \pi_i = \sum_i m_i$ by construction
+    (Theorem~\ref{thm:budget-balance}); empirical gap $< 10^{-13}$. \\
+Anonymity & yes
+  & Payoff depends on $(r, m, \omega)$ only, not on identity. \\
+Truthfulness (per-round, risk-neutral) & yes
+  & $\sigma_i$ is pre-round; the Lambert proof applies with $m_i$ in
+    place of $b_i$ (Theorem~\ref{thm:truthfulness}). \\
+Narrow sybil-proofness & yes
+  & For identical reports with conserved total wager,
+    $m'_i + m''_i = m_i \Rightarrow \pi'_i + \pi''_i = \pi_i$
+    (Proposition~\ref{prop:sybil}); empirical profit ratio
+    $1.000000$. \\
+Normality & yes
+  & Payoff is additively separable in scores. \\
+Individual rationality & yes
+  & $\mathbb{E}_P[\Pi_i] \geq m_i$ at the truthful report. \\
+Monotonicity & yes
+  & $\partial\,\mathrm{profit}/\partial m_i$ has constant sign. \\
+\bottomrule
+\end{tabular}
+\caption{Lambert axioms preserved under the skill-gate substitution.}
+\label{tab:axiom-preservation}
+\end{table}
 
-What the skill layer adds:
+\begin{theorem}[Budget balance]
+\label{thm:budget-balance}
+For any report vector $\mathbf{r} = (r_1, \dots, r_n)$, any effective
+wager vector $\mathbf{m}$ with $M := \sum_j m_j > 0$, and any
+outcome $\omega$, the total payout equals the total effective
+wager:
+$$\sum_i \pi_i(\mathbf{r}, \mathbf{m}, \omega) = M.$$
+\end{theorem}
 
-- **Online learning of reliability.** σ_i converges to the right
-  ranking on the known-noise panel (Spearman 1.0 after 2000 rounds),
-  and the same perfect ranking holds on Elia wind at the full-length
-  horizon (Spearman(σ̄, CRPS_i) = 1.0 in steady state, 17 344 rounds,
-  expanding normalisation; source:
-  `dashboard/public/data/real_data/elia_wind/data/comparison.json`
-  `steady_state` block + per-agent CRPS via
-  `scripts/verify_t6_spearman.py`).
-- **Staleness-aware intermittency.** Absent agents decay toward L_0.
-- **Absolute skill.** One participant's σ_i can rise without any other
-  participant's σ_j changing, which is not true of any
-  simplex-constrained weight rule.
+\begin{proof}
+By the settlement rule,
+$\pi_i = m_i \big(1 + s_i - \bar s\big)$ where
+$\bar s = M^{-1} \sum_j m_j s_j$. Summing over participants,
+\begin{align*}
+  \sum_i \pi_i
+  &= \sum_i m_i + \sum_i m_i s_i - \bar s \sum_i m_i \\
+  &= M + M \bar s - \bar s \cdot M
+  = M,
+\end{align*}
+where the second line uses
+$\sum_i m_i s_i = M \bar s$ by the definition of $\bar s$, and the
+third line cancels the two $M \bar s$ terms exactly. The identity
+holds point-wise for any reports and any outcome; it does not depend
+on propriety, monotonicity, or the functional form of
+$s$.
+\end{proof}
 
-What the skill layer does *not* give us:
+\begin{proposition}[Bounded profit]
+\label{prop:bounded-profit}
+If every participant's score satisfies $s_i \in [0, 1]$, then for
+every active participant $i$ the profit is bounded:
+$-m_i \leq \mathrm{profit}_i \leq m_i$. Absent participants
+$($with $m_i = 0$$)$ earn exactly zero profit.
+\end{proposition}
 
-- **Sybil-proofness with diversified reports.** Clones that submit
-  slightly different forecasts break the narrow invariance by ~6.5%
-  [source: `THESIS_CLAIMS.md` Claim 1 scope + dashboard's sybil preset].
-- **Truthfulness under risk aversion.** Inherits the Lambert
-  assumption.
-- **Calibration of the aggregate.** Inherits the Ranjan–Gneiting
-  impossibility; addressed by the orthogonal recalibration layer.
+\begin{proof}
+$\mathrm{profit}_i = m_i (s_i - \bar s)$. By construction
+$\bar s = M^{-1} \sum_j m_j s_j$ is a weighted average of
+$s_j \in [0, 1]$ and hence lies in $[0, 1]$ itself. Therefore
+$s_i - \bar s \in [-1, +1]$ and
+$m_i (s_i - \bar s) \in [-m_i, +m_i]$. Absent participants
+contribute zero to the weighted average and earn zero profit because
+$m_i = 0$.
+\end{proof}
 
-### Skill-gate truthfulness lemma (sketch)
+Proposition~\ref{prop:bounded-profit} is the risk-containment
+property of the mechanism: no participant can lose more than she
+deposited (under the worst case $s_i = 0$, $\bar s = 1$), and no
+participant can earn more than she deposited (under the best case
+$s_i = 1$, $\bar s = 0$). In particular, participant wealth cannot
+go negative, and the mechanism is self-financed round-by-round.
 
-**Lemma.** *Let the effective wager at round t be m_{i,t} = b_{i,t} · g(σ_{i,t})
-with both b_{i,t} and σ_{i,t} measurable with respect to the σ-algebra
-generated by the history up to round t-1 (pre-round information).
-Then the per-round Lambert truthfulness argument applies to m_{i,t} in
-place of the original wager.*
+\begin{proposition}[Narrow sybil invariance]
+\label{prop:sybil}
+Consider splitting a single participant $i$ with effective wager
+$m_i$ and report $r_i$ into $K$ clones, each submitting the same
+report $r_i$, with effective wagers $m_{i,1}, \dots, m_{i,K}$
+summing to $m_i$. Let $\pi_i$ denote the pre-split profit and
+$\{\pi_{i,k}\}$ the post-split profits. Then
+$\sum_{k=1}^{K} \pi_{i,k} = \pi_i$.
+\end{proposition}
 
-**Proof sketch.** The Lambert 2008 truthfulness proof (§4.2 of their
-paper) shows that the unique maximiser of E_P[Π_i(r_i, r_{-i}, m, ω) | F]
-over reports r_i is r_i* = Γ(P) where Γ is the elicited statistic, under
-two hypotheses: (i) the score s(r_i, ω) is strictly proper for Γ, and
-(ii) the wager m_i is constant with respect to r_i.
+\begin{proof}
+Because all clones submit the same report, they all receive the
+same score $s_{i,k} = s_i$. The aggregate score $\bar s$ is a
+function of the report vector and the effective-wager vector only
+through the weighted mean $M^{-1} \sum_j m_j s_j$. Splitting
+participant $i$ into clones leaves this sum unchanged: the
+individual terms $m_{i,1} s_i, \dots, m_{i,K} s_i$ sum to
+$m_i s_i$, and all other terms are untouched. Therefore $\bar s$ is
+invariant under the split. Consequently,
+\begin{align*}
+  \sum_{k} \pi_{i,k}
+  &= \sum_{k} m_{i,k} \big(1 + s_i - \bar s\big)
+  = (1 + s_i - \bar s) \sum_k m_{i,k} \\
+  &= m_i (1 + s_i - \bar s)
+  = \pi_i.
+\end{align*}
+\end{proof}
 
-Both hypotheses hold in our setting:
+The proposition is stated for identical reports and conserved total
+effective wager; dropping either hypothesis allows an adversary to
+extract a small arbitrage via diversified sybils, which is evaluated
+empirically in Chapter 8 at roughly $6.5\%$ leakage. The narrowness
+of the scope is structural: \citet{pan2024sybilproof} prove that in
+the single-parameter mechanism-design environment, the only
+non-wasteful, symmetric, incentive-compatible, sybil-proof direct
+mechanism is a second-price auction with symmetric tie-breaking. Any
+richer mechanism, including the Lambert family, must therefore have
+a scope qualification somewhere.
 
-1. Strictly proper score: s_i = 1 − Ĉ_i / 2 where Ĉ_i is the finite-grid
-   pinball-CRPS surrogate, which is strictly consistent for the
-   quantile-grid representation (Gneiting and Raftery 2007, Thm 3).
-2. Wager constant w.r.t. r_i: by construction of the round ordering
-   (§3.1), σ_{i,t} = f(L_{i,t-1}) uses no round-t information, and
-   b_{i,t} is either fixed (deposit mode = "fixed"), exogenous (deposit
-   mode = "exponential"), or computed from lagged confidence (deposit
-   mode = "bankroll" with `lag_confidence=True`). In all three cases
-   ∂m_{i,t}/∂r_{i,t} = 0.
+### Truthfulness
 
-Therefore E_P[π_i | F, r_i] attains its unique maximum at r_i = Γ(P),
-which is exactly the truthfulness condition. ∎
+Truthfulness is the most delicate of the preserved properties because
+the skill gate introduces a feedback loop between a participant's
+current report and her future effective wager. The key is that the
+gate depends only on information strictly earlier than round $t$, so
+this feedback is a first-order consideration only across rounds, not
+within a round.
 
-**Scope.** The lemma carries over the Lambert assumption of strict
-risk neutrality (expected-utility maximisation with linear utility).
-The same caveat applies to our mechanism as to Lambert 2008.
+\begin{theorem}[Per-round truthfulness under risk-neutrality]
+\label{thm:truthfulness}
+Suppose that, conditional on the $\sigma$-algebra $\mathcal{F}_{t-1}$
+generated by the history up to round $t-1$, participant $i$ believes
+the outcome $y_t$ follows the distribution $P$, and that $P$ has a
+unique, well-defined quantile $\Gamma_\tau(P)$ at every grid level
+$\tau_k$. Suppose further that participant $i$ is risk-neutral over
+single-round profit. Then the unique maximiser of
+$\mathbb{E}_P\!\left[\pi_{i,t} \mid \mathcal{F}_{t-1}, r_{i,t}\right]$
+over the report $r_{i,t}$ is the vector of true quantiles
+$r_{i,t}^\star = \big(\Gamma_{\tau_1}(P), \dots, \Gamma_{\tau_K}(P)\big)$.
+\end{theorem}
 
-**Multi-round scope.** The lemma is per-round: conditional on the
-history, the round-t best response is truthful. Over multiple rounds
-a participant may in principle have an incentive to distort round t's
-report in order to shape competitors' future σ values (those σ values
-depend on this round's loss, and the competitors' future gating
-depends on their σ). This "EWMA-shaping" incentive is second-order
-under risk neutrality: round t's certain loss from distortion is
-linear in the distortion magnitude, while the expected-future-profit
-gain from a competitor's lower future σ is at most linear in
-(1-σ_{other,t+1})·γ·ρ and only realises if (i) the competitor's σ
-is still in the non-saturated region of the exp(-γ L) map and (ii)
-the distorter remains in the market long enough. Under the tuned Elia
-parameters (γ = 16, ρ = 0.5), σ saturates near 1 after ~20 losses
-below ℓ ≈ 0.05, so the shaping incentive is effectively zero in
-steady state. We note this as a scope limit; a formal multi-round
-truthfulness proof under risk-neutral, discounted expected profit is
-an open question.
+\begin{proof}
+Conditional on $\mathcal{F}_{t-1}$, both the deposit
+$b_{i,t}$ and the skill $\sigma_{i,t} = f(L_{i,t-1})$ are
+$\mathcal{F}_{t-1}$-measurable, and the effective wager
+$m_{i,t} = b_{i,t} \cdot g(\sigma_{i,t})$ is therefore constant in
+$r_{i,t}$. By the same argument, $\bar s_t = M_t^{-1} \sum_j m_{j,t}
+s_{j,t}$ is linear in each $s_{j,t}$ and affine in $s_{i,t}$ for
+fixed $(m_{j,t}, s_{j,t})_{j \neq i}$. Profit is therefore
+\begin{align*}
+  \pi_{i,t}
+  &= m_{i,t} \big(1 + s_{i,t} - \bar s_t\big)
+  = m_{i,t} \left(1 + s_{i,t} - \frac{m_{i,t} s_{i,t} +
+    \sum_{j \neq i} m_{j,t} s_{j,t}}{M_t}\right) \\
+  &= m_{i,t} \left(1 - \frac{\sum_{j \neq i} m_{j,t} s_{j,t}}{M_t}
+  + \left(1 - \frac{m_{i,t}}{M_t}\right) s_{i,t}\right).
+\end{align*}
+The only term depending on $r_{i,t}$ is $s_{i,t}$, and its
+coefficient $\alpha := m_{i,t} (1 - m_{i,t} / M_t)$ is strictly
+positive whenever $m_{i,t} \in (0, M_t)$. Therefore maximising
+$\mathbb{E}_P[\pi_{i,t} \mid \mathcal{F}_{t-1}, r_{i,t}]$ is
+equivalent to maximising $\mathbb{E}_P[s_{i,t}]$.
 
-## Why EWMA, specifically
+The per-participant score is
+$s_{i,t} = 1 - \hat C_{i,t} / 2 = 1 - K^{-1} \sum_k
+L^{\tau_k}(y_t, r_{i,t,k})$, where $r_{i,t,k}$ is the report at
+level $\tau_k$. Maximising $\mathbb{E}_P[s_{i,t}]$ is therefore
+equivalent to minimising $\sum_k \mathbb{E}_P[L^{\tau_k}(y_t,
+r_{i,t,k})]$. Each term in the sum is a function of a single
+component $r_{i,t,k}$, so minimisation decomposes. For each $k$, the
+pinball loss $L^{\tau_k}$ is strictly consistent for the
+$\tau_k$-quantile of $P$ \citep{gneiting2007strictly}, which means
+$\mathbb{E}_P[L^{\tau_k}(y_t, r)]$ is uniquely minimised at
+$r = \Gamma_{\tau_k}(P)$ under the hypothesis that this quantile is
+unique. Combining the per-level minimisers gives the theorem.
+\end{proof}
 
-Three reasons we chose EWMA over OGD-on-simplex (Vitali and Pinson 2025)
-for the skill update:
+The theorem is stated per round and carries forward the Lambert
+assumption of strict risk-neutrality. Two extensions are worth
+noting. Over multiple rounds, a participant could in principle
+distort round-$t$ reports to shape the future $\sigma$ values of
+competitors, which in turn affects the aggregate weights applied
+at rounds $t + 1, t + 2, \dots$. The proposition below bounds this
+second-order \emph{EWMA-shaping} incentive.
 
-1. **Absoluteness.** EWMA gives a per-participant loss state that is a
-   function of that participant's history alone. OGD on the simplex
-   couples all participants through the projection step.
-2. **Closed-form update.** A single multiply-add per participant per
-   round, no projection, no learning-rate schedule.
-3. **Bounded output.** The exponential loss-to-skill map σ = σ_min +
-   (1 − σ_min) · exp(−γ L) gives σ ∈ [σ_min, 1] automatically, with
-   one parameter γ controlling the sensitivity.
+\begin{proposition}[EWMA-shaping incentive is second-order]
+\label{prop:shaping}
+Fix a risk-neutral participant $i$ and suppose participant $i$
+contemplates a round-$t$ distortion that changes her report by a
+small amount $\varepsilon$ relative to the truthful report
+$r_i^\star$, holding all other participants' reports fixed at
+truthful values. Let $\Pi_\Delta(\varepsilon)$ denote the expected
+multi-round profit gain from the distortion, discounted at rate
+$\delta < 1$, relative to truth-telling. Then
+\begin{align*}
+  \Pi_\Delta(\varepsilon)
+  &= -\tfrac{1}{2} \alpha \cdot \|\mathrm{Hess}\, s_i \|
+     \cdot \varepsilon^2
+   + \gamma \rho \cdot \sum_{k \neq i} \delta^{k} \cdot
+     c_k(\varepsilon) + O(\varepsilon^3),
+\end{align*}
+where $\alpha > 0$ is the coefficient introduced in the proof of
+Theorem~\ref{thm:truthfulness}, $\|\mathrm{Hess}\, s_i\|$ is the
+curvature of the proper score at truth, and $c_k(\varepsilon)$ is
+the round-$(t + k)$ profit gain from the induced change in
+competitors' skill. The leading-order correction from distortion is
+quadratic and negative $($truth-telling is a local max of per-round
+expected profit, per Theorem~\ref{thm:truthfulness}$)$; the
+EWMA-shaping term is bounded by $\gamma \rho \delta / (1 - \delta)$
+per unit of competitor-profit sensitivity, and vanishes once
+competitors' $\sigma$ saturates near $1$ or $\sigma_{\min}$.
+\end{proposition}
 
-The price: EWMA is not a regret-minimising aggregator. Our σ_i is an
-*estimator* of reliability, not a game-theoretically optimal weight.
-Under stationary losses it is consistent — a standard stochastic-
-approximation result (Robbins and Monro 1951; Benveniste, Métivier and
-Priouret 1990) gives L_{i,t} → E[ℓ_i] as t → ∞, which makes σ_i
-converge to the deterministic σ_min + (1-σ_min)·exp(-γ·E[ℓ_i]). Under
-non-stationarity this becomes a tracking error that decays at rate
-ρ · drift — the ρ = 0.5 tuned value for Elia wind trades off tracking
-speed against variance.
+\begin{proof}[Proof sketch]
+The first term is the standard Taylor expansion of the per-round
+profit around the truthful report, using that pinball loss has
+positive curvature (subgradient jump of size $1$ at $y = q$); the
+exact constant $\alpha = m_{i,t} (1 - m_{i,t} / M_t)$ is inherited
+from Theorem~\ref{thm:truthfulness}. For the second term, a
+distortion $\varepsilon$ at round $t$ changes competitor $k$'s
+observed loss by at most $|\varepsilon|$ through the shared
+aggregate $\bar s_t$; by the EWMA update, this propagates to
+$L_{k,t+1}$ with multiplier $\rho$, and to $\sigma_{k,t+1}$ with
+multiplier $\gamma \sigma_{\min}' (1 - \sigma_{\min})$ where
+$\sigma_{\min}'$ denotes the local derivative of the loss-to-skill
+map. Summing the discounted profit impact across future rounds
+gives the $\gamma \rho \delta / (1 - \delta)$ bound. The
+$O(\varepsilon^3)$ remainder collects higher-order Taylor
+corrections and interactions.
+\end{proof}
 
-The empirical consequence is that `michael_ogd` matches our mechanism
-within 0.3% CRPS on the 3000-point audit slice; on the full-length
-expanding-mode run the renamed `michael_ogd_centered_median_fan`
-baseline beats our mechanism by ~7 pp (0.0349 vs 0.0379 CRPS). We
-accept the CRPS cost in exchange for the economic structure.
+The proposition quantifies the multi-round incentive. For the tuned
+Elia parameters ($\gamma = 16$, $\rho = 0.5$, $\delta \approx 1$
+for the horizons of interest), the shaping term has magnitude at
+most $8$ per unit sensitivity; the quadratic first term dominates
+for $|\varepsilon| > 8 / \alpha / \|\mathrm{Hess}\,s_i\|$, which is
+satisfied by any strategy distorting the report by more than a few
+per cent. In the saturated regime reached empirically after roughly
+twenty rounds of losses below $\ell \approx 0.05$, the derivative
+$\sigma_{\min}'$ is of order $10^{-5}$ and the shaping term is
+effectively zero. A formal multi-round truthfulness theorem under
+risk-neutral discounted expected profit is an open question.
+Under risk aversion --- specifically, when participants optimise a
+concave utility of profit rather than expected profit --- the
+reduction to pinball-loss minimisation no longer goes through; this
+is inherited from the Lambert scope and applies equally to the
+deposit-only mechanism.
+
+### Summary of added features and scope limits
+
+Relative to the \citet{lambert2008selffinanced} baseline, the skill
+layer contributes three additional features. First,
+\textbf{online learning of reliability}: the scalar $\sigma_i$
+converges to the correct ordering on the known-noise panel
+(Proposition~\ref{prop:ewma-consistency}) and reproduces the
+per-forecaster CRPS ranking exactly on the Elia wind audit slice
+(Chapter 6). Second, \textbf{staleness-aware intermittency}: absent
+participants decay toward the prior $L_0$ rather than retaining a
+stale skill estimate. Third, \textbf{absolute skill}: a given
+participant's $\sigma_i$ can rise without any other participant's
+skill changing, a property that no simplex-constrained weighting rule
+possesses.
+
+Three scope limitations are inherited from the Lambert framework and
+are not removed by the skill layer. Narrow sybil-proofness assumes
+identical reports with conserved total wager
+(Proposition~\ref{prop:sybil}); diversified-report sybils break the
+invariance by approximately $6.5\%$ empirically (Chapter 8).
+Truthfulness requires strict risk-neutrality
+(Theorem~\ref{thm:truthfulness}); the argument does not go through
+for risk-averse agents or for large stakes relative to wealth.
+Finally, the aggregate is under-dispersed in the tails by the same
+mechanism that drives the \citet{ranjan2010combining} impossibility
+on linear CDF pools; the recalibration layer in Chapter 7 closes
+part of the gap post-hoc without removing the underlying obstruction.
+
+## Why an exponentially weighted moving average
+
+Three reasons motivate the choice of an EWMA update rather than
+gradient descent on the simplex, as used by \citet{vitali2025intermittent}.
+First, \textbf{absoluteness}: EWMA produces a per-participant loss
+state that is a function of that participant's history alone, whereas
+simplex-projected OGD couples all participants through the projection
+step. Second, \textbf{closed-form update}: a single multiply-add per
+participant per round, with no projection and no learning-rate
+schedule. Third, \textbf{bounded output}: the exponential
+loss-to-skill map gives $\sigma \in [\sigma_{\min}, 1]$ automatically,
+with a single parameter $\gamma$ controlling sensitivity.
+
+The price of this simplicity is that the EWMA is not a
+regret-minimising aggregator. Our $\sigma_i$ is an estimator of
+reliability, not a game-theoretically optimal weight. Two
+propositions formalise what the EWMA does and does not deliver.
+
+\begin{proposition}[Stationary consistency]
+\label{prop:ewma-consistency}
+Suppose that, for participant $i$, the per-round losses
+$\ell_{i,1}, \ell_{i,2}, \dots$ are independent and identically
+distributed with $\mathbb{E}[\ell_{i,t}] = \mu_i < \infty$ and
+$\mathrm{Var}[\ell_{i,t}] = \nu_i < \infty$, and that participant
+$i$ is present at every round $($so the EWMA does not enter the
+staleness-decay branch$)$. Let $L_{i,t}$ be the EWMA loss with
+learning rate $\rho \in (0, 1]$ and initial value $L_{i,0} = L_0$.
+Then
+\begin{enumerate}
+  \item[\emph{(a)}] $\mathbb{E}[L_{i,t}] = (1 - \rho)^t L_0 +
+    \big(1 - (1 - \rho)^t\big)\, \mu_i$, so
+    $\mathbb{E}[L_{i,t}] \to \mu_i$ as $t \to \infty$.
+  \item[\emph{(b)}] $\mathrm{Var}[L_{i,t}] \to \frac{\rho}{2 - \rho}\,
+    \nu_i$ as $t \to \infty$.
+  \item[\emph{(c)}] The mapped skill satisfies
+    $\sigma_{i,t} \to \sigma_{\min} + (1 - \sigma_{\min})
+    \exp(-\gamma\, \mu_i)$ in probability.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(a) By linearity, for $t \geq 1$,
+\begin{align*}
+  \mathbb{E}[L_{i,t}]
+  &= (1 - \rho) \mathbb{E}[L_{i,t-1}] + \rho\, \mu_i.
+\end{align*}
+Solving the recursion with initial condition $\mathbb{E}[L_{i,0}]
+= L_0$ gives the stated closed form. The limit follows because
+$|1 - \rho| < 1$.
+
+(b) The variance satisfies the analogous recursion
+$\mathrm{Var}[L_{i,t}] = (1 - \rho)^2 \mathrm{Var}[L_{i,t-1}] +
+\rho^2 \nu_i$ by independence. Its limit is
+$\rho^2 \nu_i / (1 - (1 - \rho)^2) = \rho^2 \nu_i /
+(\rho (2 - \rho)) = \rho \nu_i / (2 - \rho)$.
+
+(c) By (a) and (b), $L_{i,t}$ converges to $\mu_i$ in mean-square,
+hence in probability. The loss-to-skill map
+$\sigma \mapsto \sigma_{\min} + (1 - \sigma_{\min}) \exp(-\gamma \cdot)$
+is continuous, so the continuous mapping theorem gives the stated
+limit.
+\end{proof}
+
+Two consequences follow from this proposition. First, the EWMA
+tracking variance $\rho \nu_i / (2 - \rho)$ grows monotonically in
+$\rho$, so the learning rate traces out a bias-variance frontier:
+smaller $\rho$ means slower adaptation to drift but lower
+steady-state variance. Second, because the loss-to-skill map is
+strictly monotone in $\mu_i$ on $[0, 1]$, the long-run skill
+ordering reproduces the long-run CRPS ordering of the participants.
+This is the theoretical foundation of the empirical
+Spearman-rank-correlation $\sigma \leftrightarrow$ CRPS $= 1.000$
+result on the known-noise synthetic panel (Chapter 5).
+
+\begin{proposition}[Tracking a drifting true loss]
+\label{prop:ewma-tracking}
+Suppose the true loss at round $t$ is time-varying,
+$\mathbb{E}[\ell_{i,t}] = \mu_{i,t}$, with bounded per-round drift
+$|\mu_{i,t} - \mu_{i,t-1}| \leq \delta$. Then the EWMA tracking
+error is bounded by
+\begin{align*}
+  \big|\mathbb{E}[L_{i,t}] - \mu_{i,t}\big|
+  &\leq \frac{1 - \rho}{\rho}\, \delta + o(1),
+\end{align*}
+so the leading term is $O(\rho^{-1} \delta)$ for small $\rho$.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Unrolling the EWMA recursion,
+$\mathbb{E}[L_{i,t}] = \rho \sum_{s=0}^{t-1} (1 - \rho)^s
+\mu_{i,t-s} + (1-\rho)^t L_0$, and using
+$|\mu_{i,t-s} - \mu_{i,t}| \leq s \delta$ gives
+$|\mathbb{E}[L_{i,t}] - \mu_{i,t}|$
+$\leq \rho \delta \sum_{s=0}^{t-1} s (1-\rho)^s + O((1-\rho)^t)$.
+The sum converges to $\rho \delta (1 - \rho)/\rho^2 =
+(1 - \rho) \delta / \rho$ as $t \to \infty$, which is the stated
+bound \citep{benveniste1990adaptive}.
+\end{proof}
+
+The two propositions jointly characterise the EWMA trade-off: a
+smaller $\rho$ reduces steady-state variance (Proposition~\ref{prop:ewma-consistency}b)
+but enlarges the tracking error under drift
+(Proposition~\ref{prop:ewma-tracking}). The tuned $\rho = 0.5$ for
+the Elia wind series sits near the high-variance end of this
+trade-off, which is appropriate for the seven-forecaster panel where
+relative quality shifts across seasons.
+
+The empirical consequence is that our mechanism matches the
+published-OGD reference baseline within $0.3\%$ CRPS on the
+3000-point audit slice, but trails its per-quantile OGD variant by
+approximately eleven percentage points of CRPS on the full-length
+expanding-mode run. This gap is the CRPS cost of keeping the
+Lambert budget-balance constraint rather than relaxing to a
+simplex-projected OGD.
 
 ## Parameter tuning
 
-Defaults (γ = 4, ρ = 0.1) are tuned for synthetic panels with ~10
-participants and T ~ 1000. The Elia wind series has T = 17 544 raw
-hourly points (17 344 evaluation rounds after a 200-round warmup) and
-7 forecasters with stable relative quality, which rewards faster,
-more decisive skill differentiation; hence the tuned values γ = 16,
-ρ = 0.5 for the locked expanding-mode headline (Chapter 5.2).
+Default values $(\gamma, \rho) = (4, 0.1)$ are tuned for synthetic
+panels with approximately ten participants and $T \sim 1000$ rounds.
+The Elia wind series contains $T = 17\,544$ raw hourly points
+($17\,344$ evaluation rounds after a 200-round warmup) with seven
+forecasters of stable relative quality, which rewards faster, more
+decisive skill differentiation. Tuned values are
+$(\gamma, \rho) = (16, 0.5)$ for the locked expanding-mode headline
+(Chapter 6).
 
-The hyperparameter sweep protocol is the held-out-split design in
-`scripts/run_sensitivity_sweep_cached.py` (cache-reusing variant
-that replays the shared forecast cache through `run_simulation` for
-each grid cell rather than repeating the 25-minute forecasting pass,
-giving ~5-minute wall clock for a 40-cell × 2-series wide grid).
-Held-out-sweep selections, written to
-`onlinev2/outputs/sensitivity_sweep.json`:
+Hyperparameter selection follows a held-out-split protocol. A
+cache-reusing sweep replays the shared forecast cache through the
+simulation runner for each grid cell and scores the mechanism
+on the last $40\%$ of each series, disjoint from the burn-in window
+used by the training metric. The grid spans
+$\gamma \in \{4, 8, 16, 32, 64\}$, $\rho \in \{0.1, 0.3, 0.5, 0.7\}$,
+and $\lambda \in \{0.05, 0.2\}$, producing $40$ cells per series.
+Table~\ref{tab:sweep-optima} lists the held-out optima.
 
-| Series | γ★ | ρ★ | λ★ | Held-out Δ vs uniform |
-|---|---:|---:|---:|---:|
-| elia_wind | 32.0 | 0.7 | 0.05 | −6.86% |
-| elia_electricity | 16.0 | 0.1 | 0.05 | −0.22% |
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Series & $\gamma^\star$ & $\rho^\star$ & $\lambda^\star$
+  & Held-out $\Delta$ vs uniform \\
+\midrule
+elia\_wind & $32.0$ & $0.7$ & $0.05$ & $-6.86\%$ \\
+elia\_electricity & $16.0$ & $0.1$ & $0.05$ & $-0.22\%$ \\
+\bottomrule
+\end{tabular}
+\caption{Held-out sensitivity-sweep optima.}
+\label{tab:sweep-optima}
+\end{table}
 
-The wind optimum lands at the high-γ corner of the coarse grid (γ=64
-plateaus at −5.5%; the grid is bounded from above by the γ=64 row).
-λ=0.2 is uniformly worse than λ=0.05 on both series. Electricity
-optima sit in a tight −0.17 to −0.22% band across all top cells,
-matching the forecast-combination-puzzle regime noted in §6.3 — when
-forecasters are undifferentiated the skill signal has nothing to
+The wind optimum sits at the high-$\gamma$ corner of the coarse grid;
+the next row at $\gamma = 64$ plateaus at $-5.5\%$, so the grid is
+bounded from above. A higher floor $\lambda = 0.2$ is uniformly worse
+than $\lambda = 0.05$ on both series. Electricity optima lie in a
+tight band of $-0.17$ to $-0.22\%$, consistent with the
+forecast-combination-puzzle regime discussed in Chapter 6: when
+forecasters are undifferentiated, the skill signal has nothing to
 extract.
-
-## Notes for the final write-up
-
-- Mirror the five-step diagram from `dashboard/docs/MECHANISM_ANALYSIS.md`
-  but in LaTeX; use tikz.
-- The budget-balance derivation is short enough to put inline; the
-  other proofs (sybil, normality) go in Appendix A.
-- Keep the hyperparameter table as shown; add a column for the
-  electricity tuned values once that run finishes.

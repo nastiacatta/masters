@@ -43,7 +43,7 @@ brackets.
 > that our skill signal is absolute. Their weights live on a simplex
 > and are updated by gradient descent with projection; if one
 > participant's weight rises, everyone else's mechanically falls, even
-> if everyone improved. Our σ_i represents a participant's reliability
+> if everyone improved. Our $\sigma$_i represents a participant's reliability
 > independently of who else is in the market. One forecaster's skill
 > can rise without any other's changing. This is what makes the
 > settlement algebra go through: m_i is a per-participant scalar, not a
@@ -51,9 +51,9 @@ brackets.
 
 ### Why the skill layer preserves truthfulness [mechanism, appendix A]
 
-> The skill estimate σ_{i,t} at round t is computed from
+> The skill estimate $\sigma$_{i,t} at round t is computed from
 > L_{i,t−1}, which depends only on losses from rounds before t. The
-> effective wager m_{i,t} = b_{i,t} · g(σ_{i,t}) is therefore fixed
+> effective wager m_{i,t} = b_{i,t} · g($\sigma$_{i,t}) is therefore fixed
 > before participant i's round-t report is observed. Lambert's
 > truthfulness proof from §4.2 of their 2008 paper assumes the
 > participant's wager is fixed when they choose their report; ours
@@ -67,10 +67,13 @@ brackets.
 > forecasts is necessarily uncalibrated. This is not a defect of our
 > mechanism; it is a theorem (Ranjan and Gneiting 2010). The linear
 > pool averages the forecasts but the CDF of the average is not the
-> average of the CDFs in general. Our observed tail deviation of 0.017
-> on the Elia wind slice is this theorem manifesting at a small
-> magnitude. The recalibration layer closes the gap post-hoc without
-> touching the economic structure.
+> average of the CDFs in general. We aggregate by pointwise weighted
+> quantile averaging rather than CDF pooling — the strict statement
+> does not apply directly — but the same under-dispersion pathology
+> shows up. Our observed tail deviation of 0.019 on the Elia wind
+> slice is this pattern manifesting at a small magnitude. The
+> recalibration layer closes the gap post-hoc without touching the
+> economic structure.
 
 ### Calibration-sharpness tradeoff [recalibration]
 
@@ -78,10 +81,10 @@ brackets.
 > probabilistic forecast should be as sharp as possible subject to
 > calibration. The recalibration layer restores calibration by
 > transforming the CDF; the transformation widens the interior
-> quantiles slightly (sharpness −11%) and pays a modest CRPS cost
-> (+1.3%). These are precisely the currencies the tradeoff is
+> quantiles slightly (sharpness −12%) and pays a modest CRPS cost
+> (+1.6%). These are precisely the currencies the tradeoff is
 > denominated in. Setting the spec thresholds right at the theoretical
-> floor is why two of the three specification checks narrowly fail.
+> floor is why all three specification checks narrowly fail.
 
 ### Deposit design as the dominant lever [results, discussion]
 
@@ -101,7 +104,7 @@ brackets.
 > The mechanism does not consistently beat simpler methods on pure
 > CRPS. On the Elia wind full-length run, inverse-variance weighting
 > is effectively tied with the mechanism (−7.0% vs −7.1% CRPS vs
-> uniform) and the median beats both at −9.3%. Vitali's per-τ OGD
+> uniform) and the median beats both at −9.3%. Vitali's per-$\tau$ OGD
 > baseline beats the mechanism by ~11 pp, and best_single by ~16 pp.
 > On electricity the mechanism is indistinguishable from uniform. The
 > forecast combination puzzle (Bates and Granger 1969; Timmermann
@@ -109,7 +112,7 @@ brackets.
 > are hard to beat. The mechanism's contribution in this regime is
 > the economic structure, not the aggregation accuracy. When CRPS-
 > efficient aggregation is the only goal and budget balance is not
-> required, inverse-variance or a per-τ OGD is the right answer.
+> required, inverse-variance or a per-$\tau$ OGD is the right answer.
 
 ### Bursty participation retired [robustness, superseded]
 
@@ -136,22 +139,21 @@ brackets.
 > mechanism = −7.1% vs uniform on the 17 344-hour wind run under
 > expanding causal normalisation, DM t = 40.77, p ≈ 0; under static
 > normalisation at the held-out-sweep-selected parameters
-> (γ = 32, ρ = 0.7) the same run gives −7.9%, DM t = 42.2, p ≈ 0.
+> ($\gamma$ = 32, $\rho$ = 0.7) the same run gives −7.9%, DM t = 42.2, p ≈ 0.
 > Tuned parameters are selected from a held-out sensitivity sweep
 > artefact at `onlinev2/outputs/sensitivity_sweep.json`, not by
-> hand. The electricity null (expanding-mode t = 0.008, p = 0.994;
-> static-mode sweep-selected −0.18% Δ with t = 5.5, p ≈ 0 —
-> DM-significant by sample size but economically negligible) is
+> hand. The electricity null (expanding-mode t = 0.008, p = 0.994)
+> is
 > reported plainly. Honest discussion of "inverse-variance ties us,
-> median and Vitali's per-τ OGD beat us" is in Chapter 7 (§9.2). The
+> median and Vitali's per-$\tau$ OGD beat us" is in Chapter 7 (§9.2). The
 > forecast combination puzzle framing is also in §9.2. External
 > validation against Elia's own operational forecast is in §6.1.4.
 
 ### Reviewer who cares about calibration
 
 > Start at Chapter 5.3 (§7 in this folder). The Ranjan–Gneiting
-> impossibility drives the observed 2pp tail miscalibration; the
-> rolling isotonic recalibration closes 59% of it on the calibration-
+> impossibility motivates the observed ~2 pp tail miscalibration; the
+> rolling isotonic recalibration closes 41% of it near the calibration-
 > sharpness tradeoff floor. Orthogonality to the economic structure is
 > §7.5 / Claim 8.
 

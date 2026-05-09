@@ -1,319 +1,332 @@
-# Results — robustness
+# Strategic robustness {#ch:robustness}
 
-Status: **[LOCKED]**. All numbers in this chapter come from
-`onlinev2/outputs/behaviour/experiments/ANALYSIS.md` and the per-
-experiment summary CSVs under `onlinev2/outputs/behaviour/experiments/
-*/data/`. The earlier "18-preset" narrative from
-`dashboard/docs/MECHANISM_ANALYSIS.md` §7 used a legacy behaviour
-catalogue that has been superseded by the adversary-focused rebuild
-(ANALYSIS.md §4 explains the changes). All numbers below are from the
-current committed run unless flagged.
+This chapter evaluates the mechanism against a catalogue of
+strategic adversaries. Each adversary is grounded in published
+theoretical work, evaluated across at least ten seeds, and reported
+with paired summary statistics and $95\%$ confidence intervals. The
+catalogue is organised around named threat models from the
+wagering-mechanism literature rather than around ad-hoc behavioural
+presets.
 
-## Adversary-focused framing
+## Adversary catalogue
 
-The behaviour suite has been rebuilt around named threat models from
-the wagering-mechanism literature. Every adversary has a cited
-theoretical basis, runs across ≥ 10 seeds, and emits a paired
-`*_summary.csv` plus a plot.
+Table~\ref{tab:adversary-catalogue} lists the nine archetypes
+together with their theoretical bases.
 
-Adversary archetypes in the current catalogue [source:
-`onlinev2/outputs/behaviour/experiments/ANALYSIS.md` §1]:
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lp{7cm}}
+\toprule
+Archetype & Theoretical basis \\
+\midrule
+Arbitrage seeker & \citet{chen2014arbitrage} Theorem 3.3 (MAE
+  analogue); \citet{chun2011cooperating} \\
+Coordinated coalition & \citet{chun2011cooperating} coalition;
+  \citet{chen2014arbitrage} Section 3 \\
+Strategic-influence attacker & Corner solution of the manipulation
+  utility \\
+Strategic reporter & Soft manipulator mixing an anchor with a
+  target report \\
+Privileged-information insider & \citet{lambert2008selffinanced};
+  \citet{johnstone2007economic} \\
+Detector-aware evader & Adaptive evader tracking detector scores \\
+Wash trader & Parimutuel wash and multi-account activity
+  inflation \\
+Sybil arbitrageur & Audit combining sybil splitting with
+  arbitrage \\
+Reputation-reset attacker & \citet{feldman2004freeriding}
+  whitewashing \\
+\bottomrule
+\end{tabular}
+\caption{Strategic adversaries evaluated in this chapter and their
+theoretical bases.}
+\label{tab:adversary-catalogue}
+\end{table}
 
-| Archetype | Theory basis |
-|---|---|
-| arbitrage_seeking | Chen et al. 2014 Thm 3.3 (MAE analogue); Chun & Shachter 2011 |
-| coordinated_group | Chun & Shachter 2011 coalition; Chen et al. 2014 §3 |
-| strategic_influence | Corner solution of manipulation utility |
-| strategic_reporter | Soft manipulator that mixes anchor + target |
-| privileged_information | Lambert et al. 2008; Johnstone 2007 (insiders) |
-| detector_aware | Adaptive evader tracking detector scores |
-| wash_trader | Parimutuel wash / multi-account activity gaming |
-| sybil_arbitrage | Sybilproofness audit combining split + arbitrage |
+All $\mathcal{F}_{t-1}$-compliant adversaries use only the public
+round state available before the outcome is realised. The only
+boundary-violating variant is the \emph{leaked-future} setting of
+the privileged-information insider, which is retained as an audit
+check rather than a realistic attack.
 
-Every F_{t−1}-compliant attacker uses only `RoundPublicState`. The only
-boundary-violating attacker is `privileged_information` in
-`leaked_future` mode, which requires an explicit `allow_leakage=True`
-and is treated as an audit check rather than a realistic adversary.
+## Arbitrage scan
 
-## Arbitrage scan (Chen et al. 2014)
+The \citet{chen2014arbitrage} arbitrage interval predicts a monotone
+relationship between the skill-gate floor $\lambda$ and arbitrage
+profit. Table~\ref{tab:arbitrage-scan} reports the empirical scan
+over twenty seeds, $T = 1\,000$ rounds.
 
-Arbitrageur profit over 20 seeds, T = 1000, versus floor parameter λ
-[source: `onlinev2/outputs/behaviour/experiments/arbitrage_scan/
-data/arbitrage_scan_by_lam.csv`]:
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{rrrr}
+\toprule
+$\lambda$ & Mean profit $\pm$ SE & $95\%$ CI & Mean found-rounds \\
+\midrule
+$0.0$ & $+11.68 \pm 1.14$ & $[+9.46,\, +13.91]$ & $774$ \\
+$0.1$ & $+13.40 \pm 1.24$ & $[+10.97,\, +15.82]$ & $773$ \\
+$0.3$ & $+16.22 \pm 1.40$ & $[+13.49,\, +18.96]$ & $770$ \\
+$0.5$ & $+19.07 \pm 1.50$ & $[+16.13,\, +22.00]$ & $765$ \\
+$0.8$ & $+22.46 \pm 1.77$ & $[+18.99,\, +25.93]$ & $758$ \\
+$1.0$ & $+24.22 \pm 1.97$ & $[+20.36,\, +28.08]$ & $753$ \\
+\bottomrule
+\end{tabular}
+\caption{Arbitrage profit as a function of the skill-gate floor.}
+\label{tab:arbitrage-scan}
+\end{table}
 
-| λ | Mean profit ± SE | 95% CI | Mean found-rounds |
-|---:|---:|---|---:|
-| 0.0 | +11.68 ± 1.14 | [+9.46, +13.91] | 774 |
-| 0.1 | +13.40 ± 1.24 | [+10.97, +15.82] | 773 |
-| 0.3 | +16.22 ± 1.40 | [+13.49, +18.96] | 770 |
-| 0.5 | +19.07 ± 1.50 | [+16.13, +22.00] | 765 |
-| 0.8 | +22.46 ± 1.77 | [+18.99, +25.93] | 758 |
-| 1.0 | +24.22 ± 1.97 | [+20.36, +28.08] | 753 |
+Arbitrage profit increases monotonically with $\lambda$, as
+\citet{chen2014arbitrage} predict for the mean-absolute-error analogue. The
+effect fires on approximately $77\%$ of rounds.
 
-**Finding.** Arbitrage profit increases monotonically with λ, as Chen
-et al. 2014 predict for the MAE analogue. The earlier write-up (based
-on a broken arbitrageur implementation that never triggered) reported
-zero profit; the fixed `arbitrage_seeking` behaviour uses the actual
-weighted-median arbitrage point with an F_{t−1} snapshot and fires on
-~77% of rounds.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{writing/figures/arbitrage.png}
+\caption{Arbitrage profit as a function of the skill-gate floor
+$\lambda$ and the benign crowd size. Profit rises monotonically
+with both axes, consistent with the \citet{chen2014arbitrage}
+prediction. The skill gate constrains but does not eliminate the
+arbitrage vulnerability.}
+\label{fig:arbitrage}
+\end{figure}
 
-**Crowd-size scaling (new experiment, T = 500, 10 seeds)** [source:
-`arbitrage_crowd_size/data/arbitrage_crowd_size_summary.csv`]:
+A companion experiment varies the benign crowd size at fixed
+$\lambda$. A lone arbitrageur embedded in $32$ benign participants
+extracts approximately four times the profit of one embedded in
+$4$ benign participants at the same $\lambda$. Larger crowds carry
+more within-crowd disagreement and therefore offer more wager pool
+to access.
 
-| λ | n = 4 | n = 8 | n = 16 | n = 32 |
-|---|---:|---:|---:|---:|
-| 0.0 | +2.50 ± 0.46 | +6.13 ± 0.82 | +13.51 ± 1.22 | +23.49 ± 1.71 |
-| 0.5 | +4.89 ± 0.93 | +10.46 ± 1.09 | +22.49 ± 2.05 | +38.27 ± 2.63 |
-| 1.0 | +7.20 ± 1.42 | (see CSV) | (see CSV) | (see CSV) |
+## Collusion
 
-Profit scales roughly linearly with crowd size. A lone arbitrageur in
-32 benign agents extracts ~4× the profit of one in 4 benign agents at
-the same λ — more disagreement means more wager pool to access.
+A three-member coalition is evaluated over twenty seeds using two
+coalition-report rules, reported in Table~\ref{tab:collusion}.
 
-## Collusion (Chun & Shachter 2011)
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+Scenario & Mean coalition profit $\pm$ SE & $95\%$ CI \\
+\midrule
+No collusion & $0.00 \pm 0.00$ & $[0,\, 0]$ \\
+\citet{chun2011cooperating} weighted-mean
+  & $+19.87 \pm 2.32$ & $[+15.32,\, +24.41]$ \\
+Weighted-median variant
+  & $+16.86 \pm 2.37$ & $[+12.22,\, +21.50]$ \\
+\bottomrule
+\end{tabular}
+\caption{Collusion stress test (three-member coalition).}
+\label{tab:collusion}
+\end{table}
 
-Three-member coalition, 20 seeds [source:
-`collusion_stress/data/collusion_stress_summary.csv`]:
+Both coalition variants extract strictly positive profit, with the
+weighted-mean variant marginally better in expectation.
 
-| Scenario | Mean coalition profit ± SE | 95% CI |
-|---|---:|---|
-| no_collusion | 0.00 ± 0.00 | [0, 0] |
-| collusion_weighted_mean (Chun–Shachter) | +19.87 ± 2.32 | [+15.32, +24.41] |
-| collusion_weighted_median | +16.86 ± 2.37 | [+12.22, +21.50] |
+### Informed collusion
 
-Both coalition variants extract strictly positive profit. The weighted-
-mean variant is marginally better in expectation than the weighted-
-median variant.
+The combined-attack variant has three insiders acting as a coalition
+under an AR(1) data-generating process ($\varphi = 0.7$,
+$\sigma_\epsilon = 0.18$). Table~\ref{tab:informed-collusion} reports
+the profit.
 
-## Informed collusion (new)
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.2cm}rr}
+\toprule
+Scenario & Mean coalition profit $\pm$ SE & $95\%$ CI \\
+\midrule
+Baseline & $0.00 \pm 0.00$ & $[0,\, 0]$ \\
+Collusion only (truthful beliefs)
+  & $+24.12 \pm 3.01$ & $[+18.21,\, +30.02]$ \\
+Informed collusion (coalition + insider precision)
+  & $+33.84 \pm 2.41$ & $[+29.12,\, +38.56]$ \\
+\bottomrule
+\end{tabular}
+\caption{Informed collusion combines two attack channels.}
+\label{tab:informed-collusion}
+\end{table}
 
-Three insiders with AR(1) DGP, 10 seeds [source:
-`informed_collusion/data/informed_collusion_summary.csv`]:
+The two channels compound: the informed coalition extracts
+approximately $40\%$ more profit than pure collusion
+(\,$+33.84$ against $+24.12$).
 
-| Scenario | Mean coalition profit ± SE | 95% CI |
-|---|---:|---|
-| baseline | 0.00 ± 0.00 | [0, 0] |
-| collusion_only (Chun–Shachter, truthful beliefs) | +24.12 ± 3.01 | [+18.21, +30.02] |
-| informed_collusion (insider precision + Chun–Shachter) | +33.84 ± 2.41 | [+29.12, +38.56] |
+## Insider advantage
 
-Informed collusion compounds both attack vectors: Chun–Shachter
-arbitrage from residual member disagreement *plus* each member's
-privileged lagged signal. Combined profit (+33.84) exceeds pure
-collusion (+24.12) by ~40%.
+Under the same AR(1) data-generating process, a single insider with
+a low-variance lagged signal (lag $1$, observation noise $0.015$) is
+evaluated over twenty seeds. The lagged-signal variant captures
+approximately $89\%$ of the profit of an outright-leakage variant
+($+57.14$ against $+63.98$): the price of making the information
+boundary honest. Under an i.i.d.\ outcome process the lagged insider
+degenerates to a truthful baseline, so the effect requires
+autocorrelation in the outcome.
 
-## Insider advantage (Lambert et al. 2008; Johnstone 2007)
+## Sybil-proofness
 
-AR(1) DGP with φ = 0.7, σ_eps = 0.18, 20 seeds [source:
-`insider_advantage/data/insider_advantage_summary.csv`]:
+Two separate sybil audits are run. The first tests the narrow Lambert
+invariance directly: clones reporting identical values with conserved
+total wager. Under this regime the profit ratio is $1.000000$ with
+maximum deviation at floating-point noise. Under small
+$\varepsilon$-perturbations to the clones' reports, the ratio
+increases to approximately $1.065$, a $6.5\%$ empirical leakage. The
+Lambert proof requires $r_i = r_j$, so the diversified-report case is
+an scope limitation rather than a defect. That the scope is narrow
+is structural: \citet{pan2024sybilproof} prove that the only
+non-wasteful, symmetric, incentive-compatible, sybil-proof direct
+mechanism in the single-parameter environment is a second-price
+auction with symmetric tie-breaking. Any richer mechanism --- the
+wagering-mechanism family included --- will therefore have regimes
+under which sybil invariance holds and regimes under which it does
+not, and the task of the empirical audit is to state the scope
+precisely.
 
-| Scenario | Mean profit ± SE | 95% CI | Mean score |
-|---|---:|---|---:|
-| no_insider | 0.00 ± 0.00 | [0, 0] | 0.000 |
-| insider_lagged (F_{t−1}, lag = 1, σ = 0.015) | **+57.14 ± 2.15** | [+52.93, +61.36] | 0.852 |
-| insider_leaked (audit: reads y_t) | +63.98 ± 2.65 | [+58.78, +69.19] | 0.992 |
+The second audit combines sybil splitting with the
+\citet{chen2014arbitrage} arbitrage attack: $k$ clones fan the arbitrage
+behaviour with equal total stake. Table~\ref{tab:sybil-arbitrage}
+reports the result.
 
-The legitimate lagged insider earns ~89% of the leaker's profit — the
-cost of making the information boundary honest. The effect requires an
-AR(1) DGP; under IID uniform y the lagged insider degenerates to a
-truthful baseline.
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{rrrr}
+\toprule
+$k$ & Mean profit $\pm$ SE & $95\%$ CI & Mean $N_\mathrm{eff}$ \\
+\midrule
+$1$ & $+13.01 \pm 1.05$ & $[+10.96,\, +15.06]$ & $3.21$ \\
+$3$ & $+13.01 \pm 1.05$ & $[+10.96,\, +15.06]$ & $5.05$ \\
+$5$ & $+13.01 \pm 1.05$ & $[+10.96,\, +15.06]$ & $5.97$ \\
+\bottomrule
+\end{tabular}
+\caption{Sybil-arbitrage: profit is invariant to the number of
+clones.}
+\label{tab:sybil-arbitrage}
+\end{table}
 
-## Sybil-proofness (Lambert et al. 2008)
+Profit is invariant to $k$ within Monte-Carlo error: the Lambert
+invariance carries over to the arbitrage attack. The effective
+participant count $N_\mathrm{eff}$ inflates as $k$ grows, but this is
+an artefact of counting identities rather than influence and has no
+payoff consequence.
 
-Two separate audits.
+## Wash trading
 
-### Sybil split with identical reports (`onlinev2/outputs/core/experiments/sybil/`)
+A parimutuel wash experiment over ten seeds evaluates two activity-
+gaming styles. Anchor-style wash inflates activity by approximately
+$67\%$ at a modest positive profit of $+14.71$; split-bet wash
+inflates by $112\%$ but pays a large score-rule cost, leaving the
+attacker deeply in the red ($-261.51$). Attackers using the
+split-bet style are typically bankrupt by round $1\,000$.
 
-[source: `onlinev2/outputs/core/experiments/sybil/summary.md`].
+## Strategic reporting
 
-| Regime | Mean profit ratio | Max \|Δ\| |
-|---|---:|---:|
-| identical reports, conserved total wager | **1.000000** | 2.07e-17 |
-| diversified reports (small ε-perturbation) | **1.065** | 1.03e-3 |
-| strategic deposit manipulation (identical reports) | **1.000000** | 2.64e-17 |
-
-The **narrow Lambert invariance holds** (ratio = 1.000000 with max
-delta at floating-point noise). Diversified-report sybils break the
-invariance by ~6.5% — Lambert's proof requires r_i = r_j, so this
-is not a defect but an honest scope limitation.
-
-### Sybil-arbitrage audit (combined with Chen et al. 2014)
-
-Sybilproofness *for the arbitrage attack*, k clones fanning the
-arbitrage behaviour with equal total stake, 20 paired seeds [source:
-`sybil_arbitrage/data/sybil_arbitrage_summary.csv`]:
-
-| k | Mean profit ± SE | 95% CI | Mean N_eff |
-|---:|---:|---|---:|
-| 1 | +13.01 ± 1.05 | [+10.96, +15.06] | 3.21 |
-| 3 | +13.01 ± 1.05 | [+10.96, +15.06] | 5.05 |
-| 5 | +13.01 ± 1.05 | [+10.96, +15.06] | 5.97 |
-
-**Profit is invariant to k** (to within Monte-Carlo error). The
-Lambert sybilproofness property carries over to the arbitrage attack:
-splitting the arbitrageur into k identities with equal total stake
-gives the same profit. N_eff inflates (which is an artefact of
-counting identities, not influence) but has no payoff consequence.
-
-## Wash trading / activity gaming (parimutuel wash)
-
-10 seeds [source:
-`wash_activity_gaming/data/wash_activity_gaming_summary.csv`,
-inflation reported as ratio so 0.67 ≈ +67%]:
-
-| Scenario | Inflation rate ± SE | Wash profit ± SE |
-|---|---:|---:|
-| no_wash | 0.00 ± 0.00 | 0.00 ± 0.00 |
-| wash_k3_anchor | 0.67 ± 0.01 (≈ +67%) | +14.71 ± 1.36 |
-| wash_k5_split | 1.12 ± 0.02 (≈ +112%) | −261.51 ± 2.71 |
-
-**Anchor style** inflates activity cheaply (small positive profit +
-60% inflation). **Split-bet style** inflates more but pays a large
-score-rule cost — attackers are usually bankrupt by T = 1000.
-
-## Strategic reporting frontier
-
-Pull sweep towards target = 0.9, 20 seeds [source:
-`strategic_reporting/data/strategic_reporting_summary.csv`]:
-
-| Scenario | Δ r̂ vs baseline | Attacker profit ± SE |
-|---|---:|---:|
-| baseline_truthful | 0.000 ± 0.000 | 0.00 ± 0.00 |
-| pull = 0.3 | +0.056 ± 0.004 | **+10.49 ± 2.29** |
-| pull = 0.6 | +0.027 ± 0.003 | −9.81 ± 0.07 |
-| pull = 1.0 | +0.011 ± 0.001 | −10.00 ± 1e-7 |
-
-**Non-monotone frontier.** Gentle nudges (pull = 0.3) are *both*
-profitable *and* most effective at shifting the aggregate report.
-Aggressive pulls are self-defeating: σ collapses, the effective wager
-goes to zero before the attacker can move r̂. The mechanism
-automatically punishes extreme strategic reporting.
+A pull sweep towards target $= 0.9$ characterises the
+strategic-reporting frontier. Gentle nudges (pull $= 0.3$) are the
+only profitable attack in the family: they shift the aggregate
+report by $+0.056$ and yield profit $+10.49$. Aggressive pulls are
+self-defeating: at pull $= 1.0$ the shift is smaller ($+0.011$) and
+the profit is strongly negative ($-10.00$). The skill gate collapses
+$\sigma$ in response to the extreme reports, driving the effective
+wager towards zero before the attacker can move $\hat r$.
 
 ## Detection adaptation
 
-20 seeds, online z-score detector, target μ = 0.2 against uniform-y
-DGP [source:
-`detection_adaptation/data/summary.json`]:
+An online $z$-score detector with target $\mu = 0.2$ is run against a
+uniform-outcome data-generating process over twenty seeds. Both the
+fixed manipulator and the adaptive evader are bankrupted: the fixed
+manipulator loses $-50.02 \pm 0.003$ and the adaptive evader loses
+$-49.78 \pm 0.129$. The adaptive evader's quiet-mode hedging
+marginally reduces the loss but cannot flip the sign. On a
+uniform-outcome process, where the manipulator has no information
+edge, manipulation is not economically viable.
 
-| Attacker | Mean profit ± SE | Detector score | Flag rate |
-|---|---:|---:|---:|
-| fixed_manipulator | −50.02 ± 0.003 | 0.490 | 0.111 |
-| adaptive_evader | −49.78 ± 0.129 | 0.478 | 0.116 |
+## Whitewashing (reputation reset)
 
-Both manipulators are **bankrupted** by the skill-weighting
-mechanism. The adaptive evader's quiet-mode hedging marginally reduces
-losses (+0.24) but cannot flip the sign. The result is decisive: on a
-uniform-y DGP where the manipulator has no information edge, neither
-fixed nor adaptive manipulation is economically viable.
+\citet{feldman2004freeriding} catalogue the whitewashing attack on
+reputation systems: a participant whose reputation has collapsed
+abandons the identity and re-enters as a newcomer. In our setting,
+this maps to an adversary with a collapsed $\sigma$ creating a new
+account identifier, which the mechanism initialises from the prior.
+Table~\ref{tab:reputation-reset} reports the result over five seeds
+($T = 1\,000$, $\kappa = 0.05$, warmup $20$, cooldown $50$).
 
-## 8.9a Whitewashing / reputation reset (Feldman-Chuang 2004)
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+Scenario & Mean attacker profit $\pm$ SE & Mean resets \\
+\midrule
+Baseline & $+0.00 \pm 0.00$ & $0.0$ \\
+Fixed-identity manipulator & $-20.00 \pm 0.00$ & $0.0$ \\
+Whitewashing (reputation reset) & $-3.49 \pm 0.14$ & $1.0$ \\
+\bottomrule
+\end{tabular}
+\caption{Whitewashing attack reduces the attacker's loss but does
+not yield positive profit.}
+\label{tab:reputation-reset}
+\end{table}
 
-**Theory.** Feldman and Chuang (2004) catalogue the *whitewashing*
-attack on reputation systems: a participant who has accumulated a
-degraded reputation abandons the identity and re-joins as a newcomer.
-In our skill layer this maps to an agent with a collapsed σ dropping
-the current `account_id` and creating a new one, which the mechanism's
-`default_initial_loss` restarts from the prior L0.
+Whitewashing dramatically reduces the attacker's loss. A
+fixed-identity manipulator bankrupts itself to approximately
+$-20.00$ of wealth; a reset-capable attacker abandons the collapsed
+identity after the first deep loss and restarts from the prior,
+cutting the cumulative loss to $-3.49$. The staleness decay and the
+non-unit prior partly discount newcomers, but they do not fully
+offset the whitewash. This is a measurable vulnerability that the
+current mechanism does not close. Feldman and Chuang's recommendation
+a mandatory hold-out period for new accounts, or proof-of-identity
+gating, is not currently implemented.
 
-**Implementation.** `ReputationResetBehaviour` plays an aggressive
-manipulation (target = 0.9) and tracks its cumulative profit. When
-the profit falls below `reset_threshold`, it increments an identity
-counter so the parent's next action carries a fresh
-`account_id__reset_k` suffix. Cooldown and warmup parameters prevent
-pathological churn and let fresh identities build a reputation stock
-before manipulating.
+## Invariants holding under attack
 
-**Result (5 seeds, T = 1000, κ = 0.05, warmup = 20, cooldown = 50)**
-[source:
-`outputs/behaviour/experiments/reputation_reset/data/reputation_reset_summary.csv`]:
+The adversary suite is designed to test specific invariants. Each of
+the following holds on the committed implementation. Arbitrage
+profit is weakly increasing in $\lambda$ and in benign crowd size.
+Coalition profit is zero at baseline and strictly positive under
+both the Chun--Shachter weighted-mean and weighted-median variants.
+Informed collusion exceeds pure collusion, which exceeds baseline,
+under the AR(1) outcome process. Leaked insider information exceeds
+lagged insider information, which exceeds baseline, under the same
+process. Wash inflation exceeds $60\%$ for the anchor variant and
+$100\%$ for the split-bet variant, with the anchor profit
+approximately zero and the split-bet profit strongly negative.
+Sybil-arbitrage profit is invariant across $k$ to within Monte-Carlo
+error.
 
-| Scenario | Mean attacker profit ± SE | Mean resets |
-|---|---:|---:|
-| baseline | +0.00 ± 0.00 | 0.0 |
-| manipulator_no_reset (fixed identity) | −20.00 ± 0.00 | 0.0 |
-| reputation_reset (whitewashing) | **−3.49 ± 0.14** | 1.0 |
+## Summary
 
-**Interpretation.** The whitewashing attack dramatically reduces the
-attacker's loss. A fixed-identity manipulator bankrupts itself to
-zero (−20 ≈ full loss of its initial wealth). A reset-capable
-attacker abandons the collapsed identity after the first deep loss
-and restarts from the prior, cutting its cumulative loss to −3.49.
-The κ > 0 staleness decay partly discounts newcomers but does not
-fully offset the whitewash. This is a real measurable vulnerability
-that the current mechanism does not close.
+The mechanism is strongest against four classes of attack. The
+narrow Lambert sybil invariance holds to machine precision and
+extends to the arbitrage attack, which is invariant in the number
+of sybil clones. The strategic-reporting frontier is non-monotone:
+aggressive reports collapse the attacker's $\sigma$ and drive the
+effective wager to zero before the aggregate $\hat r$ can be shifted
+materially. Fixed manipulators against a data-generating process
+with no exploitable structure are bankrupted. The only
+small-perturbation attack that extracts positive profit in the
+suite is a narrow strategic nudge, which yields $+10.49$ over
+$1\,000$ rounds.
 
-**Mitigations not currently implemented:** a mandatory hold-out
-period for new accounts (newcomer penalty — Feldman & Chuang 2004
-Section 4), or proof-of-identity gating to make identity creation
-costly.
+The mechanism remains vulnerable in four identifiable respects.
+First, arbitrage profit of $+11$ to $+24$ per $1\,000$ rounds is
+extracted monotonically in $\lambda$; the skill gate constrains but
+does not eliminate this vulnerability. Second, a three-member
+coalition extracts $+19.9$ profit under weighted-mean coordination,
+and informed collusion under an AR(1) outcome process extracts
+$+33.8$; neither is contained by the skill gate. Third, a lagged
+insider under AR(1) extracts $+57.1$ profit, approximately $89\%$
+of what a full-leakage adversary obtains. Fourth, diversified-report
+sybils break the narrow Lambert invariance by approximately $6.5\%$,
+and anchor-style wash trading extracts small positive profit at
+modest cost.
 
-## Headline invariants (ANALYSIS.md §3)
-
-Invariants the adversary suite is expected to satisfy:
-
-- `arbitrage_scan`: profit increases (weakly) with λ. ✓
-- `arbitrage_crowd_size`: profit monotone in n_benign at fixed λ. ✓
-- `collusion_stress`: coalition profit ≥ 0 at baseline; strictly
-  positive for both weighted-mean / weighted-median variants. ✓
-- `informed_collusion`: `informed_collusion` > `collusion_only` > 0
-  under AR(1). ✓ (33.84 > 24.12 > 0).
-- `insider_advantage`: `insider_leaked` > `insider_lagged` > 0 under
-  AR(1). ✓ (63.98 > 57.14 > 0).
-- `wash_activity_gaming`: inflation > 60% anchor, > 100% split; wash
-  profit ≈ 0 anchor, strongly negative split. ✓
-- `sybil_arbitrage`: profit invariant across k. ✓
-
-All invariants hold on current code.
-
-## Headline summary
-
-What the mechanism does **well**:
-
-- Sybil-proofness for identical reports holds to machine precision;
-  extends to the arbitrage attack (k-invariance).
-- Strategic reporting frontier is non-monotone: aggressive attacks
-  are self-defeating because σ collapses.
-- Fixed manipulators against a no-information DGP are bankrupted.
-- Narrow strategic reporting (pull = 0.3) gives the attacker
-  +10.49 profit (20 seeds, T = 1000) — the only profitable small-
-  perturbation attack in the suite.
-
-What the mechanism is **vulnerable to**:
-
-- **Arbitrage.** Chen et al. 2014 arbitrage extracts +12 to +24 profit
-  per 1000 rounds as λ scales. The skill gate does not eliminate
-  arbitrage; it modestly constrains it.
-- **Collusion.** Three-member coalition extracts +19.9 weighted-mean
-  profit; informed collusion (AR(1) DGP) extracts +33.8. Neither is
-  contained by the skill gate.
-- **Insiders** with legitimate lagged signals under AR(1) extract
-  +57.1 profit, about 89% of what a full leakage adversary gets.
-- **Sybil splitting with diversified reports** breaks the Lambert
-  narrow invariance by ~6.5%.
-- **Wash trading (anchor style)** inflates activity and extracts small
-  positive profit at modest cost.
-
-What remains **open**:
-
-- Full collusion equilibria are not computed; only named strategies
-  are tested.
-- Adaptive detection — the detector is a simple online z-score. A
-  richer multi-feature detector would change both attack and defence
-  curves.
-- Participation-attack experiments (bursty, strategic absence,
-  edge-threshold). The earlier narrative's "+934% bursty" number is
-  from a legacy preset not present in the current adversary suite and
-  should be regenerated before citing.
-
-## Notes for the write-up
-
-- Include the three headline tables: arbitrage_scan (§8.2),
-  sybil-arbitrage audit (§8.6.2), and strategic reporting frontier
-  (§8.8). These are the most consequential for the "does the
-  mechanism survive strategic behaviour" question.
-- Reference figures under `onlinev2/outputs/behaviour/experiments/
-  */plots/` — one per experiment, all PNGs already rendered.
-- Drop the legacy "18-preset" table from the earlier draft; the
-  current adversary catalogue is 8 named archetypes with cited
-  theory bases.
-- The old `MECHANISM_ANALYSIS.md` §7 "critical threats" / "contained
-  threats" / "beneficial" tripartite table is superseded.
+Several questions remain open. Full collusion equilibria are not
+computed; only named strategies are tested. The detector used here
+is a simple online $z$-score, and a richer multi-feature detector
+would alter both attack and defence curves. Participation attacks
+(bursty absence, strategic absence, edge-threshold) are not part of
+the current adversary suite and should be re-evaluated before
+numerical claims from that family are cited.

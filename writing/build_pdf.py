@@ -51,27 +51,53 @@ WRITING_DIR = Path(__file__).resolve().parent
 REPO_ROOT = WRITING_DIR.parent
 
 INCLUDE_ORDER_FILE = WRITING_DIR / "include_order.txt"
-DEFAULT_ORDER = [
-    "README.md",
-    "00_outline.md",
-    "10_abstract_and_question.md",
-    "20_literature_review.md",
-    "30_mechanism_design.md",
-    "40_methodology.md",
-    "50_results_synthetic.md",
-    "60_results_real_data.md",
-    "70_recalibration_layer.md",
-    "80_robustness.md",
-    "90_discussion_and_limits.md",
-    "99_conclusion.md",
-    "bibliography.md",
-    "figures_and_tables.md",
-    "open_questions.md",
-    "quotes_and_snippets.md",
+
+# Section markers recognised in include_order.txt. Anything between
+# a marker and the next marker is emitted inside the matching
+# structural block. Front matter and back matter are not page-
+# counted by the DESE70002 handbook; the 35-page main-body cap
+# applies only to the \mainmatter block (measured at 12pt).
+SECTION_MARKERS = {
+    "front matter": "frontmatter",
+    "main body": "mainmatter",
+    "back matter": "backmatter",
+    "appendices": "appendix",
+}
+
+# Default order used when include_order.txt is missing. Mirrors the
+# structure laid down by the report-format steering rule.
+DEFAULT_ORDER: list[tuple[str, list[str]]] = [
+    ("frontmatter", [
+        "front_matter/01_abstract.md",
+        "front_matter/03_acknowledgments.md",
+    ]),
+    ("mainmatter", [
+        "10_introduction.md",
+        "15_project_management.md",
+        "20_literature_review.md",
+        "30_mechanism_design.md",
+        "40_methodology.md",
+        "50_results_synthetic.md",
+        "60_results_real_data.md",
+        "70_recalibration_layer.md",
+        "80_robustness.md",
+        "90_discussion_and_limits.md",
+        "95_reflection.md",
+        "99_conclusion.md",
+    ]),
+    ("backmatter", [
+        "back_matter/90_references.md",
+        "back_matter/91_declaration_ai_use.md",
+    ]),
+    ("appendix", [
+        "appendix/A_proofs.md",
+        "appendix/B_hyperparameters.md",
+        "appendix/C_behaviour_presets.md",
+        "appendix/D_training_details.md",
+        "appendix/E_bankroll_pipeline.md",
+    ]),
 ]
 
-THEORY_NOTES_DIR = WRITING_DIR / "theory_notes"
-THEORY_README = "README.md"
 OUT_TEX = WRITING_DIR / "thesis_draft.tex"
 OUT_PDF = WRITING_DIR / "thesis_draft.pdf"
 
@@ -92,6 +118,63 @@ LATEX_ESCAPES = [
     ("~", r"\textasciitilde{}"),
     ("^", r"\textasciicircum{}"),
 ]
+
+
+# Unicode math/typographic characters that Latin Modern OTF does not
+# contain. Replace them with LaTeX equivalents *before* markdown
+# conversion so we don't have to rely on unicode-math / STIX fonts.
+# Every replacement is wrapped in \ensuremath{...} so it survives the
+# escape_latex_preserve placeholder pass (which recognises macros with
+# braces) and works in both text and math mode.
+UNICODE_TO_LATEX: dict[str, str] = {
+    # Math relations / operators.
+    "\u2248": r"\ensuremath{\approx}",   # ≈
+    "\u2260": r"\ensuremath{\neq}",      # ≠
+    "\u2264": r"\ensuremath{\leq}",      # ≤
+    "\u2265": r"\ensuremath{\geq}",      # ≥
+    "\u00b1": r"\ensuremath{\pm}",       # ±
+    "\u00d7": r"\ensuremath{\times}",    # ×
+    "\u00f7": r"\ensuremath{\div}",      # ÷
+    "\u2212": r"\ensuremath{-}",         # − (minus sign)
+    # Greek letters most commonly appearing in prose.
+    "\u03b1": r"\ensuremath{\alpha}",   # α
+    "\u03b2": r"\ensuremath{\beta}",    # β
+    "\u03b3": r"\ensuremath{\gamma}",   # γ
+    "\u03b4": r"\ensuremath{\delta}",   # δ
+    "\u03b5": r"\ensuremath{\varepsilon}",
+    "\u03b7": r"\ensuremath{\eta}",     # η
+    "\u03ba": r"\ensuremath{\kappa}",   # κ
+    "\u03bb": r"\ensuremath{\lambda}",  # λ
+    "\u03bc": r"\ensuremath{\mu}",      # μ
+    "\u03c1": r"\ensuremath{\rho}",     # ρ
+    "\u03c3": r"\ensuremath{\sigma}",   # σ
+    "\u03c4": r"\ensuremath{\tau}",     # τ
+    "\u03c6": r"\ensuremath{\phi}",     # φ
+    "\u03c8": r"\ensuremath{\psi}",     # ψ
+    "\u03c9": r"\ensuremath{\omega}",   # ω
+    "\u0394": r"\ensuremath{\Delta}",   # Δ
+    "\u03a3": r"\ensuremath{\Sigma}",   # Σ
+    "\u03a0": r"\ensuremath{\Pi}",      # Π
+    "\u03a6": r"\ensuremath{\Phi}",     # Φ
+    "\u03a8": r"\ensuremath{\Psi}",     # Ψ
+    "\u03a9": r"\ensuremath{\Omega}",   # Ω
+    # Typographic characters — en-dash, em-dash, and the Unicode arrows
+    # — are already in LM, so we leave them alone.
+}
+
+
+def replace_unicode_math(text: str) -> str:
+    """Replace bare Unicode math characters with LaTeX macros.
+
+    Runs before escape_latex so the backslashes in the LaTeX
+    replacements do not get escaped. Safe to call on any text.
+    """
+    if not UNICODE_TO_LATEX:
+        return text
+    for u, lx in UNICODE_TO_LATEX.items():
+        if u in text:
+            text = text.replace(u, lx)
+    return text
 
 
 def escape_latex(text: str) -> str:
@@ -116,8 +199,35 @@ def escape_latex_preserve(text: str) -> str:
 
     # Protect inline code first (spans between single backticks).
     protected = re.sub(r"`([^`\n]+)`", stash, text)
-    # Protect already-escaped LaTeX macros like \textbf{...}, \emph{...}.
-    protected = re.sub(r"\\[a-zA-Z]+\{[^{}]*\}", stash, protected)
+    # Protect inline math (single $...$) and display math ($$...$$) —
+    # the markdown sources contain LaTeX math inline (e.g. `$\sigma$`,
+    # `$\hat C_i$`) and in display blocks that span lines. Without
+    # protection the `$` signs get escaped to `\$` and the enclosed
+    # macros get their backslashes doubled. Display math must match
+    # across newlines (hence re.DOTALL).
+    protected = re.sub(r"\$\$.+?\$\$", stash, protected, flags=re.DOTALL)
+    # Inline math is $...$; the regex allows newlines because the
+    # source sometimes wraps inline math across two lines (e.g. a long
+    # formula with `\qquad`). Cap the span at ~400 chars so an unmatched
+    # `$` does not eat the rest of the paragraph.
+    protected = re.sub(r"\$[^$]{1,400}?\$", stash, protected, flags=re.DOTALL)
+    # Protect already-escaped LaTeX macros. Four shapes, in order from
+    # most specific to least:
+    #   \macro[opt]{arg1}{arg2}...  — e.g. \hypersetup{...}, \href[opt]{}
+    #   \macro{arg}                — e.g. \textbf{x}, \emph{x}, \cite{k}
+    #   \macro                     — e.g. \item, \hline, \newline, \maketitle
+    #   \x                         — single-character math spacing like
+    #                                \, \; \! \: \| \$ \# \% \& \_ \{ \}
+    # Cases 3 and 4 are important for bare commands (\item inside
+    # enumerate/itemize, \, thin-space in prose) and must run after
+    # the more specific patterns.
+    protected = re.sub(
+        r"\\[a-zA-Z]+(?:\[[^\]]*\])?(?:\{[^{}]*\}){1,4}",
+        stash,
+        protected,
+    )
+    protected = re.sub(r"\\[a-zA-Z]+\b", stash, protected)
+    protected = re.sub(r"\\[,;!:|\$\#\%\&\_\{\}]", stash, protected)
 
     escaped = escape_latex(protected)
 
@@ -240,12 +350,86 @@ HEADER_COMMANDS = {
 }
 
 
-def convert_markdown_block(md: str) -> str:
+def convert_markdown_block(md: str, numbered_chapters: bool = True) -> str:
     """Convert a single markdown document to LaTeX body text.
 
     Processes line by line to keep tables and code blocks intact.
     Returns LaTeX source without a preamble or document wrapper.
+
+    When ``numbered_chapters`` is False, H1 headings are emitted as
+    ``\\chapter*{...}`` with an explicit TOC entry so front/back
+    matter files (abstract, acknowledgments, references, AI
+    declaration) appear in the contents without a chapter number.
     """
+    # Pre-pass: swap Unicode math / Greek characters for LaTeX macros.
+    # Done before line-by-line conversion so the macros pass through the
+    # escape layer unchanged (they are stashed as LaTeX commands).
+    md = replace_unicode_math(md)
+
+    # Pre-pass: strip HTML comments (`<!-- ... -->`). They are used
+    # throughout writing/ as author-only cross-reference notes and
+    # must not appear in the compiled PDF. The regex spans lines so
+    # a multi-line comment (`<!--\n...\n-->`) is consumed whole.
+    md = re.sub(r"<!--.*?-->", "", md, flags=re.DOTALL)
+
+    # Pre-pass: figure paths are written as `writing/figures/...` in the
+    # markdown sources (so they resolve from the repository root). The
+    # build compiles inside the writing/ directory, so strip the
+    # `writing/` prefix from `\includegraphics{...}` arguments.
+    md = re.sub(
+        r"(\\includegraphics(?:\[[^\]]*\])?\{)writing/",
+        r"\1",
+        md,
+    )
+
+    # Pre-pass: stash inline math spans that cross a line boundary so
+    # that the later line-by-line escape pass does not see them as
+    # naked `$` characters. Each stashed span is replaced by a
+    # placeholder of the form `\x00MATHSPAN<N>\x00` which escape_latex
+    # treats as plain text but which we restore to the original `$...$`
+    # fragment at the end of this function. We do *not* touch
+    # same-line inline math — escape_latex_preserve handles that.
+    # Display math (`$$...$$` on their own lines) is handled by a
+    # dedicated block inside the line loop below.
+    preserved_math_spans: list[str] = []
+
+    def _stash_multiline_math(match: re.Match[str]) -> str:
+        preserved_math_spans.append(match.group(0))
+        return f"\x01MATHSPAN{len(preserved_math_spans) - 1}\x01"
+
+    # Display math `$$...$$` first, so its delimiters are consumed
+    # whole before the single-`$` inline regex runs on the remainder.
+    # Failing to do this causes the single-`$` regex to match the
+    # inner two dollars of `$$...$$` and shred the display block.
+    md = re.sub(
+        r"\$\$.+?\$\$",
+        _stash_multiline_math,
+        md,
+        flags=re.DOTALL,
+    )
+    # Then inline math. The span may cross a single newline (formulas
+    # with `\qquad` occasionally wrap) but should not cross a blank
+    # line or an unrelated `$`.
+    md = re.sub(
+        r"\$[^$]+?\$",
+        _stash_multiline_math,
+        md,
+        flags=re.DOTALL,
+    )
+
+    # Raw LaTeX environments that the markdown source embeds directly
+    # (\begin{table}...\end{table}, tabular, equation, align, figure,
+    # enumerate, itemize — though the last two are only embedded when
+    # the list spans code vs prose boundaries). Stash them whole so the
+    # inner `&` and `\\` separators are not escape-mangled.
+    md = re.sub(
+        r"\\begin\{(table|tabular|equation\*?|align\*?|figure|gather\*?"
+        r"|eqnarray\*?|array|longtable)\}.+?\\end\{\1\}",
+        _stash_multiline_math,
+        md,
+        flags=re.DOTALL,
+    )
+
     lines = md.splitlines()
     out: list[str] = []
     i = 0
@@ -289,6 +473,24 @@ def convert_markdown_block(md: str) -> str:
             i += 1
             continue
 
+        # Display-math block delimited by `$$` on its own line. The
+        # enclosed content is raw LaTeX that must NOT pass through the
+        # escape pass. Emit as `\[...\]` so it survives in both
+        # author-year text mode and math mode.
+        if stripped == "$$":
+            close_list()
+            close_quote()
+            math_lines: list[str] = []
+            j = i + 1
+            while j < len(lines) and lines[j].strip() != "$$":
+                math_lines.append(lines[j])
+                j += 1
+            out.append(r"\[")
+            out.extend(math_lines)
+            out.append(r"\]")
+            i = j + 1
+            continue
+
         # Horizontal rule.
         if re.fullmatch(r"-{3,}|\*{3,}|_{3,}", stripped):
             close_list()
@@ -304,10 +506,27 @@ def convert_markdown_block(md: str) -> str:
             close_quote()
             level = len(m.group(1))
             title = m.group(2).strip()
+            # Pandoc-style inline label: `# Title {#label}`. Strip it
+            # from the title and emit a matching `\label{...}` after
+            # the heading so cross-references work.
+            label_match = re.search(r"\s*\{#([^}]+)\}\s*$", title)
+            label = None
+            if label_match:
+                label = label_match.group(1)
+                title = title[: label_match.start()].rstrip()
             title = escape_latex_preserve(convert_inline(title))
             cmd = HEADER_COMMANDS.get(level, "subsubsection")
-            # Keep heading command numbered; TOC depth handled in preamble.
-            out.append(f"\\{cmd}{{{title}}}")
+            if level == 1 and not numbered_chapters:
+                # Unnumbered chapter with manual TOC entry, used for
+                # front-matter and back-matter files (abstract,
+                # acknowledgments, references, AI declaration).
+                out.append(f"\\chapter*{{{title}}}")
+                out.append(f"\\addcontentsline{{toc}}{{chapter}}{{{title}}}")
+            else:
+                # Keep heading command numbered; TOC depth handled in preamble.
+                out.append(f"\\{cmd}{{{title}}}")
+            if label:
+                out.append(f"\\label{{{label}}}")
             i += 1
             continue
 
@@ -392,32 +611,134 @@ def convert_markdown_block(md: str) -> str:
     if in_code_block:
         out.append(r"\end{verbatim}")
 
-    return "\n".join(out)
+    rendered = "\n".join(out)
+
+    # Restore multi-line inline math placeholders. We do this last so
+    # all markdown conversion and escaping is complete before the raw
+    # math spans reappear. The `\x01` sentinel is chosen so plain
+    # escape_latex passes it through unchanged.
+    #
+    # The restore is iterated because a stashed environment (e.g. a
+    # tabular block) can itself contain a stashed span (e.g. `$m_i$`).
+    # A single substitution would reintroduce the inner placeholder
+    # without expanding it. We loop until no placeholders remain, with
+    # a safety cap to avoid runaway.
+    if preserved_math_spans:
+        def _restore(match: re.Match[str]) -> str:
+            idx = int(match.group(1))
+            return preserved_math_spans[idx]
+        for _ in range(8):
+            new_rendered = re.sub(r"\x01MATHSPAN(\d+)\x01", _restore, rendered)
+            if new_rendered == rendered:
+                break
+            rendered = new_rendered
+
+    return rendered
 
 
 # ---------------------------------------------------------------------------
 # LaTeX preamble and document assembly
 
-PREAMBLE = r"""\documentclass[11pt,a4paper,openany]{report}
+PREAMBLE = r"""\documentclass[12pt,a4paper,openany]{report}
 
-% tectonic uses XeTeX under the hood — native Unicode. Avoid inputenc.
-\usepackage{fontspec}
-\defaultfontfeatures{Ligatures=TeX}
+% Engine-agnostic preamble: works with pdflatex, xelatex, and tectonic.
+%
+% We detect the engine with iftex. For XeTeX/LuaTeX we use fontspec +
+% Latin Modern via the TeX Live TTFs (Tectonic fetches these on demand
+% from its bundle). For plain pdfTeX (no Unicode, no fontspec) we use
+% the classical inputenc + lmodern route, which ships with any texlive.
+\usepackage{iftex}
+\ifxetex
+  \usepackage{fontspec}
+  \defaultfontfeatures{Ligatures=TeX}
+  % `Latin Modern Roman` is the XeTeX-visible name installed by TeX Live.
+  % If it is absent (as with an incomplete font cache), fontspec will
+  % throw a recoverable error. Tectonic resolves it from its bundle.
+  \IfFontExistsTF{Latin Modern Roman}{%
+    \setmainfont{Latin Modern Roman}%
+    \setsansfont{Latin Modern Sans}%
+    \setmonofont{Latin Modern Mono}%
+  }{%
+    % Tectonic bundle ships with lmroman10-regular.otf; try that by file.
+    \IfFontExistsTF{lmroman10-regular.otf}{%
+      \setmainfont{lmroman10-regular.otf}[%
+        BoldFont        = lmroman10-bold.otf,%
+        ItalicFont      = lmroman10-italic.otf,%
+        BoldItalicFont  = lmroman10-bolditalic.otf%
+      ]%
+      \setsansfont{lmsans10-regular.otf}[%
+        BoldFont        = lmsans10-bold.otf,%
+        ItalicFont      = lmsans10-oblique.otf%
+      ]%
+      \setmonofont{lmmono10-regular.otf}[%
+        BoldFont   = lmmonolt10-bold.otf,%
+        ItalicFont = lmmono10-italic.otf%
+      ]%
+    }{%
+      % Last resort: system default, warn to log but continue.
+      \PackageWarning{thesis}{Latin Modern not found; using fontspec default}%
+    }%
+  }
+\else\ifluatex
+  \usepackage{fontspec}
+  \defaultfontfeatures{Ligatures=TeX}
+  \setmainfont{Latin Modern Roman}
+  \setsansfont{Latin Modern Sans}
+  \setmonofont{Latin Modern Mono}
+\else
+  % pdfTeX path.
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+  \usepackage{textcomp}
+\fi\fi
 
-% Fall back to the LaTeX-default "Latin Modern Roman" XeTeX knows about
-% without any font-cache magic. fontspec auto-discovers it.
-\setmainfont{Latin Modern Roman}
-\setsansfont{Latin Modern Sans}
-\setmonofont{Latin Modern Mono}
-
-% Math glyphs via mathspec or unicode-math would be ideal, but they are
-% touchy about font presence. Use the classic amsmath + cm-math defaults.
+% Math glyphs — classical amsmath + amssymb work under all three engines.
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{amsthm}
+% Theorem-like environments used in the mechanism-design chapter.
+\newtheorem{lemma}{Lemma}[chapter]
+\newtheorem{theorem}[lemma]{Theorem}
+\newtheorem{proposition}[lemma]{Proposition}
+\newtheorem{corollary}[lemma]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[lemma]{Definition}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
 
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+% Column type ``Y'' = tabularx column that wraps on word boundaries
+% (`>{\raggedright\arraybackslash}`), useful for wide appendix tables.
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\usepackage{graphicx}
+% Figure paths in the markdown sources are written as
+% `writing/figures/...` (so they resolve from the repo root). When
+% build_pdf.py compiles in the writing/ directory, the same paths are
+% one level too deep. Add both search paths so either form works.
+\graphicspath{{./}{./figures/}{./writing/}{./writing/figures/}{../writing/figures/}}
+
+% natbib is loaded *before* hyperref to get clean \citet/\citep links.
+% The markdown source uses natbib-style citations pervasively
+% (\citet{...} and \citep{...}); without this the \cite* commands are
+% undefined. authoryear gives the (Author, Year) form; round puts them
+% in parentheses to match the prose in chapters 2, 6, 7, 8.
+\IfFileExists{natbib.sty}{%
+  \usepackage[round,authoryear]{natbib}%
+}{%
+  % Fallback: define \citet/\citep to plain \cite so the document still
+  % compiles if natbib is absent. Citation keys will appear as [key].
+  \providecommand{\citet}[1]{\cite{#1}}%
+  \providecommand{\citep}[1]{\cite{#1}}%
+}
+
+% Allow \url{...} inside hyperref to break at hyphens in long URLs.
+% Must be passed before hyperref loads the url package internally.
+\PassOptionsToPackage{hyphens}{url}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -425,30 +746,96 @@ PREAMBLE = r"""\documentclass[11pt,a4paper,openany]{report}
   urlcolor=black,
   citecolor=black,
 }
-\usepackage{enumitem}
-\setlist{itemsep=0.2em,topsep=0.3em}
+
+% microtype does subtle glyph scaling, character protrusion, and
+% spacing that fixes most overfull/underfull \hbox warnings in
+% body text. Font expansion is pdftex-only; under xetex/luatex we
+% enable protrusion only. Optional: skip if absent (texlive-basic
+% does not include it; tectonic's bundle does).
+\IfFileExists{microtype.sty}{%
+  \ifxetex
+    \usepackage[protrusion=true,final]{microtype}%
+  \else\ifluatex
+    \usepackage[protrusion=true,expansion=true,final]{microtype}%
+  \else
+    \usepackage[protrusion=true,expansion=true,final]{microtype}%
+  \fi\fi
+}{}
+
+% Allow LaTeX to stretch inter-word spacing in problematic
+% paragraphs rather than producing overfull \hbox warnings. 3em
+% is the conventional value; larger values relax the penalty
+% further but risk visibly loose lines.
+\setlength{\emergencystretch}{3em}
+
+% Set a modest tolerance bump so the engine does not chase every
+% fractional-point overflow.
+\hbadness=2000
+\vbadness=2000
+
+% Optional packages: enumitem tightens list spacing; titlesec tightens
+% chapter/section headings. Both are nice-to-have but ship in texlive-full
+% rather than texlive-basic. Skip gracefully if missing.
+\IfFileExists{enumitem.sty}{%
+  \usepackage{enumitem}%
+  \setlist{itemsep=0.2em,topsep=0.3em}%
+}{}
+
 \usepackage{parskip}
-\usepackage{titlesec}
-\titleformat{\chapter}[hang]{\Large\bfseries}{\thechapter.}{0.5em}{}
-\titlespacing*{\chapter}{0pt}{-0.8em}{0.8em}
-\titleformat{\section}{\large\bfseries}{\thesection}{0.5em}{}
-\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
-\titleformat{\subsubsection}{\normalsize\itshape}{}{0em}{}
+
+\IfFileExists{titlesec.sty}{%
+  \usepackage{titlesec}%
+  \titleformat{\chapter}[hang]{\Large\bfseries}{\thechapter.}{0.5em}{}%
+  \titlespacing*{\chapter}{0pt}{-0.8em}{0.8em}%
+  \titleformat{\section}{\large\bfseries}{\thesection}{0.5em}{}%
+  \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}%
+  \titleformat{\subsubsection}{\normalsize\itshape}{}{0em}{}%
+}{}
+
 \setcounter{tocdepth}{2}
 \setcounter{secnumdepth}{3}
 \raggedbottom
 
+% The `report` class does not define \frontmatter / \mainmatter /
+% \backmatter (those live in `book` and `memoir`). We provide
+% lightweight equivalents that implement the DESE70002 handbook
+% page-numbering policy: roman in front matter, arabic (reset to 1)
+% in the main body, and no reset in back matter. Unnumbered chapters
+% in front/back matter are handled by the markdown→LaTeX converter,
+% which emits \chapter* when numbered_chapters=False.
+\makeatletter
+\providecommand{\frontmatter}{%
+  \cleardoublepage
+  \pagenumbering{roman}%
+}
+\providecommand{\mainmatter}{%
+  \cleardoublepage
+  \pagenumbering{arabic}%
+}
+\providecommand{\backmatter}{%
+  \cleardoublepage
+}
+\makeatother
+
+% Natbib emits the bibliography under its own chapter heading. The
+% handbook asks for "References" rather than "Bibliography", so we
+% rename the label here.
+\IfFileExists{natbib.sty}{\renewcommand{\bibname}{References}}{}
+
 \title{%
-  Online Skill Learning for Self-Financed Forecasting Markets\\
-  \vspace{0.3em}\large Thesis writing workspace — compiled draft%
+  Online Skill Learning for Self-Financed Prediction Markets\\
+  \vspace{0.3em}\large A weighted-score wagering mechanism with an
+  online skill-estimation layer and post-hoc recalibration%
 }
 \author{Anastasia Cattaneo}
 \date{\today}
 
 \begin{document}
+\frontmatter
 \maketitle
-\tableofcontents
-\clearpage
+% Abstract and acknowledgments are emitted from the front_matter/
+% markdown sources; the TOC follows them so every page-counted
+% main-body heading is reachable from the contents page.
 """
 
 POSTAMBLE = r"""
@@ -456,54 +843,119 @@ POSTAMBLE = r"""
 """
 
 
-def load_include_order() -> list[str]:
-    """Return the ordered list of markdown filenames to include."""
-    if INCLUDE_ORDER_FILE.exists():
-        names = []
-        for line in INCLUDE_ORDER_FILE.read_text().splitlines():
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            names.append(line)
-        return names
-    return DEFAULT_ORDER
+# Per-block prologues emitted by build_latex. The TOC lives inside
+# the front matter so roman-numeral pagination covers it.
+FRONTMATTER_PROLOGUE = ""
+FRONTMATTER_EPILOGUE = r"""
+\tableofcontents
+\clearpage
+"""
+
+# Arabic pagination restarts at 1 inside \mainmatter by default.
+MAINMATTER_PROLOGUE = r"""
+\mainmatter
+\label{mainmatter:start}
+"""
+MAINMATTER_EPILOGUE = r"""
+\label{mainmatter:end}
+"""
+
+# Back matter: references (via natbib) + AI-use declaration. The
+# handbook requires the AI-use notice to appear *after* the list of
+# references.
+BACKMATTER_PROLOGUE = r"""
+\backmatter
+\IfFileExists{natbib.sty}{%
+  \bibliographystyle{plainnat}%
+  \IfFileExists{bibliography.bib}{\bibliography{bibliography}}{}%
+}{}
+"""
+BACKMATTER_EPILOGUE = ""
+
+APPENDIX_PROLOGUE = r"""
+\appendix
+"""
+APPENDIX_EPILOGUE = ""
+
+
+def load_include_order() -> list[tuple[str, list[str]]]:
+    """Return the include order as a list of (section, [paths]) pairs.
+
+    Section is one of 'frontmatter', 'mainmatter', 'backmatter',
+    'appendix'. Order follows the section markers in
+    include_order.txt (``# -- front matter --`` etc.). Files listed
+    before any marker are assigned to the main body by default so
+    a legacy include_order.txt still works.
+    """
+    if not INCLUDE_ORDER_FILE.exists():
+        return DEFAULT_ORDER
+
+    sections: list[tuple[str, list[str]]] = [
+        ("frontmatter", []),
+        ("mainmatter", []),
+        ("backmatter", []),
+        ("appendix", []),
+    ]
+    index_by_name = {name: i for i, (name, _) in enumerate(sections)}
+    current = "mainmatter"
+
+    for raw in INCLUDE_ORDER_FILE.read_text().splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        # Section-marker comments: "# -- front matter --", etc.
+        marker_match = re.match(r"#\s*--\s*(.+?)\s*--\s*$", line)
+        if marker_match:
+            label = marker_match.group(1).lower()
+            if label in SECTION_MARKERS:
+                current = SECTION_MARKERS[label]
+            continue
+        if line.startswith("#"):
+            continue
+        sections[index_by_name[current]][1].append(line)
+    return sections
 
 
 def build_latex() -> str:
-    """Assemble the full LaTeX source."""
+    """Assemble the full LaTeX source with front/main/back/appendix split."""
     parts = [PREAMBLE]
-    order = load_include_order()
-    missing = []
+    ordered = load_include_order()
+    missing: list[str] = []
 
-    for name in order:
-        path = WRITING_DIR / name
-        if not path.exists():
-            missing.append(name)
+    prologues = {
+        "frontmatter": FRONTMATTER_PROLOGUE,
+        "mainmatter": MAINMATTER_PROLOGUE,
+        "backmatter": BACKMATTER_PROLOGUE,
+        "appendix": APPENDIX_PROLOGUE,
+    }
+    epilogues = {
+        "frontmatter": FRONTMATTER_EPILOGUE,
+        "mainmatter": MAINMATTER_EPILOGUE,
+        "backmatter": BACKMATTER_EPILOGUE,
+        "appendix": APPENDIX_EPILOGUE,
+    }
+
+    for section, names in ordered:
+        if not names and section not in ("frontmatter", "mainmatter",
+                                          "backmatter"):
+            # Skip empty optional sections (e.g. no appendices).
             continue
-        title = name_to_part_label(name)
-        parts.append(rf"% ---- begin {name} ----")
-        parts.append(rf"\part*{{{title}}}")
-        parts.append(r"\addcontentsline{toc}{part}{" + title + r"}")
-        parts.append(convert_markdown_block(path.read_text()))
-        parts.append(rf"% ---- end {name} ----")
-        parts.append("")
+        parts.append(prologues[section])
 
-    # Theory notes appendix.
-    if THEORY_NOTES_DIR.exists():
-        parts.append(r"\appendix")
-        parts.append(r"\part*{Appendix: Theory notes}")
-        parts.append(r"\addcontentsline{toc}{part}{Appendix: Theory notes}")
-        readme = THEORY_NOTES_DIR / THEORY_README
-        if readme.exists():
-            parts.append(convert_markdown_block(readme.read_text()))
-        note_files = sorted(
-            p for p in THEORY_NOTES_DIR.glob("*.md")
-            if p.name != THEORY_README
-        )
-        for note in note_files:
-            parts.append(rf"% ---- theory note {note.name} ----")
-            parts.append(convert_markdown_block(note.read_text()))
+        for name in names:
+            path = WRITING_DIR / name
+            if not path.exists():
+                missing.append(name)
+                continue
+            parts.append(rf"% ---- begin {name} ----")
+            numbered = section == "mainmatter" or section == "appendix"
+            parts.append(convert_markdown_block(
+                path.read_text(), numbered_chapters=numbered,
+            ))
+            parts.append(rf"% ---- end {name} ----")
             parts.append("")
+
+        parts.append(epilogues[section])
 
     if missing:
         parts.append(r"\chapter*{Missing source files}")
@@ -538,51 +990,79 @@ def find_tectonic() -> Path | None:
 
 
 def run_compiler(tex_path: Path) -> int:
-    """Compile the .tex to .pdf using tectonic (preferred) or xelatex."""
+    """Compile the .tex to .pdf. Try tectonic, then xelatex, then pdflatex.
+
+    The preamble is engine-agnostic (see PREAMBLE): pdflatex uses
+    inputenc + lmodern; xelatex/tectonic use fontspec with Latin Modern.
+    If tectonic is present but fails (e.g. incomplete font cache),
+    we fall through to xelatex / pdflatex.
+    """
     tex_dir = tex_path.parent
     tectonic = find_tectonic()
+    attempts: list[list[str]] = []
     if tectonic is not None:
-        cmd = [
+        attempts.append([
             str(tectonic),
             "--outdir", str(tex_dir),
             "--keep-intermediates",
             "--keep-logs",
             str(tex_path),
-        ]
-        print("[build_pdf] running:", " ".join(cmd))
-        return subprocess.run(cmd, check=False).returncode
-
-    # Fallback: try xelatex (handles unicode), then pdflatex.
+        ])
     for compiler in ("xelatex", "pdflatex"):
+        attempts.append([
+            compiler,
+            "-interaction=nonstopmode",
+            "-halt-on-error",
+            "-output-directory", str(tex_dir),
+            str(tex_path),
+        ])
+
+    last_rc = 1
+    for cmd in attempts:
         try:
-            cmd = [
-                compiler,
-                "-interaction=nonstopmode",
-                "-halt-on-error",
-                "-output-directory", str(tex_dir),
-                str(tex_path),
-            ]
             print("[build_pdf] running:", " ".join(cmd))
             rc = subprocess.run(cmd, check=False).returncode
-            if rc == 0:
-                # Second pass for TOC.
-                subprocess.run(cmd, check=False)
-                return 0
         except FileNotFoundError:
+            print(f"[build_pdf]   {cmd[0]!r} not found; trying next compiler.")
             continue
-    print("[build_pdf] ERROR: no compiler available (tectonic, xelatex, pdflatex).")
-    return 1
+        if rc == 0:
+            # For non-tectonic compilers, run a second pass so TOC resolves.
+            if "tectonic" not in cmd[0]:
+                subprocess.run(cmd, check=False)
+            return 0
+        print(f"[build_pdf]   {cmd[0]!r} failed (rc={rc}); trying next compiler.")
+        last_rc = rc
+
+    print("[build_pdf] ERROR: no compiler succeeded (tectonic, xelatex, pdflatex).")
+    return last_rc
 
 
 def write_include_order_if_missing() -> None:
     if INCLUDE_ORDER_FILE.exists():
         return
-    INCLUDE_ORDER_FILE.write_text(
-        "# One filename per line, in the order they should appear in the PDF.\n"
-        "# Blank lines and lines starting with '#' are ignored.\n"
-        "# Remove a line to exclude that file from the build.\n\n"
-        + "\n".join(DEFAULT_ORDER) + "\n"
-    )
+    lines = [
+        "# One filename per line, in the order they appear in the PDF.",
+        "# Blank lines and lines starting with '#' are ignored.",
+        "# Remove a line to exclude that file from the build.",
+        "#",
+        "# Section markers:",
+        "#   # -- front matter --  (not page-counted)",
+        "#   # -- main body --     (35-page cap at 12pt)",
+        "#   # -- back matter --   (not page-counted)",
+        "#   # -- appendices --    (not page-counted)",
+        "",
+    ]
+    for section, paths in DEFAULT_ORDER:
+        label = {
+            "frontmatter": "front matter",
+            "mainmatter": "main body",
+            "backmatter": "back matter",
+            "appendix": "appendices",
+        }[section]
+        lines.append(f"# -- {label} --")
+        lines.extend(paths)
+        lines.append("")
+    INCLUDE_ORDER_FILE.write_text("\n".join(lines))
     print(f"[build_pdf] wrote default include order to {INCLUDE_ORDER_FILE}")
 
 

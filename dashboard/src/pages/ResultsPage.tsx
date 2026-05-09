@@ -803,7 +803,14 @@ export default function ResultsPage() {
   const accuracyVerdict: Verdict = deltaCrps == null ? 'neutral' : deltaCrps < -ACCURACY_EPS ? 'good' : deltaCrps > ACCURACY_EPS ? 'bad' : 'neutral';
   const concentrationVerdict: Verdict = gini == null ? 'neutral' : gini < 0.55 ? 'good' : gini > 0.7 ? 'bad' : 'neutral';
 
-  if (!tabs.includes(activeTab as never)) setActiveTab(tabs[0]);
+  // Ensure the active tab is part of the current tab set.
+  // Using an effect avoids the "setState during render" StrictMode warning.
+  useEffect(() => {
+    if (!tabs.includes(activeTab as never)) {
+      setActiveTab(tabs[0]);
+    }
+  }, [tabs, activeTab]);
+  const shownTab = tabs.includes(activeTab as never) ? activeTab : tabs[0];
 
   return (
     <FigureProvider>
@@ -884,7 +891,7 @@ export default function ResultsPage() {
 
           {/* ═══ REAL DATA TAB ═══ */}
 
-          {activeTab === 'Real data' && realData && (
+          {shownTab === 'Real data' && realData && (
             <div className="space-y-6">
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -1492,7 +1499,7 @@ export default function ResultsPage() {
           )}
 
           {/* Electricity results */}
-          {activeTab === 'Real data' && realDataElec && (
+          {shownTab === 'Real data' && realDataElec && (
             <div className="space-y-6 mt-8">
               <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -1522,7 +1529,7 @@ export default function ResultsPage() {
             </div>
           )}
 
-          {activeTab === 'Real data' && !realData && !loading && (
+          {shownTab === 'Real data' && !realData && !loading && (
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
               <p className="text-sm text-slate-500">Real-data comparison is not available. Run the forecaster models on the Elia data first, then reload this page.</p>
             </div>
@@ -1530,7 +1537,7 @@ export default function ResultsPage() {
 
           {/* ═══ EXPERIMENT-BACKED TABS ═══ */}
 
-          {useExp && !loading && activeTab === 'Accuracy' && (
+          {useExp && !loading && shownTab === 'Accuracy' && (
             expAccuracyDisplay.length > 0 && calibrationData.length > 0 && ablationData.length > 0 ? (
               <div className="space-y-6">
               <FourPanelLayout
@@ -1616,7 +1623,7 @@ export default function ResultsPage() {
             )
           )}
 
-          {useExp && activeTab === 'Concentration' && (
+          {useExp && shownTab === 'Concentration' && (
             <ConcentrationPanel
               data={methodAgg
                 .filter((m) => (CORE_METHOD_KEYS as readonly string[]).includes(m.method))
@@ -1631,7 +1638,7 @@ export default function ResultsPage() {
             />
           )}
 
-          {useExp && activeTab === 'Calibration' && (
+          {useExp && shownTab === 'Calibration' && (
             calibrationData.length === 0 ? (
               <div
                 className="p-5"
@@ -1653,7 +1660,7 @@ export default function ResultsPage() {
             )
           )}
 
-          {useExp && activeTab === 'Ablation' && (
+          {useExp && shownTab === 'Ablation' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <h3 className="text-sm font-semibold text-slate-800 mb-3">Bankroll ablation (ΔCRPS vs Full)</h3>
               {ablationData.length === 0 ? (
@@ -1675,7 +1682,7 @@ export default function ResultsPage() {
 
           {/* ═══ DEMO FALLBACK TABS ═══ */}
 
-          {!useExp && !loading && activeTab === 'Accuracy' && (
+          {!useExp && !loading && shownTab === 'Accuracy' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
               {/* Experiment setup */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
@@ -1759,9 +1766,7 @@ export default function ResultsPage() {
                 {/* Insight callout */}
                 <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
                   <p className="text-xs text-emerald-800 leading-relaxed">
-                    <span className="font-semibold">Key insight:</span> Lines converge during the first ~50 rounds while the EWMA skill estimates are still learning.
-                    After convergence, Skill × stake consistently tracks below equal weighting. The gap is the mechanism's value.
-                    The advantage is {fmt(Math.abs(demoDelta), 4)} mean CRPS ({(Math.abs(demoDelta) / demoEqual.pipeline.summary.meanError * 100).toFixed(1)}% improvement).
+                    <span className="font-semibold">Reading the chart:</span> the lines sit on top of each other for the first ~50 rounds while the EWMA skill estimate is still learning. After that the Skill × stake line pulls below equal weighting and stays there; the vertical gap is the measured advantage — about {fmt(Math.abs(demoDelta), 4)} mean CRPS ({(Math.abs(demoDelta) / demoEqual.pipeline.summary.meanError * 100).toFixed(1)}%).
                   </p>
                 </div>
               </div>
@@ -1958,7 +1963,7 @@ export default function ResultsPage() {
             </div>
           )}
 
-          {!useExp && !loading && activeTab === 'Concentration' && (
+          {!useExp && !loading && shownTab === 'Concentration' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
               {/* Experiment setup */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
@@ -2032,7 +2037,7 @@ export default function ResultsPage() {
             </div>
           )}
 
-          {!useExp && !loading && activeTab === 'Deposit policy' && (
+          {!useExp && !loading && shownTab === 'Deposit policy' && (
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
               {/* Experiment setup */}
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
@@ -2120,7 +2125,7 @@ export default function ResultsPage() {
 
           {/* ═══ SCIENTIFIC ANALYSIS TAB ═══ */}
 
-          {activeTab === 'Scientific Analysis' && (
+          {shownTab === 'Scientific Analysis' && (
             <div className="space-y-6">
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
                 <h3 className="text-sm font-semibold text-indigo-900 mb-1">Scientific analysis</h3>

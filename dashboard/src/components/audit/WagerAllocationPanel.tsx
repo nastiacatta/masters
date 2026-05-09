@@ -61,6 +61,10 @@ export default function WagerAllocationPanel() {
   const nEff = effectiveN(weights);
 
   // ── Deposit policy comparison ──────────────────────────────────
+  // NOTE: We deliberately do NOT compute Gini / N_eff over the three
+  // per-method CRPS values here — those are error magnitudes, not a
+  // concentration allocation, and feeding them into a Lorenz-curve
+  // statistic produces a meaningless number.
   const depositPolicies = useMemo(() => {
     if (!depositSensitivity?.deposit_sensitivity) return [];
     const ds = depositSensitivity.deposit_sensitivity;
@@ -69,8 +73,6 @@ export default function WagerAllocationPanel() {
       uniform: data.uniform,
       skill: data.skill,
       mechanism: data.mechanism,
-      gini: giniCoefficient([data.uniform, data.skill, data.mechanism]),
-      nEff: effectiveN([data.uniform, data.skill, data.mechanism]),
     }));
   }, [depositSensitivity]);
 

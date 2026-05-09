@@ -64,7 +64,7 @@ export default function BehaviourPage() {
           hero
           eyebrow="Step 3 · Stress tests"
           title="Robustness"
-          subtitle="Stress-tests of the mechanism under diverse agent behaviours, strategic attacks, and parameter shifts. Eighteen behaviour presets are compared against a truthful baseline using paired runs, same underlying outcomes and seeds, so every reported difference comes from the behaviour alone."
+          subtitle="Eighteen behaviour presets — strategic, noisy, adversarial — run against a truthful baseline on identical seeds and draws. Reported deltas isolate the effect of the behaviour itself."
         />
 
         <div
@@ -72,20 +72,17 @@ export default function BehaviourPage() {
           style={{ marginTop: 8 }}
         >
           <div className="font-semibold text-slate-700 text-[11px] uppercase tracking-wider mb-1.5">
-            Why synthetic data here, when the forecasting chapter uses real Elia data?
+            Why synthetic data for the stress tests
           </div>
           <p>
-            Adversarial agents make <em>decisions</em> — whether to participate, which account to
-            play from, how much to stake, how far to pull the aggregate. Real-world time series
-            (Elia wind, Elia imbalance) can&apos;t generate those decisions: the forecaster panel
-            (XGBoost, ARIMA, MLP, etc.) is passive and has no strategy layer. To test sybil-
-            proofness, collusion, or manipulation you need three things real data can&apos;t give
-            you — a <strong>paired counterfactual</strong> (&ldquo;what if the attacker had been
-            honest?&rdquo;), a <strong>ground-truth label</strong> of which accounts belong to
-            whom, and <strong>controlled stake and arrival choices</strong>. Every attack below
-            is therefore run on the same synthetic DGP and paired seeds, so the only thing moving
-            is the attacker. The honest-forecaster results on Elia wind/electricity live in the
-            Results and Validation pages.
+            The forecasting chapter uses real Elia data because the question there is
+            accuracy. Here the question is agent behaviour: whether to enter, how much to
+            stake, which account to play from, how hard to pull the aggregate. Real
+            time series cannot produce those decisions, and they cannot provide a
+            paired counterfactual, a ground-truth identity label, or controlled
+            stake choices. Every preset below runs on the same synthetic DGP with
+            paired seeds, so only the attacker moves. The honest-forecaster evaluation
+            on Elia wind and electricity is reported under <em>Evidence</em>.
           </p>
         </div>
 

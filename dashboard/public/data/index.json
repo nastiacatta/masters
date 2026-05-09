@@ -25,7 +25,9 @@
     "rounds": 1000,
     "nSeeds": 20,
     "dataFiles": {
-      "crps_timeseries": "crps_timeseries.csv"
+      "crps_summary": "crps_summary.csv",
+      "paired_delta": "paired_delta.csv",
+      "summary": "summary.json"
     }
   },
   {
@@ -165,7 +167,7 @@
     "dgp": "latent_fixed",
     "scoringMode": "CRPS",
     "nAgents": 6,
-    "rounds": 2000,
+    "rounds": 20000,
     "nSeeds": 20,
     "dataFiles": {
       "quantiles_crps_summary": "quantiles_crps_summary.csv",

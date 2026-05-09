@@ -35,7 +35,7 @@ Convention for every entry:
 - What we take: seven-axiom characterisation, uniqueness of the
   weighted-score mechanism, sybil-proofness for identical reports with
   conserved total wager, the payout formula
-  Π_i = m_i(1 + s_i − Σ_j s_j m_j / Σ_j m_j).
+  $\Pi$_i = m_i(1 + s_i − $\Sigma$_j s_j m_j / $\Sigma$_j m_j).
 - Primary source: `theory/lambert_Selffinanced.md`.
 
 ### Lambert, Pennock, Shoham 2008
@@ -272,7 +272,7 @@ Convention for every entry:
   identity to escape past losses. Our
   `ReputationResetBehaviour` implements this attack. Feldman and
   Chuang's main recommendation -- impose a penalty on every newcomer
-  -- is roughly what our κ > 0 staleness decay and non-unit σ_init
+  -- is roughly what our $\kappa$ > 0 staleness decay and non-unit $\sigma$_init
   prior jointly achieve.
 
 ### Johnstone 2007
@@ -492,8 +492,8 @@ Convention for every entry:
 
 - Used in: Chapter 5.3 (recalibration).
 - What we take: calibration-sharpness principle. Recalibration must
-  trade sharpness for calibration; our 11% sharpness cost is just past
-  the theoretical floor (ratio 0.891 < 0.9 bound).
+  trade sharpness for calibration; our 12% sharpness cost is just past
+  the theoretical floor (ratio 0.877 < 0.9 bound).
 
 ### Ranjan, Gneiting 2010
 
@@ -762,3 +762,168 @@ committed as `data/elia_offshore_wind_2024_2025.csv`.
 - Kilgour, Gerchak 2004 — KG scoring rules (background for Lambert).
 - Savage 1971 — strict propriety characterisation (background).
 - Gneiting, Katzfuss 2014 — probabilistic forecasting review.
+
+---
+
+## F. Additions (2025 literature sweep)
+
+### Berrisch and Ziel 2024
+
+```bibtex
+@article{berrisch2024multivariate,
+  title   = {Multivariate Probabilistic CRPS Learning with an
+             Application to Day-Ahead Electricity Prices},
+  author  = {Berrisch, Jonathan and Ziel, Florian},
+  journal = {arXiv preprint arXiv:2303.10019},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2303.10019}
+}
+```
+
+- Used in: Chapter 2 (online forecast combination), as a horizontal
+  (cross-quantile) online aggregator alternative to our scalar-σ skill
+  gate.
+- What we take: Bernstein Online Aggregation (BOA) as a principled
+  regret-minimising alternative that achieves strong asymptotic
+  properties at the price of giving up self-financing, matching the
+  same trade-off we draw with Vitali 2025.
+
+### Gonçalves, Bessa, Teixeira, Vinagre 2025
+
+```bibtex
+@article{goncalves2025budget,
+  title   = {Budget-constrained Collaborative Renewable Energy
+             Forecasting Market},
+  author  = {Gon{\c{c}}alves, Carla and Bessa, Ricardo J. and
+             Teixeira, Tiago and Vinagre, Jo{\~a}o},
+  journal = {arXiv preprint arXiv:2501.12367},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2501.12367}
+}
+```
+
+- Used in: Chapter 2 (related markets), as an analogue from the
+  INESC-TEC / Predico research stream that attacks the data-sharing
+  incentive side rather than the per-round elicitation side.
+- What we take: existence-proof that a budget-constrained market with
+  spline-LASSO regression attains >10% RMSE improvement; our
+  contribution is orthogonal in that we fix the allocation question
+  and add the skill-and-calibration layers.
+
+### Falconer, Kazempour, Pinson 2025
+
+```bibtex
+@article{falconer2025replication,
+  title   = {Towards Replication-Robust Analytics Markets},
+  author  = {Falconer, Thomas and Kazempour, Jalal and Pinson, Pierre},
+  journal = {INFORMS Journal on Data Science},
+  year    = {2025},
+  doi     = {10.1287/ijds.2025.0075}
+}
+```
+
+- Used in: Chapter 2 (sybil / replication attacks) and Chapter 8
+  (strategic robustness), as a complementary approach using causal
+  Shapley allocation to neutralise feature-replication attacks.
+- What we take: positioning. Their attack model (replication under
+  multiple identities in analytics markets) is the modern analogue of
+  the Lambert sybil attack; their countermeasure (causally-refined
+  Shapley) is a different family from our Lambert-preserving one.
+
+### Shanaev et al. 2025
+
+```bibtex
+@article{shanaev2025manipulable,
+  title   = {How Manipulable are Prediction Markets?},
+  author  = {Shanaev, Savva and Ghaderi, Mohammadreza and Hinich,
+             Aleksandra and Sabbaghi, Omid},
+  journal = {arXiv preprint arXiv:2503.03312},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2503.03312}
+}
+```
+
+- Used in: Chapter 2 (strategic manipulation framing) and Chapter 8.
+- What we take: empirical benchmark that adversarial trades' price
+  effects persist for 60+ days in a live prediction market; motivates
+  why robustness in wagering mechanisms is a practical rather than
+  theoretical concern.
+
+### Oesterheld, Treutlein, Cooper, Hudson 2023
+
+```bibtex
+@article{oesterheld2023performative,
+  title   = {Incentivizing honest performative predictions with proper
+             scoring rules},
+  author  = {Oesterheld, Caspar and Treutlein, Johannes and Cooper,
+             Emery and Hudson, Rubi},
+  journal = {Proceedings of the 39th Conference on Uncertainty in
+             Artificial Intelligence (UAI)},
+  year    = {2023}
+}
+```
+
+- Used in: Chapter 2 (performative prediction).
+- What we take: the correct multi-author citation for the
+  performativity paper previously cited as `treutlein2023performative`
+  alone; the earlier key is retained as an alias to avoid breaking the
+  frozen thesis_draft.tex.
+
+### Gneiting et al. 2023 (Annual Review)
+
+```bibtex
+@article{gneiting2023model,
+  title   = {Model Diagnostics and Forecast Evaluation for Quantiles},
+  author  = {Gneiting, Tilmann and Wolffram, Daniel and Resin, Johannes
+             and others},
+  journal = {Annual Review of Statistics and Its Application},
+  volume  = {10},
+  pages   = {597--621},
+  year    = {2023},
+  doi     = {10.1146/annurev-statistics-032921-020240}
+}
+```
+
+- Used in: Chapter 2 (forecast evaluation framing), Chapter 5.3
+  (recalibration and reliability diagrams).
+- What we take: the modern overview of conditional calibration and
+  Murphy diagrams for quantile-indexed forecasts; supplements the
+  older Gneiting–Raftery 2007 and Gneiting-Balabdaoui–Raftery 2007
+  pair with evaluation tools that take the quantile grid seriously.
+
+### Predico (Elia + INESC-TEC)
+
+```bibtex
+@misc{elia2024predico,
+  title   = {Predico Collaborative Forecasting Platform},
+  author  = {{Elia Group Innovation} and {INESC TEC}},
+  year    = {2024},
+  url     = {https://predico-elia.inesctec.pt/docs/}
+}
+```
+
+- Used in: Chapter 2 (industry motivation).
+- What we take: existence-proof that a performance-weighted
+  collaborative forecasting platform operates on real energy data
+  today; our mechanism is a theoretical analogue of the allocation
+  layer Predico runs in practice.
+
+### Kostrzewski, Marcjasz, Weron 2025
+
+```bibtex
+@article{kostrzewski2025iqra,
+  title   = {Isotonic Quantile Regression Averaging for uncertainty
+             quantification of electricity price forecasts},
+  author  = {Kostrzewski, Maciej and Marcjasz, Grzegorz and Weron,
+             Rafa{\l}},
+  journal = {arXiv preprint arXiv:2507.15079},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2507.15079}
+}
+```
+
+- Used in: Chapter 7 (recalibration future work).
+- What we take: iQRA as an isotonic-constrained post-processor for
+  quantile ensembles; listed as a future-work alternative to our
+  Kuleshov-style isotonic recalibration.
+

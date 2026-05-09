@@ -18,7 +18,7 @@ supported by committed outputs and should be treated as stable.
 | File | Purpose | Status |
 |---|---|---|
 | `00_outline.md` | Top-level thesis structure + section word budgets | skeleton |
-| `10_abstract_and_question.md` | Abstract drafts, research question framing | partial draft |
+| `10_introduction.md` | Abstract drafts, research question framing | partial draft |
 | `20_literature_review.md` | What exists, what's missing, where this sits | partial draft |
 | `30_mechanism_design.md` | Full mechanism description — math + intuition | [LOCKED] |
 | `40_methodology.md` | DGPs, forecaster panel, experiment protocol | [LOCKED] |

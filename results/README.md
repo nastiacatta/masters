@@ -144,8 +144,8 @@ deviation on stationary Elia wind is 0.017.
 
 ### Claim 7 — Recalibration closes the gap
 
-Rolling isotonic (Kuleshov-Fenner-Ermon) closes ~60% of tail deviation
-for ~1.3% CRPS cost.
+Rolling isotonic (Kuleshov-Fenner-Ermon) closes ~41% of tail deviation
+for ~1.6% CRPS cost.
 
 | Artifact | Path |
 |---|---|

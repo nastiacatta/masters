@@ -9,8 +9,8 @@ checklist so nothing slips between the results and the manuscript.
   `onlinev2/outputs/post_fix_deltas/SUMMARY.md`) — done 2026-05-07.
   Held-out optima from `scripts/run_sensitivity_sweep_cached.py`
   (artefact `onlinev2/outputs/sensitivity_sweep.json`): wind
-  (γ = 32, ρ = 0.7, λ = 0.05), electricity (γ = 16, ρ = 0.1,
-  λ = 0.05). Chapter 3.5 table and Chapter 5.2 sensitivity block
+  ($\gamma$ = 32, $\rho$ = 0.7, $\lambda$ = 0.05), electricity ($\gamma$ = 16, $\rho$ = 0.1,
+  $\lambda$ = 0.05). Chapter 3.5 table and Chapter 5.2 sensitivity block
   updated accordingly.
 - [ ] **Horizon runs re-run under expanding normalisation.** Current
   `day_ahead.json`, `4h_ahead.json`, `regime_shift.json` are static-
@@ -55,7 +55,7 @@ checklist so nothing slips between the results and the manuscript.
   (post-fix), matches `dm_test.statistic` in the regenerated
   `comparison.json`. Earlier draft cited +15.92 under the pre-fix
   pipeline.
-- [x] Synthetic skill recovery σ values — match `skill_recovery/data/
+- [x] Synthetic skill recovery $\sigma$ values — match `skill_recovery/data/
   quantiles_crps_summary.csv` to 3 decimals.
 - [x] Deposit policy comparison means — match
   `deposit_policy_comparison.csv` exactly (bankroll_conf = 0.03796,
@@ -67,7 +67,7 @@ checklist so nothing slips between the results and the manuscript.
 - [ ] Sybil ratio 1.065 for diversified reports — still quoted from
   the dashboard pre-refactor preset. Verify against
   `onlinev2/outputs/core/experiments/sybil/` after the next re-run.
-- [x] η default value — runner hardcodes `eta=2.0`, not the `η = 1`
+- [x] $\eta$ default value — runner hardcodes `eta=2.0`, not the `η = 1`
   the original draft said. Fixed in `30_mechanism_design.md`.
 - [x] `best_single` semantics — it is a 100-step rolling CRPS
   selector, not a per-round oracle. Fixed throughout.
@@ -78,14 +78,14 @@ checklist so nothing slips between the results and the manuscript.
 ## Conceptual points still to nail down
 
 - [x] **Truthfulness under the skill gate.** The informal argument is
-  "σ_i is fixed pre-round, so Lambert's proof applies with m_i in
+  "$\sigma$_i is fixed pre-round, so Lambert's proof applies with m_i in
   place of the original wager". Written out explicitly in §3.3.1
   (skill-gate truthfulness lemma, proof sketch), citing Gneiting
   and Raftery 2007 Thm 3 for strict consistency of the pinball
   score and spelling out the three deposit-mode cases. The subtlety
   about c_i depending on the current forecast is addressed: the
   code uses `deposit_mode="fixed"` on the real-data runner
-  (`runner.py:387`), and when `deposit_mode="bankroll"` is used,
+  (`runner.py:402`), and when `deposit_mode="bankroll"` is used,
   `staking.py` explicitly warns that `c_t` must be lagged for the
   theorem to apply. Scope limit (risk neutrality) is kept.
 - [ ] **Diversified-report sybil leakage.** Is ~6.5% the
@@ -94,19 +94,19 @@ checklist so nothing slips between the results and the manuscript.
   stating as a hard scope limit.
 - [x] **Scope of "online" in the truthfulness argument.** Lambert's
   proof is per-round. Adding a multi-round EWMA does not change the
-  per-round sense (σ is frozen for round t), but introduces a
+  per-round sense ($\sigma$ is frozen for round t), but introduces a
   second-order "EWMA-shaping" incentive across rounds: distorting
-  round t's report to lower a competitor's future σ. Addressed in
+  round t's report to lower a competitor's future $\sigma$. Addressed in
   §3.3.1 "Multi-round scope" paragraph: the incentive is at most
-  linear in γ·ρ·(1−σ_{other}) and effectively zero once competitor
-  σ saturates near 1 (which under the tuned γ = 16, ρ = 0.5 happens
+  linear in $\gamma$·$\rho$·(1−$\sigma$_{other}) and effectively zero once competitor
+  $\sigma$ saturates near 1 (which under the tuned $\gamma$ = 16, $\rho$ = 0.5 happens
   after ~20 rounds with ℓ ≲ 0.05). A formal multi-round truthfulness
   proof under discounted expected profit is flagged as an open
   theoretical question.
 - [x] **Confidence proxy specification.** c_i =
-  clip(exp(−β_c · Δ_i), c_min, c_max) with Δ_i = q_i(0.9) − q_i(0.1)
+  clip(exp(−$\beta$_c · $\Delta$_i), c_min, c_max) with $\Delta$_i = q_i(0.9) − q_i(0.1)
   the 80%-interval width on the observed [0, 1] scale, defaults
-  β_c = 1.0, c_min = 0.8, c_max = 1.0. Implementation
+  $\beta$_c = 1.0, c_min = 0.8, c_max = 1.0. Implementation
   `confidence_from_quantiles` in
   `onlinev2/src/onlinev2/core/staking.py`. Now written out
   explicitly in `30_mechanism_design.md` §3.1 Step 1 with lag
@@ -144,7 +144,7 @@ checklist so nothing slips between the results and the manuscript.
 - [ ] Decide: "mechanism" vs "market". Thesis uses "mechanism" when
   referring to the algorithmic object, "market" when referring to the
   economic framing. Keep consistent.
-- [ ] Decide: "σ" or "sigma". Use σ in math mode, "sigma" in prose.
+- [ ] Decide: "$\sigma$" or "sigma". Use $\sigma$ in math mode, "sigma" in prose.
 - [ ] Figure / table numbering restarts per chapter in the LaTeX
   template. This index uses global IDs (T1..T18, F1..F22) for
   convenience; the final thesis will show them as T5.1, F5.4, etc.
