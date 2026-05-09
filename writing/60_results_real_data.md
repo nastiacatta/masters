@@ -29,17 +29,17 @@ $[0, 1]$ scale for the full suite of methods.
 \toprule
 Rule & Mean CRPS & $\Delta$ vs uniform \\
 \midrule
-Per-round inverse-variance oracle (hindsight)
+Per-round oracle (argmin over forecasters)
   & $0.02176$ & $-46.7\%$ \\
 Rolling best single (100-step CRPS selector)
   & $0.03145$ & $-22.9\%$ \\
-Inverse-variance hindsight & $0.03175$ & $-22.2\%$ \\
+Hindsight inverse-CRPS weighting & $0.03175$ & $-22.2\%$ \\
 Shifted-median fan (OGD reference)
   & $0.03487$ & $-14.5\%$ \\
 Median & $0.03700$ & $-9.3\%$ \\
 Trimmed mean & $0.03786$ & $-7.2\%$ \\
 \textbf{Mechanism} & $\mathbf{0.03788}$ & $\mathbf{-7.1\%}$ \\
-Inverse variance & $0.03792$ & $-7.0\%$ \\
+Inverse-CRPS (Bates--Granger style) & $0.03792$ & $-7.0\%$ \\
 Skill only & $0.03869$ & $-5.2\%$ \\
 Uniform & $0.04079$ & --- \\
 \bottomrule
@@ -60,33 +60,33 @@ significant at any reasonable threshold.
 \includegraphics[width=0.95\textwidth]{writing/figures/wind_master_comparison.png}
 \caption{Mean CRPS for ten aggregation rules on the full-length
 Elia offshore-wind headline slice ($T = 17{,}344$). The mechanism
-reduces CRPS by $7.1\%$ against uniform averaging; the
-inverse-variance hindsight, rolling best-single, and shifted-median
-fan baselines delimit the region accessible to self-financed
-aggregators.}
+reduces CRPS by $7.1\%$ against uniform averaging; the per-round
+oracle, rolling best-single, and shifted-median fan baselines
+delimit the region accessible to self-financed aggregators.}
 \label{fig:wind-master}
 \end{figure}
 
 \paragraph{Discussion.} Four comparisons merit attention. The
-mechanism against inverse-variance weighting is a statistical tie
+mechanism against inverse-CRPS weighting is a statistical tie
 ($-7.1\%$ versus $-7.0\%$): the skill gate's contribution on top of
-Bates--Granger-style inverse-variance weighting is within noise on
+Bates--Granger-style inverse-error weighting is within noise on
 this slice. The mechanism against the shifted-median fan is
 $-7.1\%$ versus $-14.5\%$: the published OGD reference baseline
 beats the mechanism by $7.4$ percentage points CRPS, the price paid
 for keeping the Lambert budget-balance constraint. The mechanism
-against the oracle ($-7.1\%$ versus $-46.7\%$) leaves an oracle gap
-of approximately forty percentage points, which no self-financed
-aggregator can close; the mechanism captures roughly $15\%$ of the
-available oracle gap. The mechanism against the rolling best-single
-selector ($-7.1\%$ versus $-22.9\%$) loses by $15.8$ percentage
-points, because wind power is highly autocorrelated and a single
-well-tuned model (online XGBoost) captures most of the structure.
+against the per-round oracle ($-7.1\%$ versus $-46.7\%$) leaves an
+oracle gap of approximately forty percentage points, which no
+self-financed aggregator can close; the mechanism captures roughly
+$15\%$ of the available oracle gap. The mechanism against the
+rolling best-single selector ($-7.1\%$ versus $-22.9\%$) loses by
+$15.8$ percentage points, because wind power is highly
+autocorrelated and a single well-tuned model (online XGBoost)
+captures most of the structure.
 
 Note that the rolling best-single selector is defined as the
 forecaster with the lowest recent average CRPS over a 100-step
 lookback window. It is not a per-round oracle; the per-round
-hindsight row (top of the table) serves that role.
+argmin row (top of the table) serves that role.
 
 The mechanism and the trimmed-mean baseline differ by $0.1$
 percentage point of CRPS ($-7.1\%$ versus $-7.2\%$). Under the
@@ -203,9 +203,9 @@ Rule & Mean CRPS & $\Delta$ vs uniform \\
 \midrule
 Per-round oracle (argmin) & $0.01166$ & $-44.9\%$ \\
 Rolling best single & $0.01665$ & $-21.3\%$ \\
-Inverse-variance hindsight & $0.01670$ & $-21.0\%$ \\
+Hindsight inverse-CRPS weighting & $0.01670$ & $-21.0\%$ \\
 Median & $0.01919$ & $-9.3\%$ \\
-Inverse variance & $0.01963$ & $-7.2\%$ \\
+Inverse-CRPS (Bates--Granger style) & $0.01963$ & $-7.2\%$ \\
 Trimmed mean & $0.01973$ & $-6.7\%$ \\
 \textbf{Mechanism} & $\mathbf{0.02000}$ & $\mathbf{-5.4\%}$ \\
 Shifted-median fan (OGD reference)
@@ -345,12 +345,12 @@ Method & Mean CRPS & $\Delta$ vs uniform \\
 Uniform & $0.09052$ & --- \\
 Skill only & $0.09051$ & $-0.0\%$ \\
 \textbf{Mechanism} & $\mathbf{0.09052}$ & $\mathbf{\approx 0.0\%}$ \\
-Inverse variance & $0.09022$ & $-0.3\%$ \\
 Median & $0.09004$ & $-0.5\%$ \\
 Trimmed mean & $0.08979$ & $-0.8\%$ \\
+Inverse-CRPS (Bates--Granger style) & $0.09022$ & $-0.3\%$ \\
 Shifted-median fan (OGD reference) & $0.09063$ & $+0.1\%$ \\
 Rolling best single & $0.08606$ & $-4.9\%$ \\
-Inverse-variance hindsight & $0.08026$ & $-11.3\%$ \\
+Hindsight inverse-CRPS weighting & $0.08026$ & $-11.3\%$ \\
 Per-round oracle & $0.05924$ & $-34.6\%$ \\
 \bottomrule
 \end{tabular}
@@ -368,10 +368,10 @@ This is the forecast-combination puzzle regime
 mechanism behaves accordingly: a null rather than a regression.
 
 The oracle gap on electricity is approximately thirty-five
-percentage points (mechanism $0.09052$, oracle $0.05924$), so a
-perfect per-round weight could improve a great deal, but not via an
-EWMA or OGD on this forecaster panel, because the forecasters
-themselves are undifferentiated.
+percentage points (mechanism $0.09052$, per-round oracle $0.05924$),
+so a perfect per-round weight could improve a great deal, but not
+via an EWMA or OGD on this forecaster panel, because the
+forecasters themselves are undifferentiated.
 
 ## Horizon experiments
 

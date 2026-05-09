@@ -140,9 +140,10 @@ Rung~2, \emph{pure forecasting gain}, holds seeds, data-generating
 process, horizon, participation pattern, and agent panel fixed
 across all methods in a batch. Each comparison reports paired deltas
 against a set of mandatory baselines: uniform averaging, stake-only,
-skill-only, the mechanism, inverse-variance weighting, trimmed mean,
-median, the rolling best-single selector, the per-round
-inverse-variance hindsight oracle, and the published OGD reference.
+skill-only, the mechanism, inverse-CRPS weighting, trimmed mean,
+median, the rolling best-single selector, the per-round oracle
+(argmin), the hindsight inverse-CRPS combination, and the published
+OGD reference.
 
 Rung~3, \emph{dynamic robustness}, evaluates performance under
 drift (non-stationary noise scales), missingness (i.i.d.\ and

@@ -46,10 +46,10 @@ $13\%$ above Elia's operational forecast.
 ## Limitations
 
 \paragraph{No universal dominance over simple baselines.} On the
-full-length wind run, inverse-variance weighting (\,$-7.0\%$ vs
-uniform) is statistically tied with the mechanism (\,$-7.1\%$), and
-the median (\,$-9.3\%$) and trimmed mean (\,$-7.2\%$) both improve
-on it. The per-quantile OGD baseline of \citet{vitali2025intermittent}
+full-length wind run, inverse-CRPS weighting (\,$-7.0\%$ vs uniform)
+is statistically tied with the mechanism (\,$-7.1\%$), and the
+median (\,$-9.3\%$) and trimmed mean (\,$-7.2\%$) both improve on
+it. The per-quantile OGD baseline of \citet{vitali2025intermittent}
 (\,$-18.0\%$) and the rolling best-single selector (\,$-22.9\%$)
 beat it by larger margins. The contribution is conditional
 improvement together with preserved economic structure, not raw

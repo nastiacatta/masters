@@ -198,8 +198,9 @@ with \citet{vitali2025intermittent}, the cost is that identity,
 deposit, and aggregation-weight are three independent quantities
 rather than being unified through an effective wager.
 \citet{guillot2023adaptive} apply residual-quantile online gradient
-descent with multi-learning-rate expert aggregation to French
-electricity net-load, and constitute the closest methodological
+descent with multi-learning-rate expert aggregation to regional net-load
+in Great Britain and city demand in the United States, and constitute
+the closest methodological
 predecessor to the per-quantile OGD baseline used throughout the
 present empirical chapters. The isotonic-QRA post-processor of
 \citet{kostrzewski2025iqra} goes the other way, imposing stochastic

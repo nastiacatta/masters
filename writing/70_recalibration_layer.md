@@ -17,30 +17,30 @@ explicitly.
 \begin{proposition}[Quantile-averaging under-dispersion]
 \label{prop:qa-under-dispersion}
 Let $\hat q(\tau)$ be the weighted pointwise average of $n \geq 2$
-expert quantile reports at level $\tau$, with weights on the simplex
-and not all experts identical at $\tau$. Then the
-$\big(\hat q(\tau_L), \hat q(\tau_U)\big)$ prediction interval at
-confidence level $\tau_U - \tau_L$ has width less than or equal to
-the weighted average of the expert interval widths, with equality
-if and only if every expert reports the same interval width.
+expert quantile reports at level $\tau$, with weights on the
+simplex. Let $\Delta_i = q_i(\tau_U) - q_i(\tau_L)$ be expert $i$'s
+reported interval width at confidence level $\tau_U - \tau_L$, and
+let $\bar\Delta = \sum_i w_i \Delta_i$ be the weighted mean width.
+Then the aggregate interval width is exactly $\bar\Delta$. When
+the experts disagree on position, however, the empirical coverage
+of the aggregate interval is, in general, strictly less than
+$\tau_U - \tau_L$: averaging quantiles pointwise does not
+compose their coverage levels.
 \end{proposition}
 
 \begin{proof}
-Let $\Delta_i = q_i(\tau_U) - q_i(\tau_L)$ be expert $i$'s interval
-width and $\bar \Delta = \sum_i w_i \Delta_i$ the weighted mean
-width. By linearity,
-$\hat q(\tau_U) - \hat q(\tau_L) = \sum_i w_i (q_i(\tau_U) -
-q_i(\tau_L)) = \bar \Delta$, so the aggregate width equals
-$\bar \Delta$ exactly. Jensen's inequality applies trivially because
-the map is linear. However, if the experts' positions also
-disagree, the aggregate's coverage is determined by where
-$\hat q(\tau_L), \hat q(\tau_U)$ sit relative to the outcome's
-true distribution, and this mean-width interval will typically
-cover less than $\tau_U - \tau_L$ of the outcome mass because the
-mean-of-quantiles is not the quantile-of-the-mean for non-Gaussian
-distributions. The deviation is bounded in magnitude by the
-expert-disagreement range $\max_i q_i(\tau) - \min_i q_i(\tau)$ at
-each grid level.
+By linearity, $\hat q(\tau_U) - \hat q(\tau_L)
+ = \sum_i w_i (q_i(\tau_U) - q_i(\tau_L)) = \bar\Delta$, which gives
+the width identity. For coverage, take two experts with identical
+widths $\Delta$ but locations $q_1(\tau_L), q_2(\tau_L)$ offset by
+$\epsilon > 0$; each expert covers the nominal fraction of
+outcomes inside its own $(\tau_L, \tau_U)$ interval, but the
+aggregate interval, positioned at the mean location with the same
+width $\Delta$, covers only the overlap of the two outcome masses.
+For non-symmetric outcome distributions the overlap is, in
+general, strictly below $\tau_U - \tau_L$. The deviation is
+bounded in magnitude by the expert-disagreement range
+$\max_i q_i(\tau) - \min_i q_i(\tau)$ at each grid level.
 \end{proof}
 
 The proposition gives a non-strict analogue of the Ranjan-Gneiting

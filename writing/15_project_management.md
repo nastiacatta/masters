@@ -65,3 +65,24 @@ academic supervisor (weekly technical guidance), the module leaders
 (\citealt{lambert2008selffinanced, vitali2025intermittent, raja2024wagering})
 whose published implementations and proofs are cited and, where
 possible, ported directly.
+
+## Scope relative to the ESG plan
+
+The Early Stage Gateway project plan identified four design
+directions: (i) manipulation and defence, (ii) reinforcement
+learning for mechanism tuning, (iii) multi-output Gaussian-process
+aggregation, and (iv) online learning for forecaster weights. The
+proposal committed to (iv) as the main contribution, with (i)--(iii)
+as stretch goals. The present thesis delivers (iv) in full,
+addresses (i) at depth in Chapter~\ref{ch:robustness}, and leaves
+(ii) and (iii) as future work. Two smaller deviations from the ESG
+plan are worth recording. The online update is an exponentially
+weighted moving average rather than Hedge or Online Gradient
+Descent on the simplex, because the mechanism already imposes a
+simplex-free scalar skill; the trade-off is discussed in
+Chapter~\ref{ch:mechanism}. The real-data validation was performed
+on the Elia offshore-wind and electricity-imbalance series rather
+than the Survey of Professional Forecasters proposed at ESG,
+because the Elia data is long enough for the online estimator to
+converge and has an independent operational baseline, which the
+SPF does not.

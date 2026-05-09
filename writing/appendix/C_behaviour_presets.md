@@ -41,7 +41,7 @@ per-preset figures are in the main body
 
 ## 5. Strategic reporter
 
-- Basis: \citet{hardt2023performative, treutlein2023performative}.
+- Basis: \citet{hardt2023performative, oesterheld2023performative}.
 - Objective: shift the aggregate to match an off-mechanism
   objective.
 - Headline: pulls of magnitude $0.3$ are profitable; larger pulls
