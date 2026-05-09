@@ -11,8 +11,9 @@ import {
   Bar,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE, ORANGE } from '@/lib/palette';
 
-const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#10b981'];
+const PREF_PALETTE = [PALETTE.imperial, PALETTE.purple, PALETTE.teal, ORANGE];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -61,7 +62,7 @@ export default function PreferenceStressRenderer({ data, header }: RendererProps
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="totalProfit" fill={PALETTE[0]} />
+                <Bar dataKey="totalProfit" fill={PREF_PALETTE[0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -75,7 +76,7 @@ export default function PreferenceStressRenderer({ data, header }: RendererProps
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="finalGini" fill={PALETTE[3]} />
+                <Bar dataKey="finalGini" fill={PREF_PALETTE[3]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

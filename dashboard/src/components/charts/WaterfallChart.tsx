@@ -15,10 +15,12 @@ import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
+  AXIS_LABEL_FILL,
   GRID_PROPS,
   TOOLTIP_STYLE,
   fmt,
 } from '@/components/lab/shared';
+import { PALETTE } from '@/lib/palette';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -45,9 +47,12 @@ interface WaterfallChartProps {
 
 /* ── Colours ───────────────────────────────────────────────────────── */
 
-const COLOUR_IMPROVE = '#0072B2'; // Wong blue — improvement (negative delta, colour-blind safe)
-const COLOUR_DEGRADE = '#D55E00'; // Wong vermillion — degradation (positive delta, colour-blind safe)
-const COLOUR_TOTAL = '#1B2A4A';   // navy — total bar
+// Palette-anchored. Teal for improvement, coral for degradation, navy for totals.
+// Previously used Wong (2011) blue/vermillion — still colour-blind safe because
+// teal vs coral is the same hue contrast the slide palette already uses.
+const COLOUR_IMPROVE = PALETTE.teal;
+const COLOUR_DEGRADE = PALETTE.coral;
+const COLOUR_TOTAL   = PALETTE.navy;
 
 /* ── Component ─────────────────────────────────────────────────────── */
 
@@ -131,7 +136,7 @@ export default function WaterfallChart({
               position: 'insideLeft',
               offset: 8,
               fontSize: 11,
-              fill: '#5a6175',
+              fill: AXIS_LABEL_FILL,
             }}
           />
           <ReferenceLine y={0} stroke={AXIS_STROKE} strokeDasharray="4 4" />
@@ -166,14 +171,37 @@ export default function WaterfallChart({
             <LabelList
               dataKey="delta"
               position="top"
-              formatter={(v: string | number | boolean | null | undefined) => {
-                if (v == null) return '';
-                const num = Number(v);
-                const row = chartData.find(d => Math.abs(d.delta - num) < 1e-10);
-                if (!row) return fmt(num, 4);
-                return row.isTotal ? fmt(num, 4) : `${row.rawDelta <= 0 ? '' : '+'}${fmt(row.rawDelta, 4)}`;
+              content={(props: {
+                x?: number | string;
+                y?: number | string;
+                width?: number | string;
+                index?: number;
+              }) => {
+                const x = typeof props.x === 'number' ? props.x : Number(props.x);
+                const y = typeof props.y === 'number' ? props.y : Number(props.y);
+                const w = typeof props.width === 'number' ? props.width : Number(props.width);
+                const { index } = props;
+                if (index == null || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w)) {
+                  return null;
+                }
+                const row = chartData[index];
+                if (!row) return null;
+                const text = row.isTotal
+                  ? fmt(row.delta, 4)
+                  : `${row.rawDelta <= 0 ? '' : '+'}${fmt(row.rawDelta, 4)}`;
+                return (
+                  <text
+                    x={x + w / 2}
+                    y={y - 4}
+                    textAnchor="middle"
+                    fontSize={11}
+                    fill="#334155"
+                    fontFamily="monospace"
+                  >
+                    {text}
+                  </text>
+                );
               }}
-              style={{ fontSize: 11, fill: '#334155', fontFamily: 'monospace' }}
             />
           </Bar>
         </BarChart>

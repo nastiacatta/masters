@@ -13,11 +13,12 @@ import {
   YAxis,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
 const COLOURS: Record<string, string> = {
-  baseline: '#94a3b8',
-  manipulator_no_reset: '#dc2626',
-  reputation_reset: '#f59e0b',
+  baseline:             PALETTE.slate,
+  manipulator_no_reset: PALETTE.coral,
+  reputation_reset:     '#B45309',  // amber
 };
 
 function EmptyState({ message }: { message: string }) {

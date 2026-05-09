@@ -18,7 +18,7 @@ import { gini, mean } from '@/components/lab/shared';
 const DEFAULT_ROUNDS = 20000;
 const DEFAULT_SEED = 42;
 const DEFAULT_N = 6;
-const INITIAL_WEALTH = 20;
+export const INITIAL_WEALTH = 20;
 
 export interface PipelineRoundResult {
   round: number;

@@ -5,9 +5,11 @@ import {
   ComposedChart, Line,
 } from 'recharts';
 import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
+import { INITIAL_WEALTH } from '@/lib/coreMechanism/runPipeline';
 import type { RoundTrace } from '@/lib/coreMechanism/runRoundComposable';
 import MechanismChain from './MechanismChain';
-import { AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, agentName, fmt } from './shared';
+import { AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, REF_LINE_STROKE, TOOLTIP_STYLE, agentName, fmt } from './shared';
+import { PALETTE } from '@/lib/palette';
 
 interface Props {
   pipeline: PipelineResult;
@@ -145,7 +147,10 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
           </div>
           <div className="bg-slate-50 rounded-lg p-2.5">
             <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Error |y − r̂|</div>
-            <div className={`text-base font-bold font-mono mt-0.5 ${Math.abs(trace.y - trace.r_hat) < 0.1 ? 'text-emerald-600' : 'text-red-600'}`}>
+            <div
+              className="text-base font-bold font-mono mt-0.5"
+              style={{ color: Math.abs(trace.y - trace.r_hat) < 0.1 ? PALETTE.teal : PALETTE.coral }}
+            >
               {fmt(Math.abs(trace.y - trace.r_hat), 4)}
             </div>
           </div>
@@ -185,12 +190,12 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="deposit" name="Deposit bᵢ" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.4}>
                 {agentBarData.map((d) => (
-                  <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />
+                  <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : PALETTE.border} />
                 ))}
               </Bar>
               <Bar dataKey="effectiveWager" name="Wager mᵢ" radius={[4, 4, 0, 0]} maxBarSize={32}>
                 {agentBarData.map((d) => (
-                  <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : '#e2e8f0'} />
+                  <Cell key={d.idx} fill={d.active ? AGENT_PALETTE[d.idx % AGENT_PALETTE.length] : PALETTE.border} />
                 ))}
               </Bar>
               <ReferenceLine y={0} stroke={AXIS_STROKE} />
@@ -209,11 +214,11 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
                 {scoreBarData.map((d) => (
                   <Cell
                     key={d.idx}
-                    fill={!d.active ? '#e2e8f0' : d.value > 0.8 ? '#10b981' : d.value > 0.5 ? '#f59e0b' : '#ef4444'}
+                    fill={!d.active ? PALETTE.border : d.value > 0.8 ? PALETTE.teal : d.value > 0.5 ? '#B45309' : PALETTE.coral}
                   />
                 ))}
               </Bar>
-              <ReferenceLine y={trace.scores.reduce((a, b) => a + b, 0) / Math.max(1, trace.activeCount)} stroke="#6366f1" strokeDasharray="3 3" label={{ value: 'avg', fill: '#6366f1', fontSize: 10 }} />
+              <ReferenceLine y={trace.scores.reduce((a, b) => a + b, 0) / Math.max(1, trace.activeCount)} stroke={PALETTE.navy} strokeDasharray="3 3" label={{ value: 'avg', fill: PALETTE.navy, fontSize: 10 }} />
             </BarChart>
           </ResponsiveContainer>
         </ChartSection>
@@ -225,10 +230,10 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
               <XAxis dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} />
+              <ReferenceLine y={0} stroke={REF_LINE_STROKE} strokeWidth={1.5} />
               <Bar dataKey="payoff" name="Profit πᵢ" radius={[4, 4, 4, 4]} maxBarSize={36}>
                 {payoffData.map((d) => (
-                  <Cell key={d.idx} fill={d.payoff >= 0 ? '#10b981' : '#ef4444'} opacity={d.active ? 1 : 0.3} />
+                  <Cell key={d.idx} fill={d.payoff >= 0 ? PALETTE.teal : PALETTE.coral} opacity={d.active ? 1 : 0.3} />
                 ))}
               </Bar>
               <Line dataKey="payoff" name="" stroke="transparent" dot={false} />
@@ -241,8 +246,8 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
             <BarChart data={wealthData} margin={CHART_MARGIN}>
               <defs>
                 <linearGradient id="wealthGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.5} />
+                  <stop offset="0%" stopColor={PALETTE.navy} stopOpacity={0.9} />
+                  <stop offset="100%" stopColor={PALETTE.navy} stopOpacity={0.5} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...GRID_PROPS} />
@@ -250,7 +255,7 @@ export default function RoundReplayPanel({ pipeline, currentRound, setCurrentRou
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="after" name="Wealth Wᵢ" radius={[6, 6, 0, 0]} maxBarSize={36} fill="url(#wealthGrad)" />
-              <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="3 3" label={{ value: 'initial', fill: '#94a3b8', fontSize: 9 }} />
+              <ReferenceLine y={INITIAL_WEALTH} stroke={REF_LINE_STROKE} strokeDasharray="3 3" label={{ value: 'initial', fill: REF_LINE_STROKE, fontSize: 9 }} />
             </BarChart>
           </ResponsiveContainer>
         </ChartSection>

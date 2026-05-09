@@ -16,7 +16,9 @@ import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
+  AXIS_LABEL_FILL,
   GRID_PROPS,
+  REF_LINE_STROKE,
   TOOLTIP_STYLE,
   fmt,
 } from '@/components/lab/shared';
@@ -196,7 +198,7 @@ export default function DeltaBarChart({
               position: 'insideBottom',
               offset: -8,
               fontSize: 13,
-              fill: '#5a6175',
+              fill: AXIS_LABEL_FILL,
             }}
           />
           <YAxis
@@ -208,13 +210,13 @@ export default function DeltaBarChart({
           />
           <ReferenceLine
             x={0}
-            stroke="#8c92a3"
+            stroke={REF_LINE_STROKE}
             strokeDasharray="4 4"
             label={{
               value: baselineLabel,
               position: 'top',
               fontSize: 12,
-              fill: '#5a6175',
+              fill: AXIS_LABEL_FILL,
             }}
           />
           <Tooltip

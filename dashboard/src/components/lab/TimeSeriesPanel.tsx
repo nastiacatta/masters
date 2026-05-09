@@ -5,10 +5,12 @@ import {
   ResponsiveContainer, Legend, ReferenceLine, Label, Brush, Cell,
 } from 'recharts';
 import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
+import { INITIAL_WEALTH } from '@/lib/coreMechanism/runPipeline';
 import {
-  AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  AGENT_PALETTE, CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, REF_LINE_STROKE,
   TOOLTIP_STYLE, agentName, fmt, downsample, movingAvg,
 } from './shared';
+import { PALETTE } from '@/lib/palette';
 
 interface Props {
   pipeline: PipelineResult;
@@ -196,21 +198,21 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
             <AreaChart data={errorData} margin={CHART_MARGIN} onClick={(e) => e?.activeLabel && onRoundClick?.(Number(e.activeLabel) - 1)}>
               <defs>
                 <linearGradient id="errorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor={PALETTE.coral} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={PALETTE.coral} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
-              <ReferenceLine y={meanError} stroke="#94a3b8" strokeDasharray="4 4">
-                <Label value={`μ = ${fmt(meanError, 4)}`} position="right" fill="#94a3b8" fontSize={9} />
+              <ReferenceLine y={meanError} stroke={REF_LINE_STROKE} strokeDasharray="4 4">
+                <Label value={`μ = ${fmt(meanError, 4)}`} position="right" fill={REF_LINE_STROKE} fontSize={9} />
               </ReferenceLine>
-              <Area type="monotone" dataKey="error" name="Per-round error" stroke="#ef4444" fill="url(#errorGradient)" strokeWidth={1} dot={false} />
-              <Line type="monotone" dataKey="ma" name="Moving avg" stroke="#dc2626" strokeWidth={2} dot={false} strokeDasharray="0" />
+              <Area type="monotone" dataKey="error" name="Per-round error" stroke={PALETTE.coral} fill="url(#errorGradient)" strokeWidth={1} dot={false} />
+              <Line type="monotone" dataKey="ma" name="Moving avg" stroke={PALETTE.navy} strokeWidth={2} dot={false} strokeDasharray="0" />
               {errorData.length > 40 && (
-                <Brush dataKey="round" height={24} stroke="#cbd5e1" fill="#f8fafc" travellerWidth={8}
+                <Brush dataKey="round" height={24} stroke={PALETTE.border} fill={PALETTE.offWhite} travellerWidth={8}
                   onChange={(range) => setBrushRange(range as { startIndex: number; endIndex: number })} />
               )}
             </AreaChart>
@@ -222,15 +224,15 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
             <AreaChart data={cumulativeErrorData} margin={CHART_MARGIN}>
               <defs>
                 <linearGradient id="cumErrorGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor={PALETTE.teal} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={PALETTE.teal} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
-              <Area type="monotone" dataKey="cumError" name="Cumulative mean error" stroke="#0ea5e9" fill="url(#cumErrorGrad)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="cumError" name="Cumulative mean error" stroke={PALETTE.teal} fill="url(#cumErrorGrad)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </Section>
@@ -246,8 +248,8 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8, lineHeight: '16px', maxHeight: 36, overflow: 'hidden' }} iconSize={8} />
-              <ReferenceLine y={pipeline.params.sigma_min} stroke="#94a3b8" strokeDasharray="4 4">
-                <Label value="σ_min" position="right" fill="#94a3b8" fontSize={9} />
+              <ReferenceLine y={pipeline.params.sigma_min} stroke={REF_LINE_STROKE} strokeDasharray="4 4">
+                <Label value="σ_min" position="right" fill={REF_LINE_STROKE} fontSize={9} />
               </ReferenceLine>
               {Array.from({ length: N }, (_, i) => (
                 <Line
@@ -282,8 +284,8 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-              <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="4 4">
-                <Label value="W₀" position="right" fill="#94a3b8" fontSize={9} />
+              <ReferenceLine y={INITIAL_WEALTH} stroke={REF_LINE_STROKE} strokeDasharray="4 4">
+                <Label value="W₀" position="right" fill={REF_LINE_STROKE} fontSize={9} />
               </ReferenceLine>
               {Array.from({ length: N }, (_, i) => (
                 <Line
@@ -310,8 +312,8 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
             <ComposedChart data={participationData} margin={CHART_MARGIN}>
               <defs>
                 <linearGradient id="participationGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.7} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="0%" stopColor={PALETTE.teal} stopOpacity={0.7} />
+                  <stop offset="100%" stopColor={PALETTE.teal} stopOpacity={0.3} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...GRID_PROPS} />
@@ -320,11 +322,11 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
               <Tooltip content={<SmartTooltip />} />
               <Bar dataKey="active" name="Active agents" fill="url(#participationGrad)" radius={[2, 2, 0, 0]} maxBarSize={8}>
                 {participationData.map((d, i) => (
-                  <Cell key={i} fill={d.rate >= 0.8 ? '#10b981' : d.rate >= 0.5 ? '#f59e0b' : '#ef4444'} opacity={0.7} />
+                  <Cell key={i} fill={d.rate >= 0.8 ? PALETTE.teal : d.rate >= 0.5 ? '#B45309' : PALETTE.coral} opacity={0.7} />
                 ))}
               </Bar>
-              <ReferenceLine y={N} stroke="#94a3b8" strokeDasharray="4 4">
-                <Label value="N" position="right" fill="#94a3b8" fontSize={9} />
+              <ReferenceLine y={N} stroke={REF_LINE_STROKE} strokeDasharray="4 4">
+                <Label value="N" position="right" fill={REF_LINE_STROKE} fontSize={9} />
               </ReferenceLine>
             </ComposedChart>
           </ResponsiveContainer>
@@ -335,8 +337,8 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
             <ComposedChart data={concentrationData} margin={CHART_MARGIN}>
               <defs>
                 <linearGradient id="hhiGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor={PALETTE.purple} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={PALETTE.purple} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...GRID_PROPS} />
@@ -345,9 +347,9 @@ export default function TimeSeriesPanel({ pipeline, selectedAgent, setSelectedAg
               <YAxis yAxisId="neff" tick={AXIS_TICK} stroke={AXIS_STROKE} orientation="right" />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-              <Area yAxisId="hhi" type="monotone" dataKey="hhi" name="HHI" stroke="#8b5cf6" fill="url(#hhiGrad)" strokeWidth={1.5} dot={false} />
-              <Line yAxisId="neff" type="monotone" dataKey="nEff" name="N_eff" stroke="#0ea5e9" strokeWidth={2} dot={false} />
-              <Line yAxisId="hhi" type="monotone" dataKey="topShare" name="Top share" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
+              <Area yAxisId="hhi" type="monotone" dataKey="hhi" name="HHI (left)" stroke={PALETTE.purple} fill="url(#hhiGrad)" strokeWidth={1.5} dot={false} />
+              <Line yAxisId="neff" type="monotone" dataKey="nEff" name="N_eff (right)" stroke={PALETTE.teal} strokeWidth={2} dot={false} />
+              <Line yAxisId="hhi" type="monotone" dataKey="topShare" name="Top share (left)" stroke="#B45309" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
             </ComposedChart>
           </ResponsiveContainer>
         </Section>

@@ -8,6 +8,8 @@ import {
   CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
   fmt,
 } from '@/components/lab/shared';
+import { viridis, rgbToCSS } from '@/lib/colourScales';
+import { PALETTE, ORANGE } from '@/lib/palette';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import MathBlock from '@/components/dashboard/MathBlock';
 import { SEED, N, T, VERDICT_VARIANT } from '@/lib/behaviour/helpers';
@@ -22,7 +24,12 @@ export default function SensitivityTab({ data }: { data: SweepPoint[] }) {
 
   const lams = [...new Set(data.map(d => d.lam))].sort((a, b) => a - b);
   const sigs = [...new Set(data.map(d => d.sig))].sort((a, b) => a - b);
-  const sigColors = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
+  // σ_min is an ordered variable — sample viridis to give a perceptually
+  // uniform gradient from low to high σ_min.
+  const sigColors = sigs.map((_, i, arr) => {
+    const t = arr.length <= 1 ? 0.5 : i / (arr.length - 1);
+    return rgbToCSS(viridis(t));
+  });
 
   const barData = lams.map(lam => {
     const row: Record<string, number | string> = { lam: `λ=${lam}` };
@@ -33,12 +40,14 @@ export default function SensitivityTab({ data }: { data: SweepPoint[] }) {
     return row;
   });
 
-  // Seasonality data (previously its own tab, now included here)
+  // Seasonality data (previously its own tab, now included here). Seasons are
+  // ordinal rather than categorical, so sample viridis in season order
+  // (winter → spring → summer → autumn) for a consistent progression.
   const SEASON_DATA = [
-    { season: 'Winter', pct: 17.3, color: '#6366f1' },
-    { season: 'Spring', pct: 14.3, color: '#0ea5e9' },
-    { season: 'Autumn', pct: 14.6, color: '#f59e0b' },
-    { season: 'Summer', pct: 11.8, color: '#10b981' },
+    { season: 'Winter', pct: 17.3, color: PALETTE.navy },
+    { season: 'Spring', pct: 14.3, color: PALETTE.teal },
+    { season: 'Summer', pct: 11.8, color: ORANGE },
+    { season: 'Autumn', pct: 14.6, color: PALETTE.coral },
   ];
 
   return (

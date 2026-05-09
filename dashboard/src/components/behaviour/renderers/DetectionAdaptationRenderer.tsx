@@ -11,8 +11,9 @@ import {
   Bar,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE, ORANGE } from '@/lib/palette';
 
-const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#10b981', '#ef4444'];
+const DETECTION_PALETTE = [PALETTE.imperial, PALETTE.purple, PALETTE.teal, ORANGE, PALETTE.coral];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -61,7 +62,7 @@ export default function DetectionAdaptationRenderer({ data, header }: RendererPr
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="totalProfit" fill={PALETTE[4]} />
+                <Bar dataKey="totalProfit" fill={DETECTION_PALETTE[4]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -75,7 +76,7 @@ export default function DetectionAdaptationRenderer({ data, header }: RendererPr
                 <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="finalWealth" fill={PALETTE[0]} />
+                <Bar dataKey="finalWealth" fill={DETECTION_PALETTE[0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

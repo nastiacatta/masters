@@ -8,9 +8,10 @@ import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
-  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, AXIS_LABEL_FILL, REF_LINE_STROKE, REF_BAND_FILL,
   fmt, downsample,
 } from '@/components/lab/shared';
+import { PALETTE } from '@/lib/palette';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
@@ -110,13 +111,13 @@ export default function ReportingTab({ riskAverse, noisyReporter, reputationGame
                 <CartesianGrid {...GRID_PROPS} />
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoomHedge.state.left, cumZoomHedge.state.right]} />
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-                  label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                  label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
                 <Tooltip content={<SmartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="baseline" name="Truthful" stroke="#94a3b8" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="hedged" name="Hedged" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="baseline" name="Truthful" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="hedged" name="Hedged" stroke={PALETTE.purple} strokeWidth={2} dot={false} />
                 {cumZoomHedge.state.refLeft && cumZoomHedge.state.refRight && (
-                  <ReferenceArea x1={cumZoomHedge.state.refLeft} x2={cumZoomHedge.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                  <ReferenceArea x1={cumZoomHedge.state.refLeft} x2={cumZoomHedge.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
                 )}
               </LineChart>
             </ResponsiveContainer>
@@ -129,13 +130,13 @@ export default function ReportingTab({ riskAverse, noisyReporter, reputationGame
                 <CartesianGrid {...GRID_PROPS} />
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigZoomHedge.state.left, sigZoomHedge.state.right]} />
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
-                  label={{ value: 'Avg σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                  label={{ value: 'Avg σ', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
                 <Tooltip content={<SmartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="baseline_avg" name="Truthful avg σ" stroke="#94a3b8" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="hedged_avg" name="Hedged avg σ" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="baseline_avg" name="Truthful avg σ" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="hedged_avg" name="Hedged avg σ" stroke={PALETTE.purple} strokeWidth={2} dot={false} />
                 {sigZoomHedge.state.refLeft && sigZoomHedge.state.refRight && (
-                  <ReferenceArea x1={sigZoomHedge.state.refLeft} x2={sigZoomHedge.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                  <ReferenceArea x1={sigZoomHedge.state.refLeft} x2={sigZoomHedge.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
                 )}
               </LineChart>
             </ResponsiveContainer>
@@ -172,13 +173,13 @@ export default function ReportingTab({ riskAverse, noisyReporter, reputationGame
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoomNoisy.state.left, cumZoomNoisy.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-                label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="baseline" name="Baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="noisy" name="Noisy reporter" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="baseline" name="Baseline" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="noisy" name="Noisy reporter" stroke={PALETTE.purple} strokeWidth={2} dot={false} />
               {cumZoomNoisy.state.refLeft && cumZoomNoisy.state.refRight && (
-                <ReferenceArea x1={cumZoomNoisy.state.refLeft} x2={cumZoomNoisy.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                <ReferenceArea x1={cumZoomNoisy.state.refLeft} x2={cumZoomNoisy.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -214,13 +215,13 @@ export default function ReportingTab({ riskAverse, noisyReporter, reputationGame
                 <CartesianGrid {...GRID_PROPS} />
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigZoomRepGamer.state.left, sigZoomRepGamer.state.right]} />
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
-                  label={{ value: 'σ (agent 0)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                  label={{ value: 'σ (agent 0)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
                 <Tooltip content={<SmartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="baseline" name="Honest" stroke="#94a3b8" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="gamer" name="Rep. gamer" stroke="#7c3aed" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="baseline" name="Honest" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="gamer" name="Rep. gamer" stroke={PALETTE.purple} strokeWidth={2} dot={false} />
                 {sigZoomRepGamer.state.refLeft && sigZoomRepGamer.state.refRight && (
-                  <ReferenceArea x1={sigZoomRepGamer.state.refLeft} x2={sigZoomRepGamer.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                  <ReferenceArea x1={sigZoomRepGamer.state.refLeft} x2={sigZoomRepGamer.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
                 )}
               </LineChart>
             </ResponsiveContainer>
@@ -251,13 +252,13 @@ export default function ReportingTab({ riskAverse, noisyReporter, reputationGame
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoomSandbag.state.left, cumZoomSandbag.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-                label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="baseline" name="Baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="sandbagger" name="Sandbagger" stroke="#9333ea" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="baseline" name="Baseline" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="sandbagger" name="Sandbagger" stroke={PALETTE.purple} strokeWidth={2} dot={false} />
               {cumZoomSandbag.state.refLeft && cumZoomSandbag.state.refRight && (
-                <ReferenceArea x1={cumZoomSandbag.state.refLeft} x2={cumZoomSandbag.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                <ReferenceArea x1={cumZoomSandbag.state.refLeft} x2={cumZoomSandbag.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
               )}
             </LineChart>
           </ResponsiveContainer>

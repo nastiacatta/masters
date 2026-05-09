@@ -130,8 +130,11 @@ export default function EliaOperationalBaseline() {
   ] as BarRow[]).sort((a, b) => a.crps_mw - b.crps_mw);
 
   const bestXgb = ours.best_single.crps_mw_equivalent;
-  const xgbVsElia = (1 - bestXgb / mostRecent) * 100; // +6% better
-  const mechVsElia = (ours.mechanism.crps_mw_equivalent / mostRecent - 1) * 100; // +13% worse
+  // Convention: positive = better than Elia (lower CRPS). Display as
+  // "−X% vs Elia" when positive (our error is X% below Elia's), and
+  // "+X% vs Elia" when negative (our error is X% above Elia's).
+  const xgbVsElia  = (1 - bestXgb / mostRecent) * 100;                         // positive if we beat Elia
+  const mechVsElia = (ours.mechanism.crps_mw_equivalent / mostRecent - 1) * 100; // positive if we trail Elia
 
   return (
     <ChartCard
@@ -156,7 +159,7 @@ export default function EliaOperationalBaseline() {
             type="number"
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
-            label={{ value: 'CRPS (MW-equivalent, lower is better)', position: 'insideBottom', offset: -8, fontSize: 12, fill: 'var(--ink-soft)' }}
+            label={{ value: 'CRPS (MW-equivalent, lower is better)', position: 'insideBottom', offset: -8, fontSize: 12, fill: PALETTE.slate }}
           />
           <YAxis type="category" dataKey="label" tick={{ ...AXIS_TICK, fontSize: 11 }} stroke={AXIS_STROKE} width={250} />
           <ReferenceLine x={mostRecent} stroke={AMBER} strokeDasharray="4 4"
@@ -213,16 +216,17 @@ export default function EliaOperationalBaseline() {
           {' '}<em>real data</em> headline is &ldquo;mechanism beats uniform by ~7%&rdquo;, but the real
           benchmark any wind-forecasting practitioner would ask for is Elia&apos;s own operational forecast.
           On that benchmark, our <strong>individual best forecaster (online XGBoost)</strong> comes in
-          roughly <strong>6% better than Elia&apos;s real-time NWP forecast</strong> — a meaningful
+          roughly <strong>{xgbVsElia > 0 ? `${xgbVsElia.toFixed(1)}% better than` : `${Math.abs(xgbVsElia).toFixed(1)}% worse than`} Elia&apos;s real-time NWP forecast</strong> — a meaningful
           result for anyone building a wind-forecasting system from scratch. The mechanism, as an
-          aggregate over a mixed panel, is ~13% worse than Elia&apos;s real-time forecast. The
+          aggregate over a mixed panel, is {mechVsElia > 0 ? `~${mechVsElia.toFixed(0)}% worse than` : `~${Math.abs(mechVsElia).toFixed(0)}% better than`} Elia&apos;s real-time forecast. The
           mechanism&apos;s contribution is <em>economic structure</em> (budget balance, sybil resistance,
           online skill learning), not raw accuracy dominance over the state-of-the-art NWP model.
         </p>
         <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 8 }}>
           Source: <code>dashboard/public/data/real_data/elia_wind/data/elia_operational_baseline.json</code>.
-          Elia coverage at nominal τ = 0.10 is 19.1% and at τ = 0.90 is 94.6% — Elia&apos;s
-          interval forecasts are systematically miscalibrated, which motivates the recalibration layer shown below.
+          Day-ahead ({dayAhead.toFixed(1)} MW) and week-ahead ({weekAhead.toFixed(1)} MW) are shown for context.
+          Elia&apos;s interval forecasts are systematically miscalibrated (see the <em>Coverage</em> panel in the same JSON),
+          which motivates the recalibration layer shown below.
         </p>
       </div>
     </ChartCard>

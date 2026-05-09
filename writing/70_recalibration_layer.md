@@ -135,6 +135,68 @@ missed narrowly, not by a factor of two or more; the next section
 argues that this margin is the theoretical floor, not an
 implementation shortfall.
 
+## Calibration on the full-length headline slice
+
+The recalibration analysis above is defensible only on the
+3{,}000-point audit slice because the audit slice is the one for
+which tightened coverage diagnostics were pre-declared. It is
+reasonable to ask whether the calibration numbers carry to the full
+$T_{\mathrm{eval}} = 17{,}344$ round headline slice that underpins
+the thesis's main real-data result. Table~\ref{tab:wind-calibration-headline}
+reports per-quantile empirical coverage for the mechanism and for
+the \citet{vitali2025intermittent} per-$\tau$ OGD baseline on the
+full slice.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{rrrrr}
+\toprule
+$\tau$ & Nominal & Mechanism empirical & Vitali empirical & Gap (mech) \\
+\midrule
+$0.10$ & $0.100$ & $0.153$ & $0.156$ & $+0.053$ \\
+$0.20$ & $0.200$ & $0.246$ & $0.249$ & $+0.046$ \\
+$0.30$ & $0.300$ & $0.341$ & $0.345$ & $+0.041$ \\
+$0.40$ & $0.400$ & $0.440$ & $0.447$ & $+0.040$ \\
+$0.50$ & $0.500$ & $0.541$ & $0.539$ & $+0.041$ \\
+$0.60$ & $0.600$ & $0.634$ & $0.636$ & $+0.034$ \\
+$0.70$ & $0.700$ & $0.728$ & $0.731$ & $+0.028$ \\
+$0.80$ & $0.800$ & $0.822$ & $0.823$ & $+0.022$ \\
+$0.90$ & $0.900$ & $0.913$ & $0.909$ & $+0.013$ \\
+\bottomrule
+\end{tabular}
+\caption{Elia offshore wind: per-quantile empirical coverage on the
+full headline slice ($T_{\mathrm{eval}} = 17{,}344$).}
+\label{tab:wind-calibration-headline}
+\end{table}
+
+The mean tail deviation rises to $0.033$ on the full slice (versus
+$0.019$ on the audit slice), and the mean centre deviation rises to
+$0.038$ (versus $0.029$). The mechanism's systematic over-coverage
+pattern is preserved but amplified. Two explanations are consistent
+with the direction of this change. First, the expanding
+normalisation used on the headline slice produces larger normalised
+losses than the warmup-window normalisation used on the audit slice,
+so the skill estimates saturate closer to $\sigma_{\min}$ and the
+effective-wager spread across forecasters is smaller; reports
+therefore aggregate more uniformly and the linear-pool
+miscalibration of \citet{ranjan2010combining} bites harder. Second,
+the audit slice is a winter subset in which the forecaster panel is
+relatively homogeneous in quality; the full series spans seasonal
+regime shifts and broader panel disagreement, which widens the
+quantile fan and amplifies the mean-of-quantiles-is-not-quantile-of-
+the-mean effect.
+
+The per-$\tau$ OGD baseline shows the same miscalibration pattern at
+essentially the same magnitude (tail deviation $0.034$ against the
+mechanism's $0.033$), so the under-dispersion is a property of the
+linear pool, not of the skill layer. The CRPS side of the headline
+slice shows the mechanism at $0.0182$ and Vitali's aggregator at
+$0.0153$, the same qualitative ordering as on the audit slice. The
+recalibration layer was developed and tuned on the audit slice; a
+natural follow-up is to refit the isotonic map on the full slice,
+which Chapter~\ref{ch:conclusion} flags as future work.
+
 ## Interpretation
 
 The headline target, closing the tail calibration gap, partly

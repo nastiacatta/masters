@@ -4,6 +4,15 @@ import ChartCard from '../dashboard/ChartCard';
 import ZoomBadge from './ZoomBadge';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import { PALETTE } from '@/lib/palette';
+import {
+  AXIS_STROKE,
+  AXIS_TICK,
+  AXIS_LABEL_FILL,
+  GRID_PROPS,
+  REF_LINE_STROKE,
+  REF_BAND_FILL,
+  TOOLTIP_STYLE,
+} from '@/components/lab/shared';
 
 interface Props {
   data: CalibrationPoint[];
@@ -74,7 +83,7 @@ function CalibrationBand(props: Record<string, unknown>) {
   return (
     <polygon
       points={polygonPoints}
-      fill="#94a3b8"
+      fill={REF_LINE_STROKE}
       fillOpacity={0.1}
       stroke="none"
     />
@@ -103,33 +112,27 @@ export default function CalibrationChart({ data }: Props) {
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" />
+          <CartesianGrid {...GRID_PROPS} />
           <XAxis
             dataKey="tau"
             type="number"
             domain={zoom.state.isZoomed ? [zoom.state.left, zoom.state.right] : [0, 1]}
-            tick={{ fontSize: 11, fill: '#5a6175' }}
-            stroke="#8c92a3"
-            label={{ value: 'Nominal τ', position: 'insideBottom', offset: -12, fontSize: 11, fill: '#5a6175' }}
+            tick={AXIS_TICK}
+            stroke={AXIS_STROKE}
+            label={{ value: 'Nominal τ', position: 'insideBottom', offset: -12, fontSize: 11, fill: AXIS_LABEL_FILL }}
           />
           <YAxis
             dataKey="pHat"
             type="number"
             domain={[0, 1]}
-            tick={{ fontSize: 11, fill: '#5a6175' }}
-            stroke="#8c92a3"
-            label={{ value: 'Observed p̂', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: '#5a6175' }}
+            tick={AXIS_TICK}
+            stroke={AXIS_STROKE}
+            label={{ value: 'Observed p̂', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: AXIS_LABEL_FILL }}
           />
           <Customized component={CalibrationBand} />
-          <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#8c92a3" strokeDasharray="4 4" />
+          <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke={REF_LINE_STROKE} strokeDasharray="4 4" />
           <Tooltip
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 6,
-              border: '1px solid #d1d5db',
-              background: 'rgba(255, 253, 248, 0.98)',
-              boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18)',
-            }}
+            contentStyle={TOOLTIP_STYLE as React.CSSProperties}
             formatter={(value: unknown) => typeof value === 'number' ? value.toFixed(3) : String(value ?? '')}
           />
           <Scatter
@@ -140,7 +143,7 @@ export default function CalibrationChart({ data }: Props) {
             animationDuration={300}
           />
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill={PALETTE.navy} fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill={REF_BAND_FILL} fillOpacity={0.1} />
           )}
         </ScatterChart>
       </ResponsiveContainer>

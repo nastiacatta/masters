@@ -478,3 +478,87 @@ Re-running the headline block under expanding normalisation at
 sweep-selected parameters is on the list of remaining work. The
 expected shift is sub-percent CRPS in either direction; the
 direction of the DM statistic and the method ranking are stable.
+
+## Sensitivity of the wind optimum: plateau or peak?
+
+The coarse $\gamma \times \rho \times \lambda$ sweep identifies an
+optimum at $(\gamma, \rho, \lambda) = (32, 0.7, 0.05)$ on the wind
+training split. A reviewer's natural follow-up question is whether
+this optimum is a narrow peak, in which case a small mis-tuning would
+collapse the headline improvement, or a broad plateau, in which case
+the 7.1\% result is robust to modest parameter noise. To answer this,
+we ran a denser local sweep on
+$\gamma \in \{12, 16, 20, 24, 28, 32, 40, 48\}$,
+$\rho \in \{0.3, 0.4, 0.5, 0.6, 0.7, 0.8\}$,
+and $\lambda \in \{0.03, 0.05, 0.08, 0.12\}$, scoring each cell on
+the same held-out test partition as the main sweep.
+
+The best cell is $(\gamma, \rho, \lambda) = (28, 0.8, 0.03)$ at a
+test CRPS improvement of $-7.69\%$, marginally better than the
+coarse-grid value of $-6.86\%$. Twenty-one out of $192$ cells
+($11\%$) fall within $0.5$ percentage points of the optimum, and
+$60\%$ fall within $2$~pp. The optimum is a broad plateau. Axis-wise,
+the mechanism's sensitivity to $\lambda$ is the largest of the three
+parameters ($-7.69\%$ at $\lambda = 0.03$ falling to $-5.50\%$ at
+$\lambda = 0.12$, holding $\gamma, \rho$ at their optima), while
+$\gamma$ is stable across a wide band and $\rho$ improves
+monotonically with more aggressive updates up to the grid ceiling of
+$0.8$. This localises the hyperparameter tuning risk: the headline
+number is robust to $\gamma$ and $\rho$ mis-specification but
+depends materially on keeping $\lambda$ small.
+
+## Regime-shift robustness: restart-per-season
+
+The headline run is a single online pass over the 2024--2025 wind
+series. Skill estimates therefore carry across seasonal regimes,
+which means the reported improvement can be attributed partly to
+adaptation across regimes rather than within them. To separate the
+two effects we re-run the mechanism with a full restart at each
+seasonal boundary (winter, spring, summer, autumn), resetting
+wealth, $\sigma$, and EWMA loss buffers at the start of each season.
+Table~\ref{tab:regime-shift-restart} reports the per-season
+mechanism improvement against uniform.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Season & $T$ & Mechanism $\Delta$ vs uniform & Best single $\Delta$ vs uniform \\
+\midrule
+Winter & $4{,}344$ & $-1.20\%$ & $-12.83\%$ \\
+Spring & $4{,}416$ & $-0.83\%$ & $-10.58\%$ \\
+Summer & $4{,}416$ & $-0.92\%$ & $-10.27\%$ \\
+Autumn & $4{,}368$ & $-0.91\%$ & $-9.69\%$ \\
+\bottomrule
+\end{tabular}
+\caption{Restart-per-season regime-shift evaluation on the full
+wind series. The mechanism is initialised fresh at the start of
+each season.}
+\label{tab:regime-shift-restart}
+\end{table}
+
+Two readings of this result are simultaneously correct. The
+optimistic reading is that the mechanism delivers a consistent
+$-0.8\%$ to $-1.2\%$ improvement in \emph{every} season, without
+exception; the sign and rough magnitude of the benefit are robust
+to seasonal regime change. The pessimistic reading is that the
+$7.1\%$ full-run headline is therefore largely a
+cross-seasonal adaptation effect: by the time the mechanism reaches
+summer and autumn in the single-pass protocol, it has learned the
+forecaster ordering across winter and spring, and reuses that
+ordering. Restarting per season erases the accumulated knowledge
+and reduces the advantage to the level that can be extracted from
+within-season data alone.
+
+This is not a contradiction of the headline number but a
+decomposition of it: roughly one percentage point of the $7.1\%$
+full-run improvement is within-season skill recovery, and the
+remainder is cross-season adaptation. The best-single benchmark
+decomposes differently because it is a per-round selector: it
+achieves $-10\%$ to $-13\%$ every season, because XGBoost
+dominates the panel in every season. The mechanism's gap to
+best-single therefore widens under restart-per-season, consistent
+with the finding that XGBoost's dominance is learned quickly from
+within-season data but the mechanism does not concentrate weight
+aggressively enough on it without prior history.

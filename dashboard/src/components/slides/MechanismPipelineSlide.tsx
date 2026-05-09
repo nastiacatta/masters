@@ -18,37 +18,43 @@ interface StepConfig {
   emphasised?: boolean;
 }
 
+/**
+ * All multiplication uses \cdot explicitly. Juxtaposition is reserved for
+ * function application (f(x)) and for implicit products that are conventional
+ * in physics notation (e.g. dx / dt). This keeps the deck visually consistent
+ * when the audience scans multiple formulas in a row.
+ */
 const STEPS: StepConfig[] = [
   {
     id: 'submit',
     label: '1. Submit',
-    description: 'Forecaster submits quantile forecast q and deposit b',
+    description: 'Each forecaster sends a forecast and a deposit',
     latex: 'q_i(\\tau),\\; b_i',
   },
   {
     id: 'wager',
-    label: '2. Effective Wager',
-    description: 'Effective wager = deposit × skill factor',
-    latex: 'm_i = b_i \\cdot g(\\sigma_i)',
+    label: '2. Effective wager',
+    description: 'Deposit is scaled by learned skill',
+    latex: 'm_i \\;=\\; b_i \\cdot g(\\sigma_i)',
     emphasised: true,
   },
   {
     id: 'aggregate',
     label: '3. Aggregate',
-    description: 'Weighted average using effective wagers as weights',
-    latex: '\\hat{q}(\\tau) = \\sum_i w_i \\cdot q_i(\\tau)',
+    description: 'Market forecast is a wager-weighted average',
+    latex: '\\hat{q}(\\tau) \\;=\\; \\sum_i w_i \\cdot q_i(\\tau)',
   },
   {
     id: 'settle',
-    label: '4. Settle',
-    description: 'Payoff based on relative score — budget balanced',
-    latex: '\\Pi_i = m_i(1 + s_i - \\bar{s})',
+    label: '4. Settle (reward sharing)',
+    description: 'Everyone gets back their wager plus (or minus) their skill-weighted score, relative to the market mean. The sum of payoffs equals the sum of wagers.',
+    latex: '\\Pi_i \\;=\\; m_i \\cdot \\bigl(1 + s_i - \\bar{s}\\bigr)',
   },
   {
     id: 'skill',
-    label: '5. Skill Update',
-    description: 'Skill updates from loss via exponential smoothing',
-    latex: '\\sigma_i = \\sigma_{\\min} + (1-\\sigma_{\\min})e^{-\\gamma L_i}',
+    label: '5. Skill update',
+    description: 'Skill moves with recent forecasting loss',
+    latex: '\\sigma_i \\;=\\; \\sigma_{\\min} + (1-\\sigma_{\\min}) \\cdot e^{-\\gamma \\cdot L_i}',
   },
 ];
 
@@ -137,10 +143,13 @@ function ArrowDivider({ highlight = false }: { highlight?: boolean }) {
 }
 
 function FeedbackArrow() {
+  // The arrow represents the round→round loop: after settle + skill update,
+  // the new σ_i enters step 2 of the *next* round. We draw a curved path so
+  // it reads as "next round" rather than a confusing in-round loop.
   return (
-    <div style={{ position: 'relative', width: '100%', height: 56, marginTop: 12 }}>
+    <div style={{ position: 'relative', width: '100%', height: 64, marginTop: 14 }}>
       <svg
-        viewBox="0 0 1000 56"
+        viewBox="0 0 1000 64"
         style={{ width: '100%', height: '100%' }}
         preserveAspectRatio="none"
       >
@@ -149,9 +158,9 @@ function FeedbackArrow() {
             <polygon points="0 0, 10 3.5, 0 7" fill={PALETTE.teal} />
           </marker>
         </defs>
-        {/* Horizontal line from step 5 centre (~900) to step 2 centre (~300) — arrowhead points left */}
+        {/* Curved path: start below step 5 (right), loop down, end below step 2 (left) */}
         <path
-          d="M 900 28 L 300 28"
+          d="M 900 6 C 900 48, 300 48, 300 6"
           fill="none"
           stroke={PALETTE.teal}
           strokeWidth="2.5"
@@ -160,7 +169,7 @@ function FeedbackArrow() {
           vectorEffect="non-scaling-stroke"
         />
         <text
-          x="600" y="20"
+          x="600" y="58"
           fill={PALETTE.teal}
           fontSize="13"
           fontWeight="600"
@@ -168,7 +177,7 @@ function FeedbackArrow() {
           fontStyle="italic"
           textAnchor="middle"
         >
-          skill feeds back (next round)
+          updated skill enters the effective wager in the next round
         </text>
       </svg>
     </div>
@@ -241,7 +250,7 @@ export default function MechanismPipelineSlide() {
         <FeedbackArrow />
       </div>
 
-      {/* Insight banner */}
+      {/* Insight banner — two takeaways, with explicit reward-sharing line */}
       <div
         style={{
           flexShrink: 0,
@@ -250,15 +259,18 @@ export default function MechanismPipelineSlide() {
           border: '1px solid rgba(46, 139, 139, 0.25)',
           borderLeft: `4px solid ${PALETTE.teal}`,
           borderRadius: 8,
-          padding: '14px 28px',
-          fontSize: '1.3rem',
-          fontWeight: 700,
-          color: PALETTE.navy,
+          padding: '12px 24px',
           fontFamily: FONT_FAMILY,
           lineHeight: 1.4,
+          color: PALETTE.navy,
         }}
       >
-        Same effective wager m determines both aggregation weight and financial exposure
+        <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
+          The same effective wager controls aggregation weight and financial exposure.
+        </div>
+        <div style={{ fontSize: '1.05rem', marginTop: 4, color: PALETTE.charcoal }}>
+          Reward sharing: each forecaster’s score is taken relative to the market mean, so winners are paid from losers and the pool is self-financed.
+        </div>
       </div>
 
       {/* Footer */}

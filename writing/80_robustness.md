@@ -211,6 +211,62 @@ participant count $N_\mathrm{eff}$ inflates as $k$ grows, but this is
 an artefact of counting identities rather than influence and has no
 payoff consequence.
 
+### Report-diversification $\varepsilon$-sweep
+
+The Lambert invariance holds for identical clone reports. An
+empirically natural next question is how the invariance degrades
+when clone reports differ by a small perturbation, which is the
+most common diversified-sybil attack in practice. Holding the total
+stake constant across $k = 3$ clones, we add an i.i.d.\ Gaussian
+perturbation with standard deviation $\varepsilon$ to each clone's
+report, leaving the parent attack unchanged otherwise, and record the
+arbitrageur's mean profit over $1{,}000$ rounds across ten seeds.
+Table~\ref{tab:sybil-epsilon} reports the sweep.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{rrrr}
+\toprule
+$\varepsilon$ & Mean profit $\pm$ SE & Leakage vs $\varepsilon = 0$ & $N_\mathrm{eff}$ \\
+\midrule
+$0.000$ & $+12.02 \pm 1.28$ & $+0.00\%$ & $3.21$ \\
+$0.005$ & $+11.98 \pm 1.25$ & $-0.27\%$ & $3.21$ \\
+$0.010$ & $+11.97 \pm 1.24$ & $-0.36\%$ & $3.21$ \\
+$0.020$ & $+11.76 \pm 1.26$ & $-2.14\%$ & $3.22$ \\
+$0.050$ & $+10.40 \pm 1.26$ & $-13.40\%$ & $3.25$ \\
+$0.100$ & $+5.35  \pm 1.29$ & $-55.50\%$ & $3.33$ \\
+\bottomrule
+\end{tabular}
+\caption{Sybil-arbitrage with diversified clone reports. The
+$\varepsilon = 0$ row reproduces the narrow Lambert scope. The
+``leakage'' column is signed against the narrow-Lambert benchmark;
+positive would mean diversified reports help the attacker.}
+\label{tab:sybil-epsilon}
+\end{table}
+
+The sign of the leakage is negative and grows in magnitude
+monotonically with $\varepsilon$: diversifying clone reports
+\emph{reduces} the attacker's profit on this attack, rather than
+creating additional leakage above the narrow Lambert invariance.
+At the largest perturbation tested ($\varepsilon = 0.10$, a
+substantial fraction of the $[0, 1]$ outcome range) profit falls to
+less than half of the identical-clone value.
+
+Two implications follow. First, the previously quoted ``$+6.5\%$
+diversified-sybil leakage'' is not a general property of the
+mechanism: it holds for a different attack (report-diversified
+clones acting as independent forecasters rather than as a
+co-ordinated arbitrage seeker) and does not transfer to the
+arbitrage case. Second, the skill gate penalises clones whose
+reports miss the arbitrage point, so the decision to diversify
+trades mean arbitrage precision against $N_{\mathrm{eff}}$-based
+detection evasion; empirically the arbitrage-precision term
+dominates. A sharper formal statement of this trade-off would
+require a best-response analysis over $\varepsilon$ and the
+attacker's total stake, which is flagged as follow-up work in
+Chapter~\ref{ch:conclusion}.
+
 ## Wash trading
 
 A parimutuel wash experiment over ten seeds evaluates two activity-

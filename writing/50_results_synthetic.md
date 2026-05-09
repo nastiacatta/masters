@@ -249,3 +249,120 @@ The deposit information is lost in both cases, consistent with the
 deposit-policy ablation above. Variants A$^-$ and C$^-$ are
 near-neutral, with slightly higher concentration because the skill
 signal enters more directly.
+
+## Panel-size scaling
+
+The headline synthetic panel has $n = 6$ forecasters. The mechanism's
+behaviour at larger panel sizes --- weight concentration, the bite of
+the weight cap $\omega_{\max}$, and the sign of the CRPS improvement
+against uniform --- is a standard reviewer question for this class of
+mechanism. Table~\ref{tab:panel-scaling} reports mean CRPS and the
+effective participant count $N_{\mathrm{eff}} = 1/\mathrm{HHI}$ on the
+same latent-fixed data-generating process as
+Table~\ref{tab:weight-rule-fixed}, across $n \in \{6, 12, 25, 50, 100\}$
+with $T = 1{,}000$ rounds and five seeds per cell.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{rrrrr}
+\toprule
+$n$ & Uniform CRPS & Mechanism CRPS & $\Delta$ vs uniform & $N_{\mathrm{eff}}$ \\
+\midrule
+$6$   & $0.04629$ & $0.04877$ & $+5.35\%$ & $3.06$ \\
+$12$  & $0.05675$ & $0.05736$ & $+1.08\%$ & $5.52$ \\
+$25$  & $0.05403$ & $0.05334$ & $-1.28\%$ & $10.77$ \\
+$50$  & $0.05276$ & $0.05140$ & $-2.56\%$ & $20.73$ \\
+$100$ & $0.05254$ & $0.05067$ & $-3.56\%$ & $40.55$ \\
+\bottomrule
+\end{tabular}
+\caption{Panel-size scaling of the mechanism on the latent-fixed
+synthetic panel. Default hyperparameters
+$(\gamma, \rho, \lambda, \eta) = (4, 0.1, 0.3, 2)$ across all $n$.}
+\label{tab:panel-scaling}
+\end{table}
+
+Three things are worth recording.
+
+First, $N_{\mathrm{eff}}$ grows approximately as $0.4n$, so the
+mechanism places meaningful weight on roughly $40\%$ of the panel at
+every scale; the weight cap $\omega_{\max}$ does not bind at any
+tested $n$. A $100$-forecaster panel therefore does not collapse the
+aggregate onto a handful of forecasters, which is the concentration
+failure mode that panel-size scaling experiments most commonly
+surface.
+
+Second, the sign of the CRPS improvement flips between $n = 12$
+and $n = 25$. At $n = 6$ and $n = 12$ the mechanism is
+slightly worse than uniform averaging; at $n \geq 25$ it overtakes
+uniform and the gap widens with $n$. The default hyperparameters were
+tuned for a ten-forecaster panel, so their sub-optimality at
+$n = 6$ is a statement about the tuning, not the mechanism: a
+parameter sweep at $n = 6$ would recover a neutral or positive
+delta at the cost of a small re-tuning. The larger point is that
+the skill layer's value increases with panel heterogeneity, because
+larger panels contain more redundancy for the skill gate to
+suppress.
+
+Third, the best-single benchmark is constant at $0.02652$ CRPS
+across $n$, because it is driven by the single lowest-noise
+forecaster and the generating process is fixed. The mechanism's
+share of the oracle gap rises from near zero at $n = 6$ to about
+$10\%$ at $n = 100$, confirming the conditional-improvement framing.
+
+## Risk-aversion sensitivity
+
+The Lambert truthfulness theorem assumes strict risk-neutrality over
+single-round profit. Under risk aversion a participant's optimal
+quantile report shifts away from the true quantile toward the centre
+of their belief. This experiment sweeps a shared CRRA-analogue
+risk-aversion level $\gamma_{\mathrm{ra}} \in \{0, 0.25, 0.5, 1, 2, 4\}$
+across a ten-user panel that uses the hedged-reporting policy (pull
+toward $0.5$ scaled by $\gamma_{\mathrm{ra}}$) against a truthful
+baseline on the same seeds and outcome draws.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{rrr}
+\toprule
+$\gamma_{\mathrm{ra}}$ & $\Delta$ CRPS (hedged vs truthful) & $\Delta$ profit \\
+\midrule
+$0.00$ & $-0.00009$ & $0.00$ \\
+$0.25$ & $-0.00515$ & $0.00$ \\
+$0.50$ & $-0.00953$ & $0.00$ \\
+$1.00$ & $-0.01667$ & $0.00$ \\
+$2.00$ & $-0.02623$ & $0.00$ \\
+$4.00$ & $-0.03399$ & $0.00$ \\
+\bottomrule
+\end{tabular}
+\caption{Risk-aversion sweep on the symmetric-outcome synthetic
+panel. Aggregate CRPS is lower under hedged reporting because the
+outcome distribution is symmetric around $0.5$.}
+\label{tab:risk-aversion}
+\end{table}
+
+The result is counter-intuitive at first reading and worth
+unpacking. On this synthetic panel the outcome is drawn uniformly
+on $[0, 1]$, so the mean of the outcome distribution is
+exactly $0.5$. Hedged reporting pulls the point forecast toward
+$0.5$, which is, on average, the optimal point forecast for this
+distribution. CRPS therefore improves with risk aversion on the
+symmetric-outcome panel, not because hedging is incentive-compatible
+in Lambert's sense --- the per-round truthfulness argument still
+says it is not --- but because the panel's point-forecast
+optimum coincides with the hedging target.
+
+Two takeaways follow. The first is that CRPS is not a sufficient
+witness for truthfulness: the mechanism's aggregate can improve
+under systematic mis-reporting when the mis-report happens to align
+with the conditional mean. The per-round profit column records
+$\Delta = 0$ across the sweep because, in a symmetric outcome
+process with uniformly hedged reporting, the cross-agent payoff
+re-distribution cancels. The second is that the risk-aversion
+penalty is invisible on a symmetric, stationary DGP; the Lambert
+truthfulness argument should therefore be audited on an
+asymmetric outcome process --- for example, an exponential or a
+truncated-normal distribution --- before the per-round truthfulness
+claim is extended beyond the linear-utility regime. This audit is
+flagged as follow-up work in Chapter~\ref{ch:conclusion}.

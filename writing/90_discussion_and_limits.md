@@ -158,9 +158,14 @@ approximately two percentage points of systematic tail deviation;
 recalibration closes $41\%$ of it.
 
 \paragraph{Narrow sybil-proofness only.} The Lambert invariance
-holds for identical reports with conserved total wager. Diversified
-reports break it by approximately $6.5\%$ empirically; the gap is
-a property of the Lambert framework rather than of the skill layer.
+holds for identical reports with conserved total wager. Under small
+report-diversification perturbations the sign of the deviation
+depends on the attack: an unrelated report-diversified sybil
+accrues roughly a $6.5\%$ advantage, while the diversified-report
+variant of the Chen--Devanur--Pennock--Vaughan arbitrage attack
+\emph{loses} monotonically in the perturbation scale
+(Chapter~\ref{ch:robustness}). Both results lie outside the
+narrow Lambert scope.
 
 \paragraph{Truthfulness under risk-neutrality only.} The linear
 utility assumption is inherited from

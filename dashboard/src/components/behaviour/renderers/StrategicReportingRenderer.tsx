@@ -10,8 +10,9 @@ import {
   Bar,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
-const PALETTE = ['#10b981'];
+const LINE_PALETTE = [PALETTE.teal];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -47,7 +48,7 @@ export default function StrategicReportingRenderer({ data, header }: RendererPro
               <XAxis dataKey="label" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="meanAggError" fill={PALETTE[0]} />
+              <Bar dataKey="meanAggError" fill={LINE_PALETTE[0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

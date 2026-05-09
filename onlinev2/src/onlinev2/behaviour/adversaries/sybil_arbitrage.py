@@ -48,6 +48,16 @@ class SybilArbitrageBehaviour:
     target_others
         Optional callback supplying the lagged (p_{-i}, w_{-i}) snapshot
         (see ``ArbitrageSeekingBehaviour``).
+    report_epsilon
+        When zero the clones report identically (narrow Lambert scope).
+        When positive each clone's report is perturbed by an i.i.d.
+        Gaussian draw with standard deviation ``report_epsilon``, so
+        the diversified-report regime outside the Lambert invariance
+        can be measured empirically.
+    epsilon_rng_seed
+        Seed for the per-run report-perturbation RNG. Deterministic so
+        paired comparisons across ``k`` share the same perturbation
+        draws and so across-seed variance reflects only panel draws.
     """
     traits: UserTraits
     k_accounts: int = 3
@@ -56,7 +66,10 @@ class SybilArbitrageBehaviour:
     b_max: float = 10.0
     target_others: Optional[Any] = None
     expected_profit_threshold: float = 1e-4
+    report_epsilon: float = 0.0
+    epsilon_rng_seed: int = 0
     _arb: ArbitrageSeekingBehaviour = field(init=False, repr=False)
+    _eps_rng: np.random.Generator = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._arb = ArbitrageSeekingBehaviour(
@@ -67,6 +80,7 @@ class SybilArbitrageBehaviour:
             target_others=self.target_others,
             expected_profit_threshold=self.expected_profit_threshold,
         )
+        self._eps_rng = np.random.default_rng(int(self.epsilon_rng_seed))
 
     @property
     def arbitrage_log(self) -> List[Dict[str, float]]:
@@ -74,6 +88,9 @@ class SybilArbitrageBehaviour:
 
     def reset(self, seed: int) -> None:
         self._arb.reset(seed)
+        self._eps_rng = np.random.default_rng(
+            int(self.epsilon_rng_seed) + int(seed)
+        )
 
     def act(self, state: RoundPublicState) -> List[AgentAction]:
         # Delegate to the underlying arbitrage seeker. It returns one
@@ -106,13 +123,30 @@ class SybilArbitrageBehaviour:
 
         per_deposit = float(parent.deposit) / float(k)
         report = parent.report
+        eps = float(self.report_epsilon)
         out: List[AgentAction] = []
         for j in range(k):
+            # Diversify the clone report by a small i.i.d. Gaussian
+            # perturbation. The first clone uses the parent report
+            # unchanged so the ``epsilon = 0`` case is byte-identical
+            # to the legacy identical-clone regime.
+            if eps > 0.0 and j > 0 and report is not None:
+                if isinstance(report, (list, tuple, np.ndarray)):
+                    r_arr = np.asarray(report, dtype=float)
+                    r_arr = r_arr + self._eps_rng.normal(0.0, eps, size=r_arr.shape)
+                    r_arr = np.clip(r_arr, 0.0, 1.0)
+                    clone_report: Any = r_arr.tolist()
+                else:
+                    clone_report = float(
+                        np.clip(float(report) + self._eps_rng.normal(0.0, eps), 0.0, 1.0)
+                    )
+            else:
+                clone_report = report
             out.append(
                 AgentAction(
                     account_id=f"{self.traits.user_id}__sybil_{j}",
                     participate=True,
-                    report=report,
+                    report=clone_report,
                     deposit=per_deposit,
                     meta={
                         **dict(parent.meta),
@@ -120,6 +154,7 @@ class SybilArbitrageBehaviour:
                         "sybil_parent": self.traits.user_id,
                         "sybil_index": j,
                         "sybil_k": k,
+                        "report_epsilon": eps,
                     },
                 )
             )

@@ -12,8 +12,9 @@ import {
   YAxis,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
-const COLOUR = '#dc2626';
+const COLOUR = PALETTE.coral;
 
 function EmptyState({ message }: { message: string }) {
   return (

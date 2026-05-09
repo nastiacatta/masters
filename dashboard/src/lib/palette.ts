@@ -25,6 +25,15 @@ import { PALETTE } from '@/components/slides/shared/presentationConstants';
 /** Re-export the slide palette so other files have a single entry point. */
 export { PALETTE };
 
+/**
+ * Warm orange — used for the MLP forecaster and as a neutral warm accent.
+ * Matches `R FORECASTER_COLOURS.MLP` and Python `PALETTE[\"orange\"]`.
+ * Not part of slide `PALETTE` because the slide deck has historically kept
+ * orange out of the primary palette, but the dashboard uses it heavily
+ * for the MLP / warm-accent role.
+ */
+export const ORANGE = '#E67E22';
+
 // ─── Colourblind-safe palette (Wong 2011) ────────────────────────────
 export const CB_PALETTE = [
   '#0072B2', // blue
@@ -61,7 +70,7 @@ export const METHOD_COLORS: Record<string, string> = {
   blended:          PALETTE.teal,
   best_single:      PALETTE.navy,
   oracle:           PALETTE.navy,
-  inverse_variance: '#E67E22', // warm orange, matches R FORECASTER_COLOURS.MLP
+  inverse_variance: ORANGE, // warm orange, matches R FORECASTER_COLOURS.MLP
   trimmed_mean:     '#95A5A6',
   median:           PALETTE.charcoal,
   raja_history_free:       PALETTE.imperial,
@@ -78,7 +87,7 @@ const FC_BASE = {
   EWMA:     PALETTE.teal,
   ARIMA:    PALETTE.coral,
   XGBoost:  PALETTE.purple,
-  MLP:      '#E67E22',    // warm orange
+  MLP:      ORANGE,       // warm orange
   Theta:    PALETTE.slate,
   Ensemble: PALETTE.imperial,
 };
@@ -98,7 +107,7 @@ export const SCENARIO_COLOURS: Record<string, string> = {
   benign_baseline:     PALETTE.teal,
   bursty_kelly:        PALETTE.imperial,
   risk_averse_hedged:  PALETTE.slate,
-  lumpy_miscalibrated: '#E67E22',
+  lumpy_miscalibrated: ORANGE,
   edge_threshold:      PALETTE.purple,
   sybil_split:         PALETTE.coral,
 };
@@ -108,7 +117,7 @@ export const FAMILY_COLORS: Record<string, string> = {
   participation: PALETTE.teal,
   information:   PALETTE.imperial,
   reporting:     PALETTE.purple,
-  staking:       '#E67E22',
+  staking:       ORANGE,
   objectives:    PALETTE.navy,
   identity:      PALETTE.coral,
   learning:      PALETTE.teal,
@@ -124,7 +133,7 @@ export const AGENT_COLORS = [
   PALETTE.teal,
   PALETTE.coral,
   PALETTE.purple,
-  '#E67E22',          // orange
+  ORANGE,
   PALETTE.slate,
   PALETTE.imperial,
   PALETTE.charcoal,

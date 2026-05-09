@@ -14,8 +14,10 @@ import ChartCard from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
+  AXIS_LABEL_FILL,
   CHART_MARGIN_LABELED,
   GRID_PROPS,
+  REF_LINE_STROKE,
   TOOLTIP_STYLE,
   fmt,
 } from '@/components/lab/shared';
@@ -111,19 +113,19 @@ function SmallPanel({
               position: 'insideLeft',
               offset: 8,
               fontSize: 11,
-              fill: '#5a6175',
+              fill: AXIS_LABEL_FILL,
             }}
           />
           {referenceValue != null && (
             <ReferenceLine
               y={referenceValue}
-              stroke="#94a3b8"
+              stroke={REF_LINE_STROKE}
               strokeDasharray="4 4"
               label={{
                 value: referenceLabel ?? '',
                 position: 'right',
                 fontSize: 10,
-                fill: '#64748b',
+                fill: AXIS_LABEL_FILL,
               }}
             />
           )}

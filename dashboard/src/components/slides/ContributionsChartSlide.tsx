@@ -24,15 +24,6 @@ interface SkillHistoryRow {
   sigma_6: number;
 }
 
-interface DatasetConfig {
-  key: 'wind' | 'electricity';
-  label: string;
-  rounds: string;
-  url: string;
-  colour: string;
-  improvement: string;
-}
-
 /* ── Forecaster metadata ───────────────────────────────────────── */
 
 export const FORECASTER_META = [
@@ -46,25 +37,7 @@ export const FORECASTER_META = [
 ] as const;
 
 const BASE = import.meta.env.BASE_URL;
-
-const DATASETS: DatasetConfig[] = [
-  {
-    key: 'wind',
-    label: 'Elia Wind',
-    rounds: '17,544 rounds',
-    url: `${BASE}data/real_data/elia_wind/data/comparison.json`,
-    colour: PALETTE.teal,
-    improvement: 'Mechanism 7.0% better than equal weights (post-audit)',
-  },
-  {
-    key: 'electricity',
-    label: 'Elia Electricity',
-    rounds: '10,000 rounds',
-    url: `${BASE}data/real_data/elia_electricity/data/comparison.json`,
-    colour: PALETTE.coral,
-    improvement: 'Essentially tied with equal weights (forecasters similar)',
-  },
-];
+const WIND_URL = `${BASE}data/real_data/elia_wind/data/comparison.json`;
 
 /* ── Pure opacity helpers (exported for testing) ───────────────── */
 
@@ -81,7 +54,7 @@ export function getLineStrokeWidth(selected: number | null, lineIdx: number): nu
 /* ── Helper to extract skill_history rows ──────────────────────── */
 
 function extractSkillHistory(json: Record<string, unknown>): SkillHistoryRow[] | null {
-  const history = json?.skill_history;
+  const history = (json as { skill_history?: unknown })?.skill_history;
   if (!Array.isArray(history)) return null;
   return history.map((r: Record<string, number>) => ({
     t: r.t,
@@ -96,95 +69,110 @@ function extractSkillHistory(json: Record<string, unknown>): SkillHistoryRow[] |
 }
 
 /* ── Component ─────────────────────────────────────────────────── */
-
+/**
+ * Slide 10 — Real Data. Consolidated to a single view:
+ *   • Primary view: wind skill trajectories (the main result).
+ *   • Highlight pills act as a filter, not a page change — "Highlight:" label
+ *     makes that explicit so the slide never feels like 3 subslides.
+ *   • Electricity is a small inset card, not a separate toggle, so the
+ *     comparison is visible on the same slide.
+ *   • CRPS and σ are defined inline, so the audience never sees a metric
+ *     name without knowing what it is.
+ */
 export default function ContributionsChartSlide() {
-  const [dataByDataset, setDataByDataset] = useState<Record<string, SkillHistoryRow[]>>({});
-  const [fetchErrors, setFetchErrors] = useState<Record<string, boolean>>({});
-  const [activeDataset, setActiveDataset] = useState<'wind' | 'electricity'>('wind');
+  const [skillData, setSkillData] = useState<SkillHistoryRow[] | null>(null);
+  const [hasError, setHasError] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
 
-  /* Fetch both datasets at mount */
   useEffect(() => {
-    for (const ds of DATASETS) {
-      fetch(ds.url)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json();
-        })
-        .then((json) => {
-          const rows = extractSkillHistory(json);
-          if (rows) {
-            setDataByDataset((prev) => ({ ...prev, [ds.key]: rows }));
-          } else {
-            setFetchErrors((prev) => ({ ...prev, [ds.key]: true }));
-          }
-        })
-        .catch(() => {
-          setFetchErrors((prev) => ({ ...prev, [ds.key]: true }));
-        });
-    }
+    fetch(WIND_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json) => {
+        const rows = extractSkillHistory(json);
+        if (rows) setSkillData(rows);
+        else setHasError(true);
+      })
+      .catch(() => setHasError(true));
   }, []);
 
-  const activeConfig = DATASETS.find((d) => d.key === activeDataset)!;
-  const skillData = dataByDataset[activeDataset] ?? null;
-  const hasError = fetchErrors[activeDataset] ?? false;
-
-  /* Click handlers with stopPropagation to prevent slide advance */
   const handlePillClick = (e: React.MouseEvent, idx: number) => {
     e.stopPropagation();
     setSelected((prev) => (prev === idx ? null : idx));
   };
 
-  const handleDatasetToggle = (e: React.MouseEvent, key: 'wind' | 'electricity') => {
-    e.stopPropagation();
-    setActiveDataset(key);
-    setSelected(null); // reset forecaster selection on dataset switch
-  };
-
   return (
     <SlideShell title="Real Data: Elia Wind + Electricity" slideNumber={10}>
-      {/* Top row: dataset toggle + dataset label */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-        {/* Dataset toggle */}
-        {DATASETS.map((ds) => {
-          const isActive = activeDataset === ds.key;
-          return (
-            <button
-              key={ds.key}
-              onClick={(e) => handleDatasetToggle(e, ds.key)}
-              style={{
-                padding: '5px 18px',
-                borderRadius: 8,
-                border: `2px solid ${ds.colour}`,
-                background: isActive ? ds.colour : 'transparent',
-                color: isActive ? '#fff' : ds.colour,
-                fontWeight: isActive ? 700 : 500,
-                fontSize: '1.05rem',
-                fontFamily: TYPOGRAPHY.fontFamily,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {ds.label}
-            </button>
-          );
-        })}
-
-        {/* Active dataset info badge */}
-        <span
+      {/* ── Header row: headline number + CRPS/σ glossary ── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'stretch',
+          gap: 14,
+          marginBottom: 12,
+        }}
+      >
+        <div
           style={{
-            fontSize: '0.95rem',
-            color: PALETTE.slate,
+            flex: 1,
+            background: 'rgba(46, 139, 139, 0.08)',
+            borderLeft: `4px solid ${PALETTE.teal}`,
+            borderRadius: '0 10px 10px 0',
+            padding: '10px 16px',
             fontFamily: TYPOGRAPHY.fontFamily,
-            marginLeft: 8,
+            color: PALETTE.navy,
           }}
         >
-          {activeConfig.rounds} — {activeConfig.improvement}
-        </span>
+          <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+            Wind, 17,544 rounds: mechanism −7.0% CRPS vs equal weights.
+          </div>
+          <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, marginTop: 2 }}>
+            Skill ranks forecasters correctly; a per-round best-single still beats the aggregate.
+          </div>
+        </div>
+        <div
+          style={{
+            width: 300,
+            background: 'rgba(100, 116, 139, 0.08)',
+            borderLeft: `3px solid ${PALETTE.slate}`,
+            borderRadius: 4,
+            padding: '8px 12px',
+            fontFamily: TYPOGRAPHY.fontFamily,
+            fontSize: '0.88rem',
+            color: PALETTE.charcoal,
+            lineHeight: 1.4,
+            flexShrink: 0,
+          }}
+        >
+          <strong style={{ color: PALETTE.navy }}>CRPS</strong> — proper score for probabilistic forecasts, lower is better.
+          <br />
+          <strong style={{ color: PALETTE.navy }}>σ</strong> — learned skill, 0–1, higher means better recent accuracy.
+        </div>
       </div>
 
-      {/* Forecaster pill selector */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+      {/* ── Highlight pills (filter, not subslide) ── */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 10,
+          alignItems: 'center',
+        }}
+      >
+        <span
+          style={{
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            color: PALETTE.slate,
+            fontFamily: TYPOGRAPHY.fontFamily,
+            marginRight: 4,
+          }}
+        >
+          Highlight:
+        </span>
         {FORECASTER_META.map((meta, idx) => {
           const isSelected = selected === idx;
           return (
@@ -211,8 +199,8 @@ export default function ContributionsChartSlide() {
         })}
       </div>
 
-      {/* Chart area */}
-      <div style={{ flex: 1, minHeight: 0, ...FIGURE_FRAME }}>
+      {/* ── Chart area (wind is the primary view) ── */}
+      <div style={{ flex: 1, minHeight: 0, ...FIGURE_FRAME, position: 'relative' }}>
         {hasError ? (
           <div
             style={{
@@ -221,7 +209,7 @@ export default function ContributionsChartSlide() {
               fontSize: TYPOGRAPHY.body.fontSize, fontFamily: TYPOGRAPHY.fontFamily,
             }}
           >
-            Data unavailable for {activeConfig.label}
+            Data unavailable
           </div>
         ) : !skillData ? (
           <div
@@ -231,100 +219,161 @@ export default function ContributionsChartSlide() {
               fontSize: TYPOGRAPHY.body.fontSize, fontFamily: TYPOGRAPHY.fontFamily,
             }}
           >
-            Loading {activeConfig.label}…
+            Loading…
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={skillData} margin={{ top: 12, right: 28, bottom: 36, left: 32 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} strokeOpacity={0.6} vertical={false} />
-              <XAxis
-                dataKey="t"
-                label={{
-                  value: 'Round',
-                  position: 'insideBottom',
-                  offset: -16,
-                  style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily },
-                }}
-                tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
-                tickLine={false}
-                axisLine={{ stroke: PALETTE.border }}
-                stroke={PALETTE.slate}
-                tickFormatter={(v: number) => v.toLocaleString()}
-              />
-              <YAxis
-                domain={[0, 1]}
-                ticks={[0, 0.25, 0.5, 0.75, 1]}
-                label={{
-                  value: 'Learned skill (σ)',
-                  angle: -90,
-                  position: 'insideLeft',
-                  offset: 8,
-                  style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAnchor: 'middle' },
-                }}
-                tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
-                tickLine={false}
-                axisLine={{ stroke: PALETTE.border }}
-                stroke={PALETTE.slate}
-              />
-              <Tooltip
-                isAnimationActive={false}
-                cursor={{ stroke: PALETTE.slate, strokeDasharray: '3 3', strokeOpacity: 0.5 }}
-                contentStyle={{
-                  fontFamily: TYPOGRAPHY.fontFamily,
-                  fontSize: 12,
-                  borderRadius: 8,
-                  border: `1px solid ${PALETTE.border}`,
-                  boxShadow: '0 4px 16px rgba(27, 42, 74, 0.08)',
-                  padding: '8px 12px',
-                }}
-                labelFormatter={(label) => `Round ${Number(label).toLocaleString()}`}
-                formatter={(value, _name, entry) => {
-                  const key = (entry as { dataKey?: string })?.dataKey;
-                  const meta = FORECASTER_META.find((m) => m.key === key);
-                  return [Number(value).toFixed(3), meta?.name ?? String(key ?? '')];
-                }}
-              />
-              {FORECASTER_META.map((meta, idx) => (
-                <Line
-                  key={meta.key}
-                  type="monotone"
-                  dataKey={meta.key}
-                  name={meta.name}
-                  stroke={meta.colour}
-                  strokeOpacity={getLineOpacity(selected, idx)}
-                  strokeWidth={getLineStrokeWidth(selected, idx)}
-                  dot={false}
-                  isAnimationActive={false}
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: 8, left: 20,
+                fontSize: '0.92rem',
+                fontWeight: 700,
+                color: PALETTE.navy,
+                fontFamily: TYPOGRAPHY.fontFamily,
+              }}
+            >
+              Learned skill σ over time — Elia wind
+            </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={skillData} margin={{ top: 28, right: 28, bottom: 36, left: 32 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} strokeOpacity={0.6} vertical={false} />
+                <XAxis
+                  dataKey="t"
+                  label={{
+                    value: 'Round',
+                    position: 'insideBottom',
+                    offset: -16,
+                    style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily },
+                  }}
+                  tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
+                  tickLine={false}
+                  axisLine={{ stroke: PALETTE.border }}
+                  stroke={PALETTE.slate}
+                  tickFormatter={(v: number) => v.toLocaleString()}
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                <YAxis
+                  domain={[0, 1]}
+                  ticks={[0, 0.25, 0.5, 0.75, 1]}
+                  label={{
+                    value: 'Learned skill (σ)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 8,
+                    style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAnchor: 'middle' },
+                  }}
+                  tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
+                  tickLine={false}
+                  axisLine={{ stroke: PALETTE.border }}
+                  stroke={PALETTE.slate}
+                />
+                <Tooltip
+                  isAnimationActive={false}
+                  cursor={{ stroke: PALETTE.slate, strokeDasharray: '3 3', strokeOpacity: 0.5 }}
+                  contentStyle={{
+                    fontFamily: TYPOGRAPHY.fontFamily,
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: `1px solid ${PALETTE.border}`,
+                    boxShadow: '0 4px 16px rgba(27, 42, 74, 0.08)',
+                    padding: '8px 12px',
+                  }}
+                  labelFormatter={(label) => `Round ${Number(label).toLocaleString()}`}
+                  formatter={(value, _name, entry) => {
+                    const key = (entry as { dataKey?: string })?.dataKey;
+                    const meta = FORECASTER_META.find((m) => m.key === key);
+                    return [Number(value).toFixed(3), meta?.name ?? String(key ?? '')];
+                  }}
+                />
+                {FORECASTER_META.map((meta, idx) => (
+                  <Line
+                    key={meta.key}
+                    type="monotone"
+                    dataKey={meta.key}
+                    name={meta.name}
+                    stroke={meta.colour}
+                    strokeOpacity={getLineOpacity(selected, idx)}
+                    strokeWidth={getLineStrokeWidth(selected, idx)}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </>
         )}
       </div>
 
-      {/* Bottom summary boxes */}
-      <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+      {/* ── Inset: electricity result as a small side card ── */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 16,
+          marginTop: 10,
+          alignItems: 'stretch',
+        }}
+      >
         <div
           style={{
-            flex: 1, background: 'rgba(46, 139, 139, 0.06)',
-            border: `1.5px solid ${PALETTE.teal}`, borderRadius: 10,
-            padding: '10px 16px', textAlign: 'center',
+            flex: 2,
+            background: 'rgba(46, 139, 139, 0.06)',
+            border: `1.5px solid ${PALETTE.teal}`,
+            borderRadius: 10,
+            padding: '10px 16px',
           }}
         >
-          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Wind: −7.0% vs uniform — skill recovers ordering; best_single still wins
-          </span>
+          <div
+            style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: PALETTE.teal,
+              fontFamily: TYPOGRAPHY.fontFamily,
+            }}
+          >
+            Wind — mechanism gains where forecasters differ
+          </div>
+          <div
+            style={{
+              fontSize: '0.9rem',
+              color: PALETTE.charcoal,
+              fontFamily: TYPOGRAPHY.fontFamily,
+              lineHeight: 1.4,
+              marginTop: 2,
+            }}
+          >
+            Naive ranks highest because wind power is highly autocorrelated; the skill layer learns this from realised loss without being told.
+          </div>
         </div>
         <div
           style={{
-            flex: 1, background: 'rgba(232, 93, 74, 0.06)',
-            border: `1.5px solid ${PALETTE.coral}`, borderRadius: 10,
-            padding: '10px 16px', textAlign: 'center',
+            flex: 1,
+            background: 'rgba(232, 93, 74, 0.06)',
+            border: `1.5px solid ${PALETTE.coral}`,
+            borderRadius: 10,
+            padding: '10px 16px',
           }}
         >
-          <span style={{ fontSize: '1.05rem', fontWeight: 700, color: PALETTE.coral, fontFamily: TYPOGRAPHY.fontFamily }}>
-            Electricity: near-tied with equal weights (forecasters similar)
-          </span>
+          <div
+            style={{
+              fontSize: '1rem',
+              fontWeight: 700,
+              color: PALETTE.coral,
+              fontFamily: TYPOGRAPHY.fontFamily,
+            }}
+          >
+            Electricity — near-tie
+          </div>
+          <div
+            style={{
+              fontSize: '0.9rem',
+              color: PALETTE.charcoal,
+              fontFamily: TYPOGRAPHY.fontFamily,
+              lineHeight: 1.4,
+              marginTop: 2,
+            }}
+          >
+            Forecasters are similar in quality, so there is less heterogeneity for skill to exploit.
+          </div>
         </div>
       </div>
     </SlideShell>

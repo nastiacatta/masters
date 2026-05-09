@@ -8,9 +8,10 @@ import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
-  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, AXIS_LABEL_FILL, REF_LINE_STROKE, REF_BAND_FILL,
   fmt,
 } from '@/components/lab/shared';
+import { PALETTE } from '@/lib/palette';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import { compare } from '@/hooks/useBehaviourSimulations';
@@ -67,13 +68,13 @@ export default function OperationalTab({ latencyExploiter, baseline }: {
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoom.state.left, cumZoom.state.right]} />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-              label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+              label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line type="monotone" dataKey="baseline" name="Baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="latency" name="Latency exploiter" stroke="#64748b" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="baseline" name="Baseline" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="latency" name="Latency exploiter" stroke={PALETTE.imperial} strokeWidth={2} dot={false} />
             {cumZoom.state.refLeft && cumZoom.state.refRight && (
-              <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+              <ReferenceArea x1={cumZoom.state.refLeft} x2={cumZoom.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
             )}
           </LineChart>
         </ResponsiveContainer>

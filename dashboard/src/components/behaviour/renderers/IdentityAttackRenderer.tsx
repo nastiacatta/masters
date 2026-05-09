@@ -11,10 +11,11 @@ import {
   Cell,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
 /* Colour palette — neutral baseline vs highlight for attack scenarios */
-const COLOUR_BASELINE = '#64748b';  // slate — single account / reputation reset
-const COLOUR_ATTACK   = '#dc2626';  // coral — sybil / collusive variants
+const COLOUR_BASELINE = PALETTE.slate;   // neutral
+const COLOUR_ATTACK   = PALETTE.coral;   // highlight
 
 function isAttack(identity: string): boolean {
   return /sybil|collusive/i.test(identity);

@@ -9,12 +9,15 @@ import {
   YAxis,
   type LabelProps,
 } from 'recharts';
+import { useRef } from 'react';
 import ChartCard from '@/components/dashboard/ChartCard';
 import type { DataProvenance } from '@/components/dashboard/ChartCard';
 import {
   AXIS_STROKE,
   AXIS_TICK,
+  AXIS_LABEL_FILL,
   GRID_PROPS,
+  REF_LINE_STROKE,
   TOOLTIP_STYLE,
   fmt,
 } from '@/components/lab/shared';
@@ -44,41 +47,47 @@ interface TradeOffScatterProps {
 
 /* ── Custom label renderer for scatter points ──────────────────────── */
 
-/** Simple greedy label placement: track used Y positions and nudge labels to avoid overlap. */
-const _usedPositions: number[] = [];
 const LABEL_HEIGHT = 14; // approximate height of a label in px
 
-function resetLabelPositions() {
-  _usedPositions.length = 0;
-}
-
-function findNonOverlappingY(desiredY: number): number {
-  const y = desiredY;
-  // Try the desired position first, then nudge up/down
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const offset = attempt === 0 ? 0 : (attempt % 2 === 1 ? Math.ceil(attempt / 2) : -Math.ceil(attempt / 2)) * LABEL_HEIGHT;
-    const candidate = y + offset;
-    if (_usedPositions.every((used) => Math.abs(used - candidate) >= LABEL_HEIGHT)) {
-      _usedPositions.push(candidate);
-      return candidate;
+/**
+ * Greedy non-overlap label placement.
+ *
+ * Recharts calls the `label` renderer once per data point within a single
+ * render pass, but never guarantees ordering or pass-scoped state. To avoid
+ * cross-render leakage the caller creates a fresh {@link LabelPlacer} per
+ * render and hands it to the renderer.
+ */
+class LabelPlacer {
+  private used: number[] = [];
+  place(desiredY: number): number {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const offset =
+        attempt === 0
+          ? 0
+          : (attempt % 2 === 1 ? Math.ceil(attempt / 2) : -Math.ceil(attempt / 2)) * LABEL_HEIGHT;
+      const candidate = desiredY + offset;
+      if (this.used.every((u) => Math.abs(u - candidate) >= LABEL_HEIGHT)) {
+        this.used.push(candidate);
+        return candidate;
+      }
     }
+    this.used.push(desiredY);
+    return desiredY;
   }
-  // Fallback: just use the desired position
-  _usedPositions.push(y);
-  return y;
 }
 
-function renderPointLabel(props: LabelProps & { index?: number }, data: TradeOffPoint[]) {
+function renderPointLabel(
+  props: LabelProps & { index?: number },
+  data: TradeOffPoint[],
+  placer: LabelPlacer,
+) {
   const { x, y, index } = props;
   if (index == null || !data[index]) return null;
   const point = data[index];
   const px = Number(x);
   const py = Number(y);
 
-  // Reset positions on first label of each render pass
-  if (index === 0) resetLabelPositions();
-
-  const adjustedY = findNonOverlappingY(py + 4);
+  const adjustedY = placer.place(py + 4);
 
   return (
     <text
@@ -125,6 +134,10 @@ export default function TradeOffScatter({
   title = 'Accuracy vs Concentration Trade-off',
   provenance,
 }: TradeOffScatterProps) {
+  // Fresh placer per render prevents stale state leaking between renders.
+  const placerRef = useRef<LabelPlacer | null>(null);
+  placerRef.current = new LabelPlacer();
+
   // Compute midpoints for quadrant reference lines
   const xValues = data.map((d) => d.crpsImprovement);
   const yValues = data.map((d) => d.gini);
@@ -165,7 +178,7 @@ export default function TradeOffScatter({
               position: 'insideBottom',
               offset: -4,
               fontSize: 11,
-              fill: '#94a3b8',
+              fill: AXIS_LABEL_FILL,
             }}
           />
           <YAxis
@@ -182,12 +195,12 @@ export default function TradeOffScatter({
               position: 'insideLeft',
               offset: 4,
               fontSize: 11,
-              fill: '#94a3b8',
+              fill: AXIS_LABEL_FILL,
             }}
           />
           {/* Quadrant dividers */}
-          <ReferenceLine x={xMid} stroke="#e2e8f0" strokeDasharray="4 4" />
-          <ReferenceLine y={yMid} stroke="#e2e8f0" strokeDasharray="4 4" />
+          <ReferenceLine x={xMid} stroke={REF_LINE_STROKE} strokeOpacity={0.45} strokeDasharray="4 4" />
+          <ReferenceLine y={yMid} stroke={REF_LINE_STROKE} strokeOpacity={0.45} strokeDasharray="4 4" />
           <Tooltip
             contentStyle={TOOLTIP_STYLE as React.CSSProperties}
             formatter={(value: unknown, name: unknown) => {
@@ -204,7 +217,7 @@ export default function TradeOffScatter({
           <Scatter
             data={data}
             shape={renderDot}
-            label={(props: LabelProps & { index?: number }) => renderPointLabel(props, data)}
+            label={(props: LabelProps & { index?: number }) => renderPointLabel(props, data, placerRef.current!)}
           />
         </ScatterChart>
       </ResponsiveContainer>

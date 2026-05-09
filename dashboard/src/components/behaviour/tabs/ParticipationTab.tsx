@@ -8,9 +8,10 @@ import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
-  AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  AGENT_PALETTE, CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, AXIS_LABEL_FILL, REF_LINE_STROKE, REF_BAND_FILL,
   fmt, downsample, agentName,
 } from '@/components/lab/shared';
+import { PALETTE } from '@/lib/palette';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
@@ -68,7 +69,7 @@ export default function ParticipationTab({ bursty, baseline }: {
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, N]} />
               <Tooltip content={<SmartTooltip />} />
               <Bar dataKey="active" name="Active" radius={[2, 2, 0, 0]} maxBarSize={4}>
-                {partData.map((d, i) => <Cell key={i} fill={d.rate >= 0.8 ? '#10b981' : d.rate >= 0.5 ? '#f59e0b' : '#ef4444'} opacity={0.7} />)}
+                {partData.map((d, i) => <Cell key={i} fill={d.rate >= 0.8 ? PALETTE.teal : d.rate >= 0.5 ? '#B45309' : PALETTE.coral} opacity={0.7} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -94,7 +95,7 @@ export default function ParticipationTab({ bursty, baseline }: {
                     stroke={AGENT_PALETTE[i % AGENT_PALETTE.length]} strokeWidth={1.5} dot={false} />
                 ))}
                 {skillZoom.state.refLeft && skillZoom.state.refRight && (
-                  <ReferenceArea x1={skillZoom.state.refLeft} x2={skillZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                  <ReferenceArea x1={skillZoom.state.refLeft} x2={skillZoom.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
                 )}
               </LineChart>
             </ResponsiveContainer>
@@ -109,13 +110,13 @@ export default function ParticipationTab({ bursty, baseline }: {
             <CartesianGrid {...GRID_PROPS} />
             <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[cumZoomInter.state.left, cumZoomInter.state.right]} />
             <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE}
-              label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+              label={{ value: 'Cumulative CRPS', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
             <Tooltip content={<SmartTooltip />} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line type="monotone" dataKey="baseline" name="Baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="bursty" name="Bursty" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="baseline" name="Baseline" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="bursty" name="Bursty" stroke={PALETTE.imperial} strokeWidth={2} dot={false} />
             {cumZoomInter.state.refLeft && cumZoomInter.state.refRight && (
-              <ReferenceArea x1={cumZoomInter.state.refLeft} x2={cumZoomInter.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+              <ReferenceArea x1={cumZoomInter.state.refLeft} x2={cumZoomInter.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
             )}
           </LineChart>
         </ResponsiveContainer>

@@ -80,10 +80,26 @@ export default function ContributionSlide() {
           color: PALETTE.darkText,
           lineHeight: 1.6,
           maxWidth: 800,
-          marginBottom: 48,
+          marginBottom: 32,
         }}
       >
         Coupling self-financed wagering with online skill learning
+      </p>
+
+      {/* Gap → resolution line (connects slide 4 to the formula) */}
+      <p
+        style={{
+          fontSize: '1.15rem',
+          color: PALETTE.darkText,
+          lineHeight: 1.55,
+          maxWidth: 820,
+          marginBottom: 22,
+          opacity: 0.92,
+        }}
+      >
+        The gap: existing self-financed mechanisms are history-free, and existing
+        adaptive ones give up self-financing. This contribution closes that gap
+        with a single idea — let the wager carry the learned skill.
       </p>
 
       {/* Equation highlight box */}
@@ -92,8 +108,8 @@ export default function ContributionSlide() {
           background: 'rgba(46, 139, 139, 0.14)',
           border: `2px solid ${PALETTE.teal}`,
           borderRadius: 18,
-          padding: '36px 56px',
-          marginBottom: 48,
+          padding: '32px 52px',
+          marginBottom: 40,
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
         }}
       >

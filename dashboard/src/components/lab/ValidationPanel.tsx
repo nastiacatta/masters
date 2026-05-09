@@ -5,7 +5,8 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
-import { CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, fmt, downsample } from './shared';
+import { CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, AXIS_LABEL_FILL, REF_LINE_STROKE, TOOLTIP_STYLE, fmt, downsample } from './shared';
+import { PALETTE } from '@/lib/palette';
 
 interface Props {
   pipeline: PipelineResult;
@@ -371,8 +372,8 @@ export default function ValidationPanel({ pipeline }: Props) {
           <AreaChart data={budgetData} margin={CHART_MARGIN_LABELED}>
             <defs>
               <linearGradient id="budgetGradPos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0f766e" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#0f766e" stopOpacity={0} />
+                <stop offset="0%" stopColor={PALETTE.teal} stopOpacity={0.25} />
+                <stop offset="100%" stopColor={PALETTE.teal} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid {...GRID_PROPS} />
@@ -380,20 +381,20 @@ export default function ValidationPanel({ pipeline }: Props) {
               dataKey="round"
               tick={AXIS_TICK}
               stroke={AXIS_STROKE}
-              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#5a6175' }}
+              label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: AXIS_LABEL_FILL }}
             />
             <YAxis
               tick={AXIS_TICK}
               stroke={AXIS_STROKE}
-              label={{ value: 'Budget gap', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#5a6175' }}
+              label={{ value: 'Budget gap', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }}
             />
             <Tooltip content={<SmartTooltip />} />
-            <ReferenceLine y={0} stroke="#8c92a3" strokeWidth={1.5} />
+            <ReferenceLine y={0} stroke={REF_LINE_STROKE} strokeWidth={1.5} />
             <Area
               type="monotone"
               dataKey="gap"
               name="Budget gap"
-              stroke="#1d3461"
+              stroke={PALETTE.navy}
               fill="url(#budgetGradPos)"
               strokeWidth={1.5}
               dot={false}

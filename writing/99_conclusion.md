@@ -50,27 +50,39 @@ skill, wager, aggregation, or settlement layers.
 ## Future work
 
 Three follow-ups are immediate. First, the held-out sensitivity
-sweep (Chapter~\ref{ch:real}) should be re-run under the expanding
-causal normalisation so that the locked headline numbers and the
-sweep-selected parameters are directly comparable. Second,
-per-forecaster conformal wrappers would calibrate each
-forecaster's quantile reports before aggregation, reducing the
-magnitude of the linear-pool miscalibration the recalibration
-layer has to close. Third, a true per-$\tau$ online gradient
-descent aggregator would replace the shifted-median-fan reference
-used as the \citet{vitali2025intermittent} baseline, giving a
-stronger comparison point on each individual quantile rather than
-on the median alone.
+sweep (Chapter~\ref{ch:real}) has now been refined around the
+coarse-grid wind optimum and identifies a slightly better cell at
+$(\gamma, \rho, \lambda) = (28, 0.8, 0.03)$, pushing the held-out
+improvement from $-6.86\%$ to $-7.69\%$; re-running the locked
+headline block at this optimum under expanding normalisation would
+bring the reported number in line with the sweep-selected
+parameters. Second, per-forecaster conformal wrappers would
+calibrate each forecaster's quantile reports before aggregation,
+reducing the magnitude of the linear-pool miscalibration the
+recalibration layer has to close --- an effect whose importance is
+amplified on the full headline slice, where the tail deviation
+($0.033$) is roughly double the value on the audit slice
+(Chapter~\ref{ch:recalibration}). Third, a true per-$\tau$ online
+gradient descent aggregator would replace the shifted-median-fan
+reference used as the \citet{vitali2025intermittent} baseline,
+giving a stronger comparison point on each individual quantile
+rather than on the median alone.
 
 In the medium term, the Beta-transformed linear pool of
 \citet{gneiting2013combining} offers a parametric alternative to
 isotonic recalibration and is expected to preserve sharpness more
-gracefully. A formal bound on diversified-report sybil leakage ---
-that is, conditions under which sybil profit is bounded when the
-clones' reports differ by at most $\varepsilon$ --- would
-generalise the narrow Lambert invariance to a quantifiable
-small-perturbation regime, and is well-posed as a standalone open
-problem.
+gracefully. A formal best-response analysis of the
+report-diversification trade-off --- quantifying the sign and
+magnitude of sybil-arbitrage leakage as a function of the
+per-clone perturbation $\varepsilon$ and the attacker's total
+stake --- would generalise the ad-hoc $\varepsilon$-sweep reported
+in Chapter~\ref{ch:robustness} into a bound that holds across
+attack families. Extending the risk-aversion sensitivity test
+(Chapter~\ref{ch:synthetic}) from a symmetric uniform outcome
+process to an asymmetric process such as an exponential or a
+truncated-normal would separate the CRPS-alignment artefact from
+the per-round truthfulness gap under risk aversion that the
+experiment as presented cannot resolve.
 
 Longer-term extensions are structural rather than incremental. A
 collusion-resistant scoring rule penalising correlated reports

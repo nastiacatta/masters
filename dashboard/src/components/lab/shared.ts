@@ -16,6 +16,19 @@ export const CHART_MARGIN_LABELED = { top: 20, right: 32, bottom: 36, left: 64 }
 export const AXIS_TICK = { fontSize: 13, fill: PALETTE.charcoal };
 export const AXIS_STROKE = CHART_AXIS;
 
+/** Colour for secondary labels on axes and annotations (matches --ink-soft). */
+export const AXIS_LABEL_FILL = PALETTE.slate;
+
+/** Colour for reference lines, band fills, dividers (desaturated, high-contrast grey). */
+export const REF_LINE_STROKE = PALETTE.slate;
+
+/** Fill for drag-to-zoom / brush preview rectangles. */
+export const REF_BAND_FILL = PALETTE.navy;
+
+/** Diverging tokens for bar charts that encode direction. */
+export const DIVERGING_GOOD = PALETTE.teal;
+export const DIVERGING_BAD  = PALETTE.coral;
+
 export const GRID_PROPS = {
   strokeDasharray: '3 3',
   stroke: CHART_GRID,

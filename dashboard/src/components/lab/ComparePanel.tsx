@@ -9,8 +9,9 @@ import type { BuilderSelections } from '@/lib/coreMechanism/runRoundComposable';
 import type { DGPId } from '@/lib/coreMechanism/dgpSimulator';
 import type { BehaviourPresetId } from '@/lib/behaviour/scenarioSimulator';
 import {
-  CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, TOOLTIP_STYLE, fmt, downsample, movingAvg,
+  CHART_MARGIN, GRID_PROPS, AXIS_TICK, AXIS_STROKE, REF_LINE_STROKE, TOOLTIP_STYLE, fmt, downsample, movingAvg,
 } from './shared';
+import { PALETTE } from '@/lib/palette';
 
 interface Props {
   pipeline: PipelineResult;
@@ -85,13 +86,19 @@ function DeltaCard({ m }: { m: MetricDelta }) {
       <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{m.label}</div>
       <div className="flex items-end gap-2 mt-1">
         <span className="text-xl font-bold font-mono text-slate-800">{fmt(m.current, 4)}</span>
-        <span className={`text-sm font-mono font-medium ${m.better ? 'text-emerald-600' : 'text-red-500'}`}>
+        <span
+          className="text-sm font-mono font-medium"
+          style={{ color: m.better ? PALETTE.teal : PALETTE.coral }}
+        >
           {m.delta >= 0 ? '+' : ''}{fmt(m.delta, 4)}
         </span>
       </div>
       <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
         <span>vs baseline {fmt(m.baseline, 4)}</span>
-        <span className={`font-medium ${m.better ? 'text-emerald-600' : 'text-red-500'}`}>
+        <span
+          className="font-medium"
+          style={{ color: m.better ? PALETTE.teal : PALETTE.coral }}
+        >
           ({m.deltaPct >= 0 ? '+' : ''}{m.deltaPct.toFixed(1)}%)
         </span>
       </div>
@@ -194,9 +201,10 @@ export default function ComparePanel({ pipeline, dgp, seed, nAgents, rounds }: P
               onClick={() => setSelectedPreset(p.id)}
               className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 selectedPreset === p.id
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
+              style={selectedPreset === p.id ? { background: PALETTE.navy } : undefined}
               title={p.desc}
             >
               {p.label}
@@ -227,8 +235,8 @@ export default function ComparePanel({ pipeline, dgp, seed, nAgents, rounds }: P
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-              <Line type="monotone" dataKey="current" name="Current" stroke="#6366f1" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="baseline" name="Baseline" stroke="#94a3b8" strokeWidth={2} dot={false} strokeDasharray="6 3" />
+              <Line type="monotone" dataKey="current" name="Current" stroke={PALETTE.navy} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="baseline" name="Baseline" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} strokeDasharray="6 3" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -240,20 +248,34 @@ export default function ComparePanel({ pipeline, dgp, seed, nAgents, rounds }: P
             <ComposedChart data={pairedErrorData} margin={CHART_MARGIN}>
               <defs>
                 <linearGradient id="deltaGradPos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                  <stop offset="0%" stopColor={PALETTE.coral} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={PALETTE.coral} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="deltaGradNeg" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                  <stop offset="0%" stopColor={PALETTE.teal} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={PALETTE.teal} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <Tooltip content={<SmartTooltip />} />
-              <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} />
-              <Area type="monotone" dataKey="delta" name="Error delta" stroke="#6366f1" fill="url(#deltaGradPos)" strokeWidth={1.5} dot={false} />
+              <ReferenceLine y={0} stroke={REF_LINE_STROKE} strokeWidth={1.5} />
+              <Area
+                type="monotone"
+                dataKey={(d: { delta: number }) => (d.delta >= 0 ? d.delta : 0)}
+                name="Current worse"
+                stroke="none"
+                fill="url(#deltaGradPos)"
+              />
+              <Area
+                type="monotone"
+                dataKey={(d: { delta: number }) => (d.delta < 0 ? d.delta : 0)}
+                name="Current better"
+                stroke="none"
+                fill="url(#deltaGradNeg)"
+              />
+              <Line type="monotone" dataKey="delta" name="Error delta" stroke={PALETTE.navy} strokeWidth={1.5} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -261,7 +283,7 @@ export default function ComparePanel({ pipeline, dgp, seed, nAgents, rounds }: P
         <div className="bg-white rounded-xl border border-slate-200 p-5 lg:col-span-2">
           <h4 className="text-sm font-semibold text-slate-800">Summary: Relative Change (%)</h4>
           <p className="text-[11px] text-slate-400 mt-0.5 italic mb-3">
-            Percent change vs baseline — green bars mean current setup is better
+            Percent change vs baseline — teal bars mean current setup is better
           </p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={deltaBarData} layout="vertical" margin={{ ...CHART_MARGIN, left: 100 }}>
@@ -269,10 +291,10 @@ export default function ComparePanel({ pipeline, dgp, seed, nAgents, rounds }: P
               <XAxis type="number" tick={AXIS_TICK} stroke={AXIS_STROKE} />
               <YAxis type="category" dataKey="name" tick={AXIS_TICK} stroke={AXIS_STROKE} width={90} />
               <Tooltip content={<SmartTooltip />} />
-              <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={1.5} />
+              <ReferenceLine x={0} stroke={REF_LINE_STROKE} strokeWidth={1.5} />
               <Bar dataKey="delta" name="% change" radius={[0, 4, 4, 0]} maxBarSize={24}>
                 {deltaBarData.map((d, i) => (
-                  <Cell key={i} fill={d.better ? '#10b981' : '#ef4444'} />
+                  <Cell key={i} fill={d.better ? PALETTE.teal : PALETTE.coral} />
                 ))}
               </Bar>
             </BarChart>

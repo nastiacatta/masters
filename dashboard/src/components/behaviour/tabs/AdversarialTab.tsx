@@ -8,9 +8,10 @@ import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import ChartCard from '@/components/dashboard/ChartCard';
 import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
-  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, AXIS_LABEL_FILL, REF_LINE_STROKE, REF_BAND_FILL,
   fmt, downsample,
 } from '@/components/lab/shared';
+import { PALETTE } from '@/lib/palette';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
@@ -37,14 +38,17 @@ export default function AdversarialTab({ manipulator, arbitrageur, sybil, collus
   const baselinePairProfit = baseline.finalState.slice(0, 2).reduce((a, s) => a + s.wealth, 0);
   const sybilRatio = baselinePairProfit > 0 ? sybilProfit / baselinePairProfit : 1;
 
+  // Attack-family colours — baseline uses the neutral slate, attacks draw from the
+  // palette's coral/orange/imperial/purple/navy range so each attack is distinct
+  // while staying in the same colour system as the rest of the dashboard.
   const attacks = [
-    { name: 'Baseline', error: baseline.summary.meanError, gini: baseline.summary.finalGini, color: '#94a3b8' },
-    { name: 'Manipulator', error: manipulator.summary.meanError, gini: manipulator.summary.finalGini, color: '#ef4444' },
-    { name: 'Arbitrageur', error: arbitrageur.summary.meanError, gini: arbitrageur.summary.finalGini, color: '#f59e0b' },
-    { name: 'Sybil', error: sybil.summary.meanError, gini: sybil.summary.finalGini, color: '#f97316' },
-    { name: 'Collusion', error: collusion.summary.meanError, gini: collusion.summary.finalGini, color: '#ec4899' },
-    { name: 'Rep. reset', error: repReset.summary.meanError, gini: repReset.summary.finalGini, color: '#dc2626' },
-    { name: 'Evader', error: evader.summary.meanError, gini: evader.summary.finalGini, color: '#a855f7' },
+    { name: 'Baseline',    error: baseline.summary.meanError,    gini: baseline.summary.finalGini,    color: PALETTE.slate },
+    { name: 'Manipulator', error: manipulator.summary.meanError, gini: manipulator.summary.finalGini, color: PALETTE.coral },
+    { name: 'Arbitrageur', error: arbitrageur.summary.meanError, gini: arbitrageur.summary.finalGini, color: '#B45309' }, // amber
+    { name: 'Sybil',       error: sybil.summary.meanError,       gini: sybil.summary.finalGini,       color: '#E67E22' }, // orange
+    { name: 'Collusion',   error: collusion.summary.meanError,   gini: collusion.summary.finalGini,   color: PALETTE.purple },
+    { name: 'Rep. reset',  error: repReset.summary.meanError,    gini: repReset.summary.finalGini,    color: PALETTE.imperial },
+    { name: 'Evader',      error: evader.summary.meanError,      gini: evader.summary.finalGini,      color: PALETTE.navy },
   ];
 
   const sigmaTraces = useMemo(() => downsample(
@@ -120,7 +124,10 @@ export default function AdversarialTab({ manipulator, arbitrageur, sybil, collus
                   <tr key={r.name} className="border-b border-slate-50">
                     <td className="py-2 pr-3 font-medium" style={{ color: r.color }}>{r.name}</td>
                     <td className="text-right py-2 px-2 font-mono">{fmt(r.error, 4)}</td>
-                    <td className={`text-right py-2 px-2 font-mono ${delta > 1 ? 'text-red-500' : delta < -1 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    <td
+                      className="text-right py-2 px-2 font-mono"
+                      style={{ color: delta > 1 ? PALETTE.coral : delta < -1 ? PALETTE.teal : PALETTE.slate }}
+                    >
                       {i === 0 ? '-' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`}
                     </td>
                     <td className="text-right py-2 px-2 font-mono">{fmt(r.gini, 3)}</td>
@@ -161,15 +168,15 @@ export default function AdversarialTab({ manipulator, arbitrageur, sybil, collus
                 <CartesianGrid {...GRID_PROPS} />
                 <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigDecayZoom.state.left, sigDecayZoom.state.right]} />
                 <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
-                  label={{ value: 'σ (F1)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                  label={{ value: 'σ (F1)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
                 <Tooltip content={<SmartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="honest" name="Honest" stroke="#94a3b8" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="manipulator" name="Manipulator" stroke="#ef4444" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="rep_reset" name="Rep. reset" stroke="#dc2626" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
-                <Line type="monotone" dataKey="evader" name="Evader" stroke="#a855f7" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="honest" name="Honest" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="manipulator" name="Manipulator" stroke={PALETTE.coral} strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="rep_reset" name="Rep. reset" stroke={PALETTE.imperial} strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
+                <Line type="monotone" dataKey="evader" name="Evader" stroke={PALETTE.navy} strokeWidth={1.5} dot={false} />
                 {sigDecayZoom.state.refLeft && sigDecayZoom.state.refRight && (
-                  <ReferenceArea x1={sigDecayZoom.state.refLeft} x2={sigDecayZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                  <ReferenceArea x1={sigDecayZoom.state.refLeft} x2={sigDecayZoom.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
                 )}
               </LineChart>
             </ResponsiveContainer>

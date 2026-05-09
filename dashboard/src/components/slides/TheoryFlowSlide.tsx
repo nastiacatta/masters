@@ -1,44 +1,46 @@
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
- * Slide 2: "What Is a Prediction Market?" — SVG diagram showing
- * the prediction market concept.
+ * Slide 2: "What Is a Prediction Market?" — SVG diagram showing the three
+ * roles explicitly, so the slide reinforces the story we tell verbally.
  *
- * Layout:
- * - Left: 3–4 participant boxes, each with a forecast icon and wager indicator
- * - Centre: Market aggregation box showing the combination process
- * - Right: Output showing the improved collective prediction
+ * Layout (left to right):
+ *   Client (posts task + reward)
+ *      ↓ (arrow labelled "task")
+ *   Forecasters (each submits forecast + wager)
+ *      ↓ (arrows labelled "forecast + wager")
+ *   Platform (aggregates + settles)
+ *      ↓ (arrow labelled "market forecast + payoffs")
+ *   Outcome / reward allocation
  *
- * No technical formulas or scoring rules. No references to "Logistics".
- * Uses PALETTE and TYPOGRAPHY constants for all styling.
+ * No formulas. No technical notation. The visual answers "who does what?".
  */
 export default function TheoryFlowSlide() {
-  const participants = [
-    { label: 'Forecaster A', y: 60 },
-    { label: 'Forecaster B', y: 200 },
-    { label: 'Forecaster C', y: 340 },
-  ];
-
   // Layout constants
-  const pBoxX = 30;
-  const pBoxW = 220;
-  const pBoxH = 95;
-  const iconSize = 18;
+  const clientX = 30;
+  const clientW = 200;
+  const clientH = 110;
+  const clientCY = 280;
 
-  const aggX = 400;
-  const aggW = 260;
-  const aggH = 130;
-  const aggCenterY = 260;
+  const forecastersX = 300;
+  const forecasterW = 180;
+  const forecasterH = 80;
 
-  const outX = 810;
-  const outW = 180;
-  const outH = 100;
+  const platformX = 560;
+  const platformW = 230;
+  const platformH = 140;
+  const platformCY = 280;
 
-  const GAP = 18;
-  const arrowStartX = pBoxX + pBoxW + GAP;
-  const arrowEndX = aggX - GAP;
-  const outArrowStartX = aggX + aggW + GAP;
-  const outArrowEndX = outX - GAP;
+  const outputX = 840;
+  const outputW = 180;
+  const outputH = 110;
+  const outputCY = 280;
+
+  const forecasters = [
+    { label: 'Forecaster A', y: 110 },
+    { label: 'Forecaster B', y: 240 },
+    { label: 'Forecaster C', y: 370 },
+  ];
 
   return (
     <div
@@ -51,15 +53,15 @@ export default function TheoryFlowSlide() {
       }}
     >
       <svg
-        viewBox="0 0 1040 560"
+        viewBox="0 0 1060 560"
         style={{ width: '100%', height: '100%' }}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label="Prediction market diagram: participants submit forecasts and wagers, which are aggregated into an improved collective prediction"
+        aria-label="Prediction market diagram: a client posts a task, forecasters submit forecasts with wagers, the platform aggregates and settles, and payoffs flow back after the outcome is observed"
       >
         <defs>
           <marker
-            id="pm-arrow"
+            id="pm-arrow-grey"
             markerWidth="10"
             markerHeight="7"
             refX="10"
@@ -80,59 +82,102 @@ export default function TheoryFlowSlide() {
           </marker>
         </defs>
 
-        {/* ── Participant boxes ── */}
-        {participants.map((p, i) => {
-          const centerY = p.y + pBoxH / 2;
+        {/* ── Client box ── */}
+        <rect
+          x={clientX}
+          y={clientCY - clientH / 2}
+          width={clientW}
+          height={clientH}
+          rx={14}
+          fill={PALETTE.lightBg}
+          stroke={PALETTE.imperial}
+          strokeWidth={2.5}
+        />
+        <text
+          x={clientX + clientW / 2}
+          y={clientCY - 14}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="22"
+          fontWeight={700}
+          fill={PALETTE.imperial}
+        >
+          Client
+        </text>
+        <text
+          x={clientX + clientW / 2}
+          y={clientCY + 10}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="15"
+          fill={PALETTE.slate}
+        >
+          Needs a forecast
+        </text>
+        <text
+          x={clientX + clientW / 2}
+          y={clientCY + 30}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="15"
+          fill={PALETTE.slate}
+        >
+          Posts a reward
+        </text>
+
+        {/* Arrow: Client → Forecasters (label: task) */}
+        <line
+          x1={clientX + clientW + 6}
+          y1={clientCY}
+          x2={forecastersX - 6}
+          y2={clientCY}
+          stroke={PALETTE.slate}
+          strokeWidth={2.5}
+          markerEnd="url(#pm-arrow-grey)"
+        />
+        <text
+          x={(clientX + clientW + forecastersX) / 2}
+          y={clientCY - 10}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="14"
+          fontStyle="italic"
+          fill={PALETTE.slate}
+        >
+          task + reward
+        </text>
+
+        {/* ── Forecaster stack ── */}
+        {forecasters.map((f) => {
+          const centerY = f.y + forecasterH / 2;
           return (
-            <g key={p.label}>
-              {/* Box */}
+            <g key={f.label}>
               <rect
-                x={pBoxX}
-                y={p.y}
-                width={pBoxW}
-                height={pBoxH}
+                x={forecastersX}
+                y={f.y}
+                width={forecasterW}
+                height={forecasterH}
                 rx={12}
-                fill={PALETTE.lightBg}
+                fill={PALETTE.white}
                 stroke={PALETTE.navy}
                 strokeWidth={2}
               />
-
-              {/* Forecast icon — small chart line */}
-              <g transform={`translate(${pBoxX + 16}, ${p.y + 14})`}>
-                <polyline
-                  points={`0,${iconSize} ${iconSize * 0.3},${iconSize * 0.4} ${iconSize * 0.6},${iconSize * 0.7} ${iconSize},0`}
-                  fill="none"
-                  stroke={PALETTE.teal}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </g>
-
-              {/* Participant label */}
               <text
-                x={pBoxX + 42}
-                y={p.y + 28}
+                x={forecastersX + forecasterW / 2}
+                y={f.y + 28}
+                textAnchor="middle"
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="18"
+                fontSize="17"
                 fontWeight={600}
                 fill={PALETTE.navy}
               >
-                {p.label}
+                {f.label}
               </text>
-
-              {/* Wager/deposit indicator — coin icon + "Wager" text */}
-              <g transform={`translate(${pBoxX + 16}, ${p.y + 46})`}>
-                <circle
-                  cx="7"
-                  cy="7"
-                  r="7"
-                  fill={PALETTE.coral}
-                  opacity="0.2"
-                />
+              {/* Forecast + wager token */}
+              <g transform={`translate(${forecastersX + 14}, ${f.y + 44})`}>
+                <circle cx="7" cy="7" r="7" fill={PALETTE.coral} opacity="0.22" />
                 <text
-                  x="7"
-                  y="11"
+                  x="7" y="11"
                   textAnchor="middle"
                   fontFamily={TYPOGRAPHY.fontFamily}
                   fontSize="11"
@@ -143,168 +188,188 @@ export default function TheoryFlowSlide() {
                 </text>
               </g>
               <text
-                x={pBoxX + 34}
-                y={p.y + 58}
+                x={forecastersX + 32}
+                y={f.y + 57}
                 fontFamily={TYPOGRAPHY.fontFamily}
-                fontSize="15"
+                fontSize="14"
                 fill={PALETTE.slate}
               >
-                + forecast
+                forecast + wager
               </text>
 
-              {/* Arrow from participant to aggregation */}
+              {/* Arrow: each forecaster → Platform */}
               <line
-                x1={arrowStartX}
+                x1={forecastersX + forecasterW + 6}
                 y1={centerY}
-                x2={arrowEndX}
-                y2={aggCenterY - 30 + i * 20}
+                x2={platformX - 6}
+                y2={platformCY - 40 + (forecasters.indexOf(f) * 40)}
                 stroke={PALETTE.slate}
                 strokeWidth={2}
-                markerEnd="url(#pm-arrow)"
+                markerEnd="url(#pm-arrow-grey)"
               />
             </g>
           );
         })}
 
-        {/* ── Market aggregation box ── */}
+        {/* ── Platform box ── */}
         <rect
-          x={aggX}
-          y={aggCenterY - aggH / 2}
-          width={aggW}
-          height={aggH}
+          x={platformX}
+          y={platformCY - platformH / 2}
+          width={platformW}
+          height={platformH}
           rx={14}
           fill={PALETTE.white}
           stroke={PALETTE.teal}
           strokeWidth={3}
         />
-
-        {/* Aggregation icon — overlapping circles */}
-        <g transform={`translate(${aggX + aggW / 2}, ${aggCenterY - 22})`}>
-          <circle cx="-10" cy="0" r="10" fill={PALETTE.teal} opacity="0.15" />
-          <circle cx="0" cy="0" r="10" fill={PALETTE.teal} opacity="0.25" />
-          <circle cx="10" cy="0" r="10" fill={PALETTE.teal} opacity="0.35" />
-        </g>
-
         <text
-          x={aggX + aggW / 2}
-          y={aggCenterY + 8}
+          x={platformX + platformW / 2}
+          y={platformCY - 32}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="22"
           fontWeight={700}
           fill={PALETTE.teal}
         >
-          Market
+          Platform
         </text>
+        {/* three merging circles */}
+        <g transform={`translate(${platformX + platformW / 2}, ${platformCY - 4})`}>
+          <circle cx="-12" cy="0" r="9" fill={PALETTE.teal} opacity="0.18" />
+          <circle cx="0" cy="0" r="9" fill={PALETTE.teal} opacity="0.30" />
+          <circle cx="12" cy="0" r="9" fill={PALETTE.teal} opacity="0.45" />
+        </g>
         <text
-          x={aggX + aggW / 2}
-          y={aggCenterY + 30}
+          x={platformX + platformW / 2}
+          y={platformCY + 26}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
           fontSize="15"
           fill={PALETTE.slate}
         >
-          Weighted aggregation
+          Aggregates + settles
+        </text>
+        <text
+          x={platformX + platformW / 2}
+          y={platformCY + 46}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="15"
+          fill={PALETTE.slate}
+        >
+          Redistributes wagers
         </text>
 
-        {/* ── Arrow from aggregation to output ── */}
+        {/* Arrow: Platform → output */}
         <line
-          x1={outArrowStartX}
-          y1={aggCenterY}
-          x2={outArrowEndX}
-          y2={aggCenterY}
+          x1={platformX + platformW + 6}
+          y1={platformCY}
+          x2={outputX - 6}
+          y2={outputCY}
           stroke={PALETTE.teal}
           strokeWidth={3}
           markerEnd="url(#pm-arrow-teal)"
         />
+        <text
+          x={(platformX + platformW + outputX) / 2}
+          y={outputCY - 10}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="14"
+          fontStyle="italic"
+          fill={PALETTE.teal}
+        >
+          market forecast
+        </text>
 
-        {/* ── Output box — collective prediction ── */}
+        {/* ── Output / reward delivery ── */}
         <rect
-          x={outX}
-          y={aggCenterY - outH / 2}
-          width={outW}
-          height={outH}
+          x={outputX}
+          y={outputCY - outputH / 2}
+          width={outputW}
+          height={outputH}
           rx={14}
           fill={PALETTE.teal}
           stroke={PALETTE.teal}
           strokeWidth={2}
         />
-
-        {/* Output icon — upward trend arrow */}
-        <g transform={`translate(${outX + outW / 2}, ${aggCenterY - 24})`}>
-          <polyline
-            points="-14,14 -4,2 6,8 16,-6"
-            fill="none"
-            stroke={PALETTE.white}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <polyline
-            points="10,-6 16,-6 16,0"
-            fill="none"
-            stroke={PALETTE.white}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
-
         <text
-          x={outX + outW / 2}
-          y={aggCenterY + 8}
+          x={outputX + outputW / 2}
+          y={outputCY - 10}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="20"
+          fontSize="19"
           fontWeight={700}
           fill={PALETTE.white}
         >
-          Collective
+          Market
         </text>
         <text
-          x={outX + outW / 2}
-          y={aggCenterY + 28}
+          x={outputX + outputW / 2}
+          y={outputCY + 12}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="19"
+          fontWeight={700}
+          fill={PALETTE.white}
+        >
+          forecast
+        </text>
+        <text
+          x={outputX + outputW / 2}
+          y={outputCY + 34}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="13"
           fill={PALETTE.darkText}
         >
-          Prediction
+          (+ payoffs after outcome)
         </text>
 
-        {/* ── Bottom labels ── */}
+        {/* Role labels underneath */}
         <text
-          x={pBoxX + pBoxW / 2}
-          y={520}
+          x={clientX + clientW / 2}
+          y={510}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="16"
           fontWeight={600}
           fill={PALETTE.navy}
         >
-          Forecasts + wagers
+          Client
         </text>
         <text
-          x={aggX + aggW / 2}
-          y={520}
+          x={forecastersX + forecasterW / 2}
+          y={510}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="16"
           fontWeight={600}
           fill={PALETTE.navy}
         >
-          Weighted combination
+          Forecasters
         </text>
         <text
-          x={outX + outW / 2}
-          y={520}
+          x={platformX + platformW / 2}
+          y={510}
           textAnchor="middle"
           fontFamily={TYPOGRAPHY.fontFamily}
-          fontSize="18"
+          fontSize="16"
           fontWeight={600}
           fill={PALETTE.navy}
         >
-          Better forecast
+          Platform
+        </text>
+        <text
+          x={outputX + outputW / 2}
+          y={510}
+          textAnchor="middle"
+          fontFamily={TYPOGRAPHY.fontFamily}
+          fontSize="16"
+          fontWeight={600}
+          fill={PALETTE.navy}
+        >
+          Output
         </text>
       </svg>
     </div>

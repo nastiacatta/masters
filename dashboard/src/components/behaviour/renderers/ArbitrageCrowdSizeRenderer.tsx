@@ -12,8 +12,10 @@ import {
   YAxis,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE as PALETTE_SEM } from '@/lib/palette';
 
-const PALETTE = ['#64748b', '#f59e0b', '#dc2626'];
+// Severity gradient: neutral → amber → coral (matches slide palette).
+const SEVERITY_PALETTE = [PALETTE_SEM.slate, '#B45309', PALETTE_SEM.coral];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -104,10 +106,10 @@ export default function ArbitrageCrowdSizeRenderer({ data, header }: RendererPro
                   key={lam}
                   dataKey={`lam_${lam}`}
                   name={`lambda = ${lam}`}
-                  fill={PALETTE[i % PALETTE.length]}
+                  fill={SEVERITY_PALETTE[i % SEVERITY_PALETTE.length]}
                 >
                   {chartRows.map((_, j) => (
-                    <Cell key={j} fill={PALETTE[i % PALETTE.length]} />
+                    <Cell key={j} fill={SEVERITY_PALETTE[i % SEVERITY_PALETTE.length]} />
                   ))}
                 </Bar>
               ))}

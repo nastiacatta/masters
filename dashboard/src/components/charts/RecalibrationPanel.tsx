@@ -15,7 +15,9 @@ import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import {
   AXIS_STROKE,
   AXIS_TICK,
+  AXIS_LABEL_FILL,
   GRID_PROPS,
+  REF_LINE_STROKE,
 } from '@/components/lab/shared';
 import { PALETTE } from '@/lib/palette';
 
@@ -111,22 +113,22 @@ export default function RecalibrationPanel() {
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
             ticks={data.taus}
-            label={{ value: 'Nominal level τ', position: 'insideBottom', offset: -18, fontSize: 12, fill: 'var(--ink-soft)' }}
+            label={{ value: 'Nominal level τ', position: 'insideBottom', offset: -18, fontSize: 12, fill: AXIS_LABEL_FILL }}
           />
           <YAxis
             type="number"
             domain={[0, 1]}
             tick={AXIS_TICK}
             stroke={AXIS_STROKE}
-            label={{ value: 'Empirical coverage', angle: -90, position: 'insideLeft', offset: 8, fontSize: 12, fill: 'var(--ink-soft)' }}
+            label={{ value: 'Empirical coverage', angle: -90, position: 'insideLeft', offset: 8, fontSize: 12, fill: AXIS_LABEL_FILL }}
           />
           <Tooltip content={<SmartTooltip />} />
           <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
           <ReferenceLine
             segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]}
-            stroke="#8c92a3"
+            stroke={REF_LINE_STROKE}
             strokeDasharray="4 4"
-            label={{ value: 'y = x (perfect calibration)', position: 'insideTopRight', fontSize: 10, fill: '#64748b' }}
+            label={{ value: 'y = x (perfect calibration)', position: 'insideTopRight', fontSize: 10, fill: AXIS_LABEL_FILL }}
           />
           <Line
             type="monotone"
@@ -185,7 +187,19 @@ export default function RecalibrationPanel() {
       <div className="mt-4 p-3" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 4 }}>
         <p style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
           <strong>Interpretation.</strong> The mechanism&apos;s aggregate is systematically over-covering
-          — at nominal τ = 0.5 the empirical coverage is {(data.mech_coverage[4] * 100).toFixed(1)}% (should be 50%).
+          {(() => {
+            // Look up the empirical coverage at the τ closest to 0.5 so the
+            // sentence stays consistent if the tau grid ever changes.
+            const idx = data.taus.reduce(
+              (bestIdx, t, i) => (Math.abs(t - 0.5) < Math.abs(data.taus[bestIdx] - 0.5) ? i : bestIdx),
+              0,
+            );
+            const tauMid = data.taus[idx];
+            const covMid = data.mech_coverage[idx];
+            return (
+              <> — at nominal τ = {tauMid.toFixed(2)} the empirical coverage is {(covMid * 100).toFixed(1)}% (should be {(tauMid * 100).toFixed(0)}%).</>
+            );
+          })()}
           This is the Ranjan–Gneiting (2010) limit: a non-trivial linear pool of calibrated forecasts is
           necessarily uncalibrated. Adding a rolling isotonic recalibration layer (Kuleshov, Fenner &amp;
           Ermon 2018) as a <em>post-processing</em> step closes <strong>{centrePctDown.toFixed(0)}% of the centre deviation</strong>

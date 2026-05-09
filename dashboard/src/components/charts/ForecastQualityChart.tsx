@@ -1,7 +1,14 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { ForecastSeriesPoint } from '@/lib/types';
 import { WEIGHTING_COLORS, metricLabel } from '@/lib/formatters';
-import { PALETTE } from '@/lib/palette';
+import {
+  AXIS_STROKE,
+  AXIS_TICK,
+  AXIS_LABEL_FILL,
+  GRID_PROPS,
+  REF_BAND_FILL,
+  TOOLTIP_STYLE,
+} from '@/components/lab/shared';
 import ChartCard from '../dashboard/ChartCard';
 import ZoomBadge from './ZoomBadge';
 import { useState, useCallback } from 'react';
@@ -59,26 +66,21 @@ export default function ForecastQualityChart({ data }: Props) {
           onMouseMove={zoom.onMouseMove}
           onMouseUp={zoom.onMouseUp}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e4dfd3" strokeOpacity={0.8} />
+          <CartesianGrid {...GRID_PROPS} />
           <XAxis
             dataKey="t"
-            tick={{ fontSize: 12, fill: '#5a6175' }}
-            stroke="#8c92a3"
+            tick={AXIS_TICK}
+            stroke={AXIS_STROKE}
             domain={[zoom.state.left, zoom.state.right]}
-            label={{ value: 'Round', position: 'insideBottom', offset: -8, fontSize: 12, fill: '#5a6175' }}
+            label={{ value: 'Round', position: 'insideBottom', offset: -8, fontSize: 12, fill: AXIS_LABEL_FILL }}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: '#5a6175' }}
-            stroke="#8c92a3"
-            label={{ value: 'CRPS', angle: -90, position: 'insideLeft', offset: 4, fontSize: 12, fill: '#5a6175' }}
+            tick={AXIS_TICK}
+            stroke={AXIS_STROKE}
+            label={{ value: 'CRPS', angle: -90, position: 'insideLeft', offset: 4, fontSize: 12, fill: AXIS_LABEL_FILL }}
           />
           <Tooltip
-            contentStyle={{
-              fontSize: 12, borderRadius: 6,
-              border: '1px solid #d1d5db',
-              background: 'rgba(255, 253, 248, 0.98)',
-              boxShadow: '0 12px 32px -8px rgba(15, 23, 42, 0.18)',
-            }}
+            contentStyle={TOOLTIP_STYLE as React.CSSProperties}
             formatter={(value: unknown, name: unknown) => [typeof value === 'number' ? value.toFixed(5) : String(value ?? ''), metricLabel(String(name ?? ''))]}
           />
           <Legend
@@ -103,7 +105,7 @@ export default function ForecastQualityChart({ data }: Props) {
             />
           ))}
           {zoom.state.refLeft && zoom.state.refRight && (
-            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill={PALETTE.navy} fillOpacity={0.1} />
+            <ReferenceArea x1={zoom.state.refLeft} x2={zoom.state.refRight} strokeOpacity={0.3} fill={REF_BAND_FILL} fillOpacity={0.1} />
           )}
         </LineChart>
       </ResponsiveContainer>

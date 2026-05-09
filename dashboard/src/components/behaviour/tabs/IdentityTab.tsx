@@ -7,9 +7,10 @@ import {
 import type { PipelineResult } from '@/lib/coreMechanism/runPipeline';
 import MetricDisplay from '@/components/dashboard/MetricDisplay';
 import {
-  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE,
+  CHART_MARGIN_LABELED, GRID_PROPS, AXIS_TICK, AXIS_STROKE, AXIS_LABEL_FILL, REF_LINE_STROKE, REF_BAND_FILL,
   fmt, downsample,
 } from '@/components/lab/shared';
+import { PALETTE } from '@/lib/palette';
 import { SmartTooltip } from '@/components/dashboard/SmartTooltip';
 import { useChartZoom } from '@/hooks/useChartZoom';
 import ZoomBadge from '@/components/charts/ZoomBadge';
@@ -113,14 +114,14 @@ export default function IdentityTab({ sybil, collusion, repReset, baseline }: {
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[sigZoom.state.left, sigZoom.state.right]} />
               <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={[0, 1]}
-                label={{ value: 'σ (agent 0)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
+                label={{ value: 'σ (agent 0)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: AXIS_LABEL_FILL }} />
               <Tooltip content={<SmartTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="4 3" label={{ value: 'Attack onset', position: 'top', fontSize: 11, fill: '#ef4444' }} />
-              <Line type="monotone" dataKey="baseline" name="Honest baseline" stroke="#94a3b8" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="rep_reset" name="Rep. reset attacker" stroke="#dc2626" strokeWidth={2} dot={false} />
+              <ReferenceLine x={100} stroke={PALETTE.coral} strokeDasharray="4 3" label={{ value: 'Attack onset', position: 'top', fontSize: 11, fill: PALETTE.coral }} />
+              <Line type="monotone" dataKey="baseline" name="Honest baseline" stroke={REF_LINE_STROKE} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="rep_reset" name="Rep. reset attacker" stroke={PALETTE.coral} strokeWidth={2} dot={false} />
               {sigZoom.state.refLeft && sigZoom.state.refRight && (
-                <ReferenceArea x1={sigZoom.state.refLeft} x2={sigZoom.state.refRight} fillOpacity={0.1} fill="#6366f1" />
+                <ReferenceArea x1={sigZoom.state.refLeft} x2={sigZoom.state.refRight} fillOpacity={0.1} fill={REF_BAND_FILL} />
               )}
             </LineChart>
           </ResponsiveContainer>

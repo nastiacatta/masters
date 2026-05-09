@@ -13,11 +13,12 @@ import {
   YAxis,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
 const COLOURS: Record<string, string> = {
-  baseline: '#94a3b8',
-  collusion_only: '#8b5cf6',
-  informed_collusion: '#dc2626',
+  baseline:           PALETTE.slate,
+  collusion_only:     PALETTE.purple,
+  informed_collusion: PALETTE.coral,
 };
 
 function EmptyState({ message }: { message: string }) {

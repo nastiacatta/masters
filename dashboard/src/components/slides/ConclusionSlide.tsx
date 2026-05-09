@@ -1,11 +1,12 @@
 import SlideShell from './shared/SlideShell';
 import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
-/* ── CRPS comparison data (benchmark on Elia) ── */
-// Numbers regenerated under the post-fix pipeline (causal normalisation,
-// horizon residual rewrite, warmup floor). Source: baselines.json emitted
-// by scripts/run_baseline_comparison.py on Elia wind (T=17344) and
-// electricity (T=~70k). See onlinev2/outputs/post_fix_deltas/SUMMARY.md.
+/* ── CRPS comparison data (benchmark on Elia) ──
+ * Numbers regenerated under the post-fix pipeline (causal normalisation,
+ * horizon residual rewrite, warmup floor). Source: baselines.json emitted
+ * by scripts/run_baseline_comparison.py on Elia wind (T=17344) and
+ * electricity (T=~70k). See onlinev2/outputs/post_fix_deltas/SUMMARY.md.
+ */
 const comparisons = [
   {
     label: 'Raja et al.',
@@ -13,7 +14,7 @@ const comparisons = [
     tagColour: PALETTE.slate,
     wind: '−1.5 %',
     elec: '+0.0 %',
-    note: 'Self-financed but no memory across rounds',
+    note: 'Self-financed, but no memory across rounds',
   },
   {
     label: 'Vitali & Pinson',
@@ -21,7 +22,7 @@ const comparisons = [
     tagColour: PALETTE.purple,
     wind: '−18.0 %',
     elec: '−2.0 %',
-    note: 'Lowest CRPS in this benchmark — not self-financed; relative weights',
+    note: 'Lowest CRPS — relative weights, not self-financed',
   },
   {
     label: 'This project',
@@ -33,33 +34,41 @@ const comparisons = [
   },
 ] as const;
 
-/* ── Future-work bullets ── */
 const futureWork = [
   'Close the CRPS gap to Vitali & Pinson without giving up self-financing',
   'Improve tail calibration (currently ~5 pp under-dispersion)',
   'Test against a wider range of strategic adversaries',
 ] as const;
 
-/* ── Card wrapper (dark-mode) ── */
-function DarkCard({
-  children,
-  accent,
-}: {
-  children: React.ReactNode;
-  accent?: string;
-}) {
+/* ── Unified type tokens ──
+ * Keeping to three tiers so the dark slide does not feel noisy. Using
+ * solid PALETTE.white for primary text on dark (contrast ≥ 15:1) and
+ * PALETTE.darkText (#E2E8F0) only for secondary meta text.
+ */
+const TYPE = {
+  cardLabel: { fontSize: '1.5rem', fontWeight: 700 as const, color: PALETTE.white },
+  cardTag:   { fontSize: '0.9rem', fontWeight: 700 as const, color: PALETTE.white },
+  cardBody:  { fontSize: '1.25rem', color: PALETTE.white },
+  cardMeta:  { fontSize: '1.05rem', color: PALETTE.darkText },
+  takeaway:  { fontSize: '1.4rem', fontWeight: 700 as const, color: PALETTE.white },
+  sectionH:  { fontSize: '1.15rem', fontWeight: 700 as const, color: PALETTE.teal, letterSpacing: '0.06em', textTransform: 'uppercase' as const },
+  listItem:  { fontSize: '1.2rem', color: PALETTE.white },
+};
+
+function DarkCard({ children, accent }: { children: React.ReactNode; accent: string }) {
   return (
     <div
       style={{
         flex: 1,
-        background: 'rgba(255,255,255,0.05)',
-        border: `1.5px solid ${accent ?? PALETTE.border}`,
+        background: 'rgba(255,255,255,0.06)',
+        border: `1.5px solid ${accent}`,
         borderRadius: 12,
-        padding: '28px 32px',
+        padding: '22px 26px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        gap: 8,
+        gap: 10,
+        fontFamily: TYPOGRAPHY.fontFamily,
       }}
     >
       {children}
@@ -70,55 +79,73 @@ function DarkCard({
 export default function ConclusionSlide() {
   return (
     <SlideShell title="Conclusion + Future Work" dark slideNumber={13}>
-      {/* Use flex column with justify-content to spread content evenly */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 
-        {/* ── CRPS Comparison Cards — flex:1 so they grow ── */}
+        {/* ── CRPS Comparison Cards ── */}
         <div style={{ flex: 1, display: 'flex', gap: 20, alignItems: 'stretch' }}>
           {comparisons.map((c) => (
             <DarkCard key={c.label} accent={c.tagColour}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '1.4rem', fontWeight: 700, color: PALETTE.white, fontFamily: TYPOGRAPHY.fontFamily }}>
+                <span style={{ ...TYPE.cardLabel, fontFamily: TYPOGRAPHY.fontFamily }}>
                   {c.label}
                 </span>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: PALETTE.white, background: c.tagColour, borderRadius: 20, padding: '4px 14px' }}>
+                <span
+                  style={{
+                    ...TYPE.cardTag,
+                    fontFamily: TYPOGRAPHY.fontFamily,
+                    background: c.tagColour,
+                    borderRadius: 20,
+                    padding: '4px 14px',
+                  }}
+                >
                   {c.tag}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 20, marginTop: 12, fontSize: '1.2rem', color: PALETTE.darkText, fontFamily: TYPOGRAPHY.fontFamily, fontVariantNumeric: 'tabular-nums' }}>
-                <span>Wind: <strong style={{ color: PALETTE.white }}>{c.wind}</strong></span>
-                <span>Elec: <strong style={{ color: PALETTE.white }}>{c.elec}</strong></span>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 20,
+                  ...TYPE.cardBody,
+                  fontFamily: TYPOGRAPHY.fontFamily,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                <span>Wind: <strong>{c.wind}</strong></span>
+                <span>Elec: <strong>{c.elec}</strong></span>
               </div>
-              <p style={{ marginTop: 10, fontSize: '1.05rem', color: PALETTE.darkText, lineHeight: 1.55, fontFamily: TYPOGRAPHY.fontFamily }}>
+              <p style={{ margin: 0, ...TYPE.cardMeta, fontFamily: TYPOGRAPHY.fontFamily, lineHeight: 1.5 }}>
                 {c.note}
               </p>
             </DarkCard>
           ))}
         </div>
 
-        {/* ── Key Takeaway — bigger, more breathing room ── */}
+        {/* ── Key Takeaway ── */}
         <div
           style={{
-            background: 'rgba(46, 139, 139, 0.12)',
+            background: 'rgba(46, 139, 139, 0.18)',
             borderLeft: `4px solid ${PALETTE.teal}`,
             borderRadius: '0 12px 12px 0',
-            padding: '20px 28px',
-            marginTop: 28,
+            padding: '18px 26px',
+            marginTop: 24,
           }}
         >
-          <p style={{ margin: 0, fontSize: '1.45rem', fontWeight: 700, color: PALETTE.white, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
+          <p style={{ margin: 0, ...TYPE.takeaway, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
             Adaptation, self-financing, and an absolute skill signal can coexist in a single mechanism.
           </p>
         </div>
 
-        {/* ── Future Work — spread with bigger text ── */}
-        <div style={{ marginTop: 28 }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: PALETTE.teal, marginBottom: 14, fontFamily: TYPOGRAPHY.fontFamily, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>
+        {/* ── Future Work ── */}
+        <div style={{ marginTop: 24 }}>
+          <h3 style={{ margin: 0, marginBottom: 12, ...TYPE.sectionH, fontFamily: TYPOGRAPHY.fontFamily }}>
             Future Work
           </h3>
           <ul style={{ margin: 0, paddingLeft: 24, listStyleType: 'disc' }}>
             {futureWork.map((item) => (
-              <li key={item} style={{ fontSize: '1.3rem', color: PALETTE.darkText, lineHeight: 1.7, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 10 }}>
+              <li
+                key={item}
+                style={{ ...TYPE.listItem, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 8 }}
+              >
                 {item}
               </li>
             ))}

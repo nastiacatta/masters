@@ -68,7 +68,7 @@ export default function DGPPanel() {
           <p className="text-xs text-slate-500 mb-2">Preview: outcome y and mean report (first 50 rounds)</p>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={dgpSeries}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="t" tick={{ fontSize: 9 }} />
               <YAxis tick={{ fontSize: 9 }} domain={[0, 1]} />
               <Tooltip formatter={(v) => (typeof v === 'number' ? fmtNum(v, 4) : String(v))} />

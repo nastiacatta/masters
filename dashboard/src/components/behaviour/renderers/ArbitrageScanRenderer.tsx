@@ -12,8 +12,9 @@ import {
   Line,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE, ORANGE } from '@/lib/palette';
 
-const PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#10b981', '#ef4444'];
+const LINE_PALETTE = [PALETTE.imperial, PALETTE.purple, PALETTE.teal, ORANGE, PALETTE.coral];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -60,8 +61,8 @@ export default function ArbitrageScanRenderer({ data, header }: RendererProps) {
                 <YAxis label={{ value: 'Total profit', angle: -90, position: 'insideLeft', fontSize: 12 }} />
                 <Tooltip formatter={(v: unknown) => typeof v === 'number' ? fmtNum(v, 3) : String(v ?? '')} />
                 <Legend />
-                <Line type="monotone" dataKey="arbTotalProfit" name="Attacker total profit" stroke={PALETTE[4]} strokeWidth={2} dot />
-                <Line type="monotone" dataKey="arbFinalWealth" name="Attacker final wealth" stroke={PALETTE[0]} strokeWidth={2} dot />
+                <Line type="monotone" dataKey="arbTotalProfit" name="Attacker total profit" stroke={LINE_PALETTE[4]} strokeWidth={2} dot />
+                <Line type="monotone" dataKey="arbFinalWealth" name="Attacker final wealth" stroke={LINE_PALETTE[0]} strokeWidth={2} dot />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -75,7 +76,7 @@ export default function ArbitrageScanRenderer({ data, header }: RendererProps) {
                 <XAxis dataKey="lam" label={{ value: 'λ', position: 'insideBottom', offset: -4, fontSize: 12 }} />
                 <YAxis label={{ value: 'Arbitrage rounds (count)', angle: -90, position: 'insideLeft', fontSize: 12 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="arbitrageFoundRounds" name="Arbitrage rounds" stroke={PALETTE[1]} strokeWidth={2} dot />
+                <Line type="monotone" dataKey="arbitrageFoundRounds" name="Arbitrage rounds" stroke={LINE_PALETTE[1]} strokeWidth={2} dot />
               </LineChart>
             </ResponsiveContainer>
           </div>

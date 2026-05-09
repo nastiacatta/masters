@@ -6,7 +6,7 @@
  * `@/lib/palette` so the same concept has the same hue in the main app,
  * the slide deck, and every R/Python-generated PNG.
  */
-import { PALETTE } from './palette';
+import { PALETTE, ORANGE } from './palette';
 
 /** Tailwind-compatible rgba helper. */
 function alpha(hex: string, a: number): string {
@@ -27,7 +27,7 @@ export const SEM = {
   skill:     { main: PALETTE.purple,   light: tint(PALETTE.purple),   ring: alpha(PALETTE.purple, 0.25),   sym: 'σ', label: 'Skill' },
   wager:     { main: PALETTE.teal,     light: tint(PALETTE.teal),     ring: alpha(PALETTE.teal, 0.25),     sym: 'm', label: 'Eff. wager' },
   aggregate: { main: PALETTE.imperial, light: tint(PALETTE.imperial), ring: alpha(PALETTE.imperial, 0.25), sym: 'r̂', label: 'Aggregate' },
-  score:     { main: '#E67E22',        light: tint('#E67E22'),        ring: alpha('#E67E22', 0.25),        sym: 's', label: 'Score' },
+  score:     { main: ORANGE,          light: tint(ORANGE),          ring: alpha(ORANGE, 0.25),          sym: 's', label: 'Score' },
   payoff:    { main: PALETTE.teal,     light: tint(PALETTE.teal),     ring: alpha(PALETTE.teal, 0.25),     sym: 'Π', label: 'Payoff' },
   outcome:   { main: PALETTE.coral,    light: tint(PALETTE.coral),    ring: alpha(PALETTE.coral, 0.25),    sym: 'y', label: 'Outcome' },
   wealth:    { main: PALETTE.navy,     light: tint(PALETTE.navy),     ring: alpha(PALETTE.navy, 0.25),     sym: 'W', label: 'Wealth' },

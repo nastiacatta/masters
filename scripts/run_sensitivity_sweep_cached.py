@@ -65,6 +65,14 @@ _GRIDS: dict[str, dict[str, list[float]]] = {
         "rho": [0.05, 0.1, 0.2, 0.3, 0.5, 0.7],
         "lam": [0.0, 0.05, 0.1, 0.2],
     },
+    # Local refinement around the wind-series coarse-grid optimum
+    # (γ, ρ, λ) = (32, 0.7, 0.05) to test whether the optimum is a
+    # broad plateau or a narrow peak.
+    "fine_local": {
+        "gamma": [12.0, 16.0, 20.0, 24.0, 28.0, 32.0, 40.0, 48.0],
+        "rho": [0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+        "lam": [0.03, 0.05, 0.08, 0.12],
+    },
 }
 
 

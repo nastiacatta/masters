@@ -10,8 +10,9 @@ import {
   Bar,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
-const PALETTE = ['#ef4444'];
+const INSIDER_PALETTE = [PALETTE.coral];
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -47,7 +48,7 @@ export default function InsiderAdvantageRenderer({ data, header }: RendererProps
               <XAxis dataKey="label" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="insiderProfit" fill={PALETTE[0]} />
+              <Bar dataKey="insiderProfit" fill={INSIDER_PALETTE[0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

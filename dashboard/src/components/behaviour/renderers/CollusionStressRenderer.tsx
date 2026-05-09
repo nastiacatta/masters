@@ -12,9 +12,10 @@ import {
   Cell,
 } from 'recharts';
 import type { RendererProps } from './types';
+import { PALETTE } from '@/lib/palette';
 
-const COLOUR_BASELINE = '#64748b';
-const COLOUR_ATTACK   = '#dc2626';
+const COLOUR_BASELINE = PALETTE.slate;
+const COLOUR_ATTACK   = PALETTE.coral;
 
 function isAttack(scenario: string): boolean {
   return scenario === 'collusion';
