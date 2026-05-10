@@ -738,3 +738,49 @@ A second sub-pass surfaced two additional items:
   and `run_regime_shift_restart_per_season`, with the tuned values
   as defaults. A regeneration of the horizon JSONs under the new
   defaults is flagged as future work in `60_results_real_data.md`.
+
+
+### Further findings (simulation-audit Issue 1, Issue 5, behaviour-audit F1)
+
+A third sub-pass, delegated to a parallel Claude Code audit, surfaced
+three more items:
+
+- **Issue 1 — `run_simulation` silently discarded partial `y_pre`.**
+  `onlinev2/src/onlinev2/simulation.py` required both `y_pre` AND
+  `reports_pre` (or `q_reports_pre`) to activate pre-data ingestion.
+  If the caller passed only `y_pre`, the function silently fell through
+  to synthetic regeneration from `seed`, discarding the user's ground
+  truth without warning. Fixed by raising `ValueError` in the
+  `not use_pre` branch when `y_pre is not None` but the matching
+  reports array is missing. Tests in
+  `onlinev2/tests/test_simulation_audit_pass2_fixes.py`.
+
+- **Issue 5 — snapshot captured the first round, not a representative
+  state.** The `snapshot` dict used by `run_all_tests`'
+  wager-scaling and identity-split tests locked in scores/sigma from
+  the first round with ≥2 active wagering agents — typically an
+  atypical startup where all agents sat at `sigma ≈ sigma_min`.
+  Fixed by overwriting on every qualifying round so the final
+  snapshot is the LAST round with ≥2 active agents (steady state).
+  Existing tests still pass because the linear-scaling identity
+  holds at any valid state; the fix just makes the test sample
+  representative.
+
+- **F1 — `CoordinatedGroupBehaviour` default played the wrong coalition
+  target under MAE scoring.** The factory call path
+  (`make_behaviour("COORDINATED_GROUP", scoring_mode="point_mae")`)
+  fell through to `aggregation="weighted_mean"` by default, which is
+  the Chun-Shachter arbitrage-free target for differentiable scoring
+  rules, not for MAE. The weighted median is the analogous interior-
+  of-hull target under absolute loss. Fixed by changing the default
+  to `aggregation="auto"`, which picks `weighted_median` when
+  `scoring_mode == "point_mae"` and `weighted_mean` otherwise. An
+  explicit choice passes through unchanged, so the published
+  `run_collusion_stress` numbers (which pin `aggregation=` per row)
+  are unaffected. Tests in
+  `onlinev2/tests/test_f1_coalition_aggregation_auto.py`.
+  Reference: Chun, S. and Shachter, R. D. (2011), "Strictly Proper
+  Mechanisms with Cooperating Players", arXiv:1202.3710.
+
+Tests: 258/258 green (204 prior + 8 new Issue 1/5 + 6 new F1 + 40
+pre-existing adversary tests re-run).

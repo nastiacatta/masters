@@ -867,6 +867,30 @@ def run_simulation(
             c = 2.0
             use_pre = True
     if not use_pre:
+        # Guard: y_pre provided without matching reports is almost
+        # certainly a caller bug — the user believes their ground truth
+        # is being consumed, but the fallback branch below ignores it
+        # and regenerates synthetic data from `seed`. Fail loudly.
+        # (Simulation audit Issue 1, May 2026.)
+        if y_pre is not None:
+            if scoring_mode == "point_mae" and reports_pre is None:
+                raise ValueError(
+                    "y_pre was provided but reports_pre is None. "
+                    "For scoring_mode='point_mae', both y_pre and "
+                    "reports_pre must be supplied together — otherwise "
+                    "the fallback branch silently discards y_pre and "
+                    "regenerates synthetic data from `seed`. Pass "
+                    "reports_pre alongside y_pre, or omit both."
+                )
+            if scoring_mode == "quantiles_crps" and q_reports_pre is None:
+                raise ValueError(
+                    "y_pre was provided but q_reports_pre is None. "
+                    "For scoring_mode='quantiles_crps', both y_pre and "
+                    "q_reports_pre must be supplied together — otherwise "
+                    "the fallback branch silently discards y_pre and "
+                    "regenerates synthetic data from `seed`. Pass "
+                    "q_reports_pre alongside y_pre, or omit both."
+                )
         # scoring_mode: "point_mae" (baseline) or "quantiles_crps" (paper-consistent)
         if scoring_mode == "quantiles_crps":
             if taus is None:
@@ -1123,9 +1147,17 @@ def run_simulation(
         else:
             L_hist[:, t] = L
 
-        if snapshot["scores"] is None:
-            if int(np.sum((alpha_t == 0) & (m_t > eps))) >= 2:
-                snapshot = {"scores": scores_t, "sigma": sigma_t, "deposits": b_t, "alpha": alpha_t}
+        # Snapshot of scores/sigma/deposits/alpha for the downstream
+        # wager-scaling and identity-split tests (run_all_tests). We
+        # overwrite on EVERY qualifying round so the final snapshot
+        # is the LAST round with ≥ 2 active wagering agents — i.e. a
+        # steady-state sample rather than the first transient round
+        # (simulation audit Issue 5, May 2026). Previously the snapshot
+        # was only written once at the first qualifying round, which
+        # locked the tests onto an atypical startup state when all
+        # agents sat at sigma ≈ sigma_min.
+        if int(np.sum((alpha_t == 0) & (m_t > eps))) >= 2:
+            snapshot = {"scores": scores_t, "sigma": sigma_t, "deposits": b_t, "alpha": alpha_t}
 
     params_out = {
         "T": T,

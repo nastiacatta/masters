@@ -56,14 +56,29 @@ def _coalition_beliefs(
 class CoordinatedGroupBehaviour:
     """
     Coalition attack: members share a common report computed as the
-    wager-weighted mean (Chun-Shachter) of coalition-internal beliefs.
+    wager-weighted mean (Chun-Shachter) or the wager-weighted median.
 
     Parameters
     ----------
     members
         Coalition member traits.
     aggregation
-        "weighted_mean" (Chun-Shachter) or "weighted_median" (MAE variant).
+        ``"weighted_mean"`` (Chun-Shachter 2011 arbitrage-free target for
+        differentiable proper scoring rules), ``"weighted_median"`` (the
+        analogous interior-of-hull MAE target), or ``"auto"`` (default).
+        ``"auto"`` picks ``"weighted_median"`` when
+        ``scoring_mode == "point_mae"`` and ``"weighted_mean"``
+        otherwise. An explicit choice overrides the auto-selection.
+
+        Why the auto-select matters. Before this default changed, the
+        factory call path in :mod:`onlinev2.behaviour.factory`
+        (``make_behaviour("COORDINATED_GROUP", scoring_mode="point_mae")``)
+        fell through to ``"weighted_mean"`` unconditionally, playing
+        the Chun-Shachter target against an MAE mechanism. Empirically
+        on the headline collusion stress test both variants profit, but
+        caller-unaware paths now default to the MAE-analogue target
+        rather than the always-weighted-mean default. See
+        behaviour-audit F1 (May 2026).
     belief_history_window
         How far back to look when forming individual beliefs.
     """
@@ -71,7 +86,7 @@ class CoordinatedGroupBehaviour:
     scoring_mode: str = "point_mae"
     taus: Optional[Sequence[float]] = None
     b_max: float = 10.0
-    aggregation: str = "weighted_mean"
+    aggregation: str = "auto"
     belief_history_window: int = 20
     # Optional jitter on the shared report to avoid trivial fake_activity_loop
     # detection while retaining the arbitrage. Keep small.
@@ -82,12 +97,29 @@ class CoordinatedGroupBehaviour:
         self.rng = np.random.default_rng(seed)
         self.coalition_log = []
 
+    def _resolve_aggregation(self) -> str:
+        """Resolve the ``"auto"`` aggregation mode into a concrete choice.
+
+        MAE scoring → weighted median; anything else → weighted mean.
+        Concrete choices (``"weighted_mean"`` / ``"weighted_median"``)
+        pass through unchanged, so a caller who wants to force a
+        sub-optimal aggregation (e.g., for an ablation) can still do so.
+        """
+        mode = self.aggregation
+        if mode == "auto":
+            return (
+                "weighted_median" if self.scoring_mode == "point_mae"
+                else "weighted_mean"
+            )
+        return mode
+
     def _aggregate_report(self, beliefs: np.ndarray, wagers: np.ndarray) -> float:
         wagers = np.clip(wagers, 0.0, None)
         total = float(wagers.sum())
         if total <= 0.0 or beliefs.size == 0:
             return 0.5
-        if self.aggregation == "weighted_median":
+        mode = self._resolve_aggregation()
+        if mode == "weighted_median":
             order = np.argsort(beliefs)
             b_sorted = beliefs[order]
             w_sorted = wagers[order]
