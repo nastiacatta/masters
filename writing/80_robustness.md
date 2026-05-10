@@ -338,9 +338,10 @@ gating, is not currently implemented.
 
 ### Invariants holding under attack
 
-The adversary suite is designed to test specific invariants. Each of
-the following holds on the committed implementation. Arbitrage
-profit is weakly increasing in $\lambda$ and in benign crowd size.
+The adversary suite is designed to test specific invariants. Each
+of the following holds on the implementation evaluated here.
+Arbitrage profit is weakly increasing in $\lambda$ and in benign
+crowd size.
 Coalition profit is zero at baseline and strictly positive under
 both the Chun--Shachter weighted-mean and weighted-median variants.
 Informed collusion exceeds pure collusion, which exceeds baseline,

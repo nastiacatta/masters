@@ -110,8 +110,8 @@ Mean sharpness ($q(0.9) - q(0.1)$)
   & $0.0887$ & $0.0778$ & $-0.0109$ & $-12\%$ \\
 \bottomrule
 \end{tabular}
-\caption{Recalibration headline numbers on the audit slice under the
-post-audit (expanding-mode causal normalisation) pipeline.}
+\caption{Recalibration headline numbers on the audit slice under
+expanding-mode causal normalisation.}
 \label{tab:recal-headline}
 \end{table}
 
@@ -277,10 +277,9 @@ The recalibration layer preserves the economic structure of the
 mechanism end-to-end. Its implementation is a single module that
 sits downstream of the aggregation step; the skill gate, wager
 rule, aggregation operator, and settlement algebra are unchanged.
-When the recalibration flag is disabled, the output of the runner
-matches the pre-feature baseline exactly, so the recalibration
-is a pure post-processor and not a partial re-parameterisation of
-the economic layers.
+Disabling the recalibration step recovers the pre-recalibration
+output exactly, so the layer is a pure post-processor and not a
+partial re-parameterisation of the economic layers.
 
 ### Design choice: rolling buffer
 

@@ -39,23 +39,54 @@ but the strict bound is stated for the linear pool not QA_pinball.
 Note: pointwise weighted quantile averaging does not guarantee
 monotonicity of the aggregate quantiles. When
 ``enforce_monotonicity=True`` (the default for quantile mode), the
-output is projected onto the monotone cone via
-``np.maximum.accumulate`` (the L-infinity isotonic regression). This
-ensures downstream PIT and CRPS computations receive valid quantile
-functions.
+output is projected onto the monotone cone via Pool-Adjacent-Violators
+(PAV / L² isotonic regression, ``scipy.optimize.isotonic_regression``).
+This ensures downstream PIT and CRPS computations receive valid
+quantile functions.
+
+Why PAV rather than ``np.maximum.accumulate``
+----------------------------------------------
+An earlier version used ``np.maximum.accumulate`` (the running maximum,
+which is the L∞ isotonic projection onto the non-decreasing cone). The
+running max resolves every crossing by pushing the *lower* of the two
+values **up**, never by pulling the higher value **down**. Over many
+rounds this biased the aggregate quantile function systematically to
+the right and produced the over-coverage pattern documented in the
+post-fix calibration diagnostics (Claim 6, Table 6.8). PAV resolves
+crossings symmetrically (pools the violating block around its weighted
+mean) and is therefore unbiased in the L² sense; it is also the
+standard choice for quantile crossing repair in the forecasting
+literature (Chernozhukov, Fernández-Val & Galichon 2010,
+``Quantile and Probability Curves Without Crossing'', Econometrica).
 """
 
 import numpy as np
+from scipy.optimize import isotonic_regression
 
 
 def _enforce_quantile_monotonicity(q: np.ndarray) -> np.ndarray:
-    """Project quantile vector onto the monotone (non-decreasing) cone.
+    """Project quantile vector onto the monotone (non-decreasing) cone via PAV.
 
-    Uses cumulative-maximum, which is the L∞ isotonic regression for
-    non-decreasing sequences. Returns a new array; does not modify input.
+    Uses ``scipy.optimize.isotonic_regression`` (Pool-Adjacent-Violators,
+    the L² isotonic projection). Unlike cumulative-maximum (L∞ isotonic)
+    this is symmetric in how crossings are resolved — the pooled block is
+    set to the weighted mean of the violating values rather than their
+    running maximum. PAV is the standard choice for quantile-crossing
+    repair (see module docstring).
+
+    Edge cases
+    ----------
+    * Arrays of length ≤ 1 are returned unchanged.
+    * Already-monotone arrays pass through PAV unchanged (PAV is a no-op
+      on such inputs), so the behaviour in the non-crossing case matches
+      the previous implementation exactly.
+
+    Returns a new float64 array; does not modify the input.
     """
-    q = np.asarray(q, dtype=np.float64).copy()
-    return np.maximum.accumulate(q)
+    q = np.asarray(q, dtype=np.float64)
+    if q.size <= 1:
+        return q.copy()
+    return isotonic_regression(q, increasing=True).x
 
 
 def aggregate_forecast(reports, m, alpha=None, eps=1e-12, fallback=None,

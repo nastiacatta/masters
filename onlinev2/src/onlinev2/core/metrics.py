@@ -73,6 +73,108 @@ def compute_pit(
     return float(tau_lo + frac * (tau_hi - tau_lo))
 
 
+def compute_pit_extended(
+    y_t: float,
+    quantiles: np.ndarray,
+    taus: np.ndarray,
+    *,
+    support_lo: float = 0.0,
+    support_hi: float = 1.0,
+) -> float:
+    """
+    Untruncated PIT on a bounded support by linear tail extension.
+
+    The reported quantile fan only covers ``[taus[0], taus[-1]]`` (e.g.
+    ``[0.1, 0.9]`` on the nine-level grid). Below ``taus[0]`` and above
+    ``taus[-1]`` the predictive CDF is unknown; the reported fan is
+    silent. For a bounded-support observation (normalised Elia wind power,
+    ``y ∈ [0, 1]``), a principled default is to extend the reported CDF
+    linearly to the support boundaries: the CDF is 0 at ``support_lo``
+    and 1 at ``support_hi``, linearly interpolated between
+    ``(support_lo, 0)`` → ``(quantiles[0], taus[0])`` in the lower tail
+    and between ``(quantiles[-1], taus[-1])`` → ``(support_hi, 1)`` in
+    the upper tail.
+
+    The returned PIT lies in ``[0, 1]`` and is distributed uniformly on
+    ``[0, 1]`` under a calibrated predictive CDF, so the KS statistic
+    against ``Uniform(0, 1)`` is the correct null — no ``taus[0]``-bias
+    correction is required.
+
+    Why this exists
+    ---------------
+    ``compute_pit`` returns truncated values in ``[taus[0], taus[-1]]``
+    with atoms at the boundaries, which is the right diagnostic for the
+    reliability plot (it preserves the information "the fan does not
+    report this region"). For *recalibration*, an atom-at-the-boundary
+    PIT is the wrong input: the isotonic map built from it has no data
+    in ``G_x ∈ [0, taus[0])`` or ``G_x ∈ (taus[-1], 1]`` and the
+    recalibrated quantiles at τ ∈ {0.1, 0.9} come from boundary linear
+    interpolation against pinned ``(0, 0)`` and ``(1, 1)`` endpoints —
+    i.e., a structural under-correction in the tails. This extended PIT
+    spreads the atom mass uniformly into the tails under the bounded-
+    support assumption, giving the isotonic fitter actual data at every
+    τ.
+
+    Parameters
+    ----------
+    y_t : float
+        Observation, assumed in ``[support_lo, support_hi]``.
+    quantiles : array-like of shape (K,)
+        Monotone non-decreasing quantile vector at ``taus``.
+    taus : array-like of shape (K,)
+        Strictly-increasing levels in the open interval (0, 1).
+    support_lo, support_hi : float
+        Bounds of the outcome support. Defaults ``(0.0, 1.0)`` match the
+        normalisation used throughout the ``onlinev2`` pipeline.
+
+    Returns
+    -------
+    float
+        Extended PIT in ``[0, 1]``. For ``y_t`` inside the reported fan
+        the value matches ``compute_pit``; outside the fan it extends
+        linearly to the support boundary.
+    """
+    quantiles = np.asarray(quantiles, dtype=np.float64).ravel()
+    taus = np.asarray(taus, dtype=np.float64).ravel()
+    y = float(y_t)
+    support_lo = float(support_lo)
+    support_hi = float(support_hi)
+
+    if quantiles.size == 0 or quantiles.size != taus.size:
+        raise ValueError(
+            f"quantiles and taus must have matching positive length; "
+            f"got sizes {quantiles.size} and {taus.size}"
+        )
+
+    # Lower tail: (support_lo, 0) -> (quantiles[0], taus[0])
+    if y <= quantiles[0]:
+        if quantiles[0] <= support_lo + 1e-15:
+            # Degenerate lower tail; return taus[0] atom value.
+            return float(taus[0])
+        y_clipped = max(y, support_lo)
+        frac = (y_clipped - support_lo) / (quantiles[0] - support_lo)
+        return float(frac * taus[0])
+
+    # Upper tail: (quantiles[-1], taus[-1]) -> (support_hi, 1)
+    if y >= quantiles[-1]:
+        if quantiles[-1] >= support_hi - 1e-15:
+            return float(taus[-1])
+        y_clipped = min(y, support_hi)
+        frac = (y_clipped - quantiles[-1]) / (support_hi - quantiles[-1])
+        return float(taus[-1] + frac * (1.0 - taus[-1]))
+
+    # Interior: match compute_pit exactly.
+    idx = np.searchsorted(quantiles, y)
+    if idx == 0:
+        return float(taus[0])
+    q_lo, q_hi = quantiles[idx - 1], quantiles[idx]
+    tau_lo, tau_hi = taus[idx - 1], taus[idx]
+    if abs(q_hi - q_lo) < 1e-15:
+        return float((tau_lo + tau_hi) / 2.0)
+    frac = (y_t - q_lo) / (q_hi - q_lo)
+    return float(tau_lo + frac * (tau_hi - tau_lo))
+
+
 def compute_sharpness(
     quantiles: np.ndarray,
     taus: np.ndarray,

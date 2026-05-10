@@ -49,6 +49,34 @@ forecast-combination-puzzle regime of
 deliberate choice: suppressing it would misrepresent the scope of
 the headline claim.
 
+### Comparison against the operational forecast
+
+Two findings from the comparison against Elia's own published
+wind-power forecasts deserve a brief interpretation. First, a
+plain online XGBoost trained on the observed series alone, with no
+weather inputs, reaches $69.5$~MW in CRPS-megawatt-equivalent
+units against Elia's real-time forecast at $74.0$~MW: an online
+point-forecast model with lag features and rolling statistics beats
+a weather-driven operational forecast by about $6\%$ on the hours
+tested. The gap is neither surprising nor a critique of the Elia
+pipeline --- Elia's forecast is designed for multi-step-ahead use
+--- but it does establish that the forecaster panel contains a
+member capable of outperforming the weather baseline at zero-step
+horizon.
+
+Second, the mechanism aggregates seven forecasters and lands at
+$83.7$~MW, i.e.\ approximately $13\%$ worse than the Elia baseline.
+The aggregate is dominated by its weakest members: a panel in
+which one forecaster does most of the work is, by construction, a
+panel on which an aggregator that cannot concentrate weight enough
+cannot match the best single model. This confirms the
+best-single-ceiling observation of
+\citet{timmermann2006forecast} directly, and motivates the
+conditional reading of the $-7.1\%$ headline: the thesis does not
+claim to beat operational NWP-driven forecasting; it claims a
+conditional improvement over uniform averaging within the
+budget-balanced design space.
+
 ## Interpreting the economic result
 
 Budget balance holds to machine precision, with the maximum
@@ -100,26 +128,25 @@ thesis.
 
 The four-way deposit-policy ablation of Section~\ref{ch:synthetic}
 moves CRPS by tens of percent on synthetic data: bankroll-confidence
-deposits beat fixed-unit deposits by $10.4\%$ and capture roughly
-a quarter of the gap to an oracle-precision policy. The headline
-prose of the original result presented this as ``the dominant
-empirical lever'', a formulation that does not survive a careful
-reading. The ablation is only meaningful in a setting in which the
-mechanism operator dictates the deposit rule; in a deployed market,
-participants decide their own deposits and the operator has no
-instrument with which to impose a confidence-encoded stake. The
-Elia real-data runs in Section~\ref{ch:real} therefore leave
-deposits at unit and rely on the skill gate alone; the $-7.1\%$
-CRPS improvement reported there is a skill-gate effect. The
-correct reading of the synthetic ablation is therefore a statement
-about where the information ceilings sit in the design space --- if
-deposits could be made to encode observable confidence, the CRPS
-ceiling would shift --- rather than about what an operator can
-achieve without constraining participant behaviour. This
-clarification motivates the mechanism's single-object design
-(effective wager $m_i = b_i \cdot g(\sigma_i)$) as the way to carry
-the skill signal through the wager pool without requiring the
-deposit policy to encode anything.
+deposits beat fixed-unit deposits by $10.4\%$ and capture roughly a
+quarter of the gap to an oracle-precision policy. The ablation is
+meaningful only in a setting in which the mechanism operator
+dictates the deposit rule. In a deployed market participants decide
+their own deposits and the operator has no instrument with which
+to impose a confidence-encoded stake. The Elia real-data runs in
+Section~\ref{ch:real} therefore leave deposits at unit and rely on
+the skill gate alone; the $-7.1\%$ CRPS improvement reported there
+is a skill-gate effect.
+
+The correct reading of the synthetic ablation is a statement about
+where the information ceilings sit in the design space: if deposits
+could be made to encode observable confidence, the CRPS ceiling
+would shift; absent that constraint, the skill gate is the only
+lever the operator has. Framed this way, the synthetic result
+motivates the mechanism's single-object design (effective wager
+$m_i = b_i \cdot g(\sigma_i)$) as the way to carry the skill signal
+through the wager pool without requiring the deposit policy to
+encode anything.
 
 ## The recalibration trade-off
 
@@ -215,16 +242,16 @@ characterised.
 
 ## Threats to validity
 
-\paragraph{Internal validity.} Pre-audit numbers used whole-series
+\paragraph{Internal validity.} An earlier pipeline used whole-series
 min-max normalisation, a non-reproducible neural-network seed,
-tail-adjacent XGBoost validation, and a silent persistence-fallback
-path. The post-audit pipeline (Chapter~\ref{ch:methodology}) uses
-strictly-causal expanding normalisation, fixed seeds, embargoed
-cross-validation following \citet{bergmeir2018note}, and an
-explicit fallback indicator. Headline numbers can differ from
-pre-audit presentations by small but measurable amounts, and the
-pre-audit snapshot is retained for comparison. The finite-grid
-CRPS approximation uses a nine-level grid with small but non-zero
+tail-adjacent cross-validation for XGBoost, and a silent
+persistence-fallback path. The current pipeline
+(Chapter~\ref{ch:methodology}) uses strictly-causal expanding
+normalisation, fixed seeds, embargoed cross-validation following
+\citet{bergmeir2018note}, and an explicit fallback indicator.
+Headline numbers from earlier drafts differ from those reported
+here by small but measurable amounts. The finite-grid CRPS
+approximation uses a nine-level grid with small but non-zero
 approximation bias; pointwise quantile coverage
 (Section~\ref{ch:real}) is not subject to the same bias.
 

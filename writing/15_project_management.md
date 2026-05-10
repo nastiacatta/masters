@@ -35,7 +35,7 @@ plan changes.
 
 - **Data leakage in the real-data pipeline.** A leaky normalisation
   step inflated mechanism performance by roughly $2$~pp of CRPS.
-  Caught during the post-ESG audit. Mitigation: strict
+  Caught during the mid-year pipeline audit. Mitigation: strict
   expanding causal normalisation, regression tests, and a full
   rerun of all real-data numbers.
 - **Electricity-imbalance null result.** The seven-forecaster panel
@@ -45,16 +45,15 @@ plan changes.
   conditional-improvement framing.
 - **Computational cost of the full-length wind run.** Running
   $17{,}344$ hours with seven forecasters and multiple aggregation
-  variants required caching the forecaster outputs under a versioned
-  pipeline tag. Contingency: an invalidation-aware
-  artefact store with per-seed idempotent outputs.
+  variants required per-seed caching of forecaster outputs under a
+  versioned tag so that pipeline changes invalidated the cache
+  automatically.
 
 ## Resources and auditability
 
 The repository hosts all experimental code, tuning notes, and raw
-output artefacts. Every numerical claim in the report is linked to
-the artefact that produced it; the figures and tables registry maps
-each identifier to its source. Hyperparameters are selected on
+output files. Every numerical claim in the report is linked to the
+output that produced it, and hyperparameters are selected on
 held-out data via a sensitivity sweep rather than by hand.
 
 ## Stakeholder engagement

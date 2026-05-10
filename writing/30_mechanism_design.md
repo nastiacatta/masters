@@ -123,14 +123,10 @@ effective wager $m_i$ in place of the original deposit:
   \bar s &= \frac{\sum_j m_j s_j}{\sum_j m_j}, \\
   \mathrm{profit}_i &= \pi_i - m_i = m_i \cdot (s_i - \bar s).
 \end{align}
-Budget balance is a construction property, not an empirical claim:
-\begin{align*}
-  \sum_i \pi_i
-  &= \sum_i m_i + \sum_i m_i s_i - \bar s \cdot \sum_i m_i \\
-  &= M + M \bar s - \bar s M = M.
-\end{align*}
-It is verified numerically (gap below $10^{-13}$ over 1000 synthetic
-rounds) only because finite-precision arithmetic is not exact.
+Budget balance is a construction property: $\sum_i \pi_i = M$
+identically in the reports and the outcome. The statement and a
+short algebraic proof are given as Theorem~\ref{thm:budget-balance}
+in the next section.
 
 ### Step 5: update
 
@@ -581,11 +577,10 @@ decisive skill differentiation. Tuned values are
 $(\gamma, \rho) = (16, 0.5)$ for the locked expanding-mode headline
 (Chapter~\ref{ch:real}).
 
-Hyperparameter selection follows a held-out-split protocol. A
-cache-reusing sweep replays the shared forecast cache through the
-simulation runner for each grid cell and scores the mechanism on
-the last $40\%$ of each series, disjoint from the burn-in window
-used by the training metric. The grid spans
+Hyperparameter selection follows a held-out-split protocol. The
+sweep scores the mechanism on the last $40\%$ of each series,
+disjoint from the burn-in window used by the training metric. The
+grid spans
 $\gamma \in \{4, 8, 16, 32, 64\}$, $\rho \in \{0.1, 0.3, 0.5, 0.7\}$,
 and $\lambda \in \{0.05, 0.2\}$, producing $40$ cells per series.
 The held-out optima themselves are reported alongside the

@@ -65,7 +65,7 @@ from typing import Optional, Tuple
 import numpy as np
 from scipy.optimize import isotonic_regression
 
-from onlinev2.core.metrics import compute_pit
+from onlinev2.core.metrics import compute_pit, compute_pit_extended
 
 
 class RollingRecalibrator:
@@ -96,6 +96,24 @@ class RollingRecalibrator:
         Cadence hint for the caller; any positive integer is admissible.
         The recalibrator itself does not enforce this cadence — the runner
         is responsible for calling ``fit`` at the desired interval.
+    pit_mode : {"extended", "truncated"}, default "extended"
+        How to compute the PIT fed into the isotonic fitter.
+        ``"extended"`` (the default as of the A3 tail-extrapolation fix)
+        uses :func:`onlinev2.core.metrics.compute_pit_extended`, which
+        linearly extends the reported quantile fan to the bounded
+        support ``[pit_support_lo, pit_support_hi]`` so PIT values
+        span the full ``[0, 1]`` interval. This gives the isotonic
+        fitter data at every τ, including below ``taus[0]`` and above
+        ``taus[-1]`` — the range where the legacy ``"truncated"`` PIT
+        had no observations and the map was forced to boundary-
+        interpolate between the pinned ``(0, 0)`` / ``(1, 1)``
+        endpoints and the first observed PIT value.
+        ``"truncated"`` reproduces the pre-fix behaviour for
+        reproducibility of earlier outputs.
+    pit_support_lo, pit_support_hi : float, defaults ``0.0`` / ``1.0``
+        Bounds of the outcome support, used only when
+        ``pit_mode="extended"``. The defaults match the ``[0, 1]``
+        normalisation used by the real-data pipeline.
 
     Attributes
     ----------
@@ -126,6 +144,10 @@ class RollingRecalibrator:
         window_size: int = 500,
         min_pits: int = 100,
         refit_every: int = 50,
+        *,
+        pit_mode: str = "extended",
+        pit_support_lo: float = 0.0,
+        pit_support_hi: float = 1.0,
     ) -> None:
         taus_arr = np.asarray(taus, dtype=np.float64).ravel()
         if taus_arr.size < 2:
@@ -162,10 +184,23 @@ class RollingRecalibrator:
                 f"min_pits ({min_pits}) must be <= window_size ({window_size})"
             )
 
+        if pit_mode not in {"extended", "truncated"}:
+            raise ValueError(
+                f"pit_mode must be 'extended' or 'truncated', got {pit_mode!r}"
+            )
+        if not (float(pit_support_lo) < float(pit_support_hi)):
+            raise ValueError(
+                f"pit_support_lo ({pit_support_lo}) must be < "
+                f"pit_support_hi ({pit_support_hi})"
+            )
+
         self.taus: np.ndarray = taus_arr.copy()
         self.window_size: int = window_size
         self.min_pits: int = min_pits
         self.refit_every: int = refit_every
+        self.pit_mode: str = pit_mode
+        self.pit_support_lo: float = float(pit_support_lo)
+        self.pit_support_hi: float = float(pit_support_hi)
 
         # Rolling buffer of (q_agg, y, pit) triples. FIFO eviction is handled
         # automatically by deque's ``maxlen`` argument.
@@ -201,7 +236,16 @@ class RollingRecalibrator:
                 f"q_agg length ({q.size}) must match taus length ({self.taus.size})"
             )
         y_f = float(y)
-        pit = float(compute_pit(y_f, q, self.taus))
+        if self.pit_mode == "extended":
+            pit = float(
+                compute_pit_extended(
+                    y_f, q, self.taus,
+                    support_lo=self.pit_support_lo,
+                    support_hi=self.pit_support_hi,
+                )
+            )
+        else:
+            pit = float(compute_pit(y_f, q, self.taus))
         # deque(maxlen=...) evicts from the left automatically when full.
         self._buffer.append((q, y_f, pit))
 

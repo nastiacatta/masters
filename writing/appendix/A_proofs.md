@@ -26,33 +26,14 @@ argument.
 
 ## Budget balance
 
-\begin{proposition}[Budget balance]
-Let $N$ participants submit effective wagers $m_1, \dots, m_N$ and
-quantile-forecast scores $s_1, \dots, s_N$ in round $t$. Under the
-weighted-score settlement rule
-$
-  \Pi_i \;=\; m_i \Bigl(1 + s_i - \tfrac{\sum_j s_j m_j}{\sum_j m_j}\Bigr),
-$
-the sum of payouts equals the sum of wagers:
-$\sum_i \Pi_i = \sum_i m_i$.
-\end{proposition}
-
-\begin{proof}
-Expand and factor:
-$
-  \sum_i \Pi_i
-  = \sum_i m_i + \sum_i m_i s_i
-     - \frac{\sum_j s_j m_j}{\sum_j m_j} \sum_i m_i
-  = \sum_i m_i + \sum_i m_i s_i - \sum_j s_j m_j
-  = \sum_i m_i.
-$
-The last equality relabels the dummy index. Budget balance therefore
-holds for any choice of effective wagers $m_i$, including the
-skill-gated wager $m_i = b_i \cdot g(\sigma_i)$ used throughout this
-thesis. Numerical verification over $1000$ synthetic rounds reports a
+The budget-balance theorem (Theorem~\ref{thm:budget-balance}) is
+proved in the main body. We record here only that the proof is
+algebraic and does not depend on propriety, monotonicity, or the
+functional form of the scoring rule: the identity
+$\sum_i \pi_i = M$ holds for any score vector and any outcome.
+Numerical verification over $1000$ synthetic rounds reports a
 maximum absolute gap of $2.84 \times 10^{-14}$, consistent with
 floating-point noise.
-\end{proof}
 
 ## Skill-gate truthfulness
 
@@ -89,28 +70,15 @@ question.
 
 ## Narrow Lambert sybil invariance
 
-\begin{proposition}[Narrow sybil invariance]
-Suppose a participant with effective wager $m$ and report $r$ is
-replaced by $k$ identical clones, each with effective wager $m/k$
-and report $r$. Then the aggregated forecast, the aggregated score,
-and the original participant's total profit are unchanged, up to
-floating-point noise.
-\end{proposition}
-
-\begin{proof}
-The aggregate used in this thesis is a per-quantile weighted mean,
-$\hat q(\tau) = \sum_i w_i q_i(\tau)$ with
-$w_i = m_i / \sum_j m_j$. Replacing participant $i$ by $k$ clones
-with identical reports and conserved total wager leaves
-$\sum_j m_j$ invariant and contributes identical summands to every
-quantile, so $\hat q(\tau)$ is unchanged. The weighted score
-$\sum_j s_j m_j$ and the denominator $\sum_j m_j$ are likewise
-invariant, so the per-participant payout
-$\Pi_i = m_i(1 + s_i - \bar s)$ aggregates to the same total over
-the clones as the original participant received. The invariance is
-numerically verified over $10{,}000$ synthetic rounds with mean
-absolute deviation $2.07 \times 10^{-17}$.
-\end{proof}
+The narrow Lambert sybil invariance (Proposition~\ref{prop:sybil})
+is proved in the main body. For completeness we record here that
+the invariance extends component-wise to the aggregated forecast
+itself: because the aggregate is a per-quantile weighted mean
+$\hat q(\tau) = \sum_i w_i q_i(\tau)$, replacing one participant by
+$k$ identical clones with conserved total wager leaves $\hat q$
+pointwise unchanged. The numerical audit over $10{,}000$ synthetic
+rounds reports mean absolute deviation $2.07 \times 10^{-17}$,
+consistent with floating-point noise.
 
 Remark. The proposition assumes identical reports and conserved
 total wager. Diversified-report sybils with the same total wager

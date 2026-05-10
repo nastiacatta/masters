@@ -476,7 +476,7 @@ $\lambda = 0.05$ on both series. Electricity optima lie in a tight
 band of $-0.17$ to $-0.22\%$, consistent with the null result
 reported above.
 
-Re-running the headline block under expanding normalisation at
+Re-running the headline comparison under expanding normalisation at
 sweep-selected parameters is on the list of remaining work. The
 expected shift is sub-percent CRPS in either direction; the
 direction of the DM statistic and the method ranking are stable.

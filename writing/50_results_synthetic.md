@@ -3,9 +3,7 @@
 This section reports the synthetic experiments that underwrite the
 mechanism's correctness, its ability to recover the true skill
 ordering, and the effects of the deposit and weighting rules in
-isolation. Each result is derived from a committed experiment and is
-paired with its source artefact; the figures referenced in the text
-are compiled plots from the presentation pipeline.
+isolation.
 
 ### Mechanism correctness
 
@@ -107,7 +105,7 @@ this is the experiment that establishes that convergence.
 The seven real-data forecasters are subject to three standing checks
 before any headline comparison is used: no future-data leakage, no
 degenerate constant output, and no silent substitution of a
-persistence fallback for the model's own output. On the post-audit
+persistence fallback for the model's own output. On the
 $3{,}000$-point Elia wind audit slice all three checks pass for all
 seven forecasters; the detailed protocols and diagnostics are in
 Appendix~\ref{app:training-details}.
