@@ -324,10 +324,19 @@ def run_round(
                 return -loss
 
             present_idx = np.where(alpha == 0)[0]
+            # Deterministic per-round, per-τ RNG so Michael-split allocation
+            # is reproducible across runs with the same parameters
+            # (audit fix M1: shapley.py::shapley_mc uses an unseeded
+            # default_rng when no RNG is passed; the previous runner
+            # never passed one, making Michael-split non-reproducible).
+            shapley_rng = np.random.default_rng(
+                int(params.shapley_seed) + K * int(state.t) + int(k)
+            )
             phi_s_k = shapley_mc(
                 present_idx,
                 coalition_value,
                 n_perm=params.michael_shapley_mc,
+                rng=shapley_rng,
             )
             phi_s_k = np.asarray(phi_s_k, dtype=float).ravel()
             if phi_s_k.size != n:

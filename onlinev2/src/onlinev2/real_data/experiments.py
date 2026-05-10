@@ -51,6 +51,10 @@ def _run_horizon_comparison(
     seed: int = 42,
     strict_no_fallback: bool = False,
     normalize_mode: str = "static",
+    *,
+    gamma: float = 16.0,
+    rho: float = 0.5,
+    lam: float = 0.05,
 ) -> dict:
     """Run forecasters with a given forecast horizon.
 
@@ -63,6 +67,15 @@ def _run_horizon_comparison(
     clips evaluation-window observations outside that range;
     ``"expanding"`` refits ``(lo_t, hi_t)`` over ``series[:t+1]``
     while preserving strict causality. See post-audit issue #1.
+
+    Mechanism parameters
+    --------------------
+    ``gamma``, ``rho``, ``lam`` default to the real-data tuned values
+    from the held-out sensitivity sweep
+    (``onlinev2/outputs/sensitivity_sweep.json``) — previously these
+    were omitted and fell back to the synthetic defaults
+    (γ=4, ρ=0.1) via ``run_simulation``'s signature, which underweight
+    the skill layer on real-data panels (audit fix M3).
     """
     if normalize_mode not in {"static", "expanding"}:
         raise ValueError(
@@ -185,7 +198,7 @@ def _run_horizon_comparison(
         y_pre=norm, q_reports_pre=q_reports,
         forecaster_noise_pre=np.ones(n), store_history=True,
         deposit_mode="fixed", fixed_deposit=1.0,
-        eta=2.0, lam=0.05, omega_max=0.0,
+        eta=2.0, lam=lam, gamma=gamma, rho=rho, omega_max=0.0,
     )
 
     eps = 1e-12
@@ -290,8 +303,24 @@ def _run_horizon_comparison(
     }
 
 
-def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
-    """Run day-ahead, 4h-ahead, and regime-shift experiments."""
+def run_all_real_experiments(
+    data_path: str,
+    outdir: str = "outputs",
+    *,
+    gamma: float = 16.0,
+    rho: float = 0.5,
+    lam: float = 0.05,
+) -> dict:
+    """Run day-ahead, 4h-ahead, and regime-shift experiments.
+
+    Mechanism parameters (``gamma``, ``rho``, ``lam``) default to the
+    real-data tuned values from the held-out sensitivity sweep. Prior
+    to the audit M3 fix, the horizon sub-experiments dropped these
+    parameters on the floor and inherited ``run_simulation``'s
+    synthetic-tuned defaults (γ=4, ρ=0.1, λ=0.3), which underweight
+    the skill layer on real-data panels and so understate the
+    mechanism's horizon-experiment improvement.
+    """
 
     df = pd.read_csv(data_path)
     df["datetime"] = pd.to_datetime(df["datetime"], utc=True)
@@ -314,6 +343,7 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
     results["day_ahead"] = _run_horizon_comparison(
         daily, horizon=1, forecasters=forecasters_daily,
         warmup=day_ahead_warmup, taus=taus, label="day_ahead",
+        gamma=gamma, rho=rho, lam=lam,
     )
 
     # === 2. 4h-ahead at 15-min resolution ===
@@ -328,6 +358,7 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
     results["4h_ahead"] = _run_horizon_comparison(
         series_15min, horizon=16, forecasters=forecasters_15min,
         warmup=200, taus=taus, label="4h_ahead_15min",
+        gamma=gamma, rho=rho, lam=lam,
     )
 
     # === 3. Regime-shift test (seasonal) ===
@@ -358,6 +389,7 @@ def run_all_real_experiments(data_path: str, outdir: str = "outputs") -> dict:
     full_result = _run_horizon_comparison(
         full_hourly, horizon=1, forecasters=forecasters_regime,
         warmup=200, taus=taus, label="regime_shift",
+        gamma=gamma, rho=rho, lam=lam,
     )
 
     # Compute per-season CRPS from per_round data
@@ -529,6 +561,10 @@ def run_regime_shift_restart_per_season(
     strict_no_fallback: bool = False,
     normalize_mode: str = "static",
     min_season_len: int = 400,
+    *,
+    gamma: float = 16.0,
+    rho: float = 0.5,
+    lam: float = 0.05,
 ) -> dict:
     """Run per-season horizon comparisons with fresh forecaster / mechanism
     state at each seasonal boundary.
@@ -640,6 +676,9 @@ def run_regime_shift_restart_per_season(
             seed=seed,
             strict_no_fallback=strict_no_fallback,
             normalize_mode=normalize_mode,
+            gamma=gamma,
+            rho=rho,
+            lam=lam,
         )
         per_season[season] = result_s
 

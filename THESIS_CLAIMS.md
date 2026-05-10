@@ -701,3 +701,40 @@ numbers) and two materially change the reported figures.
 ---
 
 _Claim 11 added after the second-pass audit landed, May 2026._
+
+### Follow-up findings (M1, M3)
+
+A second sub-pass surfaced two additional items:
+
+- **M1 — Shapley MC was unseeded.**
+  `onlinev2/src/onlinev2/core/shapley.py::shapley_mc` creates a fresh
+  `np.random.default_rng()` with no seed when called without an
+  explicit generator. The only call site
+  (`onlinev2/src/onlinev2/core/runner.py` in the `michael_split`
+  allocation branch) never passed an RNG, so every per-round per-τ
+  Shapley estimate came from a non-reproducible generator. Fixed by
+  adding `MechanismParams.shapley_seed` (default 2026) and
+  constructing `np.random.default_rng(shapley_seed + K·t + k)` at the
+  call site; Shapley φ_c state is now reproducible across runs with
+  the same parameters. New tests in
+  `onlinev2/tests/test_m1_shapley_reproducibility.py`.
+  **Scope:** the current real-data headline run uses the default
+  `raja` allocation, not `michael_split`, so the headline numbers
+  are unaffected. This fix matters for the behaviour/collusion
+  experiments that exercise `michael_split` and for any future
+  sensitivity analysis of the Shapley-based utility allocation.
+
+- **M3 — Horizon experiments silently used synthetic defaults.**
+  `onlinev2/src/onlinev2/real_data/experiments.py::_run_horizon_comparison`
+  called `run_simulation(...)` passing only `eta=2.0, lam=0.05`, so
+  `gamma` and `rho` fell back to `run_simulation`'s synthetic-tuned
+  defaults (γ=4, ρ=0.1). The real-data headline uses the tuned
+  values (γ=16, ρ=0.5), selected by the held-out sensitivity sweep.
+  EWMA half-life at ρ=0.1 is ~7 rounds; at ρ=0.5 it is ~1 round, so
+  the horizon artefacts currently on disk under-weight the skill
+  layer on panels where relative forecaster quality drifts across
+  the year. Fixed by adding `gamma`, `rho`, `lam` as keyword
+  arguments to `_run_horizon_comparison`, `run_all_real_experiments`,
+  and `run_regime_shift_restart_per_season`, with the tuned values
+  as defaults. A regeneration of the horizon JSONs under the new
+  defaults is flagged as future work in `60_results_real_data.md`.

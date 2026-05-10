@@ -65,6 +65,12 @@ class MechanismParams:
     michael_lambda: float = 0.95
     # Number of Monte Carlo permutations for approximate Shapley
     michael_shapley_mc: int = 128
+    # Base seed for the per-round deterministic RNG used by Shapley MC
+    # when ``allocation_mode == "michael_split"``. A fresh
+    # ``np.random.default_rng(shapley_seed + K * t + k)`` is constructed
+    # per round and per quantile level so the result is reproducible
+    # across runs with the same seed (see Shapley audit M1).
+    shapley_seed: int = 2026
 
 
 @dataclass

@@ -449,6 +449,23 @@ list of remaining work; the direction of the comparisons is stable
 and the magnitudes are expected to shift by under one percentage
 point.
 
+\paragraph{Caveat on mechanism hyperparameters.} The saved horizon
+artefacts were regenerated before the audit-M3 fix: the
+\texttt{\_run\_horizon\_comparison} call path silently dropped
+$\gamma$, $\rho$, and $\lambda$ on the floor and inherited
+\texttt{run\_simulation}'s synthetic-tuned defaults
+($\gamma = 4$, $\rho = 0.1$, $\lambda = 0.3$), rather than the
+real-data tuned values
+$\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$ used in the headline
+slice. The EWMA half-life at $\rho = 0.1$ is about seven rounds,
+roughly seven times longer than at $\rho = 0.5$, which attenuates
+the skill signal on panels where relative forecaster quality shifts
+across the year. The horizon tables above therefore understate the
+mechanism's advantage at the operating hyperparameters. The
+post-M3 code takes $(\gamma, \rho, \lambda)$ as keyword arguments
+with the tuned values as defaults, so a re-run lifts this caveat;
+it is listed alongside the expanding-mode rerun as future work.
+
 ### Published-OGD head-to-head
 
 Table~\ref{tab:head-to-head-wind} reports the wind head-to-head
