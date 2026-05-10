@@ -808,9 +808,12 @@ def get_all_forecasters() -> list[BaseForecaster]:
     - ARIMA (300): Retrains every 50 steps on a 300-point training
       window; matching residual_window to the training window ensures
       the bootstrap covers the same data horizon as the fitted model.
-    - XGBoost (300): Same rationale as ARIMA — the model retrains on
-      a 300-point window, so the residual buffer should span the same
-      horizon for consistent fallback quantile estimation.
+    - XGBoost (500): The XGBoost residual_window was expanded from the
+      original 300 to 500 to match the larger effective training window
+      created by XGBoost's ``window=0`` (expanding history). A 500-point
+      residual buffer spans the full model-fit horizon at typical
+      Elia-length runs and prevents the residual distribution from
+      tailing off on a shorter window than XGBoost is itself trained on.
     - MLP (300): Same rationale as ARIMA/XGBoost — periodic retraining
       on a 300-point window warrants a matching residual buffer.
     - Theta (200): SES with drift, moderate residual window balances
