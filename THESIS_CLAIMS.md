@@ -784,3 +784,55 @@ three more items:
 
 Tests: 258/258 green (204 prior + 8 new Issue 1/5 + 6 new F1 + 40
 pre-existing adversary tests re-run).
+
+
+### DGP-audit findings (pass 5)
+
+A fifth sub-pass audited the synthetic DGP generators
+(`onlinev2/src/onlinev2/dgps/`):
+
+- **HIGH — Baseline DGP cross-n instability.**
+  `onlinev2/src/onlinev2/dgps/baseline.py` previously drew per-agent
+  noise levels and per-agent report-noise arrays from a shared
+  `np.random.default_rng(seed)` with shapes `size=n_forecasters` and
+  `size=(n, T)`. Bumping `n_forecasters` with a fixed seed shifted
+  the RNG state, changing the realised truth `y` and every downstream
+  draw. Cross-`n` panel-scaling experiments that share a seed were
+  therefore comparing incomparable worlds.
+
+  Fixed by using `SeedSequence.spawn` to give each agent an
+  independent sub-stream keyed by agent index. After the fix,
+  adding agents `n+1 … n+k` leaves `y` and the realisations of
+  agents `0 … n-1` bit-identical. Tests in
+  `onlinev2/tests/test_dgp_cross_n_stability.py` (8 new).
+
+- **MED — Latent-fixed and aggregation DGPs inherited the same
+  pattern.** Both now use per-agent spawned sub-streams too.
+  `latent_fixed.py`: `y` (shared, depends only on `Z` → stable),
+  per-agent reports (stable across `n`). `aggregation.py`: `y` is
+  endogenous (`y = w·x_latent + noise`) so it necessarily changes
+  with `n`; per-agent reports `x_latent[0..n-1]` are now stable.
+  This preserves the economic interpretation of the endogenous DGP
+  while making within-n experiments reproducible.
+
+- **MED — `baseline.py` silent clipping near [0,1] boundaries.**
+  `np.clip(y + noise, 0, 1)` silently truncates for `y` near the
+  boundary. Acknowledged in the module docstring as a legacy / sanity
+  limitation; the DGP is not used for headline claims (the latent
+  Bayes-consistent generator is).
+
+- Multiple LOW items not fixed (dead catch-up loop in Theta, doc
+  mismatch in get_all_forecasters already fixed in pass-4, ensemble
+  bypass of the quantile pipeline).
+
+**Claim scope impact.** The headline real-data experiments
+(Chapters 6, 7) use the Elia wind and electricity series, not these
+synthetic DGPs, and are unaffected. The synthetic skill-recovery
+experiment (Chapter 5, Claim 2) uses `latent_fixed`, which only
+had the per-agent `eps` realisations changing with `n` — `tau_i`
+was already user-supplied and noise levels were stable. Claim 2
+is unaffected. The fix matters for any future panel-scaling
+sensitivity experiment.
+
+Tests: 258 prior + 8 new DGP tests = **266/266** on the non-audit
+tree; audit tree unchanged.

@@ -70,18 +70,41 @@ def _generate_core(
     sigma_mu_noise: float,
     link: str,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Core generator.
+
+    Cross-``n`` reproducibility note
+    --------------------------------
+    Shared-state draws (``mu_t``, ``eps_y``) are generated before any
+    per-agent arrays so adding a forecaster does not shift them. The
+    per-agent arrays ``xi`` and ``eta`` still have shape ``(n, T)``;
+    they use independent spawn-per-agent streams (see
+    :meth:`_DGPAggregation.generate`), so agents ``0..n-1`` retain
+    identical realisations when ``n`` grows. ``y`` itself is
+    endogenous ``(y = w @ x_latent + sigma_eps * eps_y)`` and will
+    change with ``n`` because ``x_latent`` has a new row — that is a
+    property of the endogenous DGP, not an RNG artefact.
+
+    DGP-audit (May 2026) pass-5 fix.
+    """
     if normalise_w:
         s = float(np.sum(np.abs(w)))
         w = w / s if s > 0 else np.ones(n, dtype=np.float64) / n
 
     mu_t = _ar1_mu(T, rng, rho_mu, sigma_state, mu0)
-    xi = rng.normal(0.0, 1.0, size=(n, T)).astype(np.float64)
     eps_y = rng.normal(0.0, 1.0, size=T).astype(np.float64)
-    eta = (
-        rng.normal(0.0, sigma_mu_noise, size=(n, T)).astype(np.float64)
-        if method == 3
-        else np.zeros((n, T), dtype=np.float64)
-    )
+
+    # Per-agent independent draws so agents 0..n-1 are stable when a
+    # new agent is added. Use child SeedSequences from the rng's
+    # bit_generator, chained by agent index.
+    ss = rng.bit_generator.seed_seq
+    agent_seeds = ss.spawn(n)
+    xi = np.zeros((n, T), dtype=np.float64)
+    eta = np.zeros((n, T), dtype=np.float64)
+    for i in range(n):
+        agent_rng = np.random.default_rng(agent_seeds[i])
+        xi[i] = agent_rng.normal(0.0, 1.0, size=T)
+        if method == 3:
+            eta[i] = agent_rng.normal(0.0, sigma_mu_noise, size=T)
 
     centres = mu_t[None, :] + eta
     x_latent = centres + sigmas[:, None] * xi

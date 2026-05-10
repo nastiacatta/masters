@@ -86,7 +86,17 @@ class _DGPLatentFixed:
         y = _phi(Z)
 
         Z_bc = np.broadcast_to(Z, (n, T))
-        eps = rng.normal(0.0, 1.0, size=(n, T)).astype(np.float64)
+        # Per-agent independent eps streams so that adding agent n+1
+        # does not change the realisations of agents 0..n (DGP-audit
+        # May 2026, LOW fix). ``tau_i`` is already user-supplied so
+        # the noise *levels* were stable before; now the realisations
+        # are too.
+        ss = rng.bit_generator.seed_seq
+        agent_seeds = ss.spawn(n)
+        eps = np.zeros((n, T), dtype=np.float64)
+        for i in range(n):
+            agent_rng = np.random.default_rng(agent_seeds[i])
+            eps[i] = agent_rng.normal(0.0, 1.0, size=T)
         tau_bc = np.broadcast_to(tau_true[:, None], (n, T))
         X = Z_bc + _beta[:, None] + tau_bc * eps
 

@@ -35,14 +35,40 @@ class _DGPBaseline:
         quantiles: np.ndarray | None = None,
         **kwargs,
     ) -> DGPOutput:
-        rng = np.random.default_rng(seed)
-        noise = rng.lognormal(mean=-2.5, sigma=0.4, size=n_forecasters)
-        noise = np.maximum(noise, 0.01)
+        # Independent RNG sub-streams so that changing ``n_forecasters``
+        # does not change the realised truth ``y`` or the
+        # already-assigned per-forecaster noise for agents < n. This
+        # is the DGP-audit HIGH fix (May 2026): the previous
+        # implementation drew ``noise`` with size=n_forecasters from a
+        # shared RNG, then drew ``y`` afterwards, so bumping n shifted
+        # the RNG state and changed every downstream realisation.
+        # Cross-n sensitivity experiments sharing a seed were therefore
+        # comparing incomparable worlds.
+        ss = np.random.SeedSequence(seed)
+        # Fixed-purpose children: truth, per-agent noise level, per-agent
+        # report noise (arranged as a list so addition of agent i only
+        # touches children >= i).
+        truth_rng = np.random.default_rng(ss.spawn(1)[0])
+        # Reserve a fixed block of agent streams. Using a generous
+        # upper bound (4096 agents is far beyond any realistic panel)
+        # means ``seed`` keyed into agent-0 is the same irrespective
+        # of how many total agents exist.
+        _MAX_AGENTS = 4096
+        agent_seeds = ss.spawn(_MAX_AGENTS + 1)[1:]  # offset past truth
+        if n_forecasters > _MAX_AGENTS:
+            raise ValueError(
+                f"n_forecasters={n_forecasters} exceeds _MAX_AGENTS={_MAX_AGENTS}"
+            )
 
-        y = rng.uniform(0.0, 1.0, size=T).astype(np.float64)
+        y = truth_rng.uniform(0.0, 1.0, size=T).astype(np.float64)
+
+        noise = np.zeros(n_forecasters, dtype=np.float64)
         reports = np.zeros((n_forecasters, T), dtype=np.float64)
         for i in range(n_forecasters):
-            reports[i] = np.clip(y + rng.normal(0.0, noise[i], size=T), 0.0, 1.0)
+            agent_rng = np.random.default_rng(agent_seeds[i])
+            noise_i = float(np.maximum(agent_rng.lognormal(mean=-2.5, sigma=0.4), 0.01))
+            noise[i] = noise_i
+            reports[i] = np.clip(y + agent_rng.normal(0.0, noise_i, size=T), 0.0, 1.0)
 
         q_reports = None
         taus = None
