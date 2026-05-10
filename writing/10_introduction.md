@@ -153,28 +153,37 @@ with $\lambda$.
 
 ## Structure of the thesis
 
-Chapter~\ref{ch:related} reviews the three research strands on
+The thesis follows the standard empirical-research structure:
+introduction, background, methods, results, discussion, conclusion.
+Chapter~\ref{ch:background} reviews the three research strands on
 which the thesis builds: self-financed wagering mechanisms, online
 forecast combination, and probabilistic forecast evaluation.
-Chapter~\ref{ch:mechanism} specifies the mechanism: round
-structure, skill gate, and settlement algebra. It argues why
+Chapter~\ref{ch:mechanism} specifies the mechanism itself --- round
+structure, skill gate, and settlement algebra --- and argues why
 making the effective wager the single object that governs both
-influence and exposure preserves Lambert's axioms.
-Chapter~\ref{ch:methodology} describes the datasets, the
-forecaster panel, and the experimental protocol.
-Chapter~\ref{ch:synthetic} reports synthetic validation:
-mechanism correctness, skill recovery, deposit-policy ablation,
-weight-rule comparison, and a five-step bankroll-pipeline
-ablation. Chapter~\ref{ch:real} reports real-data results on
-Elia offshore wind and electricity-imbalance prices, together
-with an external validation against Elia's own operational
-forecast. Chapter~\ref{ch:recalibration} develops a rolling
-isotonic recalibration layer as a post-hoc remedy for the
-\citet{ranjan2010combining} linear-pool miscalibration.
+influence and exposure preserves Lambert's axioms. This chapter
+plays the role of the theoretical contribution; it sits between
+background and methodology because it introduces the object that
+the methodology then evaluates.
+Chapter~\ref{ch:methodology} describes the datasets, the forecaster
+panel, and the experimental protocol. The results are split across
+four chapters for readability:
+Chapter~\ref{ch:synthetic} covers synthetic validation (mechanism
+correctness, skill recovery, deposit-policy ablation, weight-rule
+comparison, bankroll-pipeline ablation, panel-size scaling, and
+risk-aversion sensitivity);
+Chapter~\ref{ch:real} covers real-data validation on Elia offshore
+wind and electricity-imbalance prices, together with an external
+comparison against Elia's own operational forecast;
+Chapter~\ref{ch:recalibration} develops a rolling isotonic
+recalibration layer as a post-hoc remedy for the
+\citet{ranjan2010combining} linear-pool miscalibration; and
 Chapter~\ref{ch:robustness} evaluates the mechanism against the
 theory-grounded adversary catalogue.
-Chapter~\ref{ch:discussion} discusses limitations, scope, and
-threats to validity. Chapter~\ref{ch:conclusion} concludes.
+Chapter~\ref{ch:discussion} interprets the results, places them
+in the context of prior work, and records limitations.
+Chapter~\ref{ch:conclusion} summarises the findings and outlines
+future work.
 Chapter~\ref{ch:project-management} records the project plan and
 risk management, and Chapter~\ref{ch:reflection} gives a short
 personal reflection, as required by the Design Engineering

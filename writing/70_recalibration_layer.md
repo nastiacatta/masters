@@ -1,4 +1,4 @@
-# A post-hoc calibration layer {#ch:recalibration}
+# Results: post-hoc calibration {#ch:recalibration}
 
 ## Motivation
 

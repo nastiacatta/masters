@@ -1,4 +1,4 @@
-# Experimental methodology {#ch:methodology}
+# Methodology {#ch:methodology}
 
 ## Three-layer architecture
 

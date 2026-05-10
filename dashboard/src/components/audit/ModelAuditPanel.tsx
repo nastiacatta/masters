@@ -29,11 +29,6 @@ import {
 } from '@/lib/audit/auditContent';
 import { FORECASTER_COLOURS, PALETTE } from '@/lib/palette';
 
-/** Soft desaturated grey used for tick labels and axis strokes in audit charts. */
-const AXIS_SOFT = PALETTE.slate;
-/** Low-contrast grey for grid lines and reference lines. */
-const GRID_SOFT = PALETTE.border;
-
 function getColour(name: string): string {
   return FORECASTER_COLOURS[name] ?? PALETTE.slate;
 }

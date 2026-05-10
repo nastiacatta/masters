@@ -1,4 +1,4 @@
-# Related work {#ch:related}
+# Background {#ch:background}
 
 This chapter reviews the three research strands on which the thesis
 builds: self-financed wagering mechanisms, online learning for

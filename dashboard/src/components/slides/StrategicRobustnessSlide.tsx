@@ -1,7 +1,5 @@
 import SlideShell from './shared/SlideShell';
-import { PALETTE, TYPOGRAPHY, FIGURE_FRAME } from './shared/presentationConstants';
-
-const BASE = import.meta.env.BASE_URL;
+import { PALETTE, TYPOGRAPHY } from './shared/presentationConstants';
 
 /**
  * Slide 15: Strategic Robustness — properly centred layout.
@@ -188,42 +186,6 @@ export default function StrategicRobustnessSlide() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Quantitative evidence — sybil profit-ratio dot plot with CIs */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p
-            style={{
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              color: PALETTE.navy,
-              fontFamily: TYPOGRAPHY.fontFamily,
-              letterSpacing: '0.03em',
-              textTransform: 'uppercase' as const,
-              margin: 0,
-            }}
-          >
-            Sybil profit ratio vs number of clones
-          </p>
-          <div style={{ ...FIGURE_FRAME, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img
-              src={`${BASE}presentation-plots/sybil.png`}
-              alt="Dot plot of sybil profit ratio against number of clones. Identical clones stay at ratio 1.0; diversified clones sit at approximately 1.065."
-              style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 6 }}
-            />
-          </div>
-          <p
-            style={{
-              fontSize: '0.92rem',
-              color: PALETTE.slate,
-              fontFamily: TYPOGRAPHY.fontFamily,
-              textAlign: 'center',
-              margin: 0,
-              lineHeight: 1.5,
-            }}
-          >
-            Ratio = 1.000 for identical clones across k; ≈ 1.065 for diversified clones. Evaluated across 18 behaviour presets in 9 families.
-          </p>
         </div>
       </div>
     </SlideShell>

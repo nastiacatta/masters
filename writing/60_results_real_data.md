@@ -1,4 +1,4 @@
-# Real-data results {#ch:real}
+# Results: real-data validation {#ch:real}
 
 This chapter reports the empirical results on the two real-data
 series: Elia offshore-wind power and Elia electricity-imbalance

@@ -1,4 +1,4 @@
-# Synthetic validation {#ch:synthetic}
+# Results: synthetic validation {#ch:synthetic}
 
 This chapter reports the synthetic experiments that underwrite the
 mechanism's correctness, its ability to recover the true skill

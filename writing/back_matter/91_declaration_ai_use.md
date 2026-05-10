@@ -12,7 +12,7 @@ report and the purpose for which they were used.
 - Scaffolding code for experiments, plotting, and the companion
   dashboard.
 - Cross-checking derivations and literature against the primary
-  sources cited in Chapter~\ref{ch:related}.
+  sources cited in Chapter~\ref{ch:background}.
 
 **Where not used.**
 - No AI tool generated experimental results, numerical outputs, or

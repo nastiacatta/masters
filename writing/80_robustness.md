@@ -1,4 +1,4 @@
-# Strategic robustness {#ch:robustness}
+# Results: strategic robustness {#ch:robustness}
 
 This chapter evaluates the mechanism against a catalogue of
 strategic adversaries. Each adversary is grounded in published
