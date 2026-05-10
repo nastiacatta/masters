@@ -112,14 +112,25 @@ synthetic rounds) and the narrow Lambert sybil invariance holds with
 mean profit ratio $1.000000$ and maximum absolute deviation
 $2.07 \times 10^{-17}$.
 
-Third, identification of deposit design as the dominant empirical
-lever. A four-way deposit-policy ablation shows that
-bankroll-confidence deposits, computed from observable quantities
-alone, reduce CRPS by $10.4\%$ against fixed-unit deposits,
-capturing approximately one quarter of the improvement attained by
-an oracle-precision deposit. Holding the deposit policy fixed, the
-choice of weighting rule moves CRPS by at most a few percent, while
-the deposit policy moves it by tens of percent.
+Third, a mechanism-design lesson about deposits on controlled data.
+On the six-forecaster synthetic panel, a four-way deposit-policy
+ablation (iid-random, fixed-unit, bankroll-confidence computed from
+observable forecast width, and oracle-precision) moves CRPS by tens
+of percent: bankroll-confidence deposits reduce CRPS by $10.4\%$
+against fixed-unit deposits, while holding the weighting rule fixed
+the choice of rule moves CRPS by at most a few percent. The
+ablation is meaningful only in the setting it was run in, one in
+which the mechanism operator dictates the deposit rule. In a
+deployed market, deposits are chosen by participants and the
+operator cannot impose an informative deposit policy: the real-data
+runs in Section~\ref{ch:real} therefore use fixed unit deposits
+throughout, and the headline improvement observed there is driven
+by the skill gate, not by an adaptive deposit rule.
+The synthetic result is retained because it locates the upper bound
+on what a deposit channel could contribute if one were
+enforceable, and because it motivates the mechanism's
+single-object design (effective wager $m_i = b_i \cdot g(\sigma_i)$)
+rather than separate weight and deposit tracks.
 
 Fourth, real-data validation on two Elia series. On the full
 $17{,}344$-hour offshore-wind series under strictly-causal expanding

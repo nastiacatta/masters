@@ -96,8 +96,9 @@ adversarial and the remaining experts are marginally symmetric;
 the closeness of trimmed-mean to the mechanism on this slice
 reflects the absence of adversarial reports in the Elia panel ---
 the skill gate has no adversarial tail to discard and therefore
-no structural advantage over robust averaging. Chapter 8 revisits
-this under synthetic adversarial behaviour.
+no structural advantage over robust averaging.
+Section~\ref{ch:robustness} revisits this under synthetic
+adversarial behaviour.
 
 #### Per-forecaster skill and weight ordering
 
@@ -174,8 +175,8 @@ Elia's published interval forecasts are systematically miscalibrated.
 Nominal $\tau = 0.10$ gives empirical coverage of $19.1\%$, and
 $\tau = 0.90$ gives $94.6\%$. This is a known property of operational
 numerical-weather-prediction forecasts and motivates the
-recalibration layer developed in Chapter 7 as a generic operational
-tool.
+recalibration layer developed in Section~\ref{ch:recalibration} as
+a generic operational tool.
 
 ### Elia offshore wind: calibration anchor slice
 
@@ -292,7 +293,8 @@ The mean tail deviation over $\tau \in \{0.1, 0.2, 0.8, 0.9\}$ is
 $0.019$, and the mean centre deviation over $0.4 \leq \tau \leq 0.6$
 is $0.029$. The pattern is systematic over-coverage at every
 quantile level: the aggregate quantile function is right-shifted.
-This is corrected by the recalibration layer developed in Chapter 7.
+This is corrected by the recalibration layer developed in
+Section~\ref{ch:recalibration}.
 
 #### Mechanism versus published per-quantile OGD
 
@@ -324,7 +326,7 @@ lower CRPS ($0.01775$ against $0.02000$, a gap of approximately
 $11\%$). The advantage on CRPS comes from relaxing the Lambert
 budget-balance constraint and learning per-$\tau$ weights directly;
 our recalibration layer closes most of the centre deviation in
-Chapter 7 without relaxing budget balance.
+Section~\ref{ch:recalibration} without relaxing budget balance.
 
 ### Elia electricity imbalance: null result
 
@@ -448,7 +450,7 @@ aggregator drops both in exchange for CRPS.
 ### Sensitivity sweep and parameter provenance
 
 Tuned parameters are selected through the held-out sweep described
-in Chapter 3, not by hand.
+in Chapter~\ref{ch:mechanism}, not by hand.
 Table~\ref{tab:sensitivity-sweep} reports the selected cells.
 
 \begin{table}[h]

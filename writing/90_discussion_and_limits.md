@@ -96,6 +96,31 @@ constructed by \citet{chen2014arbitrage}, which abandons budget
 balance in exchange; that choice is outside the scope of this
 thesis.
 
+## What the deposit-policy result does and does not claim
+
+The four-way deposit-policy ablation of Section~\ref{ch:synthetic}
+moves CRPS by tens of percent on synthetic data: bankroll-confidence
+deposits beat fixed-unit deposits by $10.4\%$ and capture roughly
+a quarter of the gap to an oracle-precision policy. The headline
+prose of the original result presented this as ``the dominant
+empirical lever'', a formulation that does not survive a careful
+reading. The ablation is only meaningful in a setting in which the
+mechanism operator dictates the deposit rule; in a deployed market,
+participants decide their own deposits and the operator has no
+instrument with which to impose a confidence-encoded stake. The
+Elia real-data runs in Section~\ref{ch:real} therefore leave
+deposits at unit and rely on the skill gate alone; the $-7.1\%$
+CRPS improvement reported there is a skill-gate effect. The
+correct reading of the synthetic ablation is therefore a statement
+about where the information ceilings sit in the design space --- if
+deposits could be made to encode observable confidence, the CRPS
+ceiling would shift --- rather than about what an operator can
+achieve without constraining participant behaviour. This
+clarification motivates the mechanism's single-object design
+(effective wager $m_i = b_i \cdot g(\sigma_i)$) as the way to carry
+the skill signal through the wager pool without requiring the
+deposit policy to encode anything.
+
 ## The recalibration trade-off
 
 The rolling isotonic recalibrator closes $41\%$ of the tail
@@ -106,8 +131,8 @@ maximised subject to sharpness; our result sits squarely inside the
 theoretical floor stated in Proposition~\ref{prop:recal-floor}
 (Section~\ref{ch:recalibration}): isotonic post-processing of an
 under-dispersed forecast can only re-spread probability mass. The
-fact that three pre-declared spec targets are each missed by a
-narrow margin is therefore not a tuning problem --- the
+fact that three pre-registered calibration targets are each missed
+by a narrow margin is therefore not a tuning problem --- the
 floor was set below the observed values by construction --- but a
 signal about how much calibration repair is available without
 touching the forecast's sharpness budget.

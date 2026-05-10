@@ -22,13 +22,16 @@ verbatim with $m_i$ in place of the original deposit.
 Three bodies of evidence support the contribution. On synthetic data
 with known latent skill, the learned $\sigma$ is monotone in the true
 noise scale across $[0.15, 1.00]$ with Spearman rank correlation of
-one. On the full 17{,}344-hour Elia offshore-wind series under
+one. On the full $17{,}344$-hour Elia offshore-wind series under
 expanding causal normalisation, the mechanism reduces CRPS by
 $7.1\%$ against uniform averaging (Diebold--Mariano $t = 40.77$,
 $p \approx 0$); against Elia's published real-time forecast the best
 single forecaster attains $69.5$~MW CRPS-megawatt-equivalent versus
-Elia's $74.0$~MW. A deposit-policy ablation identifies deposit design,
-not weighting rule, as the dominant empirical lever. A rolling
+Elia's $74.0$~MW. A deposit-policy ablation on synthetic data shows
+that the deposit channel is the largest information channel the
+mechanism operator could exploit if they could constrain deposits,
+though real markets leave deposits to participants; the real-data
+runs use fixed-unit deposits throughout. A rolling
 isotonic recalibrator closes $41\%$ of the linear-pool tail
 miscalibration \citep{ranjan2010combining} at a $1.6\%$ CRPS cost,
 without modifying the economic layers. Eight theory-grounded

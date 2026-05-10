@@ -71,58 +71,29 @@ averaging:
   w_i &= \frac{m_i}{\sum_j m_j}, \\
   \hat q(\tau_k) &= \sum_i w_i \cdot q_i(\tau_k).
 \end{align}
-This operator has a theoretical grounding beyond being "the obvious
-averaging rule" for quantile reports. The proposition below states
-the correspondence explicitly.
+This operator has a theoretical grounding beyond being the
+obvious averaging rule for quantile reports. Pointwise weighted
+quantile averaging is the natural analogue of the linear opinion
+pool under quantile representation: interval width and median
+commute with convex combinations in the forecast coordinate, and
+the finite-grid implementation reduces to a weighted arithmetic
+mean at each level. The same aggregation operator is used by
+\citet{raja2024wagering} in their quantile extension of the
+Lambert mechanism. The Ranjan-Gneiting impossibility applies
+literally to linear pools of CDFs, not to this operator; an
+analogous under-dispersion pathology nonetheless arises (stated
+formally as Proposition~\ref{prop:qa-under-dispersion} in
+Section~\ref{ch:recalibration}) whenever experts disagree on
+location.
 
-\begin{proposition}[Pointwise quantile averaging is max-min optimal for pinball loss]
-\label{prop:qa-pinball}
-Fix a quantile level $\tau \in (0, 1)$ and a weight vector
-$w = (w_1, \dots, w_n)$ on the simplex. Let
-$(q_1, \dots, q_n) \in \mathbb{R}^n$ be expert reports at level
-$\tau$. The unique aggregator $\phi : \mathbb{R}^n \to \mathbb{R}$
-that maximises the principal's worst-case expected score,
-\begin{align*}
-  \phi(q_1, \dots, q_n; w)
-  &= \arg\max_{\hat q \in \mathbb{R}}
-     \min_{y \in \mathbb{R}}
-     \Big[s(\hat q, y) - \sum_i w_i s(q_i, y)\Big],
-\end{align*}
-when $s(\cdot, \cdot) = -L^\tau(\cdot, \cdot)$ is the pinball score
-at level $\tau$, is the weighted arithmetic mean
-$\hat q = \sum_i w_i q_i$. Applying this level-by-level to the full
-$\tau$-grid gives the aggregate operator used by the mechanism.
-\end{proposition}
-
-\begin{proof}[Proof sketch]
-This is a direct instance of the quasi-arithmetic-pooling
-correspondence of \citet{neyman2021quasiarithmetic}, Theorem 3.
-They show that every strictly proper scoring rule $s$ induces a
-canonical aggregation operator $\mathrm{QA}_s$ via
-$\mathrm{QA}_s(q; w) = s^{-1}\!\big(\sum_i w_i s(q_i, \cdot)\big)$,
-interpreted as the unique forecast whose expected score equals the
-weighted sum of the experts' expected scores against a common
-adversary. For the pinball score $s(\hat q, y) = -L^\tau(\hat q, y)$
-on the real line, $s$ is piecewise linear with a kink at $y$; its
-inverse in the sense required reduces to the weighted arithmetic
-mean in the forecast coordinate. The max-min optimality follows from
-their Theorem 1: among aggregators, $\mathrm{QA}_s$ is the one that
-maximises worst-case profit for a principal who sub-contracts
-experts under $s$ and pays them in proportion to $w$.
-\end{proof}
-
-The proposition clarifies that the operator implemented is \emph{not}
-the linear opinion pool over CDFs, to which the strict
-\citet{ranjan2010combining} impossibility applies; it is the QA pool
-for pinball loss, which is a different object. The two coincide only
-for the quadratic score. The empirical under-dispersion reported in
-Chapter 6 and addressed by the recalibration layer in Chapter 7 is
-a property of quantile averaging of non-identical reports
-inheriting inter-forecaster spread at every $\tau_k$, not of a
-Ranjan-Gneiting impossibility directly transferred from CDF pools.
-An optional dominance cap projects the weight vector onto the simplex
-with $w_i \leq w_{\max}$; it is disabled ($w_{\max} = 1$) in the
-locked configuration.
+The max-min-optimal aggregator for pinball-style scoring rules is
+a more delicate object, covered under the quasi-arithmetic (QA)
+pooling correspondence of \citet{neyman2021quasiarithmetic}; the
+operator implemented here coincides with the QA pool for quadratic
+scores and with the Raja--Pinson operator for pinball scores on a
+finite grid. A discussion of the precise correspondence, including
+the sense in which their Theorem~1 transfers to a $\tau$-grid
+implementation, is deferred to Appendix~\ref{app:qa-pool}.
 
 ### Step 4: scoring and settlement
 
@@ -350,7 +321,8 @@ invariant under the split. Consequently,
 The proposition is stated for identical reports and conserved total
 effective wager; dropping either hypothesis allows an adversary to
 extract a small arbitrage via diversified sybils, which is evaluated
-empirically in Chapter 8 at roughly $6.5\%$ leakage. The narrowness
+empirically in Section~\ref{ch:robustness} at roughly $6.5\%$
+leakage. The narrowness
 of the scope is structural: \citet{pan2024sybilproof} prove that in
 the single-parameter mechanism-design environment, the only
 non-wasteful, symmetric, incentive-compatible, sybil-proof direct
@@ -432,60 +404,26 @@ small amount $\varepsilon$ relative to the truthful report
 $r_i^\star$, holding all other participants' reports fixed at
 truthful values. Let $\Pi_\Delta(\varepsilon)$ denote the expected
 multi-round profit gain from the distortion, discounted at rate
-$\delta < 1$, relative to truth-telling. Then
-\begin{align*}
-  \Pi_\Delta(\varepsilon)
-  &= -\tfrac{1}{2} \alpha \cdot \|\mathrm{Hess}\, s_i \|
-     \cdot \varepsilon^2
-   + \gamma \rho \cdot \sum_{k \neq i} \delta^{k} \cdot
-     c_k(\varepsilon) + O(\varepsilon^3),
-\end{align*}
-where $\alpha > 0$ is the coefficient introduced in the proof of
-Theorem~\ref{thm:truthfulness}, $\|\mathrm{Hess}\, s_i\|$ is the
-curvature of the proper score at truth, and $c_k(\varepsilon)$ is
-the round-$(t + k)$ profit gain from the induced change in
-competitors' skill. The leading-order correction from distortion is
-quadratic and negative $($truth-telling is a local max of per-round
-expected profit, per Theorem~\ref{thm:truthfulness}$)$; the
-EWMA-shaping term is bounded by $\gamma \rho \delta / (1 - \delta)$
-per unit of competitor-profit sensitivity, and vanishes once
-competitors' $\sigma$ saturates near $1$ or $\sigma_{\min}$.
+$\delta < 1$, relative to truth-telling. Then the leading-order
+correction from distortion is negative and quadratic in
+$\varepsilon$, and the EWMA-shaping correction from influencing
+competitors' future weights is bounded by
+$\gamma \rho \delta / (1 - \delta)$ per unit of competitor-profit
+sensitivity and vanishes once competitors' $\sigma$ saturates.
 \end{proposition}
 
-\begin{proof}[Proof sketch]
-The first term is the standard Taylor expansion of the per-round
-profit around the truthful report, using that pinball loss has
-positive curvature (subgradient jump of size $1$ at $y = q$); the
-exact constant $\alpha = m_{i,t} (1 - m_{i,t} / M_t)$ is inherited
-from Theorem~\ref{thm:truthfulness}. For the second term, a
-distortion $\varepsilon$ at round $t$ changes competitor $k$'s
-observed loss by at most $|\varepsilon|$ through the shared
-aggregate $\bar s_t$; by the EWMA update, this propagates to
-$L_{k,t+1}$ with multiplier $\rho$, and to $\sigma_{k,t+1}$ with
-multiplier $\gamma \sigma_{\min}' (1 - \sigma_{\min})$ where
-$\sigma_{\min}'$ denotes the local derivative of the loss-to-skill
-map. Summing the discounted profit impact across future rounds
-gives the $\gamma \rho \delta / (1 - \delta)$ bound. The
-$O(\varepsilon^3)$ remainder collects higher-order Taylor
-corrections and interactions.
-\end{proof}
-
-The proposition quantifies the multi-round incentive. For the tuned
-Elia parameters ($\gamma = 16$, $\rho = 0.5$, $\delta \approx 1$
-for the horizons of interest), the shaping term has magnitude at
-most $8$ per unit sensitivity; the quadratic first term dominates
-for $|\varepsilon| > 8 / \alpha / \|\mathrm{Hess}\,s_i\|$, which is
-satisfied by any strategy distorting the report by more than a few
-per cent. In the saturated regime reached empirically after roughly
-twenty rounds of losses below $\ell \approx 0.05$, the derivative
-$\sigma_{\min}'$ is of order $10^{-5}$ and the shaping term is
+The precise statement and proof sketch are given in
+Appendix~\ref{app:ewma-shaping}. The proposition establishes that,
+at the tuned Elia parameters ($\gamma = 16$, $\rho = 0.5$) and in
+the saturated regime reached empirically after roughly twenty
+rounds of losses below $\ell \approx 0.05$, the shaping term is
 effectively zero. A formal multi-round truthfulness theorem under
 risk-neutral discounted expected profit is an open question.
 Under risk aversion --- specifically, when participants optimise a
 concave utility of profit rather than expected profit --- the
-reduction to pinball-loss minimisation no longer goes through; this
-is inherited from the Lambert scope and applies equally to the
-deposit-only mechanism.
+reduction to pinball-loss minimisation no longer goes through;
+this is inherited from the Lambert scope and applies equally to
+the deposit-only mechanism.
 
 ### Summary of added features and scope limits
 
@@ -495,7 +433,7 @@ layer contributes three additional features. First,
 converges to the correct ordering on the known-noise panel
 (Proposition~\ref{prop:ewma-consistency}) and reproduces the
 per-forecaster CRPS ranking exactly on the Elia wind audit slice
-(Chapter 6). Second, \textbf{staleness-aware intermittency}: absent
+(Section~\ref{ch:real}). Second, \textbf{staleness-aware intermittency}: absent
 participants decay toward the prior $L_0$ rather than retaining a
 stale skill estimate. Third, \textbf{absolute skill}: a given
 participant's $\sigma_i$ can rise without any other participant's
@@ -506,14 +444,16 @@ Three scope limitations are inherited from the Lambert framework and
 are not removed by the skill layer. Narrow sybil-proofness assumes
 identical reports with conserved total wager
 (Proposition~\ref{prop:sybil}); diversified-report sybils break the
-invariance by approximately $6.5\%$ empirically (Chapter 8).
+invariance by approximately $6.5\%$ empirically
+(Section~\ref{ch:robustness}).
 Truthfulness requires strict risk-neutrality
 (Theorem~\ref{thm:truthfulness}); the argument does not go through
 for risk-averse agents or for large stakes relative to wealth.
 Finally, the aggregate is under-dispersed in the tails by the same
 mechanism that drives the \citet{ranjan2010combining} impossibility
-on linear CDF pools; the recalibration layer in Chapter 7 closes
-part of the gap post-hoc without removing the underlying obstruction.
+on linear CDF pools; the recalibration layer in
+Section~\ref{ch:recalibration} closes part of the gap post-hoc
+without removing the underlying obstruction.
 
 ## Why an exponentially weighted moving average
 
@@ -587,7 +527,7 @@ strictly monotone in $\mu_i$ on $[0, 1]$, the long-run skill
 ordering reproduces the long-run CRPS ordering of the participants.
 This is the theoretical foundation of the empirical
 Spearman-rank-correlation $\sigma \leftrightarrow$ CRPS $= 1.000$
-result on the known-noise synthetic panel (Chapter 5).
+result on the known-noise synthetic panel (Section~\ref{ch:synthetic}).
 
 \begin{proposition}[Tracking a drifting true loss]
 \label{prop:ewma-tracking}
@@ -654,6 +594,7 @@ real-data results in Chapter~\ref{ch:real}
 is uniformly worse than $\lambda = 0.05$ on both series, and the
 $\gamma$ optimum on wind pushes the top of the grid. Electricity
 optima lie in a tight band of $-0.17$ to $-0.22\%$, consistent with
-the forecast-combination-puzzle regime discussed in Chapter 6:
+the forecast-combination-puzzle regime discussed in
+Section~\ref{ch:real}:
 when forecasters are undifferentiated, the skill signal has
 nothing to extract.

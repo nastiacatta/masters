@@ -34,9 +34,9 @@ marginal effect of every pipeline stage can be read off directly.
   from §3.1. Combines skill gate with observable-only deposit
   scaling.
 - **Variant D — C plus rolling isotonic recalibration.** Adds the
-  recalibration layer of Chapter 5.3 on top of variant C. Tests
-  whether the calibration fix interferes with the economic
-  structure.
+  recalibration layer of Section~\ref{ch:recalibration} on top of
+  variant C. Tests whether the calibration fix interferes with the
+  economic structure.
 - **Variant E — oracle-precision deposits, skill-gated weights.**
   Replaces the observable confidence proxy with the true latent
   precision (known on the synthetic panel). Represents the upper
@@ -56,10 +56,16 @@ process used in Chapter~\ref{ch:synthetic}:
 | D --- C + recalibration | $0.03855$ | $-10.1\%$ |
 | E --- oracle-precision | $0.02271$ | $-47.0\%$ |
 
-The ordering $A < B < C < D < E$ confirms the main-body claim that
-deposit design (the step from $B$ to $C$, $5.1$~pp of CRPS) is the
-dominant empirical lever, larger than the skill-gate contribution
-alone ($A$ to $B$, $6.4$~pp) or the recalibration cost ($C$ to $D$,
-$+1.6\%$ CRPS). The gap $C$ to $E$ quantifies the performance
+The ordering $A < B < C < D < E$ confirms a \emph{synthetic-only}
+finding that the deposit channel has the largest available
+information capacity: the step from $B$ to $C$, $5.1$~pp of CRPS,
+dwarfs the skill-gate contribution ($A$ to $B$, $6.4$~pp) and the
+recalibration cost ($C$ to $D$, $+1.6\%$ CRPS). The ablation is
+meaningful only because the deposit rule is imposed by the
+experimenter. A deployed market cannot impose a deposit rule on
+the participants, so this gap is an information-ceiling statement,
+not an actionable lever. The Elia real-data runs use fixed-unit
+deposits and rely on the skill-gate contribution alone. The gap
+$C$ to $E$ quantifies the performance
 ceiling a practical system cannot reach without privileged
 information.

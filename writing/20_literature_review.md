@@ -4,7 +4,7 @@ This chapter reviews the three research strands on which the thesis
 builds: self-financed wagering mechanisms, online learning for
 forecast combination, and probabilistic forecast evaluation and
 calibration. The structure follows the logical dependencies of the
-mechanism developed in Chapter 3 rather than a strict chronology.
+mechanism developed in Chapter~\ref{ch:mechanism} rather than a strict chronology.
 
 ## Self-financed wagering mechanisms
 
@@ -33,7 +33,7 @@ an explicit buyer. They showed that the payoff mechanism retains
 budget balance, truthfulness, sybil-proofness, and individual
 rationality in the quantile setting. Each market instance remains
 history-free: no inter-round state is accumulated. The online skill
-layer developed in Chapter 3 is precisely the component that
+layer developed in Chapter~\ref{ch:mechanism} is precisely the component that
 accumulates such state across rounds while keeping the per-round
 payoff algebra intact.
 
@@ -43,7 +43,7 @@ any differentiable strictly proper scoring rule, participant $i$ can
 choose a report in an \emph{arbitrage interval} that yields a
 non-negative payoff under every outcome, strictly positive whenever
 other participants disagree (their Theorem 3.3). The arbitrage-seeking
-adversary studied in Chapter 8 implements the mean-absolute-error
+adversary studied in Section~\ref{ch:robustness} implements the mean-absolute-error
 analogue of this arbitrage point, namely the wager-weighted median
 of other reports, and participates only when the expected profit
 under a uniform outcome is strictly positive. Empirically this
@@ -65,7 +65,7 @@ $$p_C = \sum_{i \in C} \frac{w_i}{W_C}\, p_i, \qquad
 earns a strictly higher total payoff than reporting truthfully,
 whenever coalition members disagree. This formula provides the
 specification for the coordinated-group adversary evaluated in
-Chapter 8; combined with a privileged lagged signal under an AR(1)
+Section~\ref{ch:robustness}; combined with a privileged lagged signal under an AR(1)
 outcome process, the attack attains cumulative profit of $+33.84$
 per 1000 rounds.
 
@@ -78,9 +78,10 @@ probabilities to neutralise the attack. The wagering-mechanism sybil
 invariance of \citet{lambert2008selffinanced} solves a different
 problem: identical-report clones with conserved total deposit retain
 identical total profit. The diversified-report sybil evaluated in
-Chapter 8, which departs from the Lambert scope qualification, is
-the analogue of the strategic-replication attack Falconer et al.\
-target. The breadth of that scope qualification is not an accident:
+Section~\ref{ch:robustness}, which departs from the Lambert scope
+qualification, is the analogue of the strategic-replication attack
+of \citet{falconer2025replication}. The breadth of that scope
+qualification is not an accident:
 \citet{pan2024sybilproof} show that in the single-parameter
 mechanism-design environment, the only non-wasteful, symmetric,
 incentive-compatible, and sybil-proof direct mechanism is a
@@ -88,7 +89,7 @@ second-price auction with symmetric tie-breaking. Any mechanism
 richer than that will therefore have a scope under which sybil
 invariance holds and a scope under which it does not; our task is
 to state the scope precisely and measure deviations empirically
-(Chapter 8), not to claim something stronger than the impossibility
+(Section~\ref{ch:robustness}), not to claim something stronger than the impossibility
 allows.
 
 For aggregation in the presence of adversarial participants,
@@ -98,9 +99,9 @@ experts: under $L^1$ loss the truncated mean, which discards the
 $k$ lowest and $k$ highest reports and averages the remainder, is
 optimal; for $L^2$ loss the optimal aggregators are piecewise
 linear. We include a \texttt{trimmed\_mean} baseline throughout the
-empirical chapters for exactly this reason; Chapter 6 reports its
-CRPS head-to-head against the mechanism and its dependence on the
-number of forecasters. See also \citet{berta2023spatialmarket} for
+empirical chapters for exactly this reason; Section~\ref{ch:real}
+reports its CRPS head-to-head against the mechanism and its
+dependence on the number of forecasters. See also \citet{berta2023spatialmarket} for
 an adversarially robust data-market analogue in a crowd-sourced
 spatial-data setting.
 
@@ -113,7 +114,7 @@ provided the informational framing adopted for our insider-advantage
 experiment: in a repeated wagering setting, a forecaster with
 superior information accumulates wealth at a rate determined by the
 Kullback--Leibler divergence between her belief and the market's
-belief. The insider adversary in Chapter 8 replaces the hard leak
+belief. The insider adversary in Section~\ref{ch:robustness} replaces the hard leak
 of the outcome with a low-variance lagged signal, aligning the
 attack with this informational model.
 
@@ -122,8 +123,9 @@ literature. The relevant precedent is \citet{feldman2004freeriding},
 who catalogued the \emph{whitewashing} attack, in which a
 participant abandons a degraded reputation and re-enters as a
 newcomer, and showed that a penalty on every newcomer partly offsets
-the incentive. The reputation-reset adversary in Chapter 8 tests
-this attack against the skill layer; the staleness decay $\kappa$
+the incentive. The reputation-reset adversary in
+Section~\ref{ch:robustness} tests this attack against the skill
+layer; the staleness decay $\kappa$
 together with the non-unit prior $\sigma_{\mathrm{init}}$ realises
 the newcomer-penalty recommendation.
 
@@ -176,10 +178,10 @@ Intermittency & Robust regression & Staleness decay toward prior \\
 
 Their online-gradient-descent variant is retained as a published
 reference aggregator throughout the empirical chapters, where it
-appears as a shifted-median fan baseline (Chapter 6). The ratio of
+appears as a shifted-median fan baseline (Section~\ref{ch:real}). The ratio of
 our mechanism to this baseline is $0.985$ on the 3000-point audit
 slice, a $1.5\%$ CRPS advantage for the self-financed design on that
-slice. On the full 17{,}344-hour expanding-mode wind run, the
+slice. On the full $17{,}344$-hour expanding-mode wind run, the
 per-quantile OGD baseline of \citet{vitali2025intermittent} improves
 on our mechanism by approximately eleven percentage points of CRPS;
 this gap quantifies the CRPS cost of preserving the Lambert
@@ -261,9 +263,10 @@ pinball scoring rule on a finite $\tau$-grid, $\mathrm{QA}_s$
 reduces to pointwise weighted quantile averaging, which is what
 the mechanism implements. Third, the aggregator's expected score is
 concave in the weights, so online gradient descent achieves
-sub-linear regret on the weight simplex. Chapter~\ref{ch:mechanism}
-states the pinball specialisation as
-Proposition~\ref{prop:qa-pinball}. The last point is exactly the
+sub-linear regret on the weight simplex. The pinball specialisation
+and its relation to the weighted-quantile operator used here are
+discussed in Section~\ref{ch:mechanism} and Appendix~\ref{app:qa-pool}.
+The last point is exactly the
 theoretical regime that \citet{vitali2025intermittent} and
 \citet{berrisch2024multivariate} exploit; the present mechanism
 instead fixes the weights at effective wagers $m_i$ and uses the
@@ -284,7 +287,7 @@ introduce serial correlation in the combined errors that the
 individual forecasts did not carry. This is an important caveat on
 reading any linear-pool result, including ours: a well-performing
 combined CRPS does not guarantee an efficient combined forecast.
-The empirical findings of Chapter 6 are consistent with this
+The empirical findings of Section~\ref{ch:real} are consistent with this
 literature. On Elia offshore wind, with sufficient forecaster
 heterogeneity and a long evaluation window, the adaptive skill gate
 improves on uniform averaging by $7.1\%$
@@ -301,7 +304,7 @@ derive scoring-rule variants that are incentive-compatible under
 performativity when the forecaster can choose among several
 self-fulfilling equilibria. We do not model performativity
 directly, but record that it would amplify the strategic-reporting
-threat in Chapter 8: shifting the aggregate report $\hat r$ could
+threat in Section~\ref{ch:robustness}: shifting the aggregate report $\hat r$ could
 also shift the outcome $y$ that scores the attacker. Extending the
 skill layer to performative settings is a natural direction for
 future work.
@@ -314,7 +317,7 @@ thinly-traded markets can be moved by strategic participants with
 modest budgets. \citet{gervasini2025arbitrage} complement this with
 a large-scale on-chain study of Polymarket, documenting over
 40 million USD of realised arbitrage profit from
-probability-inconsistent pricing across more than 7{,}000 markets
+probability-inconsistent pricing across more than $7{,}000$ markets
 during 2024--2025. In the
 forecasting-accuracy adjacent domain, \citet{liu2025weatherattack}
 show that adversarial perturbations to fewer than 0.1\% of weather
@@ -354,11 +357,11 @@ uncalibrated and lacks sharpness. Our aggregator takes a pointwise
 weighted quantile average rather than a linear pool over CDFs, but
 is qualitatively susceptible to the same under-dispersion pattern;
 this motivates the post-hoc recalibration layer developed in
-Chapter 7. \citet{gneiting2013combining} proposed the
+Section~\ref{ch:recalibration}. \citet{gneiting2013combining} proposed the
 Beta-transformed linear pool as a parametric alternative to
 isotonic recalibration that preserves sharpness better; this
 extension is not implemented here and is identified as future work
-in Chapter 10.
+in Chapter~\ref{ch:conclusion}.
 
 Our recalibration layer implements the isotonic post-processor of
 \citet{kuleshov2018accurate} in a rolling-buffer, prequential

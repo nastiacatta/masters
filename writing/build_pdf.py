@@ -218,6 +218,8 @@ def escape_latex_preserve(text: str) -> str:
     #   \macro                     — e.g. \item, \hline, \newline, \maketitle
     #   \x                         — single-character math spacing like
     #                                \, \; \! \: \| \$ \# \% \& \_ \{ \}
+    #                                and \<space> (inter-sentence space after
+    #                                an abbreviation, e.g. ``et al.\ target'').
     # Cases 3 and 4 are important for bare commands (\item inside
     # enumerate/itemize, \, thin-space in prose) and must run after
     # the more specific patterns.
@@ -228,6 +230,17 @@ def escape_latex_preserve(text: str) -> str:
     )
     protected = re.sub(r"\\[a-zA-Z]+\b", stash, protected)
     protected = re.sub(r"\\[,;!:|\$\#\%\&\_\{\}]", stash, protected)
+    # Preserve LaTeX's inter-sentence spacing ``\<space>'' (``abbrev.\ next'')
+    # so escape_latex below does not convert the backslash into
+    # \textbackslash{}. Matches a backslash followed by a literal space
+    # (not a newline). The trailing space is stashed with the backslash
+    # as a single atomic token.
+    protected = re.sub(r"\\ ", stash, protected)
+    # Preserve LaTeX's non-breaking tie ``~'' (e.g. ``Chapter~\ref{ch:foo}'',
+    # ``$74.0$~MW''). The tie must reach the LaTeX output; escaping it to
+    # \textasciitilde{} turns a non-breaking space into a literal tilde
+    # character, which breaks every cross-reference that uses the tie.
+    protected = re.sub(r"~", stash, protected)
 
     escaped = escape_latex(protected)
 

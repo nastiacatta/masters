@@ -6,41 +6,43 @@ The theoretical starting point is the \citet{ranjan2010combining}
 impossibility: any non-trivial weighted average of two or more
 distinct calibrated probability forecasts, interpreted as a linear
 pool over CDFs, is necessarily uncalibrated and lacks sharpness. The
-mechanism aggregates by pointwise weighted quantile averaging
-(Proposition~\ref{prop:qa-pinball} in Chapter~\ref{ch:mechanism}),
-not by pooling CDFs, so the strict Ranjan-Gneiting statement does
-not apply to the CDF of the aggregate directly; the operator is
-qualitatively similar and the same under-dispersion pathology shows
-up empirically. We state the quantile-averaging analogue
-explicitly.
+mechanism aggregates by pointwise weighted quantile averaging (see
+Section~\ref{ch:mechanism}, Step~3), not by pooling CDFs, so the
+strict Ranjan-Gneiting statement does not apply to the CDF of the
+aggregate directly; the operator is qualitatively similar and the
+same under-dispersion pathology shows up empirically. We state the
+quantile-averaging analogue explicitly.
 
 \begin{proposition}[Quantile-averaging under-dispersion]
 \label{prop:qa-under-dispersion}
-Let $\hat q(\tau)$ be the weighted pointwise average of $n \geq 2$
-expert quantile reports at level $\tau$, with weights on the
-simplex. Let $\Delta_i = q_i(\tau_U) - q_i(\tau_L)$ be expert $i$'s
-reported interval width at confidence level $\tau_U - \tau_L$, and
-let $\bar\Delta = \sum_i w_i \Delta_i$ be the weighted mean width.
-Then the aggregate interval width is exactly $\bar\Delta$. When
-the experts disagree on position, however, the empirical coverage
-of the aggregate interval is, in general, strictly less than
-$\tau_U - \tau_L$: averaging quantiles pointwise does not
-compose their coverage levels.
+Let $\hat q(\tau_L), \hat q(\tau_U)$ with $\tau_L < \tau_U$ be the
+weighted pointwise averages of $n \geq 2$ expert quantile reports,
+with weights on the simplex. Let
+$\Delta_i = q_i(\tau_U) - q_i(\tau_L)$ be expert $i$'s reported
+interval width and $\bar\Delta = \sum_i w_i \Delta_i$ the weighted
+mean width. Assume each expert's predictive CDF $F_i$ is calibrated,
+so that $P(Y \leq q_i(\tau_L)) = \tau_L$ and
+$P(Y \leq q_i(\tau_U)) = \tau_U$, and that the experts disagree on
+location, meaning $\{q_i(\tau_L)\}$ is not a singleton. Then
+\begin{enumerate}
+  \item[\emph{(a)}] $\hat q(\tau_U) - \hat q(\tau_L) = \bar\Delta$
+    $($width identity$)$,
+  \item[\emph{(b)}] the empirical coverage of the aggregate interval,
+    $P(\hat q(\tau_L) \leq Y \leq \hat q(\tau_U))$, is in general
+    not equal to $\tau_U - \tau_L$: coverage depends on the joint
+    distribution of the expert quantile reports and the outcome.
+\end{enumerate}
 \end{proposition}
 
 \begin{proof}
-By linearity, $\hat q(\tau_U) - \hat q(\tau_L)
- = \sum_i w_i (q_i(\tau_U) - q_i(\tau_L)) = \bar\Delta$, which gives
-the width identity. For coverage, take two experts with identical
-widths $\Delta$ but locations $q_1(\tau_L), q_2(\tau_L)$ offset by
-$\epsilon > 0$; each expert covers the nominal fraction of
-outcomes inside its own $(\tau_L, \tau_U)$ interval, but the
-aggregate interval, positioned at the mean location with the same
-width $\Delta$, covers only the overlap of the two outcome masses.
-For non-symmetric outcome distributions the overlap is, in
-general, strictly below $\tau_U - \tau_L$. The deviation is
-bounded in magnitude by the expert-disagreement range
-$\max_i q_i(\tau) - \min_i q_i(\tau)$ at each grid level.
+Part~(a) is linearity of the weighted mean in each coordinate.
+Part~(b) is a corollary of \citet{ranjan2010combining}
+Proposition~2 applied to the piecewise-linear CDF interpolating the
+reported grid: a non-trivial convex combination of calibrated
+forecasts is uncalibrated, so the aggregate interval's coverage does
+not equal $\tau_U - \tau_L$ in general. Whether the deviation is
+positive or negative depends on the direction of expert
+disagreement relative to the outcome's conditional skew.
 \end{proof}
 
 The proposition gives a non-strict analogue of the Ranjan-Gneiting
@@ -49,7 +51,8 @@ interval width is a convex combination of the experts' widths, so
 aggregation cannot sharpen the forecast beyond the per-expert
 resolution; when experts disagree on position, the interval's
 coverage drops. The empirical miscalibration observed on the
-3,000-point Elia wind audit slice is documented in Chapter 6: a
+3,000-point Elia wind audit slice is documented in
+Section~\ref{ch:real}: a
 mean tail deviation of $0.019$, with a systematic pattern of
 under-coverage in the lower tail and over-coverage in the mid-upper
 range. This is quantitatively small because the Elia forecasters
@@ -138,8 +141,8 @@ implementation shortfall.
 ### Calibration on the full-length headline slice
 
 The recalibration analysis above is defensible only on the
-3{,}000-point audit slice because the audit slice is the one for
-which tightened coverage diagnostics were pre-declared. It is
+$3{,}000$-point audit slice because the audit slice is the one for
+which tightened coverage diagnostics were stated in advance. It is
 reasonable to ask whether the calibration numbers carry to the full
 $T_{\mathrm{eval}} = 17{,}344$ round headline slice that underpins
 the thesis's main real-data result. Table~\ref{tab:wind-calibration-headline}
@@ -206,9 +209,9 @@ $3\,000$-point sample: after approximately five hundred
 rolling-buffer refits, the isotonic map is fit on enough PITs to be
 a good estimate of the true CDF.
 
-All three spec assertions fail narrowly because the calibration-sharpness
-tradeoff bites at the theoretical floor. The following proposition
-formalises the floor.
+All three pre-registered targets are missed narrowly because the
+calibration-sharpness tradeoff bites at the theoretical floor. The
+following proposition formalises the floor.
 
 \begin{proposition}[Calibration-sharpness floor for isotonic post-processing]
 \label{prop:recal-floor}
@@ -251,15 +254,16 @@ sharpness loss exceeds the calibration gain.
 
 Proposition~\ref{prop:recal-floor} explains the shape of the
 empirical outcome. The isotonic map must concede sharpness
-(part~(b)); the spec allowed at most $10\%$ concession, but the
-theoretical lower bound in the thesis setting is closer to $12\%$
-because the mechanism's aggregate is more under-dispersed than the
-spec assumed. The $1.6\%$ CRPS cost (part~(c)) is consistent with a
-setting where the sharpness loss slightly exceeds the calibration
-gain, which is predicted for aggregates of already-sharp individual
-forecasters. The narrow spec failures are not pipeline bugs; they
-mark where the spec thresholds sit inside the theoretical feasible
-region.
+(part~(b)); the pre-registered threshold allowed at most $10\%$
+concession, but the theoretical lower bound in the thesis setting
+is closer to $12\%$ because the mechanism's aggregate is more
+under-dispersed than the threshold assumed. The $1.6\%$ CRPS cost
+(part~(c)) is consistent with a setting where the sharpness loss
+slightly exceeds the calibration gain, which is predicted for
+aggregates of already-sharp individual forecasters. The narrow
+misses of the pre-registered thresholds are therefore not
+implementation defects; they mark where those thresholds sit
+inside the theoretical feasible region.
 
 The $91\%$ drop in centre deviation ($0.4 \leq \tau \leq 0.6$) is
 worth flagging separately. The isotonic projection restores joint

@@ -34,10 +34,13 @@ Investigation: the lit review sprawls and a later reader would
 benefit from a tighter tutorial arc from Lambert through Raja and
 Vitali to the skill layer. The main lesson I will carry forward is
 the primacy of a reproducible pipeline over a clever aggregation
-rule. The single most informative finding of the whole project is
-that deposit design, not weighting rule, moves CRPS by an order of
-magnitude more. Finding that out required the pipeline to be
-trustworthy first.
+rule. The most informative observation from the synthetic work is
+that the \emph{deposit channel}, and not the weighting rule, carries
+the largest information capacity; the caveat being that deposits are
+not under the operator's control in a deployed market, so the
+deposit-side gain is a ceiling statement rather than an actionable
+lever. Finding that out required the pipeline to be trustworthy
+first.
 
 Skills I would strengthen next: formal treatment of multi-round
 incentive compatibility (the per-round argument in this report is

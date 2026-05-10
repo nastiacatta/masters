@@ -20,7 +20,7 @@ same platform-layer code.
 ## Datasets
 
 \paragraph{Synthetic data-generating processes.} Three families of
-synthetic processes are used in Chapter 5. The \emph{known-$\sigma$
+synthetic processes are used in Section~\ref{ch:synthetic}. The \emph{known-$\sigma$
 panel} produces six forecasters with noise scales
 $\tau \in \{0.15, 0.22, 0.32, 0.46, 0.68, 1.00\}$ and is used to
 verify skill recovery (Spearman rank correlation between learned
@@ -57,7 +57,8 @@ is Elia's published electricity-imbalance prices, truncated to
 $T = 10{,}000$ evaluation rounds after a 200-round warmup, with the
 same seven forecasters and the same expanding causal normalisation
 as the wind headline. The mechanism's behaviour on this series is a
-statistical null, reported without adjustment in Chapter 6.
+statistical null, reported without adjustment in
+Section~\ref{ch:real}.
 
 \paragraph{Elia operational-forecast baseline.} For external
 validation, we extract Elia's own published forecasts --- \emph{most

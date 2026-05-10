@@ -142,9 +142,25 @@ signal and serve as the benchmark. Bankroll-confidence deposits,
 using only observable quantities (wealth and forecast width), capture
 approximately $22\%$ of the oracle improvement. The oracle
 policy, which has access to the true signal precision, provides
-the theoretical ceiling. This table is the single clearest empirical
-statement the thesis makes: the deposit policy, not the weighting
-rule, is the dominant lever.
+the theoretical ceiling.
+
+The correct reading of the table is narrow. Deposits are under the
+mechanism operator's control \emph{only} in a synthetic setting
+where we can set the rule for the participants. In a deployed
+market, participants choose their own deposits and the operator
+has no lever over what information the deposit encodes. The
+Elia real-data runs in Section~\ref{ch:real} therefore use
+fixed-unit deposits throughout, and any headline improvement
+reported there is attributable to the skill gate. What the table
+does say is that the deposit \emph{channel} is the widest available
+information channel: if an operator could constrain deposits to
+encode observable confidence (e.g. through a client-imposed stake
+cap or a participation protocol), the CRPS ceiling would shift
+dramatically; absent that constraint, the skill gate is the only
+lever the operator has.
+The synthetic result is therefore a statement about where the
+information ceilings sit, not about what a deployed mechanism can
+achieve on its own.
 
 \begin{figure}[h]
 \centering
