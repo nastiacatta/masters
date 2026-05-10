@@ -1,13 +1,13 @@
-# Results: synthetic validation {#ch:synthetic}
+## Synthetic validation {#ch:synthetic}
 
-This chapter reports the synthetic experiments that underwrite the
+This section reports the synthetic experiments that underwrite the
 mechanism's correctness, its ability to recover the true skill
 ordering, and the effects of the deposit and weighting rules in
 isolation. Each result is derived from a committed experiment and is
 paired with its source artefact; the figures referenced in the text
 are compiled plots from the presentation pipeline.
 
-## Mechanism correctness
+### Mechanism correctness
 
 All thirteen active Lambert combinatorial payoff invariants pass on
 the reference simulator. The remaining clause, which covers an
@@ -43,7 +43,7 @@ at the seventeenth decimal confirms redistribution rather than
 creation of value. The narrow Lambert sybil invariance holds with
 residuals at floating-point noise.
 
-## Skill recovery on the known-noise panel
+### Skill recovery on the known-noise panel
 
 On the known-$\sigma$ synthetic panel ($T = 2\,000$, learning rate
 $\rho$ retuned to $0.05$ so that the EWMA saturates on the short
@@ -102,7 +102,7 @@ regret-minimising; it is an estimator of reliability. On a stationary
 panel with known signal, it converges to the correct ranking, and
 this is the experiment that establishes that convergence.
 
-## Forecaster panel integrity
+### Forecaster panel integrity
 
 The seven real-data forecasters are subject to three standing checks
 before any headline comparison is used: no future-data leakage, no
@@ -112,7 +112,7 @@ $3{,}000$-point Elia wind audit slice all three checks pass for all
 seven forecasters; the detailed protocols and diagnostics are in
 Appendix~\ref{app:training-details}.
 
-## Deposit-policy ablation
+### Deposit-policy ablation
 
 A four-way deposit-policy ablation under a fixed weighting rule and
 twenty seeds ($T = 1\,000$, six forecasters, quantile-CRPS scoring)
@@ -156,7 +156,7 @@ quantities observable to the mechanism.}
 \label{fig:deposit-policy}
 \end{figure}
 
-## Weight-rule comparison
+### Weight-rule comparison
 
 A complementary experiment varies the weighting rule for two
 deposit regimes. Under fixed deposits, which isolate the skill
@@ -197,7 +197,7 @@ deposits), simpler weights suffice. The present contribution is to package
 both levers into a single self-financed mechanism that remains
 correct regardless of which channel carries the information.
 
-## Five-step bankroll pipeline ablation
+### Five-step bankroll pipeline ablation
 
 The bankroll pipeline comprises five steps: (A) a confidence proxy
 mapping quantile width to $c_i$; (B) the deposit computation
@@ -250,7 +250,7 @@ deposit-policy ablation above. Variants A$^-$ and C$^-$ are
 near-neutral, with slightly higher concentration because the skill
 signal enters more directly.
 
-## Panel-size scaling
+### Panel-size scaling
 
 The headline synthetic panel has $n = 6$ forecasters. The mechanism's
 behaviour at larger panel sizes --- weight concentration, the bite of
@@ -310,7 +310,7 @@ forecaster and the generating process is fixed. The mechanism's
 share of the oracle gap rises from near zero at $n = 6$ to about
 $10\%$ at $n = 100$, confirming the conditional-improvement framing.
 
-## Risk-aversion sensitivity
+### Risk-aversion sensitivity
 
 The Lambert truthfulness theorem assumes strict risk-neutrality over
 single-round profit. Under risk aversion a participant's optimal

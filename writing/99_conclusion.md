@@ -7,7 +7,7 @@ reliability online, use that learning to weight the aggregate
 forecast, and do so while preserving the economic guarantees that
 give the underlying mechanism its credibility. The empirical and
 theoretical material developed across
-Chapters~\ref{ch:mechanism}--\ref{ch:robustness} answers the
+Chapters~\ref{ch:mechanism}--\ref{ch:results} answers the
 question in three conditional affirmatives.
 
 \paragraph{Online skill recovery is feasible without a subsidy or a
@@ -50,7 +50,7 @@ skill, wager, aggregation, or settlement layers.
 ## Future work
 
 Three follow-ups are immediate. First, the held-out sensitivity
-sweep (Chapter~\ref{ch:real}) has now been refined around the
+sweep (Section~\ref{ch:real}) has now been refined around the
 coarse-grid wind optimum and identifies a slightly better cell at
 $(\gamma, \rho, \lambda) = (28, 0.8, 0.03)$, pushing the held-out
 improvement from $-6.86\%$ to $-7.69\%$; re-running the locked
@@ -62,7 +62,7 @@ reducing the magnitude of the linear-pool miscalibration the
 recalibration layer has to close --- an effect whose importance is
 amplified on the full headline slice, where the tail deviation
 ($0.033$) is roughly double the value on the audit slice
-(Chapter~\ref{ch:recalibration}). Third, a true per-$\tau$ online
+(Section~\ref{ch:recalibration}). Third, a true per-$\tau$ online
 gradient descent aggregator would replace the shifted-median-fan
 reference used as the \citet{vitali2025intermittent} baseline,
 giving a stronger comparison point on each individual quantile
@@ -76,9 +76,9 @@ report-diversification trade-off --- quantifying the sign and
 magnitude of sybil-arbitrage leakage as a function of the
 per-clone perturbation $\varepsilon$ and the attacker's total
 stake --- would generalise the ad-hoc $\varepsilon$-sweep reported
-in Chapter~\ref{ch:robustness} into a bound that holds across
+in Section~\ref{ch:robustness} into a bound that holds across
 attack families. Extending the risk-aversion sensitivity test
-(Chapter~\ref{ch:synthetic}) from a symmetric uniform outcome
+(Section~\ref{ch:synthetic}) from a symmetric uniform outcome
 process to an asymmetric process such as an exponential or a
 truncated-normal would separate the CRPS-alignment artefact from
 the per-round truthfulness gap under risk aversion that the

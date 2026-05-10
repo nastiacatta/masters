@@ -1,6 +1,6 @@
-# Results: post-hoc calibration {#ch:recalibration}
+## Post-hoc calibration {#ch:recalibration}
 
-## Motivation
+### Motivation
 
 The theoretical starting point is the \citet{ranjan2010combining}
 impossibility: any non-trivial weighted average of two or more
@@ -61,7 +61,7 @@ mechanism's aggregate forecast and does not touch the skill layer,
 the wager layer, the aggregation operator, or the settlement. The
 economic argument of the thesis is preserved end-to-end.
 
-## Method
+### Method
 
 The layer implements the isotonic post-processor of
 \citet{kuleshov2018accurate} in a rolling-buffer, prequential
@@ -85,7 +85,7 @@ on information strictly before $t$, and updating the buffer only
 after scoring, avoids any leak of the current round's information
 into the calibration map that scores the current round.
 
-## Headline results
+### Headline results
 
 Table~\ref{tab:recal-headline} reports the post-recalibration
 numbers against the pre-recalibration baseline on the audit slice.
@@ -135,7 +135,7 @@ missed narrowly, not by a factor of two or more; the next section
 argues that this margin is the theoretical floor, not an
 implementation shortfall.
 
-## Calibration on the full-length headline slice
+### Calibration on the full-length headline slice
 
 The recalibration analysis above is defensible only on the
 3{,}000-point audit slice because the audit slice is the one for
@@ -197,7 +197,7 @@ recalibration layer was developed and tuned on the audit slice; a
 natural follow-up is to refit the isotonic map on the full slice,
 which Chapter~\ref{ch:conclusion} flags as future work.
 
-## Interpretation
+### Interpretation
 
 The headline target, closing the tail calibration gap, partly
 succeeds. A $41\%$ reduction takes the mean tail deviation from
@@ -267,7 +267,7 @@ calibration across the $\tau$ grid, not just at the tails, so the
 systematic pattern of under-coverage below the median and
 over-coverage above is corrected uniformly.
 
-## Orthogonality to the economic layers
+### Orthogonality to the economic layers
 
 The recalibration layer preserves the economic structure of the
 mechanism end-to-end. Its implementation is a single module that
@@ -278,7 +278,7 @@ matches the pre-feature baseline exactly, so the recalibration
 is a pure post-processor and not a partial re-parameterisation of
 the economic layers.
 
-## Design choice: rolling buffer
+### Design choice: rolling buffer
 
 \citet{kuleshov2018accurate} establish consistency of the isotonic
 post-processor under an i.i.d.\ assumption: given a large enough
@@ -308,7 +308,7 @@ five hundred rounds. The rolling version is retained because it is
 required for the electricity and horizon runs, where
 non-stationarity is expected.
 
-## Out of scope
+### Out of scope
 
 Three natural extensions of this layer are deferred to future work.
 The first is the Beta-transformed linear pool

@@ -1,6 +1,6 @@
-# Results: strategic robustness {#ch:robustness}
+## Strategic robustness {#ch:robustness}
 
-This chapter evaluates the mechanism against a catalogue of
+This section evaluates the mechanism against a catalogue of
 strategic adversaries. Each adversary is grounded in published
 theoretical work, evaluated across at least ten seeds, and reported
 with paired summary statistics and $95\%$ confidence intervals. The
@@ -8,7 +8,7 @@ catalogue is organised around named threat models from the
 wagering-mechanism literature rather than around ad-hoc behavioural
 presets.
 
-## Adversary catalogue
+### Adversary catalogue
 
 Table~\ref{tab:adversary-catalogue} lists the nine archetypes
 together with their theoretical bases.
@@ -50,7 +50,7 @@ boundary-violating variant is the \emph{leaked-future} setting of
 the privileged-information insider, which is retained as an audit
 check rather than a realistic attack.
 
-## Arbitrage scan
+### Arbitrage scan
 
 The \citet{chen2014arbitrage} arbitrage interval predicts a monotone
 relationship between the skill-gate floor $\lambda$ and arbitrage
@@ -98,7 +98,7 @@ $4$ benign participants at the same $\lambda$. Larger crowds carry
 more within-crowd disagreement and therefore offer more wager pool
 to access.
 
-## Collusion
+### Collusion
 
 A three-member coalition is evaluated over twenty seeds using two
 coalition-report rules, reported in Table~\ref{tab:collusion}.
@@ -124,7 +124,7 @@ Weighted-median variant
 Both coalition variants extract strictly positive profit, with the
 weighted-mean variant marginally better in expectation.
 
-### Informed collusion
+#### Informed collusion
 
 The combined-attack variant has three insiders acting as a coalition
 under an AR(1) data-generating process ($\varphi = 0.7$,
@@ -153,7 +153,7 @@ The two channels compound: the informed coalition extracts
 approximately $40\%$ more profit than pure collusion
 (\,$+33.84$ against $+24.12$).
 
-## Insider advantage
+### Insider advantage
 
 Under the same AR(1) data-generating process, a single insider with
 a low-variance lagged signal (lag $1$, observation noise $0.015$) is
@@ -164,7 +164,7 @@ boundary honest. Under an i.i.d.\ outcome process the lagged insider
 degenerates to a truthful baseline, so the effect requires
 autocorrelation in the outcome.
 
-## Sybil-proofness
+### Sybil-proofness
 
 Two separate sybil audits are run. The first tests the narrow Lambert
 invariance directly: clones reporting identical values with conserved
@@ -211,7 +211,7 @@ participant count $N_\mathrm{eff}$ inflates as $k$ grows, but this is
 an artefact of counting identities rather than influence and has no
 payoff consequence.
 
-### Report-diversification $\varepsilon$-sweep
+#### Report-diversification $\varepsilon$-sweep
 
 The Lambert invariance holds for identical clone reports. An
 empirically natural next question is how the invariance degrades
@@ -267,7 +267,7 @@ require a best-response analysis over $\varepsilon$ and the
 attacker's total stake, which is flagged as follow-up work in
 Chapter~\ref{ch:conclusion}.
 
-## Wash trading
+### Wash trading
 
 A parimutuel wash experiment over ten seeds evaluates two activity-
 gaming styles. Anchor-style wash inflates activity by approximately
@@ -276,7 +276,7 @@ inflates by $112\%$ but pays a large score-rule cost, leaving the
 attacker deeply in the red ($-261.51$). Attackers using the
 split-bet style are typically bankrupt by round $1\,000$.
 
-## Strategic reporting
+### Strategic reporting
 
 A pull sweep towards target $= 0.9$ characterises the
 strategic-reporting frontier. Gentle nudges (pull $= 0.3$) are the
@@ -287,7 +287,7 @@ the profit is strongly negative ($-10.00$). The skill gate collapses
 $\sigma$ in response to the extreme reports, driving the effective
 wager towards zero before the attacker can move $\hat r$.
 
-## Detection adaptation
+### Detection adaptation
 
 An online $z$-score detector with target $\mu = 0.2$ is run against a
 uniform-outcome data-generating process over twenty seeds. Both the
@@ -298,7 +298,7 @@ marginally reduces the loss but cannot flip the sign. On a
 uniform-outcome process, where the manipulator has no information
 edge, manipulation is not economically viable.
 
-## Whitewashing (reputation reset)
+### Whitewashing (reputation reset)
 
 \citet{feldman2004freeriding} catalogue the whitewashing attack on
 reputation systems: a participant whose reputation has collapsed
@@ -336,7 +336,7 @@ current mechanism does not close. Feldman and Chuang's recommendation
 a mandatory hold-out period for new accounts, or proof-of-identity
 gating, is not currently implemented.
 
-## Invariants holding under attack
+### Invariants holding under attack
 
 The adversary suite is designed to test specific invariants. Each of
 the following holds on the committed implementation. Arbitrage
@@ -352,7 +352,7 @@ approximately zero and the split-bet profit strongly negative.
 Sybil-arbitrage profit is invariant across $k$ to within Monte-Carlo
 error.
 
-## Summary
+### Summary
 
 The mechanism is strongest against four classes of attack. The
 narrow Lambert sybil invariance holds to machine precision and

@@ -166,22 +166,18 @@ plays the role of the theoretical contribution; it sits between
 background and methodology because it introduces the object that
 the methodology then evaluates.
 Chapter~\ref{ch:methodology} describes the datasets, the forecaster
-panel, and the experimental protocol. The results are split across
-four chapters for readability:
-Chapter~\ref{ch:synthetic} covers synthetic validation (mechanism
-correctness, skill recovery, deposit-policy ablation, weight-rule
-comparison, bankroll-pipeline ablation, panel-size scaling, and
-risk-aversion sensitivity);
-Chapter~\ref{ch:real} covers real-data validation on Elia offshore
-wind and electricity-imbalance prices, together with an external
-comparison against Elia's own operational forecast;
-Chapter~\ref{ch:recalibration} develops a rolling isotonic
-recalibration layer as a post-hoc remedy for the
-\citet{ranjan2010combining} linear-pool miscalibration; and
-Chapter~\ref{ch:robustness} evaluates the mechanism against the
+panel, and the experimental protocol.
+Chapter~\ref{ch:results} reports the empirical evidence in four
+sections: synthetic validation (mechanism correctness, skill
+recovery, deposit-policy ablation, weight-rule comparison,
+bankroll-pipeline ablation, panel-size scaling, and risk-aversion
+sensitivity); real-data validation on Elia offshore wind and
+electricity-imbalance prices; a rolling isotonic recalibration
+layer as a post-hoc remedy for the \citet{ranjan2010combining}
+linear-pool miscalibration; and strategic robustness under a
 theory-grounded adversary catalogue.
-Chapter~\ref{ch:discussion} interprets the results, places them
-in the context of prior work, and records limitations.
+Chapter~\ref{ch:discussion} interprets the evidence, places it in
+the context of prior work, and records limitations.
 Chapter~\ref{ch:conclusion} summarises the findings and outlines
 future work.
 Chapter~\ref{ch:project-management} records the project plan and

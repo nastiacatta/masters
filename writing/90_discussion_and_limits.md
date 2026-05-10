@@ -1,6 +1,6 @@
 # Discussion {#ch:discussion}
 
-This chapter interprets the results of Chapters~\ref{ch:synthetic}
+This chapter interprets the results of Sections~\ref{ch:synthetic}
 through~\ref{ch:robustness}, places them against the wider forecast
 combination and mechanism design literature, and states the scope
 conditions under which the headline claims hold.
@@ -104,7 +104,7 @@ $12\%$ sharpness cost. \citet{gneiting2007probabilistic}'s
 calibration-sharpness principle states that calibration is to be
 maximised subject to sharpness; our result sits squarely inside the
 theoretical floor stated in Proposition~\ref{prop:recal-floor}
-(Chapter~\ref{ch:recalibration}): isotonic post-processing of an
+(Section~\ref{ch:recalibration}): isotonic post-processing of an
 under-dispersed forecast can only re-spread probability mass. The
 fact that three pre-declared spec targets are each missed by a
 narrow margin is therefore not a tuning problem --- the
@@ -140,7 +140,7 @@ panel, not a failure of the mechanism.
 synthetic panels with approximately ten forecasters and
 $T \approx 1{,}000$ rounds are not optimal on the wind series,
 where a more aggressive $(\gamma, \rho)$ is preferred. The
-held-out sensitivity sweep reported in Chapter~\ref{ch:real}
+held-out sensitivity sweep reported in Section~\ref{ch:real}
 selects the wind-specific parameters; a poorly tuned skill gate
 renders the mechanism marginal against uniform.
 
@@ -164,7 +164,7 @@ depends on the attack: an unrelated report-diversified sybil
 accrues roughly a $6.5\%$ advantage, while the diversified-report
 variant of the Chen--Devanur--Pennock--Vaughan arbitrage attack
 \emph{loses} monotonically in the perturbation scale
-(Chapter~\ref{ch:robustness}). Both results lie outside the
+(Section~\ref{ch:robustness}). Both results lie outside the
 narrow Lambert scope.
 
 \paragraph{Truthfulness under risk-neutrality only.} The linear
@@ -201,7 +201,7 @@ pre-audit presentations by small but measurable amounts, and the
 pre-audit snapshot is retained for comparison. The finite-grid
 CRPS approximation uses a nine-level grid with small but non-zero
 approximation bias; pointwise quantile coverage
-(Chapter~\ref{ch:real}) is not subject to the same bias.
+(Section~\ref{ch:real}) is not subject to the same bias.
 
 \paragraph{External validity.} The evaluation draws on two series
 from a single European transmission system operator. Transfer to

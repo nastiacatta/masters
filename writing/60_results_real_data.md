@@ -1,6 +1,6 @@
-# Results: real-data validation {#ch:real}
+## Real-data validation {#ch:real}
 
-This chapter reports the empirical results on the two real-data
+This section reports the empirical results on the two real-data
 series: Elia offshore-wind power and Elia electricity-imbalance
 prices. Two wind slices are analysed in parallel with distinct
 purposes. The \emph{headline slice} is the full 17,344-hour run
@@ -10,14 +10,14 @@ is a 3,000-point subset under the older warmup-window normalisation;
 it is retained as the reference slice for per-quantile calibration
 analysis and for cross-checking against the published OGD reference.
 
-## Elia offshore wind: full-length run
+### Elia offshore wind: full-length run
 
 The headline slice covers $T = 17{,}344$ evaluation rounds after a
 200-round warmup, with seven real forecasters, expanding causal
 normalisation, and tuned parameters
 $(\gamma, \rho, \lambda, \eta) = (16, 0.5, 0.05, 2)$.
 
-### Aggregate comparison
+#### Aggregate comparison
 
 Table~\ref{tab:wind-headline} reports mean CRPS on the normalised
 $[0, 1]$ scale for the full suite of methods.
@@ -99,7 +99,7 @@ the skill gate has no adversarial tail to discard and therefore
 no structural advantage over robust averaging. Chapter 8 revisits
 this under synthetic adversarial behaviour.
 
-### Per-forecaster skill and weight ordering
+#### Per-forecaster skill and weight ordering
 
 Table~\ref{tab:wind-skill-ordering} reports the steady-state learned
 skill $\sigma$ over the final $20\%$ of rounds, together with the
@@ -131,7 +131,7 @@ identifies XGBoost as the top-skill forecaster. The mechanism
 therefore reconstructs the forecaster ranking from data alone,
 without being told which model is best a priori.
 
-### External validation against the Elia operational forecast
+#### External validation against the Elia operational forecast
 
 Table~\ref{tab:elia-operational} compares our mechanism and best
 single forecaster against Elia's own published operational
@@ -177,7 +177,7 @@ numerical-weather-prediction forecasts and motivates the
 recalibration layer developed in Chapter 7 as a generic operational
 tool.
 
-## Elia offshore wind: calibration anchor slice
+### Elia offshore wind: calibration anchor slice
 
 The calibration anchor covers the first $3\,000$ evaluation points
 under the older warmup-window causal normalisation, on the post-fix
@@ -189,7 +189,7 @@ would cause static normalisation to clip approximately $46\%$ of
 evaluation values to zero and render per-quantile coverage
 uninterpretable.
 
-### Aggregate comparison
+#### Aggregate comparison
 
 Table~\ref{tab:wind-audit} reports the aggregate comparison on the
 audit slice.
@@ -225,7 +225,7 @@ reference by $1.5\%$ CRPS. The Diebold--Mariano statistic for the
 mechanism against uniform on this slice is $t = +15.43$ with
 $p < 10^{-6}$.
 
-### Per-forecaster CRPS on the audit slice
+#### Per-forecaster CRPS on the audit slice
 
 Table~\ref{tab:wind-audit-per-agent} reports the per-forecaster
 CRPS, which provides the per-agent ranking used to compute the
@@ -260,7 +260,7 @@ on a $3\,000$-point slice produces tighter losses than expanding
 normalisation on $17{,}344$ points; both runs agree on the
 \emph{ordering}.
 
-### Tail calibration
+#### Tail calibration
 
 Table~\ref{tab:wind-audit-coverage} reports per-$\tau$ empirical
 coverage on the audit slice.
@@ -294,7 +294,7 @@ is $0.029$. The pattern is systematic over-coverage at every
 quantile level: the aggregate quantile function is right-shifted.
 This is corrected by the recalibration layer developed in Chapter 7.
 
-### Mechanism versus published per-quantile OGD
+#### Mechanism versus published per-quantile OGD
 
 Table~\ref{tab:vitali-audit} compares the mechanism against the
 \citet{vitali2025intermittent} per-quantile OGD baseline on the same slice.
@@ -326,7 +326,7 @@ budget-balance constraint and learning per-$\tau$ weights directly;
 our recalibration layer closes most of the centre deviation in
 Chapter 7 without relaxing budget balance.
 
-## Elia electricity imbalance: null result
+### Elia electricity imbalance: null result
 
 The Elia electricity-imbalance series covers $T = 10{,}000$ raw
 points ($T_\mathrm{eval} = 9{,}800$ evaluation rounds after a
@@ -373,7 +373,7 @@ so a perfect per-round weight could improve a great deal, but not
 via an EWMA or OGD on this forecaster panel, because the
 forecasters themselves are undifferentiated.
 
-## Horizon experiments
+### Horizon experiments
 
 Horizon-specific experiments under the older warmup-window
 normalisation provide a sanity check on the mechanism's behaviour
@@ -413,7 +413,7 @@ list of remaining work; the direction of the comparisons is stable
 and the magnitudes are expected to shift by under one percentage
 point.
 
-## Published-OGD head-to-head
+### Published-OGD head-to-head
 
 Table~\ref{tab:head-to-head-wind} reports the wind head-to-head
 against \citet{vitali2025intermittent} and \citet{raja2024wagering} on the
@@ -445,7 +445,7 @@ electricity). This is the CRPS cost of preserving the Lambert
 budget-balance and per-round truthfulness guarantees: Vitali's
 aggregator drops both in exchange for CRPS.
 
-## Sensitivity sweep and parameter provenance
+### Sensitivity sweep and parameter provenance
 
 Tuned parameters are selected through the held-out sweep described
 in Chapter 3, not by hand.
@@ -479,7 +479,7 @@ sweep-selected parameters is on the list of remaining work. The
 expected shift is sub-percent CRPS in either direction; the
 direction of the DM statistic and the method ranking are stable.
 
-## Sensitivity of the wind optimum: plateau or peak?
+### Sensitivity of the wind optimum: plateau or peak?
 
 The coarse $\gamma \times \rho \times \lambda$ sweep identifies an
 optimum at $(\gamma, \rho, \lambda) = (32, 0.7, 0.05)$ on the wind
@@ -507,7 +507,7 @@ $0.8$. This localises the hyperparameter tuning risk: the headline
 number is robust to $\gamma$ and $\rho$ mis-specification but
 depends materially on keeping $\lambda$ small.
 
-## Regime-shift robustness: restart-per-season
+### Regime-shift robustness: restart-per-season
 
 The headline run is a single online pass over the 2024--2025 wind
 series. Skill estimates therefore carry across seasonal regimes,
