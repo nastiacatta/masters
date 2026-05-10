@@ -758,6 +758,11 @@ export interface RealDataResult {
     preset: string;
     mean_crps: number;
     delta_crps_vs_equal: number;
+    // Added in audit pass 1 (C1): 95% stationary circular
+    // block-bootstrap CIs on the paired delta vs uniform.
+    delta_ci_lower?: number;
+    delta_ci_upper?: number;
+    delta_bootstrap_se?: number;
   }>;
   per_round: Array<{
     t: number;
@@ -787,6 +792,12 @@ export interface RealDataResult {
     significant_at_001: boolean;
     significant_at_005: boolean;
     comparison: string;
+    // Added in audit pass 1 (B1): Andrews (1991) data-driven HAC bandwidth
+    // is the new default. The legacy horizon-1 statistic is preserved
+    // under statistic_legacy_horizon1 for back-compat diff.
+    hac_lag?: number;
+    hac_bandwidth_mode?: string;
+    statistic_legacy_horizon1?: number;
   };
   dm_test_skill?: {
     statistic: number;
@@ -794,6 +805,9 @@ export interface RealDataResult {
     significant_at_001: boolean;
     significant_at_005: boolean;
     comparison: string;
+    hac_lag?: number;
+    hac_bandwidth_mode?: string;
+    statistic_legacy_horizon1?: number;
   };
   // Per-agent CRPS over time (downsampled ~600 points)
   per_agent_crps?: Array<Record<string, number>>;
