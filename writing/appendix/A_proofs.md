@@ -105,36 +105,48 @@ $
 and show (their Theorem~1) that $\mathrm{QA}_s$ maximises the
 worst-case expected score of a forecaster who sub-contracts $n$
 experts under $s$ and pays them in proportion to $w$. Their
-Theorem~3 establishes a continuous-forecast analogue.
+Theorem~3 extends the correspondence to continuous-outcome
+forecast spaces.
 
 For the quadratic score, $\mathrm{QA}_s$ reduces to the linear
-pool: aggregating forecast means via $\hat q = \sum_i w_i q_i$.
-For the logarithmic score, $\mathrm{QA}_s$ reduces to the
-logarithmic pool on probability densities.
+pool: the aggregate is the weighted arithmetic mean of the
+experts' point forecasts. For the logarithmic score, $\mathrm{QA}_s$
+reduces to the logarithmic pool on probability densities.
 
-For the pinball scoring rule at level $\tau$,
-$L^\tau(\hat q, y) = (y - \hat q)\bigl(\tau - \mathbb{1}[y < \hat q]\bigr)$,
-the max-min aggregator at fixed weights is \emph{not} in general
-the weighted arithmetic mean of the $\tau$-reports: it is the
-weighted \emph{$\tau$-quantile} of the reports, which under
-uniform weights reduces to the ordinary sample $\tau$-quantile.
-This is the statistical-decision analogue of the familiar fact
-that the pinball loss is minimised at the quantile, not the mean.
+For the pinball score
+$s(\hat q, y) = -L^\tau(\hat q, y)
+ = -(y - \hat q)\bigl(\tau - \mathbb{1}[y < \hat q]\bigr)$
+on a level-by-level $\tau$-grid, $\mathrm{QA}_s$ is the
+\emph{weighted arithmetic mean of the expert reports at each
+level}. A direct check confirms this: for weights
+$w = (w_1, \dots, w_n)$ on the simplex, the worst-case deviation
+$\min_y \bigl[\sum_i w_i L^\tau(q_i, y) - L^\tau(\hat q, y)\bigr]$
+is maximised, across $\hat q \in \mathbb{R}$, at
+$\hat q = \sum_i w_i q_i$; moving $\hat q$ away from the weighted
+mean introduces a sign-definite term in $y$ that the adversary
+can exploit. The finite-grid aggregation operator of this thesis
+is therefore the QA pool for the pinball score, applied
+level-by-level.
 
-The pointwise arithmetic mean used here is therefore not the
-max-min-optimal quasi-arithmetic pool for the pinball score. It is
-instead the Raja--Pinson--Kazempour--Grammatico
-\citep{raja2024wagering} quantile-averaging aggregator, which is
-motivated by budget-balance and truthfulness considerations on the
-Lambert weighted-score mechanism rather than by max-min
-optimality: it aggregates the reported quantile grid coordinate by
-coordinate, preserves monotonicity provided each expert's report
-is monotone, and admits a linear settlement algebra. The two
-aggregation philosophies, QA-optimal and budget-balanced, coincide
-for the quadratic score but diverge for the pinball score; the
-CRPS cost of the divergence on the Elia wind data is quantified in
-Section~\ref{ch:real} (mechanism versus per-$\tau$ OGD, roughly
-eleven percentage points of CRPS on the full-length run).
+Two caveats are worth recording. First, this aggregator is
+\emph{not} the same as the linear opinion pool over CDFs, to which
+the \citet{ranjan2010combining} calibration impossibility strictly
+applies. The two coincide only for the quadratic score; the
+under-dispersion pathology observed on the Elia wind data
+(Section~\ref{ch:recalibration}) is a non-strict analogue that
+nonetheless arises for pointwise quantile averaging whenever
+experts disagree on location
+(Proposition~\ref{prop:qa-under-dispersion}). Second, the QA pool
+is a \emph{weights-fixed} max-min aggregator: it does not itself
+learn the weights. In the present mechanism the weights are
+derived from the effective wager
+$w_i = m_i / \sum_j m_j$; in the
+\citet{vitali2025intermittent} design the weights are learned per
+level by simplex-projected online gradient descent, at the cost of
+budget balance. The CRPS gap between the two approaches on the
+Elia wind data (roughly eleven percentage points on the
+full-length run, see Section~\ref{ch:real}) is the price of
+preserving the Lambert settlement algebra.
 
 ## EWMA consistency under stationarity
 

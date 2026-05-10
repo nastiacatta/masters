@@ -332,9 +332,10 @@ identity after the first deep loss and restarts from the prior,
 cutting the cumulative loss to $-3.49$. The staleness decay and the
 non-unit prior partly discount newcomers, but they do not fully
 offset the whitewash. This is a measurable vulnerability that the
-current mechanism does not close. Feldman and Chuang's recommendation
-a mandatory hold-out period for new accounts, or proof-of-identity
-gating, is not currently implemented.
+current mechanism does not close. The standard remedy, a mandatory
+hold-out period for new accounts or proof-of-identity gating
+\citep{feldman2004freeriding}, is out of scope for the present
+thesis.
 
 ### Invariants holding under attack
 

@@ -72,28 +72,28 @@ averaging:
   \hat q(\tau_k) &= \sum_i w_i \cdot q_i(\tau_k).
 \end{align}
 This operator has a theoretical grounding beyond being the
-obvious averaging rule for quantile reports. Pointwise weighted
-quantile averaging is the natural analogue of the linear opinion
-pool under quantile representation: interval width and median
-commute with convex combinations in the forecast coordinate, and
-the finite-grid implementation reduces to a weighted arithmetic
-mean at each level. The same aggregation operator is used by
-\citet{raja2024wagering} in their quantile extension of the
-Lambert mechanism. The Ranjan-Gneiting impossibility applies
-literally to linear pools of CDFs, not to this operator; an
-analogous under-dispersion pathology nonetheless arises (stated
-formally as Proposition~\ref{prop:qa-under-dispersion} in
-Section~\ref{ch:recalibration}) whenever experts disagree on
-location.
-
-The max-min-optimal aggregator for pinball-style scoring rules is
-a more delicate object, covered under the quasi-arithmetic (QA)
-pooling correspondence of \citet{neyman2021quasiarithmetic}; the
-operator implemented here coincides with the QA pool for quadratic
-scores and with the Raja--Pinson operator for pinball scores on a
-finite grid. A discussion of the precise correspondence, including
-the sense in which their Theorem~1 transfers to a $\tau$-grid
-implementation, is deferred to Appendix~\ref{app:qa-pool}.
+obvious averaging rule for quantile reports. It is the
+quasi-arithmetic (QA) pool of
+\citet{neyman2021quasiarithmetic} with respect to the pinball
+score at each level, applied independently on the $\tau$-grid:
+the principal who sub-contracts $n$ experts under the pinball
+score and pays them in proportion to their weights maximises
+worst-case expected profit by reporting the weighted arithmetic
+mean of the experts' level-$\tau$ quantile reports. For the
+quadratic score the same operator coincides with the linear
+opinion pool over means; for the pinball score it extends the
+same principle to the quantile coordinate. The same operator is
+used by \citet{raja2024wagering} in their quantile extension of
+the Lambert mechanism. The
+\citet{ranjan2010combining} impossibility applies literally to
+linear pools of CDFs, not to the QA pool for pinball; an analogous
+under-dispersion pathology nonetheless arises whenever experts
+disagree on location
+(Proposition~\ref{prop:qa-under-dispersion} in
+Section~\ref{ch:recalibration}), and the recalibration layer
+addresses it post-hoc. The precise statement of the QA
+correspondence and the finite-grid implementation are in
+Appendix~\ref{app:qa-pool}.
 
 ### Step 4: scoring and settlement
 
@@ -573,9 +573,9 @@ panels with approximately ten participants and $T \sim 1000$ rounds.
 The Elia wind series contains $T = 17\,544$ raw hourly points
 ($17\,344$ evaluation rounds after a 200-round warmup) with seven
 forecasters of stable relative quality, which rewards faster, more
-decisive skill differentiation. Tuned values are
-$(\gamma, \rho) = (16, 0.5)$ for the locked expanding-mode headline
-(Chapter~\ref{ch:real}).
+decisive skill differentiation. Tuned values for the
+expanding-normalisation headline comparison are
+$(\gamma, \rho) = (16, 0.5)$ (Section~\ref{ch:real}).
 
 Hyperparameter selection follows a held-out-split protocol. The
 sweep scores the mechanism on the last $40\%$ of each series,
@@ -584,12 +584,11 @@ grid spans
 $\gamma \in \{4, 8, 16, 32, 64\}$, $\rho \in \{0.1, 0.3, 0.5, 0.7\}$,
 and $\lambda \in \{0.05, 0.2\}$, producing $40$ cells per series.
 The held-out optima themselves are reported alongside the
-real-data results in Chapter~\ref{ch:real}
+real-data results in Section~\ref{ch:real}
 (Table~\ref{tab:sensitivity-sweep}). A higher floor $\lambda = 0.2$
 is uniformly worse than $\lambda = 0.05$ on both series, and the
 $\gamma$ optimum on wind pushes the top of the grid. Electricity
 optima lie in a tight band of $-0.17$ to $-0.22\%$, consistent with
 the forecast-combination-puzzle regime discussed in
-Section~\ref{ch:real}:
-when forecasters are undifferentiated, the skill signal has
-nothing to extract.
+Section~\ref{ch:real}: when forecasters are undifferentiated, the
+skill signal has nothing to extract.

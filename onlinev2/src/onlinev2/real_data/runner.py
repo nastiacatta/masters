@@ -655,6 +655,60 @@ def run_real_data_comparison(
     # Summary
     mean_uniform = float(np.mean(crps_per_rule["uniform"]))
     mean_mechanism = float(np.mean(crps_per_rule["mechanism"]))
+
+    # Block-bootstrap 95% CIs on the paired ``delta_crps_vs_equal = mean(d)
+    # where d_t = method(t) - uniform(t)``. The stationary (circular) block
+    # bootstrap preserves the autocorrelation structure of real-data losses
+    # that a naive iid bootstrap would destroy. See ``stats.bootstrap_ci``.
+    # Bandwidth picked to ≈ one week of hourly wind (168 h) or the closest
+    # equivalent for a given T.
+    from .stats import bootstrap_ci as _bootstrap_ci
+    crps_uniform_arr_for_ci = np.asarray(crps_per_rule["uniform"], dtype=np.float64)
+    _ci_block_size = max(20, min(168, len(crps_uniform_arr_for_ci) // 20))
+    _ci_cache: dict[str, dict] = {}
+
+    def _delta_ci_for_rule(rule_name: str) -> dict:
+        """Return the 95% block-bootstrap CI on mean(method - uniform)."""
+        if rule_name in _ci_cache:
+            return _ci_cache[rule_name]
+        if rule_name == "uniform":
+            ci = {
+                "delta_ci_lower": 0.0,
+                "delta_ci_upper": 0.0,
+                "delta_bootstrap_se": 0.0,
+            }
+        else:
+            method_arr = np.asarray(crps_per_rule[rule_name], dtype=np.float64)
+            # Align lengths and drop NaN rows jointly.
+            n_align = min(len(method_arr), len(crps_uniform_arr_for_ci))
+            m = method_arr[:n_align]
+            u = crps_uniform_arr_for_ci[:n_align]
+            mask = np.isfinite(m) & np.isfinite(u)
+            if mask.sum() < 50:
+                ci = {
+                    "delta_ci_lower": float("nan"),
+                    "delta_ci_upper": float("nan"),
+                    "delta_bootstrap_se": float("nan"),
+                }
+            else:
+                # bootstrap_ci returns mean_diff = mean(losses_1 - losses_2);
+                # we pass (method, uniform) so mean_diff == delta_crps_vs_equal.
+                ci_raw = _bootstrap_ci(
+                    m[mask],
+                    u[mask],
+                    n_bootstrap=1000,
+                    block_size=_ci_block_size,
+                    alpha=0.05,
+                    seed=seed,
+                )
+                ci = {
+                    "delta_ci_lower": round(ci_raw["ci_lower"], 6),
+                    "delta_ci_upper": round(ci_raw["ci_upper"], 6),
+                    "delta_bootstrap_se": round(ci_raw["bootstrap_se"], 6),
+                }
+        _ci_cache[rule_name] = ci
+        return ci
+
     rows = []
     for rule in rules + [
         "oracle",
@@ -667,7 +721,7 @@ def run_real_data_comparison(
         # filter NaN defensively for the summary aggregate
         valid = [v for v in values if not (isinstance(v, float) and np.isnan(v))]
         mean_crps = float(np.mean(valid)) if valid else float("nan")
-        rows.append({
+        row = {
             "experiment": f"real_data_{series_name}",
             "method": rule,
             "seed": 0,
@@ -675,14 +729,16 @@ def run_real_data_comparison(
             "preset": "fixed_deposits",
             "mean_crps": mean_crps,
             "delta_crps_vs_equal": mean_crps - mean_uniform,
-        })
+        }
+        row.update(_delta_ci_for_rule(rule))
+        rows.append(row)
 
     # --- Recalibration summary row (additive; recalibrate=True only) ---
     if recalibrate and "mechanism_recal" in crps_per_rule:
         values = crps_per_rule["mechanism_recal"]
         valid = [v for v in values if not (isinstance(v, float) and np.isnan(v))]
         mean_crps_recal = float(np.mean(valid)) if valid else float("nan")
-        rows.append({
+        row = {
             "experiment": f"real_data_{series_name}",
             "method": "mechanism_recal",
             "seed": 0,
@@ -690,7 +746,9 @@ def run_real_data_comparison(
             "preset": "fixed_deposits",
             "mean_crps": mean_crps_recal,
             "delta_crps_vs_equal": mean_crps_recal - mean_uniform,
-        })
+        }
+        row.update(_delta_ci_for_rule("mechanism_recal"))
+        rows.append(row)
 
     result = {
         "config": {
@@ -991,25 +1049,43 @@ def run_real_data_comparison(
     result["sensitivity"] = sensitivity_block
 
     # --- Diebold-Mariano tests ---
+    # Uses Andrews (1991) data-driven HAC bandwidth by default (stats.py
+    # fix B1). This is more conservative than the legacy horizon-1
+    # bandwidth on autocorrelated real-data series; the reported
+    # ``statistic`` and ``p_value`` are now defensible against an
+    # econometrics-literate reviewer. The legacy horizon-1 values are
+    # also emitted for back-compat and as a sensitivity check.
     crps_uniform_arr = np.array(crps_per_rule["uniform"])
     crps_mechanism_arr = np.array(crps_per_rule["mechanism"])
     dm_mech = diebold_mariano_test(crps_uniform_arr, crps_mechanism_arr, h=1)
+    dm_mech_legacy = diebold_mariano_test(
+        crps_uniform_arr, crps_mechanism_arr, h=1, hac_bandwidth=None
+    )
     result["dm_test"] = {
         "statistic": round(dm_mech["dm_stat"], 4),
         "p_value": round(dm_mech["p_value"], 6),
         "significant_at_001": dm_mech["p_value"] < 0.001,
         "significant_at_005": dm_mech["p_value"] < 0.05,
         "comparison": "uniform vs mechanism",
+        "hac_lag": int(dm_mech["hac_lag"]),
+        "hac_bandwidth_mode": dm_mech["hac_bandwidth_mode"],
+        "statistic_legacy_horizon1": round(dm_mech_legacy["dm_stat"], 4),
     }
 
     crps_skill_arr = np.array(crps_per_rule["skill"])
     dm_skill = diebold_mariano_test(crps_uniform_arr, crps_skill_arr, h=1)
+    dm_skill_legacy = diebold_mariano_test(
+        crps_uniform_arr, crps_skill_arr, h=1, hac_bandwidth=None
+    )
     result["dm_test_skill"] = {
         "statistic": round(dm_skill["dm_stat"], 4),
         "p_value": round(dm_skill["p_value"], 6),
         "significant_at_001": dm_skill["p_value"] < 0.001,
         "significant_at_005": dm_skill["p_value"] < 0.05,
         "comparison": "uniform vs skill",
+        "hac_lag": int(dm_skill["hac_lag"]),
+        "hac_bandwidth_mode": dm_skill["hac_bandwidth_mode"],
+        "statistic_legacy_horizon1": round(dm_skill_legacy["dm_stat"], 4),
     }
 
     # --- Per-agent CRPS time series (downsampled) ---
