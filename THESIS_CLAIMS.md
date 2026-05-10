@@ -531,32 +531,40 @@ because the panel mixes XGBoost with weaker models.
 ### Evidence (full 17 344-hour Elia wind series, 2024–2025)
 
 CRPS-MW-equivalent scale (normalised CRPS × (series_max − series_min)
-with series_max = 2208.7 MW, series_min = 0 MW):
+with series_max = 2208.7 MW, series_min = 0 MW).
 
-| Forecast source | CRPS (MW-equiv) | Source |
-|---|---:|---|
-| Elia `mostrecentforecast` (real-time, NWP) | 74.0 | Elia public data |
-| Elia `dayaheadforecast` (day-ahead, NWP) | 98.6 | Elia public data |
-| Elia `dayahead11hforecast` | 102.7 | Elia public data |
-| Elia `weekaheadforecast` | 372.4 | Elia public data |
-| **our best_single (online XGBoost)** | **69.5** | This thesis |
-| our per_round_inv_crps_hindsight (oracle) | 70.1 | This thesis |
-| our median | 81.7 | This thesis |
-| our mechanism | 83.7 | This thesis |
-| our uniform | 90.1 | This thesis |
+**Grid-matched** (both Elia and the mechanism scored on the nine-level
+equidistant τ-grid by linear interpolation of Elia's tri-quantile fan;
+this is the apples-to-apples comparison):
+
+| Forecast source | CRPS 9-grid (MW-eq) | CRPS 3-grid (MW-eq) | Source |
+|---|---:|---:|---|
+| Elia `mostrecentforecast` (real-time, NWP) | 90.7 | 74.0 | Elia public data |
+| Elia `dayaheadforecast` (day-ahead, NWP) | 121.2 | 98.6 | Elia public data |
+| Elia `dayahead11hforecast` | 126.5 | 102.7 | Elia public data |
+| Elia `weekaheadforecast` | 452.7 | 372.4 | Elia public data |
+| **our best_single (online XGBoost)** | **69.5** | — | This thesis |
+| our per_round_inv_crps_hindsight (oracle) | 70.1 | — | This thesis |
+| our median | 81.7 | — | This thesis |
+| our mechanism | 83.7 | — | This thesis |
+| our uniform | 90.1 | — | This thesis |
 
 ### Interpretation
 
 - **XGBoost on observed series beats Elia's NWP-driven real-time
-  forecast by ~6%.** The online model uses only lag features of the
-  measured wind power; Elia's operational forecast uses weather
-  inputs and a physical model. This is a meaningful baseline for
-  anyone building wind-forecasting systems from scratch.
-- **Mechanism is ~13% worse than Elia's real-time forecast.** When
-  aggregating the seven-forecaster panel, the mechanism averages
-  XGBoost (83.7 MW) with weaker models (Theta at ~149 MW, EWMA at
-  ~139 MW), giving a composite that trails Elia's single-best
-  operational forecast.
+  forecast by ~23% on the matched nine-level grid** (or ~6% if
+  Elia is scored on its native three-point grid; the three-point
+  rule under-integrates the pinball integrand on this series and
+  artificially flatters Elia). The online model uses only lag
+  features of the measured wind power; Elia's operational forecast
+  uses weather inputs and a physical model. This is a meaningful
+  baseline for anyone building wind-forecasting systems from
+  scratch.
+- **Mechanism beats Elia's real-time forecast by ~8% on the matched
+  nine-level grid.** On the native three-grid, the mechanism trailed
+  Elia's three-point forecast by ~13%; the ranking flipped when the
+  grid mismatch is removed. Against Elia's day-ahead forecast
+  (121.2 MW on nine-grid), the mechanism's 83.7 MW is ~31% better.
 - **Elia's interval forecasts are systematically miscalibrated.**
   τ = 0.10 nominal gives 19.1% empirical coverage (should be 10%),
   τ = 0.90 gives 94.6% (should be 90%). This is a known property of
@@ -576,3 +584,120 @@ with series_max = 2208.7 MW, series_min = 0 MW):
 
 _Claim 10 added as the Elia operational-forecast comparison result
 from the training-audit spec, May 2026._
+
+
+---
+
+## Claim 11 — Post-hoc correctness pass (A1/A2/A3/B1/C1)
+
+A second-pass audit surfaced five items not covered by the earlier
+specs. All five are fixed in source; three are empirically neutral
+on the locked slices (they harden the defense without moving
+numbers) and two materially change the reported figures.
+
+### Fixes landed
+
+- **A1 — Symmetric quantile monotonicity.**
+  `onlinev2/src/onlinev2/core/aggregation.py::_enforce_quantile_monotonicity`
+  now uses PAV (L² isotonic, `scipy.optimize.isotonic_regression`)
+  instead of `np.maximum.accumulate` (L∞ isotonic / running max).
+  PAV resolves quantile crossings symmetrically around the weighted
+  mean of the violating block; running max only pushes the lower
+  value up, which biased the aggregate CDF rightward. No numerical
+  change on the audit slice (the monotonicity projection is a no-op
+  on the Elia panel at the operating point); structural correctness
+  fix. Reference: Chernozhukov, Fernández-Val & Galichon (2010),
+  ``Quantile and Probability Curves Without Crossing'', Econometrica
+  78(3), 1093–1125, [doi:10.3982/ECTA7880](https://doi.org/10.3982/ECTA7880).
+
+- **A2 — Grid-matched Elia operational-forecast comparison.**
+  `scripts/compute_elia_forecast_baseline.py` now reports both the
+  native 3-point pinball score on Elia's tri-quantile fan AND a
+  grid-matched 9-point re-score (linear interpolation of Elia's fan
+  onto TAUS_FINE, with monotonicity enforcement). On the matched
+  9-level grid, Elia's real-time forecast is 90.7 MW (not 74.0),
+  day-ahead is 121.2 MW (not 98.6), and week-ahead is 452.7 MW
+  (not 372.4). Our best-single (69.5 MW) beats Elia real-time by
+  ~23%; the mechanism (83.7 MW) beats Elia real-time by ~8% (the
+  sign flipped from the 3-grid comparison).
+
+- **A3 — Untruncated PIT for the recalibrator.**
+  `onlinev2/src/onlinev2/core/metrics.py::compute_pit_extended` and
+  `onlinev2/src/onlinev2/core/recalibration.py::RollingRecalibrator`
+  now use linear tail extension of the reported quantile fan to the
+  bounded outcome support `[0, 1]`. The old truncated PIT put atoms
+  at `taus[0]` and `taus[-1]` and left the isotonic fitter with no
+  data in `[0, taus[0])` or `(taus[-1], 1]`; the new extended PIT
+  spreads the atom mass uniformly into the tails under a calibrated
+  base forecast. Empirically neutral on the 3000-point audit slice
+  (the earlier pinned `(0,0)` / `(1,1)` boundary was crudely doing
+  the same job); structural correctness fix that removes the
+  hidden boundary-extrapolation artefact. `pit_mode="truncated"`
+  preserves the legacy behaviour for reproducibility.
+
+- **B1 — Andrews (1991) data-driven HAC bandwidth in DM test.**
+  `onlinev2/src/onlinev2/real_data/stats.py::diebold_mariano_test`
+  now defaults to `hac_bandwidth="auto"`, which selects
+  `M = ⌊4 · (n/100)^(2/9)⌋` following Andrews (1991), Econometrica
+  59(3). The Bartlett kernel weights are also applied (previously
+  unweighted covariance sums). Effect on the headline numbers:
+  the wind mechanism DM drops from +40.77 (legacy horizon-1
+  bandwidth) to +22.35 at `lag=12` with $p \approx 0$; the
+  electricity null is unchanged at +0.01. The legacy value is
+  also emitted under `statistic_legacy_horizon1` for back-compat.
+
+- **C1 — Block-bootstrap 95% CIs on headline rows.**
+  `onlinev2/src/onlinev2/real_data/runner.py` attaches
+  `delta_ci_lower`, `delta_ci_upper`, `delta_bootstrap_se` to every
+  row of `comparison.json`, computed by stationary circular block
+  bootstrap with 1000 resamples at the ~one-week block size
+  (168 hours on wind). On the full-length wind series, the
+  mechanism CI is $[-0.003214, -0.002605]$ (well below zero); the
+  electricity mechanism CI is $[-0.000127, +0.000123]$ (straddles
+  zero, consistent with the null result). An additive
+  `audit_post_hoc.json` emitted by
+  `scripts/recompute_stats_from_comparison.py` carries the same
+  numbers computed from the already-saved per-round trajectories
+  for the locked pipeline version.
+
+### Headline numerical changes
+
+| Metric | Pre-fix | Post-fix | Which fix |
+|---|---:|---:|---|
+| Elia real-time CRPS (MW-eq) | 74.0 | **90.7** | A2 (grid-match) |
+| Elia day-ahead CRPS (MW-eq) | 98.6 | **121.2** | A2 |
+| Mechanism vs Elia real-time | −13% worse | **+8% better** | A2 |
+| Best-single vs Elia real-time | +6% better | **+23% better** | A2 |
+| DM mechanism-vs-uniform (wind) | +40.77 | **+22.35 (Andrews)** | B1 |
+| DM mechanism-vs-uniform (electricity) | +0.01 | +0.01 | B1 (unchanged) |
+| Wind mechanism 95% CI on ΔCRPS | — | **[-0.003214, -0.002605]** | C1 (new) |
+| Electricity mechanism 95% CI | — | **[-0.000127, +0.000123]** | C1 (new) |
+
+### Sources
+
+- Fix: [`onlinev2/src/onlinev2/core/aggregation.py`](onlinev2/src/onlinev2/core/aggregation.py)
+  (A1 PAV swap)
+- Fix: [`onlinev2/src/onlinev2/core/metrics.py`](onlinev2/src/onlinev2/core/metrics.py)
+  (A3 compute_pit_extended)
+- Fix: [`onlinev2/src/onlinev2/core/recalibration.py`](onlinev2/src/onlinev2/core/recalibration.py)
+  (A3 pit_mode="extended" default)
+- Fix: [`onlinev2/src/onlinev2/real_data/stats.py`](onlinev2/src/onlinev2/real_data/stats.py)
+  (B1 Andrews auto bandwidth)
+- Fix: [`onlinev2/src/onlinev2/real_data/runner.py`](onlinev2/src/onlinev2/real_data/runner.py)
+  (C1 per-row bootstrap CI)
+- Fix: [`scripts/compute_elia_forecast_baseline.py`](scripts/compute_elia_forecast_baseline.py)
+  (A2 grid-matched rescore)
+- Tests: 175/175 audit + recalibration + quantile-pipeline tests
+  pass post-fix; 13/13 new A3 tests in
+  `onlinev2/tests/test_a3_tail_extrapolation.py`.
+- Post-hoc recomputed headline stats:
+  `dashboard/public/data/real_data/elia_wind/data/audit_post_hoc.json`
+  and `dashboard/public/data/real_data/elia_electricity/data/audit_post_hoc.json`.
+- Citation: Andrews, D. W. K. (1991). Heteroskedasticity and
+  Autocorrelation Consistent Covariance Matrix Estimation.
+  *Econometrica* 59(3), 817–858,
+  [doi:10.2307/2938229](https://doi.org/10.2307/2938229).
+
+---
+
+_Claim 11 added after the second-pass audit landed, May 2026._
