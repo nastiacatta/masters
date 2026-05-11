@@ -23,7 +23,7 @@ import HeldOutTestingSlide from '@/components/slides/methodology/HeldOutTestingS
 import DefectsBeforeSlide from '@/components/slides/methodology/DefectsBeforeSlide';
 import FixesCodeSlide from '@/components/slides/methodology/FixesCodeSlide';
 import BeforeAfterNumbersSlide from '@/components/slides/methodology/BeforeAfterNumbersSlide';
-import SupervisorItemsSlide from '@/components/slides/methodology/SupervisorItemsSlide';
+import DiscussionItemsSlide from '@/components/slides/methodology/DiscussionItemsSlide';
 
 /**
  * Full-screen presentation mode for project defence.
@@ -206,12 +206,13 @@ const SLIDES: SlideData[] = [
     slideNumber: undefined,
   },
   /* Methodology backup slides — live after the appendix. No slide number, no section bar.
-     These answer supervisor's question on Slide 10 and the "how did you train and test the models"
-     methodology drill-down from the training-audit spec. Ordering reflects narrative flow:
-       M-order  = why validate the mechanism by ordering rather than CRPS (Slide 10 question)
+     These address the Slide 10 question (why validate the mechanism by ordering rather
+     than CRPS) and the methodology drill-down from the training-audit spec.
+     Ordering reflects narrative flow:
+       M-order  = why validate by ordering, not CRPS (Slide 10 question)
        M1..M3   = how we train (protocol, panel, testing)
        M4..M6   = what was wrong, what we fixed, before/after numbers
-       M7       = key things to raise with the supervisor
+       M7       = open items to flag in the viva
   */
   {
     id: 'why-ordering',
@@ -263,10 +264,10 @@ const SLIDES: SlideData[] = [
     slideNumber: undefined,
   },
   {
-    id: 'methodology-supervisor-items',
+    id: 'methodology-discussion-items',
     type: 'content',
-    title: 'Key things to discuss with supervisor',
-    component: SupervisorItemsSlide,
+    title: 'Open items to flag in the viva',
+    component: DiscussionItemsSlide,
     slideNumber: undefined,
   },
 ];
@@ -540,7 +541,7 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
       'methodology-defects',
       'methodology-fixes',
       'methodology-before-after',
-      'methodology-supervisor-items',
+      'methodology-discussion-items',
     ]);
     if (interactiveSlideIds.has(slide.id)) {
       return (

@@ -4,18 +4,18 @@ import { PALETTE, TYPOGRAPHY, CARD_STYLE } from '../shared/presentationConstants
 /**
  * Post-appendix backup slide.
  *
- * Supervisor question on main-deck Slide 10 ("Real Data: Elia Wind + Electricity"):
- *   "It is peculiar to want to look at ordering as a way to validate the mechanism —
- *    why do you do it this way?"
+ * Addresses the question raised on main-deck Slide 10 ("Real Data: Elia Wind +
+ * Electricity"): "it is peculiar to want to look at ordering as a way to
+ * validate the mechanism — why do it this way?"
  *
- * This slide is the standalone written answer. It is not part of the main deck
- * (slideNumber undefined in PresentationPage) and is click-propagation-safe.
+ * This slide is the standalone written answer. It is not part of the main
+ * deck (slideNumber undefined in PresentationPage) and is click-propagation-safe.
  */
 export default function WhyOrderingSlide() {
   return (
     <SlideShell
       title="Why validate the mechanism by ordering, not by CRPS?"
-      subtitle="Answer to supervisor's Slide 10 question"
+      subtitle="Answer to the Slide 10 question"
     >
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
