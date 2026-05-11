@@ -18,9 +18,9 @@ const QA_ITEMS: QAItem[] = [
   },
   {
     question:
-      'Why does the best single forecaster (Naive) still beat the aggregate?',
+      'Why does the best single forecaster still beat the aggregate on wind?',
     answer:
-      'Wind power is highly autocorrelated, making Naive persistence exceptionally strong. The mechanism improves the aggregate modestly (−7.0% relative to equal weights) but the ceiling is set by the best individual (−23%). This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
+      'On Elia wind, XGBoost has the lowest per-agent mean CRPS, with ARIMA and Naive persistence close behind (wind is highly autocorrelated at the one-hour horizon). The mechanism improves the aggregate modestly (−7.0% relative to equal weights) but the ceiling is set by a rolling best-single selector, which is roughly 16 percentage points lower. This is a known limitation of linear opinion pools — future work could explore nonlinear combination methods.',
   },
   {
     question:
@@ -82,7 +82,7 @@ const EXTRA_FIGURES = [
 
 /* ─── Tab type ────────────────────────────────────────────────── */
 
-type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism' | 'skillmath' | 'params' | 'crps';
+type AppendixTab = 'qa' | 'figures' | 'guarantees' | 'deposit' | 'mechanism' | 'skillmath' | 'params' | 'crps' | 'ordering' | 'rewards';
 
 /* ─── Mechanism Comparison data (moved from main deck) ─────── */
 
@@ -369,6 +369,16 @@ export default function AppendixSlide(_props: {
           label="H. CRPS Explained"
           active={tab === 'crps'}
           onClick={() => setTab('crps')}
+        />
+        <TabButton
+          label="I. Why Ordering Validates"
+          active={tab === 'ordering'}
+          onClick={() => setTab('ordering')}
+        />
+        <TabButton
+          label="J. Reward Sharing"
+          active={tab === 'rewards'}
+          onClick={() => setTab('rewards')}
         />
       </div>
 
@@ -856,6 +866,186 @@ export default function AppendixSlide(_props: {
                 mechanism stays self-financed and preserves the seven Lambert properties. Source:
                 <code>dashboard/public/data/real_data/&lt;series&gt;/data/baselines.json</code>.
               </p>
+            </div>
+          </div>
+        )}
+
+        {tab === 'ordering' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Why we look at ordering at all */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.25rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Why use ordering to validate the mechanism?
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.08rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Different forecasters contribute <strong>different information</strong>. Naive reads autocorrelation from the last observation; XGBoost reads nonlinear lag structure from a wider window; Theta reads trend. Because they see different parts of the signal, they bring different value into the final forecast — and that is exactly why combining them helps in the first place. For the same reason, there is no single ground-truth "best forecaster" label on real data.
+              </p>
+              <p style={{ margin: '10px 0 0', fontSize: '1.08rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                So I need an indirect probe. The skill signal σ is claimed to track realised forecasting loss. The cheapest, most falsifiable check on that claim is whether the <strong>ranking σ induces</strong> matches the <strong>ranking that realised CRPS induces</strong> on the same data.
+              </p>
+            </div>
+
+            {/* Synthetic: Spearman ρ = 1 */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.25rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Synthetic: ordering is the right probe because I know the answer
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                On six forecasters with known noise levels, the only way to check that σ means "skill" is to compare the induced ranking to the true noise ranking. Spearman ρ = 1.0 on all five canonical seeds is a direct, parameter-free pass/fail. It does not certify accuracy of σ values — only of the order they induce — which is precisely what the mechanism needs to allocate weight and payoff correctly.
+              </p>
+            </div>
+
+            {/* Real data: ordering vs per-agent CRPS */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.25rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Real data: σ-ranking vs per-agent CRPS ranking (Elia wind)
+              </h4>
+              <p style={{ margin: '0 0 12px', fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Steady-state σ and post-warmup per-agent mean CRPS on the 17,544-round Elia wind run give two independent orderings of the same panel. Comparing them is the real-data analogue of the synthetic ρ = 1 check.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.6fr 0.6fr 0.4fr', gap: 10, padding: '10px 14px', borderBottom: `2px solid ${PALETTE.border}`, fontWeight: 700, color: PALETTE.slate, fontSize: '0.98rem', fontFamily: TYPOGRAPHY.fontFamily }}>
+                <span>Forecaster</span>
+                <span style={{ textAlign: 'right' }}>σ (steady-state)</span>
+                <span style={{ textAlign: 'right' }}>Mean CRPS</span>
+                <span style={{ textAlign: 'center' }}>Rank agreement</span>
+              </div>
+              {[
+                { name: 'XGBoost', sigma: '0.808', crps: '0.031', ok: true },
+                { name: 'ARIMA(2,1,1)', sigma: '0.791', crps: '0.035', ok: true },
+                { name: 'Naive (last value)', sigma: '0.790', crps: '0.035', ok: true },
+                { name: 'Neural Net (MLP)', sigma: '0.768', crps: '0.040', ok: true },
+                { name: 'Ensemble (Naive+EWMA)', sigma: '0.753', crps: '0.047', ok: true },
+                { name: 'EWMA (5)', sigma: '0.703', crps: '0.063', ok: true },
+                { name: 'Theta', sigma: '0.685', crps: '0.068', ok: true },
+              ].map((r, i, arr) => (
+                <div key={r.name} style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.6fr 0.6fr 0.4fr', gap: 10, padding: '10px 14px', borderBottom: i < arr.length - 1 ? `1px solid ${PALETTE.border}` : 'none', alignItems: 'center', fontFamily: TYPOGRAPHY.fontFamily }}>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 600, color: PALETTE.navy }}>{r.name}</span>
+                  <span style={{ fontSize: '1.05rem', fontFamily: 'monospace', textAlign: 'right', color: PALETTE.teal, fontWeight: 700 }}>{r.sigma}</span>
+                  <span style={{ fontSize: '1.05rem', fontFamily: 'monospace', textAlign: 'right', color: PALETTE.charcoal }}>{r.crps}</span>
+                  <span style={{ fontSize: '1.15rem', textAlign: 'center', color: PALETTE.teal, fontWeight: 700 }}>{r.ok ? '✓' : '✗'}</span>
+                </div>
+              ))}
+              <p style={{ margin: '12px 0 0', fontSize: '0.98rem', color: PALETTE.slate, lineHeight: 1.55, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The two orderings agree monotonically: higher σ ⇔ lower per-agent CRPS. That is what the skill signal is supposed to do, and it is the check that justifies using σ to weight deposits in settlement.
+              </p>
+            </div>
+
+            {/* Why not CRPS directly */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px', background: 'rgba(46, 139, 139, 0.04)' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Why not just report CRPS and stop?
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Mean CRPS is reported — the −7.0% headline on slide 10 is exactly that. But CRPS of the aggregate only says whether the combination is good; it does not say whether the mechanism identified <em>who</em> is good, which is what a skill signal is for. Ordering separates those two questions. "Does the aggregate score well?" is CRPS. "Does σ reflect reality?" is ordering.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tab === 'rewards' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Intro: what a reward is */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.25rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The core of the mechanism — how each forecaster is paid
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.08rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Each round, every forecaster submits a probabilistic forecast and puts up a deposit bᵢ. The settlement rule returns cash Πᵢ such that the sum of all Πᵢ equals the sum of all deposits actually put at stake. No external subsidy. No budget surplus. That is what "self-financed" means, and it is the property that separates this from Vitali & Pinson's Shapley payoffs.
+              </p>
+            </div>
+
+            {/* Step 1: effective wager */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 1 — Effective wager
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                The deposit is scaled by the learned skill. Only mᵢ actually enters the settlement pool; the rest is returned to the forecaster:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.2rem', color: PALETTE.navy, fontWeight: 700 }}>
+                mᵢ = bᵢ · g(σᵢ),  g(σ) ∈ [g_min, 1]
+              </div>
+              <p style={{ margin: 0, fontSize: '0.98rem', color: PALETTE.slate, lineHeight: 1.55, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Low skill means most of the deposit is refunded, so a noisy forecaster can't buy influence or outsized loss; high skill means the full deposit counts.
+              </p>
+            </div>
+
+            {/* Step 2: score */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 2 — Round score
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                After the outcome y is observed, each forecaster gets a bounded score sᵢ computed from a proper scoring rule (CRPS-based). Higher sᵢ means a better forecast this round. The wager-weighted mean s̄ is the reference level the pool settles against:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.2rem', color: PALETTE.navy, fontWeight: 700 }}>
+                sᵢ = S(qᵢ, y),   s̄ = Σⱼ wⱼ · sⱼ,   wⱼ = mⱼ / Σₖ mₖ
+              </div>
+            </div>
+
+            {/* Step 3: payoff */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px', border: `2.5px solid ${PALETTE.teal}`, background: 'rgba(46, 139, 139, 0.04)' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Step 3 — Payoff (the reward formula)
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Each forecaster gets back their effective wager, multiplied by how much their own score beat the wager-weighted market mean:
+              </p>
+              <div style={{ margin: '14px 0', padding: '16px 22px', background: PALETTE.white, borderRadius: 10, fontFamily: 'monospace', fontSize: '1.35rem', color: PALETTE.teal, fontWeight: 700, textAlign: 'center', border: `2px solid ${PALETTE.teal}` }}>
+                Πᵢ = mᵢ · (1 + sᵢ − s̄)
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 10 }}>
+                <div style={{ padding: '12px 16px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, borderLeft: `4px solid ${PALETTE.teal}` }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.teal, fontFamily: TYPOGRAPHY.fontFamily }}>If sᵢ &gt; s̄ (above-market forecast)</div>
+                  <div style={{ fontSize: '0.98rem', color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, marginTop: 4, lineHeight: 1.5 }}>
+                    Πᵢ &gt; mᵢ — you get back more than you wagered. Paid out of the losers' pool.
+                  </div>
+                </div>
+                <div style={{ padding: '12px 16px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, borderLeft: `4px solid ${PALETTE.coral}` }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: PALETTE.coral, fontFamily: TYPOGRAPHY.fontFamily }}>If sᵢ &lt; s̄ (below-market forecast)</div>
+                  <div style={{ fontSize: '0.98rem', color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, marginTop: 4, lineHeight: 1.5 }}>
+                    Πᵢ &lt; mᵢ — you lose a fraction of your effective wager. Funds the winners.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Budget balance — the sum */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Budget balance — why the pool closes exactly
+              </h4>
+              <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Sum Πᵢ over the whole panel and the (sᵢ − s̄) term vanishes by construction, because s̄ is the wager-weighted mean of sᵢ. That gives budget balance:
+              </p>
+              <div style={{ margin: '12px 0', padding: '12px 20px', background: 'rgba(46, 139, 139, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.1rem', color: PALETTE.navy, fontWeight: 700 }}>
+                Σᵢ Πᵢ = Σᵢ mᵢ · (1 + sᵢ − s̄) = Σᵢ mᵢ + Σᵢ mᵢ(sᵢ − s̄) = Σᵢ mᵢ
+              </div>
+              <p style={{ margin: 0, fontSize: '0.98rem', color: PALETTE.slate, lineHeight: 1.55, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Measured numerically, the budget gap is zero to 10⁻¹⁴ — floating-point noise. See Appendix C.
+              </p>
+            </div>
+
+            {/* Properties rewards deliver */}
+            <div style={{ ...CARD_STYLE, padding: '24px 32px', background: 'rgba(100, 116, 139, 0.04)' }}>
+              <h4 style={{ margin: '0 0 14px', fontSize: '1.2rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily }}>
+                Why this reward rule is the right one
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                {[
+                  { h: 'Self-financed', b: 'Winners are paid from losers, not from the client. No subsidy needed.' },
+                  { h: 'Truthful', b: 'Under risk neutrality, a forecaster maximises expected Πᵢ by reporting their true belief. Follows Lambert et al.' },
+                  { h: 'Sybilproof (identical clones)', b: 'Splitting one identity into k clones with the same forecast and combined deposit b changes nothing: the aggregate is identical and the combined Π is unchanged.' },
+                  { h: 'Anonymous', b: 'Only (qᵢ, bᵢ, σᵢ, sᵢ) matters — identity plays no direct role.' },
+                  { h: 'Skill-scaled exposure', b: 'A low-skill forecaster risks less and earns less per round. Noisy participation is bounded.' },
+                  { h: 'Client reward (Raja extension)', b: 'A client reward R can be added to the pool and redistributed by the same rule, scaling payoffs proportionally without breaking balance.' },
+                ].map((c) => (
+                  <div key={c.h} style={{ padding: '12px 16px', background: PALETTE.white, borderRadius: 8, border: `1px solid ${PALETTE.border}` }}>
+                    <div style={{ fontSize: '1.02rem', fontWeight: 700, color: PALETTE.navy, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 4 }}>{c.h}</div>
+                    <div style={{ fontSize: '0.96rem', color: PALETTE.charcoal, fontFamily: TYPOGRAPHY.fontFamily, lineHeight: 1.5 }}>{c.b}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -161,7 +161,7 @@ Implementation-wise: the mechanism maintains an exponentially weighted moving av
 
 The test setup has three layers. The environment is the data — both synthetic benchmarks where I control the ground truth, and real data from the Elia Belgian grid operator for offshore wind power and electricity imbalance prices.
 
-The agent layer is the forecasters. Seven forecasting models participate on the real data. Naive persistence takes the most recent observed value as the forecast — it works well when the series is highly autocorrelated, which wind power is, and that is why Naive does unexpectedly well on the wind dataset. EWMA smooths recent observations with exponential decay. ARIMA is a classical linear time-series model. XGBoost is a gradient-boosted tree ensemble that captures nonlinear interactions from lag features. The MLP is a multi-layer perceptron — the most flexible model in the panel. Theta decomposes the series into trend components. And the ensemble simply averages Naive and EWMA.
+The agent layer is the forecasters. Seven forecasting models participate on the real data. Naive persistence takes the most recent observed value as the forecast — it works well when the series is highly autocorrelated, which wind power is, and that is why Naive is competitive with the more complex models on wind. EWMA smooths recent observations with exponential decay. ARIMA is a classical linear time-series model. XGBoost is a gradient-boosted tree ensemble that captures nonlinear interactions from lag features. The MLP is a multi-layer perceptron — the most flexible model in the panel. Theta decomposes the series into trend components. And the ensemble simply averages Naive and EWMA.
 
 All models are strictly causal — they use only data up to time t minus one. Each produces a point forecast, and the mechanism turns it into a full probabilistic forecast by resampling from the model's recent prediction errors.
 
@@ -193,7 +193,7 @@ This is a baseline sanity check, not the main result. It tells me the machinery 
 ### Slide bullets
 
 * Elia wind, 17 544 rounds: mechanism −7.0% CRPS vs equal weights
-* Skill correctly ranks forecasters; Naive highest because wind is autocorrelated
+* Skill ranks forecasters by realised loss — XGBoost first, ARIMA ≈ Naive next
 * Elia electricity: near-tie with equal weights — forecasters similar in quality
 * Best-single selector still beats the mechanism on wind — combination puzzle
 
@@ -203,7 +203,7 @@ A quick reminder of two pieces of notation before the numbers. **CRPS** is the c
 
 On the Elia wind dataset — seventeen thousand five hundred and forty-four hourly evaluation rounds, seven forecasters — the mechanism achieves a seven per cent reduction in mean CRPS compared to equal weighting, under a strictly-causal pipeline. The curves on the right show the learned sigma for each forecaster over time. You can highlight any single forecaster by clicking its pill.
 
-The ordering the mechanism recovers is correct, but some of it is counter-intuitive. Naive ends up ranked highest. That is because wind power at an hour-ahead horizon is very autocorrelated — yesterday's value is a surprisingly good forecast of today's — and the skill layer learns that directly from realised loss, without being told anything about autocorrelation.
+The ordering the mechanism recovers is: **XGBoost** on top with steady-state sigma around zero point eight one, then **ARIMA** and **Naive** effectively tied just below, then the MLP, the Ensemble, EWMA, and Theta. That matches per-agent CRPS on the same data — XGBoost has the lowest per-agent CRPS, and Naive stays competitive because wind power at an hour-ahead horizon is very autocorrelated. The point is that the skill layer learns this ordering from realised loss directly, without being told anything about autocorrelation.
 
 I want to flag two honest caveats. First, an earlier version of this deck reported forty-four per cent improvement. That figure came from a normalisation that leaked evaluation-window statistics into training. After auditing the pipeline, the right number is seven per cent. Second, a rolling best-single selector — which each round picks whichever forecaster has the lowest recent CRPS — still beats the mechanism by around sixteen percentage points on wind. That is the forecast combination puzzle surfacing honestly. The thesis contribution is conditional improvement over equal weighting while preserving self-financing, not universal CRPS dominance.
 

@@ -110,39 +110,39 @@ export default function ContributionsChartSlide() {
         style={{
           display: 'flex',
           alignItems: 'stretch',
-          gap: 14,
-          marginBottom: 12,
+          gap: 16,
+          marginBottom: 14,
         }}
       >
         <div
           style={{
             flex: 1,
             background: 'rgba(46, 139, 139, 0.08)',
-            borderLeft: `4px solid ${PALETTE.teal}`,
+            borderLeft: `5px solid ${PALETTE.teal}`,
             borderRadius: '0 10px 10px 0',
-            padding: '10px 16px',
+            padding: '14px 20px',
             fontFamily: TYPOGRAPHY.fontFamily,
             color: PALETTE.navy,
           }}
         >
-          <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+          <div style={{ fontSize: '1.45rem', fontWeight: 700, lineHeight: 1.3 }}>
             Wind, 17,544 rounds: mechanism −7.0% CRPS vs equal weights.
           </div>
-          <div style={{ fontSize: '0.95rem', color: PALETTE.charcoal, marginTop: 2 }}>
-            Skill ranks forecasters correctly; a per-round best-single still beats the aggregate.
+          <div style={{ fontSize: '1.15rem', color: PALETTE.charcoal, marginTop: 4, lineHeight: 1.4 }}>
+            Skill ranks forecasters by realised loss; a per-round best-single still beats the aggregate.
           </div>
         </div>
         <div
           style={{
-            width: 300,
+            width: 360,
             background: 'rgba(100, 116, 139, 0.08)',
-            borderLeft: `3px solid ${PALETTE.slate}`,
+            borderLeft: `4px solid ${PALETTE.slate}`,
             borderRadius: 4,
-            padding: '8px 12px',
+            padding: '12px 16px',
             fontFamily: TYPOGRAPHY.fontFamily,
-            fontSize: '0.88rem',
+            fontSize: '1.05rem',
             color: PALETTE.charcoal,
-            lineHeight: 1.4,
+            lineHeight: 1.5,
             flexShrink: 0,
           }}
         >
@@ -157,18 +157,18 @@ export default function ContributionsChartSlide() {
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: 8,
-          marginBottom: 10,
+          gap: 10,
+          marginBottom: 12,
           alignItems: 'center',
         }}
       >
         <span
           style={{
-            fontSize: '0.9rem',
+            fontSize: '1.05rem',
             fontWeight: 600,
             color: PALETTE.slate,
             fontFamily: TYPOGRAPHY.fontFamily,
-            marginRight: 4,
+            marginRight: 6,
           }}
         >
           Highlight:
@@ -180,13 +180,13 @@ export default function ContributionsChartSlide() {
               key={meta.key}
               onClick={(e) => handlePillClick(e, idx)}
               style={{
-                padding: '4px 14px',
+                padding: '6px 18px',
                 borderRadius: 999,
                 border: `2px solid ${meta.colour}`,
                 background: isSelected ? meta.colour : 'transparent',
                 color: isSelected ? '#fff' : meta.colour,
-                fontWeight: isSelected ? 700 : 500,
-                fontSize: TYPOGRAPHY.chartAxis.fontSize,
+                fontWeight: isSelected ? 700 : 600,
+                fontSize: '1.05rem',
                 fontFamily: TYPOGRAPHY.fontFamily,
                 cursor: 'pointer',
                 opacity: selected === null || isSelected ? 1 : 0.45,
@@ -226,8 +226,8 @@ export default function ContributionsChartSlide() {
             <div
               style={{
                 position: 'absolute',
-                top: 8, left: 20,
-                fontSize: '0.92rem',
+                top: 10, left: 24,
+                fontSize: '1.1rem',
                 fontWeight: 700,
                 color: PALETTE.navy,
                 fontFamily: TYPOGRAPHY.fontFamily,
@@ -236,17 +236,17 @@ export default function ContributionsChartSlide() {
               Learned skill σ over time — Elia wind
             </div>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={skillData} margin={{ top: 28, right: 28, bottom: 36, left: 32 }}>
+              <LineChart data={skillData} margin={{ top: 36, right: 36, bottom: 44, left: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={PALETTE.border} strokeOpacity={0.6} vertical={false} />
                 <XAxis
                   dataKey="t"
                   label={{
                     value: 'Round',
                     position: 'insideBottom',
-                    offset: -16,
-                    style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily },
+                    offset: -18,
+                    style: { fontSize: 22, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily },
                   }}
-                  tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
+                  tick={{ fontSize: 17, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
                   tickLine={false}
                   axisLine={{ stroke: PALETTE.border }}
                   stroke={PALETTE.slate}
@@ -260,9 +260,9 @@ export default function ContributionsChartSlide() {
                     angle: -90,
                     position: 'insideLeft',
                     offset: 8,
-                    style: { fontSize: 18, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAnchor: 'middle' },
+                    style: { fontSize: 22, fontWeight: 600, fill: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily, textAnchor: 'middle' },
                   }}
-                  tick={{ fontSize: 14, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
+                  tick={{ fontSize: 17, fontFamily: TYPOGRAPHY.fontFamily, fill: PALETTE.slate }}
                   tickLine={false}
                   axisLine={{ stroke: PALETTE.border }}
                   stroke={PALETTE.slate}
@@ -308,8 +308,8 @@ export default function ContributionsChartSlide() {
       <div
         style={{
           display: 'flex',
-          gap: 16,
-          marginTop: 10,
+          gap: 18,
+          marginTop: 12,
           alignItems: 'stretch',
         }}
       >
@@ -319,29 +319,29 @@ export default function ContributionsChartSlide() {
             background: 'rgba(46, 139, 139, 0.06)',
             border: `1.5px solid ${PALETTE.teal}`,
             borderRadius: 10,
-            padding: '10px 16px',
+            padding: '14px 20px',
           }}
         >
           <div
             style={{
-              fontSize: '1rem',
+              fontSize: '1.2rem',
               fontWeight: 700,
               color: PALETTE.teal,
               fontFamily: TYPOGRAPHY.fontFamily,
             }}
           >
-            Wind — mechanism gains where forecasters differ
+            Wind — skill tracks realised loss
           </div>
           <div
             style={{
-              fontSize: '0.9rem',
+              fontSize: '1.05rem',
               color: PALETTE.charcoal,
               fontFamily: TYPOGRAPHY.fontFamily,
-              lineHeight: 1.4,
-              marginTop: 2,
+              lineHeight: 1.5,
+              marginTop: 4,
             }}
           >
-            Naive ranks highest because wind power is highly autocorrelated; the skill layer learns this from realised loss without being told.
+            Steady-state ranking: XGBoost (σ≈0.81) → ARIMA ≈ Naive (0.79) → MLP → Ensemble → EWMA → Theta. XGBoost wins on per-agent CRPS; Naive stays competitive because wind is highly autocorrelated.
           </div>
         </div>
         <div
@@ -350,12 +350,12 @@ export default function ContributionsChartSlide() {
             background: 'rgba(232, 93, 74, 0.06)',
             border: `1.5px solid ${PALETTE.coral}`,
             borderRadius: 10,
-            padding: '10px 16px',
+            padding: '14px 20px',
           }}
         >
           <div
             style={{
-              fontSize: '1rem',
+              fontSize: '1.2rem',
               fontWeight: 700,
               color: PALETTE.coral,
               fontFamily: TYPOGRAPHY.fontFamily,
@@ -365,11 +365,11 @@ export default function ContributionsChartSlide() {
           </div>
           <div
             style={{
-              fontSize: '0.9rem',
+              fontSize: '1.05rem',
               color: PALETTE.charcoal,
               fontFamily: TYPOGRAPHY.fontFamily,
-              lineHeight: 1.4,
-              marginTop: 2,
+              lineHeight: 1.5,
+              marginTop: 4,
             }}
           >
             Forecasters are similar in quality, so there is less heterogeneity for skill to exploit.
