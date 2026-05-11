@@ -28,32 +28,32 @@ const STEPS: StepConfig[] = [
   {
     id: 'submit',
     label: '1. Submit',
-    description: 'Each forecaster sends a forecast and a deposit',
+    description: 'Forecaster submits a quantile forecast and a deposit',
     latex: 'q_i(\\tau),\\; b_i',
   },
   {
     id: 'wager',
-    label: '2. Effective wager',
-    description: 'Deposit is scaled by learned skill',
+    label: '2. Effective Wager',
+    description: 'Deposit is scaled by a learned skill factor',
     latex: 'm_i \\;=\\; b_i \\cdot g(\\sigma_i)',
     emphasised: true,
   },
   {
     id: 'aggregate',
     label: '3. Aggregate',
-    description: 'Market forecast is a wager-weighted average',
+    description: 'Weighted average of forecasters, weighted by effective wager',
     latex: '\\hat{q}(\\tau) \\;=\\; \\sum_i w_i \\cdot q_i(\\tau)',
   },
   {
     id: 'settle',
-    label: '4. Settle (reward sharing)',
-    description: 'Everyone gets back their wager plus (or minus) their skill-weighted score, relative to the market mean. The sum of payoffs equals the sum of wagers.',
+    label: '4. Settle',
+    description: 'Winners paid from losers; pool is budget balanced by construction',
     latex: '\\Pi_i \\;=\\; m_i \\cdot \\bigl(1 + s_i - \\bar{s}\\bigr)',
   },
   {
     id: 'skill',
-    label: '5. Skill update',
-    description: 'Skill moves with recent forecasting loss',
+    label: '5. Skill Update',
+    description: 'Realised loss feeds back into the skill factor for the next round',
     latex: '\\sigma_i \\;=\\; \\sigma_{\\min} + (1-\\sigma_{\\min}) \\cdot e^{-\\gamma \\cdot L_i}',
   },
 ];
@@ -177,7 +177,7 @@ function FeedbackArrow() {
           fontStyle="italic"
           textAnchor="middle"
         >
-          updated skill enters the effective wager in the next round
+          updated skill feeds back into the effective wager in the next round
         </text>
       </svg>
     </div>
@@ -266,7 +266,7 @@ export default function MechanismPipelineSlide() {
         }}
       >
         <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-          The same effective wager controls aggregation weight and financial exposure.
+          Same effective wager controls aggregation weight and financial exposure.
         </div>
         <div style={{ fontSize: '1.05rem', marginTop: 4, color: PALETTE.charcoal }}>
           Reward sharing: each forecaster’s score is taken relative to the market mean, so winners are paid from losers and the pool is self-financed.
