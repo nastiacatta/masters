@@ -16,6 +16,14 @@ import StrategicRobustnessSlide from '@/components/slides/StrategicRobustnessSli
 import BaselineComparisonSlide from '@/components/slides/BaselineComparisonSlide';
 import AppendixSlide from '@/components/slides/AppendixSlide';
 import TitleSlide from '@/components/slides/TitleSlide';
+import WhyOrderingSlide from '@/components/slides/methodology/WhyOrderingSlide';
+import TrainingProtocolSlide from '@/components/slides/methodology/TrainingProtocolSlide';
+import ForecasterPanelSlide from '@/components/slides/methodology/ForecasterPanelSlide';
+import HeldOutTestingSlide from '@/components/slides/methodology/HeldOutTestingSlide';
+import DefectsBeforeSlide from '@/components/slides/methodology/DefectsBeforeSlide';
+import FixesCodeSlide from '@/components/slides/methodology/FixesCodeSlide';
+import BeforeAfterNumbersSlide from '@/components/slides/methodology/BeforeAfterNumbersSlide';
+import SupervisorItemsSlide from '@/components/slides/methodology/SupervisorItemsSlide';
 
 /**
  * Full-screen presentation mode for project defence.
@@ -195,6 +203,70 @@ const SLIDES: SlideData[] = [
     type: 'content',
     title: 'Appendix',
     component: AppendixSlide,
+    slideNumber: undefined,
+  },
+  /* Methodology backup slides — live after the appendix. No slide number, no section bar.
+     These answer supervisor's question on Slide 10 and the "how did you train and test the models"
+     methodology drill-down from the training-audit spec. Ordering reflects narrative flow:
+       M-order  = why validate the mechanism by ordering rather than CRPS (Slide 10 question)
+       M1..M3   = how we train (protocol, panel, testing)
+       M4..M6   = what was wrong, what we fixed, before/after numbers
+       M7       = key things to raise with the supervisor
+  */
+  {
+    id: 'why-ordering',
+    type: 'content',
+    title: 'Why validate by ordering, not CRPS?',
+    component: WhyOrderingSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-training-protocol',
+    type: 'content',
+    title: 'Training protocol: one round at a time',
+    component: TrainingProtocolSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-forecaster-panel',
+    type: 'content',
+    title: 'The seven-forecaster panel',
+    component: ForecasterPanelSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-held-out',
+    type: 'content',
+    title: 'What "held-out" means here',
+    component: HeldOutTestingSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-defects',
+    type: 'content',
+    title: 'What was wrong (B1…B14)',
+    component: DefectsBeforeSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-fixes',
+    type: 'content',
+    title: 'What the fixes look like in the code',
+    component: FixesCodeSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-before-after',
+    type: 'content',
+    title: 'Pre-fix vs post-fix, side by side',
+    component: BeforeAfterNumbersSlide,
+    slideNumber: undefined,
+  },
+  {
+    id: 'methodology-supervisor-items',
+    type: 'content',
+    title: 'Key things to discuss with supervisor',
+    component: SupervisorItemsSlide,
     slideNumber: undefined,
   },
 ];
@@ -458,8 +530,19 @@ function ContentSlideView({ slide }: { slide: SlideData }) {
   if (slide.component) {
     const Comp = slide.component;
     const inner = <Comp slide={slide} palette={PALETTE} fontFamily={FONT_FAMILY} />;
-    /* Appendix is interactive (scroll, tabs); stop click-to-advance from swallowing it */
-    if (slide.id === 'appendix') {
+    /* Appendix and methodology backup slides are scrollable; stop click-to-advance from swallowing them */
+    const interactiveSlideIds = new Set([
+      'appendix',
+      'why-ordering',
+      'methodology-training-protocol',
+      'methodology-forecaster-panel',
+      'methodology-held-out',
+      'methodology-defects',
+      'methodology-fixes',
+      'methodology-before-after',
+      'methodology-supervisor-items',
+    ]);
+    if (interactiveSlideIds.has(slide.id)) {
       return (
         <div
           style={{ width: '100%', height: '100%', position: 'relative' }}

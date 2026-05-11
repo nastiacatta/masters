@@ -1244,3 +1244,154 @@ From the audit:
 ---
 
 *End of advanced study script. Pair with `SCRIPT.md` for delivery and the dashboard/R plots for figures.*
+
+---
+
+<a id="appendix-f"></a>
+## Appendix F — Training and testing the seven forecasters: step-by-step, what broke, what is fixed
+
+These slides go **after the appendix** and are the back-pocket answer to "how did you actually train the models?" They are not part of the delivery script; they are here so that if a supervisor or examiner drills into methodology, every step is documented.
+
+The seven forecasters are Naive (last value), EWMA(5), ARIMA(2,1,1), XGBoost, MLP, Theta, and an Ensemble of Naive + EWMA. Every number in Slides 13 and 14 of the main deck comes from this panel.
+
+---
+
+<a id="slide-f1"></a>
+### SLIDE F1 — The online protocol, one round at a time
+
+At every round $t$ from the warmup (200) to the end of the series:
+
+1. **Causal normalisation.** Compute `lo, hi` as the expanding min/max of the raw series over `series[:t]`; define `norm[s] = (series[s] − lo) / (hi − lo)`. The code path is `real_data/runner.py::causal_normalize_expanding`. Nothing after round $t$ is ever touched.
+2. **Each forecaster predicts.** `fc.fit(norm[:t])` then `point = fc.predict()` and `q = fc.predict_quantiles(taus)` with `taus = (0.1, 0.2, …, 0.9)`. Forecasters retrain on a cadence (every 24 rounds for XGBoost, every 96 for MLP, every round for the cheap ones). Between retrains the feature pipeline is refreshed but weights are kept.
+3. **Aggregate and settle.** The mechanism combines `q_i` into a market fan using the skill-weighted simplex, scores it with CRPS-hat against the (still hidden) outcome, and runs Lambert settlement.
+4. **Reveal $y_t$.** Update each forecaster's residual buffer with `update_residuals(y_t, point)`. Update the mechanism's EWMA of normalised loss per agent so `σ_i(t+1)` moves.
+5. **Score.** The runner records `agent_crps[i, t]`, `mech_crps[t]`, plus every baseline (uniform, median, trimmed mean, inverse-CRPS, rolling best single, hindsight inverse-CRPS, per-round oracle, shifted-median OGD fan).
+
+Everything downstream in the plots is a function of `agent_crps` and `mech_crps`.
+
+**What's reproducible.** Every RNG seed is fixed at the runner level and threaded into `MLPForecaster.seed` and `XGBoostForecaster.seed`. `OMP_NUM_THREADS=1 KMP_DUPLICATE_LIB_OK=TRUE` on macOS to pin the threadpool.
+
+---
+
+<a id="slide-f2"></a>
+### SLIDE F2 — How each forecaster is trained
+
+- **Naive.** `predict = norm[t − 1]`. Trivial baseline; residual buffer populated from round 1. No parameters.
+- **EWMA(5).** Exponential smoothing with span 5. Closed-form, one state variable; updated every round.
+- **ARIMA(2,1,1).** `statsmodels` `SARIMAX(order=(2,1,1))`, full refit every round on `norm[:t]`. The `is_persistence` flag surfaces when the solver fails and we fall through to `norm[t − 1]`.
+- **XGBoost.** Lag features `norm[t − 1], …, norm[t − n_lags]` plus calendar features. Refit every 24 rounds with `n_estimators ≤ 300`, early-stopping on an **expanding-window validation fold** (last 20% of training with a `val_gap = 24` observations before the test point, so no autocorrelation bleed). Deterministic seed from the runner.
+- **MLP.** Same features as XGBoost, two hidden layers, Adam. Refit every 96 rounds. Seed comes from the runner, not `len(history) % 1000`. Early stopping with a 10% validation fold and the same gap.
+- **Theta.** Assimakopoulos-Nikolopoulos Theta method from `statsmodels`. Refit every round.
+- **Ensemble (Naive + EWMA).** Point forecast is the simple mean; the quantile fan is the Naive fan widened by the EWMA's residual std. Exists as a sanity check on the aggregation layer.
+
+**Quantile generation.** For Naive, EWMA, ARIMA, XGBoost, MLP, Theta, and Ensemble, the point forecast is combined with a rolling residual bootstrap: keep the last 500 `(y, ŷ)` residuals, take empirical quantiles at `taus`, add to the point forecast, enforce monotonicity (PAV isotonic from `scipy.optimize.isotonic_regression`, not running max). Monotonicity enforcement is symmetric around the weighted mean of a violating block.
+
+**Fallback counters.** Each forecaster exposes `fallback_counter: int = 0`. Any training or prediction exception path (solver divergence, not enough history, NaN in features) increments it and silently returns persistence. The runner reads `fallback_counter` at the end of the run and emits a `fallback_summary` block into every output JSON. `strict_no_fallback=True` raises at end-of-run when any ML forecaster silently degraded.
+
+---
+
+<a id="slide-f3"></a>
+### SLIDE F3 — How the panel is tested (and what "held-out" means here)
+
+There is no separate training set and test set in the classical sense because the protocol is purely online. What there **is**:
+
+- **Warmup window (first 200 rounds).** Forecasters train, the mechanism's skill state initialises, residual buffers fill. These rounds are not scored. Warmup is bumped to ≥ 70 for the day-ahead horizon experiments so XGBoost and MLP are not silently reduced to persistence in the early rounds (fix B14).
+- **Evaluation window (rounds 201…T).** Every round is a one-step-ahead (or $h$-step-ahead for horizon experiments) forecast made strictly from past data.
+- **Sensitivity split.** The choice of $(\gamma, \rho, \lambda)$ comes from a held-out sweep on a partition of Elia disjoint from the headline window; the artefact is `outputs/real_data/*/sensitivity_sweep.json` and is regenerated by `scripts/run_sensitivity_sweep.py`. The runner reads `optimal_params` from that file rather than a hardcoded constant (fix B3).
+- **Horizon protocol.** For $h$-step-ahead, residuals are formed with a pending-prediction deque so `(y_u, ŷ_u)` pairs are matched at the correct target index (fix B4). The older code accidentally paired `y_{t − h − 1}` with `ŷ_t`, which is a residual of no well-defined horizon.
+- **Regime-shift protocol.** Two variants coexist: (i) the legacy "within-run seasonal slice", which buckets the single online run's per-round CRPS by calendar season — now explicitly labelled as such rather than cited to Cerqueira 2020 (fix B13); (ii) `run_regime_shift_restart_per_season`, which resets forecaster state and mechanism skill state at each seasonal boundary, is implemented and used in the main dissertation table (−0.8% to −1.2% in every season).
+
+---
+
+<a id="slide-f4"></a>
+### SLIDE F4 — What was wrong before the audit (the "B1…B14" list)
+
+The `model-training-testing-audit` spec surfaced 14 methodological defects. The short summary:
+
+| Code | Defect | Where it hit |
+|---|---|---|
+| **B1** | Whole-series min/max normalisation leaked evaluation-window extremes into every training round. | All headline CRPS values. This was the big one. |
+| **B2** | Forecast cache at `outputs_cache/*.npz` had no pipeline version, so a single buggy run contaminated every subsequent baseline comparison. | All baseline tables consuming the cache. |
+| **B3** | `optimal_improvement_pct: -27.2` and `(γ=16, ρ=0.5)` were hardcoded constants with no held-out sweep artefact. | Tuned-parameter claim. |
+| **B4** | `_run_horizon_comparison` paired `(y_{t − h − 1}, ŷ_t)` when updating residuals. The residual buffer collected errors at no well-defined horizon. | All horizon experiments (day-ahead, 4h-ahead, regime-shift). |
+| **B5** | XGBoost early-stopping validation was the last 20% of training (adjacent in time to the test point), not an expanding-window fold with a gap. | XGBoost quantile fan quality. |
+| **B6** | MLP seed was `len(history) % 1000`, so MLP output moved whenever the retraining schedule shifted. | MLP reproducibility. |
+| **B7** | `fallback_counter` existed on ML models but was never surfaced. Silent persistence masqueraded as "XGBoost" / "MLP". | Any run where ML models hit an exception. |
+| **B8** | Recalibration `update → transform` order leaked the current round's PIT into the next refit window. | `mechanism_recal` CRPS. |
+| **B9** | `best_single` had two incompatible definitions (CRPS-based in one runner, variance-of-point-error in the other). | Any cross-table comparison of "best_single". |
+| **B10** | `michael_ogd` was not Michael's algorithm — it was the ensemble's per-τ median plus a constant per-round shift, labelled as an OGD baseline. | The OGD reference row. |
+| **B11** | `rep_holdout` block cited Cerqueira 2020 / Tashman 2000 but was a windowed mean of a single online run, not a repeated-holdout protocol. | The `rep_holdout` block in `comparison.json`. |
+| **B12** | `prequential_blocks` similarly did not refit per block. | The `prequential_blocks` block. |
+| **B13** | Regime-shift was a single online run with per-month-index slicing; by the time "winter 2025" was scored, the mechanism had already seen spring, summer and autumn 2024. | `regime_shift.json`. |
+| **B14** | Day-ahead warmup was 30 rounds; XGBoost needed ≥ 70 to train. First ~40 scored rounds silently ran persistence. | Day-ahead horizon experiments. |
+
+The pre-fix headline claim was "mechanism −44.1% CRPS vs uniform" on wind. Most of that number was B1: normalising by the full-series max pushed the training signal into a tighter range than the forecasters would see at test time, and the mechanism benefited from the artefact. Post-fix under strictly-causal expanding normalisation the number is **−7.1%**, and that is the honest figure reported in Chapter 6 of the thesis.
+
+---
+
+<a id="slide-f5"></a>
+### SLIDE F5 — What the fixes look like in the code
+
+- **B1.** `real_data/runner.py::causal_normalize_expanding` replaces `normalize_series`. It's invoked at the top of every runner (`run_real_data_comparison`, `_run_horizon_comparison`, `scripts/run_baseline_comparison.py`). Static-warmup variant is also available via `normalize_mode="static"` for back-compat.
+- **B2.** Cache files at `outputs_cache/*.npz` embed `pipeline_version="v2-causal-norm"` and a `forecaster_config_hash`. `ensure_cache` auto-invalidates on mismatch.
+- **B3.** `scripts/run_sensitivity_sweep.py` performs a proper held-out grid sweep over $(\gamma, \rho, \lambda)$. The runner reads `optimal_params` / `optimal_improvement_pct` from the emitted `sensitivity_sweep.json` rather than a constant.
+- **B4.** Pending-prediction deque in `_run_horizon_comparison`: each round pops the matching `(y_u, ŷ_u)` pair at the correct target index before updating residuals. Sentinel-injection property test in `tests/audit/test_bug_condition_c_training.py`.
+- **B5.** `XGBoostForecaster.fit` uses `val_gap = 24` to space the validation fold from the test point.
+- **B6.** `MLPForecaster.seed` is a constant propagated from the runner's `seed` argument.
+- **B7.** `run_real_data_comparison` emits `fallback_summary` into every output JSON. `strict_no_fallback=True` raises at end-of-run on any ML fallback > 0.
+- **B8.** Recalibration path reordered to `transform → score → update → refit on cadence`. The `G` used to transform round $t$ was fitted on PITs from rounds strictly less than $t$.
+- **B9.** `best_single_by_crps(crps_per_agent, lookback=100)` is the shared helper. Both runners call it.
+- **B10.** The baseline row is renamed `michael_ogd_centered_median_fan` so the label matches the object.
+- **B11, B12.** `rep_holdout` → `online_window_mean`; `prequential_blocks` → `online_block_mean`. No more citations to Cerqueira 2020 / Tashman 2000 / Dawid 1984 on blocks that do not refit per split.
+- **B13.** `regime_shift.json` carries `within_run_seasonal_slice: true` and a `todo` key. The restart-per-season runner `run_regime_shift_restart_per_season` is implemented and used for the main-body table.
+- **B14.** `min_warmup_for(forecasters)` returns ≥ 70 for the day-ahead horizon with the current forecaster set.
+
+Post-fix test status: 14/14 bug-condition tests green; 10/10 preservation tests green; 105 audit tests pass; 418 non-audit tests pass.
+
+---
+
+<a id="slide-f6"></a>
+### SLIDE F6 — Post-fix numbers, side by side with the pre-fix claims
+
+| Metric | Pre-fix headline | Post-fix headline | Delta attributable to |
+|---|---:|---:|---|
+| Mechanism vs uniform (wind, full series) | −44.1% | **−7.1%** | B1 + B13 + B14 |
+| Mechanism vs uniform (wind, 3 000-pt audit) | unreported as headline | −5.4% | B1 |
+| Mechanism vs uniform (electricity) | −8% | **≈ 0.0% (null)** | B1 |
+| DM t-statistic, mechanism vs uniform (wind) | not reported under Andrews | 22.35 (Andrews), 40.77 (legacy h=1) | Andrews 1991 HAC bandwidth |
+| Mechanism vs Elia real-time (grid-matched) | +6% *better* (3-grid artefact) | +8% *better* (9-grid) | Grid-match fix A2 |
+| XGBoost CRPS (wind, audit slice) | — | 0.01777 | post-fix baseline |
+| Spearman(σ_learned, CRPS_truth) | — | 1.0 | skill layer correctness |
+
+The honest reading: the mechanism still wins against uniform on wind, but by a much smaller margin (−7.1%, not −44%); on electricity it returns a null instead of a spurious regression, which is the correct behaviour on an undifferentiated forecaster panel. The external Elia comparison *flipped sign* once Elia's fan was re-scored on the matched 9-level τ-grid: the pre-fix comparison scored Elia on a 3-point trapezoidal rule that under-integrates the pinball integrand and artificially flattered Elia by ~20%.
+
+---
+
+<a id="slide-f7"></a>
+### SLIDE F7 — Key things to discuss with supervisor
+
+These are the six items I would raise first, ordered by how likely they are to come up in the defence and how much they move the narrative.
+
+1. **Why the headline dropped from −44% to −7.1%, and whether the thesis is still defensible.** B1 is the biggest mover. The fix is strictly-causal expanding normalisation, which is the right protocol; the pre-fix number was an artefact. The thesis is still defensible because (a) −7.1% on 17 344 rounds is DM t = 22.35 and block-bootstrap CI well separated from zero; (b) the mechanism's value was never "best CRPS", it was "CRPS-competitive + the four Lambert economic guarantees simultaneously"; (c) the recalibration layer (Claim 7) closes 91% of centre miscalibration at +1.6% CRPS, near the GBR calibration-sharpness floor. The question is whether I frame the honest-number chapter as a correction of the draft or as the load-bearing result.
+
+2. **The mechanism is tied with inverse-CRPS on headline CRPS (−7.1% vs −7.0%).** On this slice, skill-gating on top of Bates–Granger weighting is within noise. This makes the "packaging" argument the load-bearing one: the value is the combination of incentive-compatible settlement + budget balance + sybil-proofness + online adaptivity, not CRPS. Worth being explicit with the supervisor on how aggressively to push this in the opening narrative.
+
+3. **The mechanism loses to the best single forecaster by ~16 pp CRPS on wind.** This is the right finding for a highly autocorrelated series with a dominant forecaster, and it matches the literature (forecast-combination puzzle). But the oral defence needs a clean one-sentence answer: "the mechanism reconstructs the best-single ordering from data alone (Spearman σ vs CRPS = 1.0), which is the value on any panel where the operator does not know a priori which model is best."
+
+4. **The electricity null result.** All seven forecasters cluster within 1% CRPS, so there is no skill signal to exploit, and the mechanism returns a null (DM t = 0.008, p = 0.994). This is the correct behaviour — a spurious positive would indicate over-fitting of σ. Discuss with supervisor whether to frame this as the mechanism's honesty property or as a limitation.
+
+5. **Restart-per-season decomposition.** The full-run −7.1% is partly cross-seasonal adaptation; within a single season the mechanism is −0.83% to −1.20% every season without exception. This is not a contradiction; it is a decomposition. Worth agreeing on how to present it so neither reading is overstated.
+
+6. **Remaining items that did not get regenerated under the full fixed pipeline.** (i) The horizon experiments (`day_ahead.json`, `4h_ahead.json`, `regime_shift.json`) were generated with the synthetic-tuned defaults $(\gamma, \rho, \lambda) = (4, 0.1, 0.3)$ rather than the real-data tuned $(16, 0.5, 0.05)$ because of the audit-M3 keyword-argument bug. Fixed in source; a re-run takes ~1 hour per dataset. (ii) The published-OGD head-to-head baseline table is still under the older warmup-window normalisation. (iii) The per-τ Michael OGD scaffolding (`run_main_rewards_per_tau`) is landed with 8 smoke tests but not wired into `runner.py`, so the current `michael_ogd_centered_median_fan` row is still the shifted-median fan rather than a true per-τ OGD. Pipeline rerun is ~1–3 hours. Need supervisor's call on which of these should block submission vs be flagged as future work.
+
+Separate-but-important items not on the main list:
+
+- **A2 grid-match sign flip.** Mechanism went from "−13% *worse* than Elia real-time" (3-grid) to "+8% *better*" (matched 9-grid). The 3-grid number was honest but compared two different Riemann approximations of the same integral. The 9-grid comparison is apples-to-apples. Worth being ready to explain why the pre-fix table was misleading even though neither version lied.
+
+- **Diebold–Mariano bandwidth.** Under legacy horizon-1 HAC the DM statistic was 40.77; under Andrews 1991 data-driven bandwidth (lag 12) it drops to 22.35. Both are significant at any conventional threshold, but the Andrews number is the one reported in the final chapter because horizon-1 HAC underestimates the long-run variance of an autocorrelated loss differential.
+
+- **Warmup-window clipping on the audit slice.** Static normalisation on a 3 000-point winter-wind slice clips ~33% of eval values to {0, 1} because the warmup range is narrower than the full-series range. Mitigated by using `normalize_mode="expanding"` for all new runs; the audit slice is retained only as the calibration anchor and the per-τ coverage reference.
+
+---
+
+*End of Appendix F. These slides are back-pocket methodology; they are not rehearsed as part of the main delivery, but every defence-ready answer on "how did you actually train the models" is on one of these seven pages.*
