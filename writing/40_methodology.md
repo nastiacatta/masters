@@ -2,19 +2,20 @@
 
 ## Three-layer architecture
 
-The simulation and analysis platform is organised into three layers
-with a strict interface. An environment layer produces outcomes and
-contextual state, an agent layer produces reports and deposits, and
-a platform layer implements the mechanism. Separating the three lets
-us run the same mechanism against synthetic data-generating
-processes, real grid data, honest forecasters, and adversaries,
-without modifying any mechanism code. The environment layer supplies
-the outcome sequence $y_t$. The agent layer supplies a triple
-$(\text{participate}, r_i, b_i)$. The platform layer produces
-aggregation weights, settlement payouts, and the updated skill state.
-This separation makes the mechanism agnostic to the forecaster panel
-and to the underlying data-generating process. Every experiment in
-Chapters 5--8 reuses the same platform-layer code.
+The simulation and analysis platform is organised into three
+layers with a strict interface. An environment layer produces
+outcomes and contextual state, an agent layer produces reports
+and deposits, and a platform layer implements the mechanism. The
+separation lets us run the same mechanism against synthetic
+data-generating processes, real grid data, honest forecasters,
+and adversaries, without modifying any mechanism code. The
+environment layer supplies the outcome sequence $y_t$. The agent
+layer supplies a triple $(\text{participate}, r_i, b_i)$. The
+platform layer produces aggregation weights, settlement payouts,
+and the updated skill state. The mechanism is therefore agnostic
+to the forecaster panel and to the underlying data-generating
+process. Every experiment in Chapters 5--8 reuses the same
+platform-layer code.
 
 ## Datasets
 
@@ -108,91 +109,92 @@ Ensemble & Equal-weighted mean of Naive and EWMA(5)
 
 All forecasters implement a common fit-predict interface. Each
 forecaster also exposes an explicit indicator whenever a model
-falls back to persistence, so that a silent degradation cannot be
+falls back to persistence, so a silent degradation cannot be
 mistaken for a legitimate forecast.
 
-Hyperparameter tuning for XGBoost and the multilayer perceptron uses
-expanding-window cross-validation with a 24-step embargo between the
-training and validation windows, following
-\citet{bergmeir2018note}. The multilayer perceptron uses $z$-score
-feature standardisation on the training window, early stopping with
-a patience of twenty rounds, and a weight-decay regulariser of
-$10^{-4}$. Full training details for both parametric forecasters are
-in Appendix~\ref{app:training-details}.
+Hyperparameter tuning for XGBoost and the multilayer perceptron
+uses expanding-window cross-validation with a 24-step embargo
+between the training and validation windows, following
+\citet{bergmeir2018note}. The multilayer perceptron uses
+$z$-score feature standardisation on the training window, early
+stopping with a patience of twenty rounds, and a weight-decay
+regulariser of $10^{-4}$. Full training details for both
+parametric forecasters are in Appendix~\ref{app:training-details}.
 
 ## Validity ladder
 
-Experiments follow a four-rung validity ladder: each rung must pass
-before the next is treated as meaningful.
+Experiments follow a four-rung validity ladder. Each rung must
+pass before the next is treated as meaningful.
 
-Rung~1, \emph{mechanism correctness}, checks the invariants of the
-mechanism itself: budget balance, non-negative payouts, zero profit
-under equal scores, score bounds, permutation invariance, and
-score-shift invariance. Every Lambert combinatorial payoff invariant
-is checked numerically and anchored by a regression comparison
-against reference values on a fixed seed set.
+Rung~1, \emph{mechanism correctness}, checks the invariants of
+the mechanism itself: budget balance, non-negative payouts, zero
+profit under equal scores, score bounds, permutation invariance,
+and score-shift invariance. Every Lambert combinatorial payoff
+invariant is checked numerically and anchored by a regression
+comparison against reference values on a fixed seed set.
 
-Rung~2, \emph{pure forecasting gain}, holds seeds, data-generating
-process, horizon, participation pattern, and agent panel fixed
-across all methods in a batch. Each comparison reports paired deltas
-against a fixed set of baselines. The set comprises uniform
-averaging, deposit-only, skill-only, the mechanism itself,
-inverse-CRPS weighting, trimmed mean, and median. It also covers the
-rolling best-single selector, the per-round oracle (argmin), the
-hindsight inverse-CRPS combination, and the published
-\citet{vitali2025intermittent} online-gradient-descent reference.
+Rung~2, \emph{pure forecasting gain}, holds seeds,
+data-generating process, horizon, participation pattern, and
+agent panel fixed across all methods in a batch. Each comparison
+reports paired deltas against a fixed set of baselines. The set
+includes uniform averaging, deposit-only, skill-only, the
+mechanism itself, inverse-CRPS weighting, trimmed mean, and
+median. It also includes the rolling best-single selector, the
+per-round oracle (argmin), the hindsight inverse-CRPS
+combination, and the published \citet{vitali2025intermittent}
+online-gradient-descent reference.
 
-Rung~3, \emph{dynamic robustness}, evaluates performance under drift
-(non-stationary noise scales), missingness (i.i.d.\ and bursty
-absence), and selective participation.
+Rung~3, \emph{dynamic robustness}, evaluates performance under
+drift (non-stationary noise scales), missingness (i.i.d.\ and
+bursty absence), and selective participation.
 
-Rung~4, \emph{strategic robustness}, evaluates the mechanism against
-the theory-grounded adversary catalogue developed in
+Rung~4, \emph{strategic robustness}, evaluates the mechanism
+against the theory-grounded adversary catalogue developed in
 Chapter~\ref{ch:robustness}. Attacker profit is reported with
 standard errors and $95\%$ confidence intervals, scaled per
 $1{,}000$ rounds, together with attacker weight share where
 relevant. Each adversary is evaluated across at least ten paired
 seeds.
 
-Every experiment emits a four-panel summary. The first panel is the
-primary outcome ($\Delta$~CRPS relative to uniform). The second is
-calibration (probability integral transform (PIT) histogram or reliability
-diagram). The third is market structure (Gini coefficient,
-Herfindahl-Hirschman index, and the effective participant count
-$N_{\mathrm{eff}}$ of the wealth or influence distribution). The
-fourth is a failure-mode panel that isolates a plausible weakness
-of the method under test.
+Every experiment emits a four-panel summary. The first panel is
+the primary outcome ($\Delta$~CRPS relative to uniform). The
+second is calibration (probability integral transform (PIT)
+histogram or reliability diagram). The third is market structure
+(Gini coefficient, Herfindahl-Hirschman index, and the effective
+participant count $N_{\mathrm{eff}}$ of the wealth or influence
+distribution). The fourth is a failure-mode panel that isolates
+a plausible weakness of the method under test.
 
 ## Statistical testing
 
 Method-versus-method comparisons use the Diebold--Mariano test
 \citep{diebold1995comparing} on the per-round CRPS differential,
 with heteroscedasticity- and autocorrelation-consistent (HAC)
-standard errors. Bootstrap confidence intervals use the stationary
-bootstrap where mean CRPS is the primary endpoint. A paired sign
-test is used as a robustness check when the DM assumptions are
-marginal.
+standard errors. Bootstrap confidence intervals use the
+stationary bootstrap where mean CRPS is the primary endpoint. A
+paired sign test runs as a robustness check when the DM
+assumptions are marginal.
 
-The three headline numbers from these tests are the following. On
-the full-length Elia wind series ($T = 17{,}344$, expanding
-normalisation), the mechanism versus uniform comparison yields
+The three headline numbers from these tests follow. On the
+full-length Elia wind series ($T = 17{,}344$, expanding
+normalisation), the mechanism-versus-uniform comparison yields
 $t = 40.77$ and $p \approx 0$ under the legacy horizon-$1$ HAC
-bandwidth. Under the Andrews 1991 data-driven HAC bandwidth
-(selected lag $12$) the same statistic is $t = 22.35$ and
-$p \approx 0$. On the Elia electricity-imbalance
-series ($T_\mathrm{eval} = 9{,}800$ after a 200-round warmup over
-$T = 10{,}000$ raw points), the same comparison yields $t = 0.007$
-and $p = 0.994$ (Andrews auto HAC, lag $11$). On the $3\,000$-point
-audit slice the mechanism outperforms uniform with $t = +8.26$
-(Andrews auto HAC, selected lag $8$), $p \approx 0$; the legacy
-horizon-$1$ bandwidth gives $t = +15.43$.
+bandwidth. Under the \citet{andrews1991hac} data-driven HAC
+bandwidth (selected lag $12$) the same statistic is $t = 22.35$
+and $p \approx 0$. On the Elia electricity-imbalance series
+($T_\mathrm{eval} = 9{,}800$ after a 200-round warmup over
+$T = 10{,}000$ raw points), the same comparison yields
+$t = 0.007$ and $p = 0.994$ (Andrews auto HAC, lag $11$). On the
+$3\,000$-point audit slice the mechanism outperforms uniform with
+$t = +8.26$ (Andrews auto HAC, selected lag $8$), $p \approx 0$;
+the legacy horizon-$1$ bandwidth gives $t = +15.43$.
 
 ## Reproducibility
 
-All experiments are driven from deterministic random seeds, with the
-canonical set $\{0, 1, 2, 42, 2024\}$. Forecaster training runs
-under single-threaded BLAS to eliminate non-determinism in
-floating-point reductions. The software stack is Python 3.12 with
-NumPy, SciPy, XGBoost, and PyTorch. All numerical tables reported
-in the thesis are reproducible end-to-end from the seed set and the
-committed code.
+All experiments are driven from deterministic random seeds, with
+the canonical set $\{0, 1, 2, 42, 2024\}$. Forecaster training
+runs under single-threaded BLAS to eliminate non-determinism in
+floating-point reductions. The software stack is Python 3.12
+with NumPy, SciPy, XGBoost, and PyTorch. Every numerical table
+reported in the thesis is reproducible end-to-end from the seed
+set and the committed code.

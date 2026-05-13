@@ -733,6 +733,11 @@ PREAMBLE = r"""\documentclass[12pt,a4paper,openany]{report}
 % (`>{\raggedright\arraybackslash}`), useful for wide appendix tables.
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 \usepackage{graphicx}
+% TikZ for the system timeline diagram in Chapter 3.
+\IfFileExists{tikz.sty}{%
+  \usepackage{tikz}%
+  \usetikzlibrary{positioning,shapes.geometric,arrows.meta,calc,fit}%
+}{}
 % Figure paths in the markdown sources are written as
 % `writing/figures/...` (so they resolve from the repo root). When
 % build_pdf.py compiles in the writing/ directory, the same paths are

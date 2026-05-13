@@ -26,13 +26,13 @@ AIC-selected order).
   hour-of-day, day-of-week, and the rolling $24$-hour mean and
   variance. No exogenous weather inputs.
 - Training protocol: expanding-window online retraining every
-  $50$ rounds; strict causal embargo of one round between the
-  training tail and the forecast target, following
+  $50$ rounds, with a strict causal embargo of one round between
+  the training tail and the forecast target, following
   \citet{bergmeir2018note}.
-- Fixed hyperparameters selected by held-out sweep: maximum depth
+- Fixed hyperparameters from the held-out sweep: maximum depth
   $6$, learning rate $0.05$, $200$ boosting rounds, minimum child
-  weight $8$, $L_2$ regularisation coefficient $1.0$. Not re-tuned
-  per dataset.
+  weight $8$, $L_2$ regularisation coefficient $1.0$. These are
+  not re-tuned per dataset.
 
 ## Multi-layer perceptron
 
@@ -53,18 +53,18 @@ AIC-selected order).
 Every forecaster in the real-data panel is screened before use
 against three properties.
 
-- \emph{No future-data leakage.} A sentinel-injection check replays
-  the series with a flag set at time $t$ and confirms that the
-  forecaster's output at time $t'\!<\!t$ is unchanged. All seven
-  forecasters pass on the Elia wind audit slice.
+- \emph{No future-data leakage.} A sentinel-injection check
+  replays the series with a flag set at time $t$ and confirms that
+  the forecaster's output at time $t'\!<\!t$ is unchanged. All
+  seven forecasters pass on the Elia wind audit slice.
 - \emph{No degenerate constant output.} After the $200$-round
   warmup, the point-forecast standard deviation and the
-  quantile-interval width exceed $10^{-4}$ for every forecaster
-  on every non-constant data-generating process.
-- \emph{No silent persistence fallback.} Each forecaster exposes
-  a fallback indicator that fires if the model's own output is
-  unavailable and the runner substitutes the lagged observation;
-  on the post-audit $3{,}000$-point Elia wind slice the fallback
+  quantile-interval width exceed $10^{-4}$ for every forecaster on
+  every non-constant data-generating process.
+- \emph{No silent persistence fallback.} Each forecaster exposes a
+  fallback indicator that fires if the model's own output is
+  unavailable and the runner substitutes the lagged observation.
+  On the post-audit $3{,}000$-point Elia wind slice the fallback
   counter is zero for all seven forecasters.
 
 ## Reproducibility
@@ -74,5 +74,6 @@ propagated from the runner. Forecaster outputs are cached per
 dataset, forecaster, seed, and pipeline version; a version bump
 invalidates the cache. The headline wind run under expanding
 normalisation is reproducible end-to-end from the experiment
-runner with the same dataset, pipeline, and seed set documented
-in Chapter~\ref{ch:methodology}.
+runner with the dataset, pipeline, and seed set documented in
+Chapter~\ref{ch:methodology}.
+

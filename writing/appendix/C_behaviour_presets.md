@@ -1,10 +1,10 @@
-# Adversary presets
+# Adversary presets {#app:behaviour-presets}
 
 The robustness chapter tests eight theory-grounded adversaries,
 each with a published theoretical basis. This appendix gives the
 one-line theoretical framing for each and the headline empirical
-result. The full confidence intervals, paired-seed comparisons, and
-per-preset figures are in the main body
+result. The full confidence intervals, paired-seed comparisons,
+and per-preset figures are in the main body
 (Chapter~\ref{ch:robustness}).
 
 ## 1. Arbitrage-seeking
@@ -16,7 +16,7 @@ per-preset figures are in the main body
   $\lambda$, from $+11.68$ at $\lambda = 0$ to $+24.22$ at
   $\lambda = 1$ over 1000 rounds.
 
-## 2. Coordinated group (Chun–Shachter coalition)
+## 2. Coordinated group (Chun--Shachter coalition)
 
 - Basis: \citet{chun2011cooperating}.
 - Objective: coalition members submit a pooled report
@@ -29,8 +29,8 @@ per-preset figures are in the main body
 - Basis: \citet{chen2014arbitrage} combined with
   \citet{chun2011cooperating}.
 - Objective: coalition with access to a shared private signal.
-- Headline: $+33.8$ coalition profit under an AR(1)
-  data-generating process.
+- Headline: $+33.8$ coalition profit under an AR(1) data-generating
+  process.
 
 ## 4. Strategic influence
 
@@ -58,7 +58,7 @@ per-preset figures are in the main body
 
 - Basis: \citet{feldman2004freeriding}.
 - Objective: adapt to any detection signal the mechanism exposes.
-- Headline: both fixed and adaptive variants bankrupted within
+- Headline: both fixed and adaptive variants bankrupt within
   1000 rounds.
 
 ## 8. Wash trader (activity gaming)
@@ -78,10 +78,11 @@ per-preset figures are in the main body
 - Headline: the narrow invariance holds to $10^{-17}$;
   diversified-report leakage is approximately $6.5\%$.
 
-Bursty participation is not part of the theory-grounded catalogue;
-the earlier ``$+934\%$ bursty'' preset from the legacy presentation
+Bursty participation is not part of the theory-grounded catalogue.
+The earlier ``$+934\%$ bursty'' preset from the legacy presentation
 is superseded and is not cited in the main body.
 
 Each preset is evaluated by a dedicated runner configuration that
-seeds the attack, records per-seed profit, and aggregates confidence
-intervals across the seed grid.
+seeds the attack, records per-seed profit, and aggregates
+confidence intervals across the seed grid.
+

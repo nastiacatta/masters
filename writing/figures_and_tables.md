@@ -46,7 +46,7 @@ Every figure and table that will appear in the thesis. Each entry has:
 
 | ID | Title | Source | Chapter | Status |
 |---|---|---|---|:---:|
-| F1 | Five-step round diagram | tikz, based on `dashboard/docs/MECHANISM_ANALYSIS.md` §2 | 30_mechanism_design | to draw |
+| F1 | Five-step round diagram (pre-event / event / post-event) | tikz, inline in `30_mechanism_design.md` | 30_mechanism_design | LOCKED |
 | F2 | Three-layer architecture diagram | tikz | 40_methodology | to draw |
 | F3 | Skill layer — loss-to-skill mapping | `dashboard/public/presentation-plots/skill_signal_clean.png` | 30_mechanism_design | LOCKED |
 | F4 | $\sigma$ trajectory on known-noise panel | `dashboard/public/presentation-plots/skill_wager.png` | 50_results_synthetic | LOCKED |

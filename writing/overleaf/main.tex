@@ -573,7 +573,7 @@ near-identical CRPS, the mechanism is statistically indistinguishable
 from uniform, which is the regime the combination puzzle predicts.
 
 Recent work on \emph{performative} prediction
-\citep{hardt2023performative, treutlein2023performative} considers the
+\citep{hardt2023performative, oesterheld2023performative} considers the
 case in which the forecast itself influences the outcome, creating a
 fixed-point problem. We do not model performativity directly, but record
 that it would amplify the strategic-reporting threat in Chapter 8:
@@ -2517,7 +2517,7 @@ without modifying any of the economic layers.
 \paragraph{Statistical evidence on wind.}
 
 The Diebold--Mariano statistic for the mechanism-versus-uniform
-comparison is \(t = 22.35\) under the Andrews 1991 data-driven HAC
+comparison is \(t = 22.35\) under the \citet{andrews1991hac} data-driven HAC
 bandwidth (selected lag 12) and \(t = 40.77\) under the legacy
 horizon-1 bandwidth on the full-length wind run, both with \(p \approx 0\)
 and well inside any Bonferroni-adjusted threshold.
@@ -2730,7 +2730,7 @@ slice.
 On the full-length 17\{,\}344-hour Elia offshore-wind series under
 strictly-causal expanding normalisation the mechanism reduces CRPS by
 \(7.1\%\) relative to uniform averaging, with Diebold--Mariano
-\(t = 22.35\) (Andrews 1991 auto HAC bandwidth, selected lag 12) and
+\(t = 22.35\) (\citet{andrews1991hac} auto HAC bandwidth, selected lag 12) and
 \(p \approx 0\); the legacy horizon-1 bandwidth gives \(t = 40.77\).
 The per-quantile online-gradient-descent baseline of
 \citet{vitali2025intermittent} improves on the mechanism on the same
