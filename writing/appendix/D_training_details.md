@@ -20,7 +20,7 @@ AIC-selected order).
 
 ## XGBoost quantile regression
 
-- Objective: quantile loss on the five-level grid
+- Objective: pinball loss on the five-level grid
   $\tau \in \{0.1, 0.25, 0.5, 0.75, 0.9\}$.
 - Features: lagged target values $y_{t-1}, \dots, y_{t-24}$,
   hour-of-day, day-of-week, and the rolling $24$-hour mean and

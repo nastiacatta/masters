@@ -19,7 +19,7 @@ $(\gamma, \rho, \lambda, \eta) = (16, 0.5, 0.05, 2)$.
 
 #### Aggregate comparison
 
-Table~\ref{tab:wind-headline} reports mean CRPS on the normalised
+Table~\ref{tab:wind-headline} reports mean Continuous Ranked Probability Score (CRPS) on the normalised
 $[0, 1]$ scale for the full suite of methods.
 
 \begin{table}[h]
@@ -51,28 +51,32 @@ slice ($T = 17{,}344$).}
 
 The Diebold--Mariano statistic for the mechanism against uniform
 averaging is $t = 22.35$ (Andrews 1991 data-driven HAC bandwidth,
-selected lag $12$) with $p \approx 0$; under the legacy
+selected lag $12$) with $p \approx 0$. Under the legacy
 horizon-$1$ HAC bandwidth (uncorrected for persistence in the loss
 differential) the same statistic inflates to $t = 40.77$. The
 skill-only rule against uniform gives $t = 21.30$ (Andrews) and
 $t = 38.92$ (legacy). The paired mechanism-versus-uniform
-improvement is large and statistically significant at any
-reasonable threshold under either bandwidth. A 95\% block-bootstrap
+difference is $-7.1\%$ with $p \approx 0$ under both bandwidths. A 95\% block-bootstrap
 confidence interval on $\mathbb{E}[\Delta\mathrm{CRPS}]$ with block
 size $168$ (one week of hourly data) gives
 $[-0.003214, -0.002605]$ for the mechanism, well separated from
 zero. All subsequent DM statistics in this chapter use the
-Andrews-auto bandwidth unless stated; the legacy values are also
+Andrews-auto bandwidth unless stated. The legacy values are also
 emitted into \texttt{comparison.json} as a sensitivity check.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.95\textwidth]{writing/figures/wind_master_comparison.png}
-\caption{Mean CRPS for ten aggregation rules on the full-length
-Elia offshore-wind headline slice ($T = 17{,}344$). The mechanism
-reduces CRPS by $7.1\%$ against uniform averaging; the per-round
-oracle, rolling best-single, and shifted-median fan baselines
-delimit the region accessible to self-financed aggregators.}
+\caption{Rolling-mean CRPS on the Elia offshore-wind headline slice
+($T_\mathrm{eval} = 17{,}344$), four aggregation rules: equal
+weights, Raja history-free, Vitali \& Pinson per-$\tau$ OGD, and
+this project's mechanism. End-of-line labels give the final
+rolling average; the caption line reports the paired delta against
+equal weights. Lower is better. Vitali sits below the mechanism on
+this slice because it relaxes budget balance in exchange for
+per-$\tau$ weight learning; Raja sits just below equal weights
+because it is history-free and cannot accumulate skill across
+rounds.}
 \label{fig:wind-master}
 \end{figure}
 
@@ -86,29 +90,55 @@ beats the mechanism by $7.4$ percentage points CRPS, the price paid
 for keeping the Lambert budget-balance constraint. The mechanism
 against the per-round oracle ($-7.1\%$ versus $-46.7\%$) leaves an
 oracle gap of approximately forty percentage points, which no
-self-financed aggregator can close; the mechanism captures roughly
+self-financed aggregator can close. The mechanism captures roughly
 $15\%$ of the available oracle gap. The mechanism against the
 rolling best-single selector ($-7.1\%$ versus $-22.9\%$) loses by
 $15.8$ percentage points, because wind power is highly
 autocorrelated and a single well-tuned model (online XGBoost)
 captures most of the structure.
 
-Note that the rolling best-single selector is defined as the
+The rolling best-single selector is defined as the
 forecaster with the lowest recent average CRPS over a 100-step
-lookback window. It is not a per-round oracle; the per-round
+lookback window. It is not a per-round oracle. The per-round
 argmin row (top of the table) serves that role.
 
 The mechanism and the trimmed-mean baseline differ by $0.1$
 percentage point of CRPS ($-7.1\%$ versus $-7.2\%$). Under the
 adversarial-expert model of \citet{guo2024robust}, the truncated
 mean is $L^1$-optimal when a bounded fraction of the reports is
-adversarial and the remaining experts are marginally symmetric;
-the closeness of trimmed-mean to the mechanism on this slice
-reflects the absence of adversarial reports in the Elia panel ---
+adversarial and the remaining experts are marginally symmetric.
+The closeness of trimmed-mean to the mechanism on this slice
+reflects the absence of adversarial reports in the Elia panel:
 the skill gate has no adversarial tail to discard and therefore
 no structural advantage over robust averaging.
 Section~\ref{ch:robustness} revisits this under synthetic
 adversarial behaviour.
+
+\paragraph{Interpretation against the combination-puzzle literature.}
+Two aspects of the $7.1\%$ CRPS reduction matter more than its magnitude.
+The first is that the gain coincides, to within statistical noise,
+with Bates--Granger-style inverse-CRPS weighting ($-7.0\%$), a
+baseline that is itself beaten by the unweighted median
+($-9.3\%$) on the same slice. The adaptive skill layer is therefore
+a minor source of the improvement on this panel: almost all of the
+gain is accessible to any aggregator that uses even a crude proxy
+for historical reliability. Read against
+\citet{timmermann2006forecast} and
+\citet{magnus2023inconvenient}, this is the expected regime for
+forecast combination. Once a panel is sufficiently heterogeneous
+for reliability weighting to help at all, the choice between
+different reliability-weighting schemes is of second order. The
+thesis therefore does not position the skill gate as a source of
+CRPS gain on its own. Its role is to carry the reliability signal
+through the wager pool (the economic layer) rather than as a
+separate weighting module bolted on top. The oracle gap is wide:
+the per-round argmin oracle reaches $0.02176$ on the same slice,
+about forty percentage points below uniform averaging. The
+mechanism closes $15\%$ of that gap, whereas
+\citet{vitali2025intermittent}'s per-quantile OGD variant closes
+about $45\%$. The residual gap, common to every aggregator
+considered, is the information that a single round's data simply
+cannot reveal about which forecaster is currently best.
 
 #### Per-forecaster skill and weight ordering
 
@@ -169,29 +199,32 @@ as a sensitivity check.
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{lrrp{4.5cm}}
+\begin{tabular}{lrrl}
 \toprule
-Forecast source & CRPS 9-grid (MW eq.) & CRPS 3-grid (MW eq.) & Notes \\
+Forecast source & CRPS 9-grid & CRPS 3-grid & Notes \\
+ & (MW eq.) & (MW eq.) & \\
 \midrule
 Elia most-recent forecast & $90.7$ & $74.0$
-  & Real-time NWP-driven forecast \\
+  & Real-time NWP \\
 Elia day-ahead forecast & $121.2$ & $98.6$
-  & Day-ahead NWP-driven forecast \\
+  & Day-ahead NWP \\
 Elia day-ahead 11h forecast & $126.5$ & $102.7$
   & Intermediate horizon \\
 Elia week-ahead forecast & $452.7$ & $372.4$
   & Weak baseline \\
-\textbf{Best single (online XGBoost)} & $\mathbf{69.5}$ & --- \\
-The present mechanism & $83.7$ & --- \\
-Inverse-variance hindsight & $70.1$ & --- \\
+\midrule
+\textbf{Best single (online XGBoost)} & $\mathbf{69.5}$ & --- & no weather inputs \\
+Inverse-variance hindsight & $70.1$ & --- & reference \\
+The present mechanism & $83.7$ & --- & 7-forecaster panel \\
 \bottomrule
 \end{tabular}
 \caption{External validation against Elia's operational forecast.
-CRPS is scored on the nine-level equidistant $\tau$-grid for
-apples-to-apples comparison (nine-grid column). The native
-three-grid Elia CRPS is also shown; the ranking of our mechanism
-and best single against Elia is stable to grid choice, while the
-absolute margin is larger on the matched grid.}
+CRPS is scored on the nine-level equidistant $\tau$-grid
+(apples-to-apples comparison). The native three-grid Elia CRPS is
+shown as a sensitivity check. The ranking of our mechanism and
+best-single against Elia is stable to grid choice, while the
+absolute margin is larger on the matched grid. The three rows
+below the rule are our outputs.}
 \label{tab:elia-operational}
 \end{table}
 
@@ -200,27 +233,50 @@ the observed series alone beats Elia's real-time forecast by
 approximately $23$\,\% in CRPS-megawatt-equivalent
 ($69.5$\,MW against $90.7$\,MW), despite using no weather inputs.
 The mechanism aggregates seven forecasters of varying quality and
-reaches $83.7$\,MW, a $7.7$\,\% improvement on Elia's real-time
+reaches $83.7$\,MW, which lowers CRPS by $7.7$\,\% against Elia's real-time
 forecast. Elia's day-ahead forecast, a more realistic forward
 operational product, is considerably weaker at $121.2$\,MW; our
 mechanism outperforms it by approximately $31$\,\%.
 
 Elia's published interval forecasts are systematically miscalibrated.
 Nominal $\tau = 0.10$ gives empirical coverage of $19.1\%$, and
-$\tau = 0.90$ gives $94.6\%$. This is a known property of operational
+$\tau = 0.90$ gives $94.6\%$. The miscalibration is a known property of operational
 numerical-weather-prediction forecasts and motivates the
 recalibration layer developed in Section~\ref{ch:recalibration} as
 a generic operational tool.
 
-### Elia offshore wind: calibration anchor slice
+\paragraph{Best-single ceiling and the conditional reading of the
+headline.} The seven-forecaster aggregate lands at $83.7$~MW, while
+the best single member (online XGBoost) reaches $69.5$~MW. The
+aggregate is therefore bounded below by its weakest members: a panel
+in which one forecaster does most of the work is, by construction,
+one on which an aggregator that cannot concentrate weight enough
+cannot match the best single model. The ceiling is the
+best-single-ceiling observation of \citet{timmermann2006forecast} in direct form. It
+motivates the conditional reading of the headline $-7.1\%$: the
+thesis does not claim to beat operational NWP-driven forecasting
+or the best single model, it claims a conditional improvement over
+uniform averaging within the budget-balanced design space.
 
-The calibration anchor covers the first $3\,000$ evaluation points
+\paragraph{Hyperparameter sensitivity.} Parameters tuned for
+synthetic panels with approximately ten forecasters and
+$T \approx 1{,}000$ rounds are not optimal on the wind series,
+where a more aggressive $(\gamma, \rho)$ is preferred. The
+held-out sensitivity sweep reported later in this section selects
+the wind-specific values; a poorly tuned skill gate renders the
+mechanism marginal against uniform. The headline number is stable
+to $\gamma$ and $\rho$ mis-specification but depends materially on
+keeping $\lambda$ small.
+
+### Elia offshore wind: audit slice
+
+The audit slice covers the first $3\,000$ evaluation points
 under the older warmup-window causal normalisation, on the post-fix
 pipeline in which negative raw wind values are clipped to zero before
 normalisation. Expanding rather than static normalisation is used for
 the audit run itself because the warmup of this slice (winter wind)
-has a systematically higher range than the evaluation window, which
-would cause static normalisation to clip approximately $46\%$ of
+has a systematically higher range than the evaluation window.
+Static normalisation would clip approximately $46\%$ of
 evaluation values to zero and render per-quantile coverage
 uninterpretable.
 
@@ -255,10 +311,11 @@ Uniform & $0.02115$ & --- \\
 \end{table}
 
 The ratio of the mechanism to the shifted-median-fan baseline is
-$0.02000 / 0.02030 = 0.985$: on this slice the mechanism beats the
-reference by $1.5\%$ CRPS. The Diebold--Mariano statistic for the
-mechanism against uniform on this slice is $t = +15.43$ with
-$p < 10^{-6}$.
+$0.02000 / 0.02030 = 0.985$: on this slice the mechanism reduces
+CRPS against the reference by $1.5\%$. The Diebold--Mariano
+statistic for the mechanism against uniform on this slice is
+$t = +8.26$ (Andrews 1991 auto HAC bandwidth, selected lag $8$),
+$p \approx 0$; the legacy horizon-$1$ bandwidth gives $t = +15.43$.
 
 #### Per-forecaster CRPS on the audit slice
 
@@ -327,8 +384,8 @@ The mean tail deviation over $\tau \in \{0.1, 0.2, 0.8, 0.9\}$ is
 $0.019$, and the mean centre deviation over $0.4 \leq \tau \leq 0.6$
 is $0.029$. The pattern is systematic over-coverage at every
 quantile level: the aggregate quantile function is right-shifted.
-This is corrected by the recalibration layer developed in
-Section~\ref{ch:recalibration}.
+The recalibration layer developed in
+Section~\ref{ch:recalibration} corrects the shift.
 
 #### Mechanism versus published per-quantile OGD
 
@@ -358,8 +415,8 @@ Vitali's aggregator is as calibrated as ours on the tail
 ($|\bar{\text{emp}} - \text{nominal}| = 0.019$ for both) and
 lower CRPS ($0.01775$ against $0.02000$, a gap of approximately
 $11\%$). The advantage on CRPS comes from relaxing the Lambert
-budget-balance constraint and learning per-$\tau$ weights directly;
-our recalibration layer closes most of the centre deviation in
+budget-balance constraint and learning per-$\tau$ weights directly.
+Our recalibration layer closes most of the centre deviation in
 Section~\ref{ch:recalibration} without relaxing budget balance.
 
 ### Elia electricity imbalance: null result
@@ -395,11 +452,14 @@ Per-round oracle & $0.05924$ & $-34.6\%$ \\
 \end{table}
 
 The Diebold--Mariano statistic for the mechanism against uniform is
-$t = 0.008$ with $p = 0.994$: the mechanism is not statistically
-distinguishable from uniform on electricity. The seven forecasters
+$t = 0.007$ with $p = 0.994$ (Andrews auto HAC, lag $11$); the
+$95\%$ block-bootstrap confidence interval on $\Delta\mathrm{CRPS}$
+at the 168-hour block size is $[-0.000127, +0.000123]$ and straddles
+zero. The mechanism is not statistically distinguishable from
+uniform on electricity. The seven forecasters
 produce near-identical CRPS within approximately $1\%$ of each
 other, so the skill signal has no persistent structure to exploit.
-This is the forecast-combination puzzle regime
+The electricity result is the forecast-combination puzzle regime
 \citep{bates1969combination, timmermann2006forecast}, and the
 mechanism behaves accordingly: a null rather than a regression.
 
@@ -411,11 +471,12 @@ forecasters themselves are undifferentiated.
 
 ### Horizon experiments
 
-Horizon-specific experiments under the older warmup-window
-normalisation provide a sanity check on the mechanism's behaviour
-away from the one-step-ahead headline.
+Horizon-specific experiments provide a sanity check on the
+mechanism's behaviour away from the one-step-ahead headline.
 Table~\ref{tab:horizon-day-ahead} reports the day-ahead horizon
-($h = 24$, warmup at least $70$).
+($h = 24$, warmup at least $70$). The JSONs were regenerated on
+2026-05-13 under the tuned mechanism parameters ($\gamma = 16$,
+$\rho = 0.5$, $\lambda = 0.05$) following the audit-M3 fix.
 
 \begin{table}[h]
 \centering
@@ -424,53 +485,98 @@ Table~\ref{tab:horizon-day-ahead} reports the day-ahead horizon
 \toprule
 Method & Mean CRPS & $\Delta$ vs uniform \\
 \midrule
-Uniform & $0.19236$ & --- \\
-Skill only & $0.19227$ & $-0.05\%$ \\
-\textbf{Mechanism} & $\mathbf{0.19220}$ & $\mathbf{-0.08\%}$ \\
-Rolling best single & $0.18866$ & $-1.92\%$ \\
+Uniform & $0.18732$ & --- \\
+Skill only & $0.18650$ & $-0.44\%$ \\
+\textbf{Mechanism} & $\mathbf{0.18657}$ & $\mathbf{-0.40\%}$ \\
+Rolling best single & $0.18288$ & $-2.37\%$ \\
 \bottomrule
 \end{tabular}
-\caption{Day-ahead horizon experiment.}
+\caption{Day-ahead horizon experiment (regenerated 2026-05-13
+under tuned $\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$).}
 \label{tab:horizon-day-ahead}
 \end{table}
 
 \noindent On the four-hour-ahead horizon ($h = 16$ steps on a
-15-minute series, $T = 20{,}000$), uniform is $0.10874$, skill-only
-is $0.10835$ ($-0.36\%$), the mechanism is $0.10808$ ($-0.61\%$),
-and rolling best-single is $0.10388$ ($-4.48\%$). On a within-run
-seasonal slice, uniform is $0.06716$, the mechanism is $0.06646$
-($-1.05\%$), and rolling best-single is $0.05980$ ($-10.97\%$). The
-per-season breakdown is uniformly positive at approximately
-$+1\%$ CRPS improvement, with no season falling below the baseline.
+15-minute series, $T = 20{,}000$), uniform is $0.10741$, skill-only
+is $0.10574$ ($-1.55\%$), the mechanism is $0.10552$ ($-1.75\%$),
+and rolling best-single is $0.10230$ ($-4.76\%$). On a within-run
+seasonal slice, uniform is $0.06541$, the mechanism is $0.06309$
+($-3.55\%$), and rolling best-single is $0.05729$ ($-12.42\%$).
+The per-season breakdown is negative in CRPS delta at
+approximately $-3\%$ to $-4\%$ relative to the baseline in every
+season (winter $-4.3\%$, spring $-3.2\%$, summer $-3.4\%$, autumn
+$-3.3\%$), with no season falling above the uniform baseline.
 
-These horizon experiments are under the older warmup-window
-normalisation. Re-running them under the expanding variant is on the
-list of remaining work; the direction of the comparisons is stable
-and the magnitudes are expected to shift by under one percentage
-point.
+These horizon experiments are under the default warmup-window
+(static) normalisation. The magnitudes shift only slightly under
+the expanding variant on the main slice; re-running the horizon
+blocks under expanding is on the list of remaining work. The
+direction of the comparisons is stable.
 
-\paragraph{Caveat on mechanism hyperparameters.} The saved horizon
-artefacts were regenerated before the audit-M3 fix: the
+\paragraph{Hyperparameter provenance.} Earlier revisions of these
+tables were regenerated before the audit-M3 fix, when the
 \texttt{\_run\_horizon\_comparison} call path silently dropped
 $\gamma$, $\rho$, and $\lambda$ on the floor and inherited
 \texttt{run\_simulation}'s synthetic-tuned defaults
-($\gamma = 4$, $\rho = 0.1$, $\lambda = 0.3$), rather than the
-real-data tuned values
-$\gamma = 16$, $\rho = 0.5$, $\lambda = 0.05$ used in the headline
-slice. The EWMA half-life at $\rho = 0.1$ is about seven rounds,
-roughly seven times longer than at $\rho = 0.5$, which attenuates
-the skill signal on panels where relative forecaster quality shifts
-across the year. The horizon tables above therefore understate the
-mechanism's advantage at the operating hyperparameters. The
-post-M3 code takes $(\gamma, \rho, \lambda)$ as keyword arguments
-with the tuned values as defaults, so a re-run lifts this caveat;
-it is listed alongside the expanding-mode rerun as future work.
+($\gamma = 4$, $\rho = 0.1$, $\lambda = 0.3$). The EWMA half-life
+at $\rho = 0.1$ is about seven rounds, roughly seven times longer
+than at $\rho = 0.5$, which attenuated the skill signal on panels
+where relative forecaster quality shifts across the year. Under
+the pre-fix defaults, the day-ahead, 4h-ahead, and regime-shift
+deltas were $-0.08\%$, $-0.61\%$, and $-1.05\%$ respectively; the
+post-fix numbers shown in the table are three to five times
+stronger in magnitude. The post-M3 code takes $(\gamma, \rho,
+\lambda)$ as keyword arguments with the tuned values as defaults,
+so the caveat is lifted on the numbers shown here.
+
+### Threats to validity
+
+\paragraph{Internal validity.} An earlier pipeline used whole-series
+min-max normalisation, a non-reproducible neural-network seed,
+tail-adjacent cross-validation for XGBoost, and a silent
+persistence-fallback path. The current pipeline
+(Chapter~\ref{ch:methodology}) uses strictly-causal expanding
+normalisation, fixed seeds, embargoed cross-validation following
+\citet{bergmeir2018note}, and an explicit fallback indicator.
+Headline numbers from earlier drafts differ from those reported
+here by small but measurable amounts. The finite-grid CRPS
+approximation uses a nine-level grid with small but non-zero
+approximation bias. Pointwise quantile coverage is not subject to
+the same bias.
+
+\paragraph{External validity.} The evaluation draws on two series
+from a single European transmission system operator. Transfer to
+solar, load, or non-European systems cannot be claimed without
+further experiments. The audit slice covers $3\,000$ hourly points
+(approximately $125$ days) and is
+roughly stationary. Full-year drift is not tested in the headline.
+The panel has seven members. Results at $n = 50$ or $n = 500$ are
+not directly extrapolable.
+
+\paragraph{Construct validity.} CRPS is strictly proper
+\citep{gneiting2007strictly} but aggregates calibration and
+sharpness in a specific way: a mechanism optimised for CRPS may
+be sub-optimal for a decision that weights tail coverage or point
+accuracy differently. Headline comparisons are reported against
+multiple baselines (uniform, inverse-CRPS, median, trimmed mean,
+rolling best-single, the \citet{vitali2025intermittent} reference),
+so the claim is not anchored to a single reference point.
+
+\paragraph{Statistical validity.} The Diebold--Mariano test
+assumes covariance stationarity of the loss differential.
+Heteroscedasticity- and autocorrelation-consistent standard errors
+are used, but residual non-stationarity is not ruled out. No
+family-wise error correction is applied across the ten-method,
+two-dataset, two-horizon design. The headline
+mechanism-versus-uniform comparison has $p < 10^{-6}$, which
+survives any reasonable Bonferroni adjustment, but finer
+method-to-method comparisons should be read with this caveat.
 
 ### Published-OGD head-to-head
 
 Table~\ref{tab:head-to-head-wind} reports the wind head-to-head
-against \citet{vitali2025intermittent} and \citet{raja2024wagering} on the
-warmup-window normalisation.
+against \citet{vitali2025intermittent} and \citet{raja2024wagering}
+on the expanding-mode normalisation.
 
 \begin{table}[h]
 \centering
@@ -479,24 +585,28 @@ warmup-window normalisation.
 \toprule
 Method & Mean CRPS & $\Delta$ vs uniform \\
 \midrule
-Vitali per-$\tau$ OGD & $0.03442$ & $-18.01\%$ \\
-\textbf{Mechanism} & $\mathbf{0.03905}$ & $\mathbf{-6.99\%}$ \\
-Raja history-free & $0.04134$ & $-1.53\%$ \\
-Uniform & $0.04198$ & --- \\
+Vitali per-$\tau$ OGD & $0.03219$ & $-21.1\%$ \\
+\textbf{Mechanism} & $\mathbf{0.03788}$ & $\mathbf{-7.1\%}$ \\
+Raja history-free & $0.04022$ & $-1.4\%$ \\
+Uniform & $0.04078$ & --- \\
 \bottomrule
 \end{tabular}
-\caption{Wind head-to-head against published baselines.}
+\caption{Wind head-to-head against published baselines
+(\texttt{baselines.json}, regenerated 2026-05-13 under
+\texttt{normalize\_mode="expanding"} with tuned $\gamma=16$,
+$\rho=0.5$, $\lambda=0.05$).}
 \label{tab:head-to-head-wind}
 \end{table}
 
 On electricity, the ranking is compressed: Vitali's per-$\tau$ OGD
-reaches $-2.03\%$ against uniform, and the mechanism and the Raja
-history-free variant are both statistically tied with uniform. Vitali's
-per-$\tau$ OGD beats the mechanism on both series (by approximately
-$11$ percentage points on wind and $2$ percentage points on
-electricity). This is the CRPS cost of preserving the Lambert
-budget-balance and per-round truthfulness guarantees: Vitali's
-aggregator drops both in exchange for CRPS.
+reaches $-4.0\%$ against uniform, and the mechanism and the Raja
+history-free variant are both statistically tied with uniform
+(mechanism $+0.0\%$, Raja $+0.0\%$). Vitali's per-$\tau$ OGD beats
+the mechanism on both series (by approximately $14$ percentage
+points on wind and $4$ percentage points on electricity). The gap
+is the CRPS cost of preserving the Lambert budget-balance and
+per-round truthfulness guarantees: Vitali's aggregator drops both
+in exchange for CRPS.
 
 ### Sensitivity sweep and parameter provenance
 
@@ -529,7 +639,7 @@ reported above.
 
 Re-running the headline comparison under expanding normalisation at
 sweep-selected parameters is on the list of remaining work. The
-expected shift is sub-percent CRPS in either direction; the
+expected shift is sub-percent CRPS in either direction. The
 direction of the DM statistic and the method ranking are stable.
 
 ### Sensitivity of the wind optimum: plateau or peak?
@@ -539,7 +649,7 @@ optimum at $(\gamma, \rho, \lambda) = (32, 0.7, 0.05)$ on the wind
 training split. A reviewer's natural follow-up question is whether
 this optimum is a narrow peak, in which case a small mis-tuning would
 collapse the headline improvement, or a broad plateau, in which case
-the 7.1\% result is robust to modest parameter noise. To answer this,
+the 7.1\% result is stable to modest parameter noise. To answer this,
 we ran a denser local sweep on
 $\gamma \in \{12, 16, 20, 24, 28, 32, 40, 48\}$,
 $\rho \in \{0.3, 0.4, 0.5, 0.6, 0.7, 0.8\}$,
@@ -547,17 +657,17 @@ and $\lambda \in \{0.03, 0.05, 0.08, 0.12\}$, scoring each cell on
 the same held-out test partition as the main sweep.
 
 The best cell is $(\gamma, \rho, \lambda) = (28, 0.8, 0.03)$ at a
-test CRPS improvement of $-7.69\%$, marginally better than the
+test CRPS change of $-7.69\%$, marginally better than the
 coarse-grid value of $-6.86\%$. Twenty-one out of $192$ cells
 ($11\%$) fall within $0.5$ percentage points of the optimum, and
 $60\%$ fall within $2$~pp. The optimum is a broad plateau. Axis-wise,
 the mechanism's sensitivity to $\lambda$ is the largest of the three
-parameters ($-7.69\%$ at $\lambda = 0.03$ falling to $-5.50\%$ at
+parameters ($-7.69\%$ at $\lambda = 0.03$ rising to $-5.50\%$ at
 $\lambda = 0.12$, holding $\gamma, \rho$ at their optima), while
-$\gamma$ is stable across a wide band and $\rho$ improves
-monotonically with more aggressive updates up to the grid ceiling of
-$0.8$. This localises the hyperparameter tuning risk: the headline
-number is robust to $\gamma$ and $\rho$ mis-specification but
+$\gamma$ is stable across a wide band and CRPS falls
+monotonically with more aggressive $\rho$ up to the grid ceiling of
+$0.8$. The plateau shape localises the hyperparameter tuning risk: the headline
+number is stable to $\gamma$ and $\rho$ mis-specification but
 depends materially on keeping $\lambda$ small.
 
 ### Regime-shift robustness: restart-per-season
@@ -579,39 +689,53 @@ mechanism improvement against uniform.
 \toprule
 Season & $T$ & Mechanism $\Delta$ vs uniform & Best single $\Delta$ vs uniform \\
 \midrule
-Winter & $4{,}344$ & $-1.20\%$ & $-12.83\%$ \\
-Spring & $4{,}416$ & $-0.83\%$ & $-10.58\%$ \\
-Summer & $4{,}416$ & $-0.92\%$ & $-10.27\%$ \\
-Autumn & $4{,}368$ & $-0.91\%$ & $-9.69\%$ \\
+Winter & $4{,}344$ & $-4.22\%$ & $-12.83\%$ \\
+Spring & $4{,}416$ & $-3.02\%$ & $-10.58\%$ \\
+Summer & $4{,}416$ & $-3.16\%$ & $-10.27\%$ \\
+Autumn & $4{,}368$ & $-3.27\%$ & $-9.69\%$ \\
 \bottomrule
 \end{tabular}
 \caption{Restart-per-season regime-shift evaluation on the full
 wind series. The mechanism is initialised fresh at the start of
-each season.}
+each season. Regenerated 2026-05-13 under tuned
+$(\gamma, \rho, \lambda) = (16, 0.5, 0.05)$ following the audit-M3
+fix; the earlier version of this table ran under the
+synthetic-default $(\gamma, \rho) = (4, 0.1)$ and reported
+$-0.8\%$ to $-1.2\%$ per season.}
 \label{tab:regime-shift-restart}
 \end{table}
 
 Two readings of this result are simultaneously correct. The
 optimistic reading is that the mechanism delivers a consistent
-$-0.8\%$ to $-1.2\%$ improvement in \emph{every} season, without
-exception; the sign and rough magnitude of the benefit are robust
+$-3.0\%$ to $-4.2\%$ CRPS change in \emph{every} season, without
+exception. The sign and rough magnitude of the benefit are stable
 to seasonal regime change. The pessimistic reading is that the
-$7.1\%$ full-run headline is therefore largely a
-cross-seasonal adaptation effect: by the time the mechanism reaches
-summer and autumn in the single-pass protocol, it has learned the
-forecaster ordering across winter and spring, and reuses that
-ordering. Restarting per season erases the accumulated knowledge
-and reduces the advantage to the level that can be extracted from
-within-season data alone.
+$7.1\%$ full-run headline is partly a cross-seasonal adaptation
+effect: by the time the mechanism reaches summer and autumn in
+the single-pass protocol, it has learned the forecaster ordering
+across winter and spring, and reuses that ordering. The
+restart-per-season protocol reinitialises forecaster and
+mechanism state at each boundary, cutting that off, so the
+weighted-mean mechanism CRPS under restart ($0.0647$ averaged
+across the four seasons) gives a $-3.4\%$ change against its own
+per-season uniform baseline ($0.0670$), not $-7.1\%$.
 
-This is not a contradiction of the headline number but a
-decomposition of it: roughly one percentage point of the $7.1\%$
-full-run improvement is within-season skill recovery, and the
-remainder is cross-season adaptation. The best-single benchmark
-decomposes differently because it is a per-round selector: it
-achieves $-10\%$ to $-13\%$ every season, because XGBoost
-dominates the panel in every season. The mechanism's gap to
-best-single therefore widens under restart-per-season, consistent
-with the finding that XGBoost's dominance is learned quickly from
-within-season data but the mechanism does not concentrate weight
+This decomposes the headline number rather than contradicting it:
+roughly three to four percentage points of the $7.1\%$ full-run
+improvement is within-season skill recovery, and the remainder
+is cross-season adaptation. The restart-per-season experiment
+runs under static normalisation rather than expanding, which
+inflates its absolute CRPS base by approximately one third
+(the warmup window's range is narrower than the full-season range,
+so roughly thirty per cent of evaluation points hit the clipping
+boundaries). The decomposition percentages above are unaffected
+by this because the reference within each season is the same
+uniform baseline. The best-single benchmark decomposes
+differently because it is a per-round selector: it achieves
+$-9.7\%$ to $-12.8\%$ every season, because XGBoost dominates the
+panel in every season. The mechanism's gap to best-single widens
+under restart-per-season compared to the single-pass headline,
+consistent with the finding that XGBoost's dominance is learned
+quickly from within-season data but the mechanism does not
+concentrate weight
 aggressively enough on it without prior history.

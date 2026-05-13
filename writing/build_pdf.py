@@ -410,7 +410,24 @@ def convert_markdown_block(md: str, numbered_chapters: bool = True) -> str:
         preserved_math_spans.append(match.group(0))
         return f"\x01MATHSPAN{len(preserved_math_spans) - 1}\x01"
 
-    # Display math `$$...$$` first, so its delimiters are consumed
+    # Raw LaTeX environments that the markdown source embeds directly.
+    # We stash these FIRST, before any dollar-math stashing, because
+    # markdown source sometimes uses patterns like `$($with $m_i = 0$)$`
+    # inside a proposition/proof body. The non-greedy inline-math
+    # regex would otherwise match across an `\end{...}` boundary (by
+    # pairing `$)` with a later `$` inside a different environment),
+    # destroying the environment delimiter and preventing it from
+    # being stashed as a whole.
+    md = re.sub(
+        r"\\begin\{(table|tabular|equation\*?|align\*?|figure|gather\*?"
+        r"|eqnarray\*?|array|longtable"
+        r"|proof|theorem|lemma|proposition|corollary|definition|remark)\}.+?\\end\{\1\}",
+        _stash_multiline_math,
+        md,
+        flags=re.DOTALL,
+    )
+
+    # Display math `$$...$$` next, so its delimiters are consumed
     # whole before the single-`$` inline regex runs on the remainder.
     # Failing to do this causes the single-`$` regex to match the
     # inner two dollars of `$$...$$` and shred the display block.
@@ -425,19 +442,6 @@ def convert_markdown_block(md: str, numbered_chapters: bool = True) -> str:
     # line or an unrelated `$`.
     md = re.sub(
         r"\$[^$]+?\$",
-        _stash_multiline_math,
-        md,
-        flags=re.DOTALL,
-    )
-
-    # Raw LaTeX environments that the markdown source embeds directly
-    # (\begin{table}...\end{table}, tabular, equation, align, figure,
-    # enumerate, itemize — though the last two are only embedded when
-    # the list spans code vs prose boundaries). Stash them whole so the
-    # inner `&` and `\\` separators are not escape-mangled.
-    md = re.sub(
-        r"\\begin\{(table|tabular|equation\*?|align\*?|figure|gather\*?"
-        r"|eqnarray\*?|array|longtable)\}.+?\\end\{\1\}",
         _stash_multiline_math,
         md,
         flags=re.DOTALL,

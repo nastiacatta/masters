@@ -538,7 +538,7 @@ to this baseline is \(0.985\) on the 3000-point audit slice, a \(1.5\%\)
 CRPS advantage for the self-financed design on that slice. On the full
 17\{,\}344-hour expanding-mode wind run, the per-quantile OGD baseline
 of \citet{vitali2025intermittent} improves on our mechanism by
-approximately eleven percentage points of CRPS; this gap quantifies the
+approximately fourteen percentage points of CRPS; this gap quantifies the
 CRPS cost of preserving the Lambert budget-balance guarantee rather than
 relaxing to a per-quantile simplex aggregator.
 
@@ -966,7 +966,7 @@ variance.
 The empirical consequence is that our mechanism matches the
 published-OGD reference baseline within \(0.3\%\) CRPS on the 3000-point
 audit slice, but trails its per-quantile OGD variant by approximately
-eleven percentage points of CRPS on the full-length expanding-mode run.
+fourteen percentage points of CRPS on the full-length expanding-mode run.
 This gap is the CRPS cost of keeping the Lambert budget-balance
 constraint rather than relaxing to a simplex-projected OGD.
 
@@ -1850,11 +1850,13 @@ undifferentiated.
 
 \section{Horizon experiments}\label{horizon-experiments}
 
-Horizon-specific experiments under the older warmup-window normalisation
-provide a sanity check on the mechanism's behaviour away from the
-one-step-ahead headline.
+Horizon-specific experiments provide a sanity check on the mechanism's
+behaviour away from the one-step-ahead headline.
 Table\textasciitilde{}\ref{tab:horizon-day-ahead} reports the day-ahead
-horizon (\(h = 24\), warmup at least \(70\)).
+horizon (\(h = 24\), warmup at least \(70\)). The JSONs were
+regenerated on 2026-05-13 under the tuned mechanism parameters
+(\(\gamma = 16\), \(\rho = 0.5\), \(\lambda = 0.05\)) following the
+audit-M3 fix.
 
 \begin{table}[h]
 \centering
@@ -1863,36 +1865,47 @@ horizon (\(h = 24\), warmup at least \(70\)).
 \toprule
 Method & Mean CRPS & $\Delta$ vs uniform \\
 \midrule
-Uniform & $0.19236$ & --- \\
-Skill only & $0.19227$ & $-0.05\%$ \\
-\textbf{Mechanism} & $\mathbf{0.19220}$ & $\mathbf{-0.08\%}$ \\
-Rolling best single & $0.18866$ & $-1.92\%$ \\
+Uniform & $0.18732$ & --- \\
+Skill only & $0.18650$ & $-0.44\%$ \\
+\textbf{Mechanism} & $\mathbf{0.18657}$ & $\mathbf{-0.40\%}$ \\
+Rolling best single & $0.18288$ & $-2.37\%$ \\
 \bottomrule
 \end{tabular}
-\caption{Day-ahead horizon experiment.}
+\caption{Day-ahead horizon experiment (regenerated 2026-05-13 under
+tuned \(\gamma = 16\), \(\rho = 0.5\), \(\lambda = 0.05\)).}
 \label{tab:horizon-day-ahead}
 \end{table}
 
 \noindent On the four-hour-ahead horizon (\(h = 16\) steps on a
-15-minute series, \(T = 20{,}000\)), uniform is \(0.10874\), skill-only
-is \(0.10835\) (\(-0.36\%\)), the mechanism is \(0.10808\)
-(\(-0.61\%\)), and rolling best-single is \(0.10388\) (\(-4.48\%\)). On
-a within-run seasonal slice, uniform is \(0.06716\), the mechanism is
-\(0.06646\) (\(-1.05\%\)), and rolling best-single is \(0.05980\)
-(\(-10.97\%\)). The per-season breakdown is uniformly positive at
-approximately \(+1\%\) CRPS improvement, with no season falling below
-the baseline.
+15-minute series, \(T = 20{,}000\)), uniform is \(0.10741\),
+skill-only is \(0.10574\) (\(-1.55\%\)), the mechanism is \(0.10552\)
+(\(-1.75\%\)), and rolling best-single is \(0.10230\) (\(-4.76\%\)).
+On a within-run seasonal slice, uniform is \(0.06541\), the mechanism
+is \(0.06309\) (\(-3.55\%\)), and rolling best-single is \(0.05729\)
+(\(-12.42\%\)). The per-season breakdown is negative in CRPS delta at
+approximately \(-3\%\) to \(-4\%\) in every season (winter
+\(-4.3\%\), spring \(-3.2\%\), summer \(-3.4\%\), autumn \(-3.3\%\)),
+with no season falling above the uniform baseline.
 
-These horizon experiments are under the older warmup-window
+These horizon experiments are under the default warmup-window (static)
 normalisation. Re-running them under the expanding variant is on the
-list of remaining work; the direction of the comparisons is stable and
-the magnitudes are expected to shift by under one percentage point.
+list of remaining work; the direction of the comparisons is stable.
+
+\paragraph{Hyperparameter provenance.} Earlier revisions of these
+tables were regenerated before the audit-M3 fix, when the
+\texttt{\_run\_horizon\_comparison} call path silently dropped
+\(\gamma\), \(\rho\), and \(\lambda\) on the floor and inherited
+\texttt{run\_simulation}'s synthetic-tuned defaults (\(\gamma = 4\),
+\(\rho = 0.1\), \(\lambda = 0.3\)). Under those defaults, day-ahead,
+4h-ahead, and regime-shift deltas were \(-0.08\%\), \(-0.61\%\), and
+\(-1.05\%\) respectively; the post-fix numbers shown in the table are
+three to five times stronger in magnitude.
 
 \section{Published-OGD head-to-head}\label{published-ogd-head-to-head}
 
 Table\textasciitilde{}\ref{tab:head-to-head-wind} reports the wind
 head-to-head against \citet{vitali2025intermittent} and
-\citet{raja2024wagering} on the warmup-window normalisation.
+\citet{raja2024wagering} on the expanding-mode normalisation.
 
 \begin{table}[h]
 \centering
@@ -1901,21 +1914,25 @@ head-to-head against \citet{vitali2025intermittent} and
 \toprule
 Method & Mean CRPS & $\Delta$ vs uniform \\
 \midrule
-Vitali per-$\tau$ OGD & $0.03442$ & $-18.01\%$ \\
-\textbf{Mechanism} & $\mathbf{0.03905}$ & $\mathbf{-6.99\%}$ \\
-Raja history-free & $0.04134$ & $-1.53\%$ \\
-Uniform & $0.04198$ & --- \\
+Vitali per-$\tau$ OGD & $0.03219$ & $-21.1\%$ \\
+\textbf{Mechanism} & $\mathbf{0.03788}$ & $\mathbf{-7.1\%}$ \\
+Raja history-free & $0.04022$ & $-1.4\%$ \\
+Uniform & $0.04078$ & --- \\
 \bottomrule
 \end{tabular}
-\caption{Wind head-to-head against published baselines.}
+\caption{Wind head-to-head against published baselines
+(\texttt{baselines.json}, regenerated 2026-05-13 under
+\texttt{normalize\_mode="expanding"} with tuned $\gamma=16$,
+$\rho=0.5$, $\lambda=0.05$).}
 \label{tab:head-to-head-wind}
 \end{table}
 
 On electricity, the ranking is compressed: Vitali's per-\(\tau\) OGD
-reaches \(-2.03\%\) against uniform, and the mechanism and the Raja
-history-free variant are both statistically tied with uniform. Vitali's
-per-\(\tau\) OGD beats the mechanism on both series (by approximately
-\(11\) percentage points on wind and \(2\) percentage points on
+reaches \(-4.0\%\) against uniform, and the mechanism and the Raja
+history-free variant are both statistically tied with uniform
+(mechanism \(+0.0\%\), Raja \(+0.0\%\)). Vitali's per-\(\tau\) OGD
+beats the mechanism on both series (by approximately \(14\)
+percentage points on wind and \(4\) percentage points on
 electricity). This is the CRPS cost of preserving the Lambert
 budget-balance and per-round truthfulness guarantees: Vitali's
 aggregator drops both in exchange for CRPS.
@@ -2493,25 +2510,29 @@ the skill gate on real data.
 
 \paragraph{Orthogonal calibration fix.}
 
-The rolling isotonic recalibration layer closes \(59\%\) of the tail
-calibration gap at a \(1.3\%\) CRPS cost and an \(11\%\) sharpness cost,
+The rolling isotonic recalibration layer closes \(41\%\) of the tail
+calibration gap at a \(1.6\%\) CRPS cost and a \(12\%\) sharpness cost,
 without modifying any of the economic layers.
 
 \paragraph{Statistical evidence on wind.}
 
 The Diebold--Mariano statistic for the mechanism-versus-uniform
-comparison is \(t = 40.77\) on the full-length wind run, well inside any
-Bonferroni-adjusted threshold.
+comparison is \(t = 22.35\) under the Andrews 1991 data-driven HAC
+bandwidth (selected lag 12) and \(t = 40.77\) under the legacy
+horizon-1 bandwidth on the full-length wind run, both with \(p \approx 0\)
+and well inside any Bonferroni-adjusted threshold.
 
 \paragraph{External benchmark.}
 
 The best single forecaster, an online gradient-boosted tree model
 trained on the observed series alone, reaches \(69.5\)\textasciitilde MW
 CRPS-megawatt-equivalent against Elia's published real-time forecast of
-\(74.0\)\textasciitilde MW, without using weather inputs. The mechanism,
+\(90.7\)\textasciitilde MW on the matched nine-level \(\tau\)-grid
+(Elia's native three-point rule under-integrates the pinball integrand
+and flatters Elia at \(74.0\)\textasciitilde MW). The mechanism,
 aggregating a panel that mixes the best forecaster with weaker models,
-reaches \(83.7\)\textasciitilde MW, approximately \(13\%\) above Elia's
-operational forecast.
+reaches \(83.7\)\textasciitilde MW, approximately \(8\%\) below Elia's
+real-time operational forecast on the grid-matched scale.
 
 \section{Limitations}\label{limitations}
 
@@ -2521,7 +2542,7 @@ On the full-length wind run, inverse-variance weighting (,\(-7.0\%\) vs
 uniform) is statistically tied with the mechanism (,\(-7.1\%\)), and the
 median (,\(-9.3\%\)) and trimmed mean (,\(-7.2\%\)) both improve on it.
 The per-quantile OGD baseline of \citet{vitali2025intermittent}
-(,\(-18.0\%\)) and the rolling best-single selector (,\(-22.9\%\)) beat
+(,\(-21.1\%\)) and the rolling best-single selector (,\(-22.9\%\)) beat
 it by larger margins. The contribution is conditional improvement
 together with preserved economic structure, not raw CRPS dominance.
 
@@ -2557,7 +2578,7 @@ The \citet{ranjan2010combining} impossibility implies that any
 non-trivial weighted average of distinct calibrated forecasts is
 necessarily uncalibrated. The aggregate shows approximately two
 percentage points of systematic tail deviation. The recalibration layer
-closes \(59\%\); the remaining \(41\%\) is the cost of the linear-pool
+closes \(41\%\); the remaining \(59\%\) is the cost of the linear-pool
 form.
 
 \paragraph{Narrow sybil-proofness only.}
@@ -2709,10 +2730,12 @@ slice.
 On the full-length 17\{,\}344-hour Elia offshore-wind series under
 strictly-causal expanding normalisation the mechanism reduces CRPS by
 \(7.1\%\) relative to uniform averaging, with Diebold--Mariano
-\(t = 40.77\) and \(p \approx 0\). The per-quantile
-online-gradient-descent baseline of \citet{vitali2025intermittent}
-improves on the mechanism on the same series; the gap quantifies the
-CRPS cost of preserving the Lambert budget-balance constraint.
+\(t = 22.35\) (Andrews 1991 auto HAC bandwidth, selected lag 12) and
+\(p \approx 0\); the legacy horizon-1 bandwidth gives \(t = 40.77\).
+The per-quantile online-gradient-descent baseline of
+\citet{vitali2025intermittent} improves on the mechanism on the same
+series; the gap quantifies the CRPS cost of preserving the Lambert
+budget-balance constraint.
 
 On Elia electricity-imbalance prices, with \(T = 10{,}000\) evaluation
 rounds, the mechanism is statistically indistinguishable from uniform

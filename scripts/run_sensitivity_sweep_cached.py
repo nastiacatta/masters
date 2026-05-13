@@ -45,35 +45,11 @@ sys.path.insert(0, str(REPO_ROOT / "onlinev2" / "src"))
 from onlinev2.core.scoring import crps_hat_from_quantiles  # noqa: E402
 from onlinev2.simulation import run_simulation  # noqa: E402
 
-
-_GRIDS: dict[str, dict[str, list[float]]] = {
-    "coarse": {
-        "gamma": [4.0, 8.0, 16.0],
-        "rho": [0.1, 0.3, 0.5],
-        "lam": [0.05],
-    },
-    # Wide sweep: extends the coarse grid at both ends of γ and ρ so the
-    # optimum cannot pin at the boundary. λ gets a small off-default value
-    # (0.2) so we can see whether a non-trivial skill gate helps.
-    "wide": {
-        "gamma": [4.0, 8.0, 16.0, 32.0, 64.0],
-        "rho": [0.1, 0.3, 0.5, 0.7],
-        "lam": [0.05, 0.2],
-    },
-    "fine": {
-        "gamma": [2.0, 4.0, 8.0, 16.0, 32.0],
-        "rho": [0.05, 0.1, 0.2, 0.3, 0.5, 0.7],
-        "lam": [0.0, 0.05, 0.1, 0.2],
-    },
-    # Local refinement around the wind-series coarse-grid optimum
-    # (γ, ρ, λ) = (32, 0.7, 0.05) to test whether the optimum is a
-    # broad plateau or a narrow peak.
-    "fine_local": {
-        "gamma": [12.0, 16.0, 20.0, 24.0, 28.0, 32.0, 40.0, 48.0],
-        "rho": [0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
-        "lam": [0.03, 0.05, 0.08, 0.12],
-    },
-}
+# Canonical parameter grids shared with ``run_sensitivity_sweep.py`` so that
+# ``--grid <name>`` refers to the same parameter space from either script
+# (audit pass 2, M2). See ``scripts/_sweep_grids.py``.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _sweep_grids import GRIDS as _GRIDS  # noqa: E402
 
 
 def _load_cache(series_name: str) -> dict:

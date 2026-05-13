@@ -29,7 +29,7 @@ const ITEMS: Item[] = [
   },
   {
     label: 'Regime-shift protocol',
-    body: 'Two variants coexist. Legacy "within-run seasonal slice" buckets per-round CRPS by calendar season and is now labelled as such. run_regime_shift_restart_per_season resets forecaster and skill state at each boundary; it delivers −0.8% to −1.2% vs uniform in every season without exception.',
+    body: 'Two variants coexist. Legacy "within-run seasonal slice" buckets per-round CRPS by calendar season and is now labelled as such. run_regime_shift_restart_per_season resets forecaster and skill state at each boundary; it delivers −3.0% to −4.2% vs uniform in every season without exception.',
   },
 ];
 

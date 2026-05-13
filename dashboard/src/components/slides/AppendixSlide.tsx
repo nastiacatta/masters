@@ -820,21 +820,21 @@ export default function AppendixSlide(_props: {
                 What Does "CRPS Reduction" Mean on Elia Wind?
               </h4>
               <p style={{ margin: 0, fontSize: '1.05rem', color: PALETTE.charcoal, lineHeight: 1.6, fontFamily: TYPOGRAPHY.fontFamily }}>
-                On 17,544 hourly points of Elia offshore wind, under strictly-causal normalisation
-                (training pipeline audit, May 2026), the mechanism's mean CRPS is <strong>about 7.0% lower</strong> than equal-weight averaging. The calculation:
+                On 17,544 hourly points of Elia offshore wind, under strictly-causal expanding
+                normalisation (training pipeline audit, May 2026), the mechanism's mean CRPS is <strong>about 7.1% lower</strong> than equal-weight averaging. The calculation:
               </p>
               <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Equal weights CRPS</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>0.04198</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(232, 93, 74, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.coral }}>0.04078</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Mechanism CRPS</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>0.03905</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(46, 139, 139, 0.08)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.teal }}>0.03788</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ width: 180, fontSize: '1.05rem', fontWeight: 600, color: PALETTE.slate, fontFamily: TYPOGRAPHY.fontFamily }}>Relative change</div>
-                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.03905 − 0.04198) / 0.04198 ≈ −6.99%</div>
+                  <div style={{ padding: '8px 20px', background: 'rgba(0, 62, 116, 0.06)', borderRadius: 8, fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 700, color: PALETTE.navy }}>(0.03788 − 0.04078) / 0.04078 ≈ −7.12%</div>
                 </div>
               </div>
               <p style={{ margin: '12px 0 0', fontSize: '0.95rem', color: PALETTE.slate, lineHeight: 1.5, fontFamily: TYPOGRAPHY.fontFamily }}>
@@ -849,9 +849,9 @@ export default function AppendixSlide(_props: {
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 {[
-                  { label: 'This Project', wind: '−7.0%', elec: '+0.0%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
-                  { label: 'Vitali OGD (per-τ)', wind: '−18.0%', elec: '−2.0%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
-                  { label: 'Raja history-free', wind: '−1.5%', elec: '+0.0%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
+                  { label: 'This Project', wind: '−7.1%', elec: '+0.0%', tint: `rgba(46, 139, 139, 0.08)`, color: PALETTE.teal },
+                  { label: 'Vitali OGD (per-τ)', wind: '−21.1%', elec: '−4.0%', tint: `rgba(124, 58, 237, 0.08)`, color: PALETTE.purple },
+                  { label: 'Raja history-free', wind: '−1.4%', elec: '+0.0%', tint: `rgba(100, 116, 139, 0.08)`, color: PALETTE.slate },
                 ].map((item) => (
                   <div key={item.label} style={{ padding: '16px 20px', background: item.tint, borderRadius: 10, textAlign: 'center' }}>
                     <div style={{ fontSize: '1rem', fontWeight: 700, color: item.color, fontFamily: TYPOGRAPHY.fontFamily, marginBottom: 8 }}>{item.label}</div>

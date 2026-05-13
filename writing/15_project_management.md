@@ -25,7 +25,7 @@ milestones aligned with the academic calendar:
    adversary catalogue, run paired-seed attacker experiments, and
    consolidate into the final report and oral examination.
 
-Weekly supervisor meetings anchored the rhythm; asynchronous
+Weekly supervisor meetings anchored the rhythm. Asynchronous
 progress was logged in the repository's development notes.
 
 ## Risk management and contingency
@@ -75,10 +75,10 @@ proposal committed to (iv) as the main contribution, with (i)--(iii)
 as stretch goals. The present thesis delivers (iv) in full,
 addresses (i) at depth in Chapter~\ref{ch:robustness}, and leaves
 (ii) and (iii) as future work. Two smaller deviations from the ESG
-plan are worth recording. The online update is an exponentially
+plan follow. The online update is an exponentially
 weighted moving average rather than Hedge or Online Gradient
 Descent on the simplex, because the mechanism already imposes a
-simplex-free scalar skill; the trade-off is discussed in
+simplex-free scalar skill. The trade-off is discussed in
 Chapter~\ref{ch:mechanism}. The real-data validation was performed
 on the Elia offshore-wind and electricity-imbalance series rather
 than the Survey of Professional Forecasters proposed at ESG,

@@ -11,7 +11,6 @@ import {
   Legend,
   Line,
   LineChart,
-  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -25,7 +24,9 @@ import {
   loadMasterComparison,
   loadRealDataComparison,
   loadWeightRecoveryMethod1,
+  loadWeightRuleComparison,
   type RealDataResult,
+  type WeightRuleComparisonRow,
 } from '@/lib/adapters';
 import type {
   BankrollAblationRow,
@@ -238,6 +239,171 @@ const METHOD_LABEL: Record<string, string> = {
   uniform: 'Equal', deposit: 'Stake-only', skill: 'Skill-only', mechanism: 'Skill × stake', best_single: 'Best single',
 };
 
+// ─── Weight-rule comparison (canonical Table 5.4) ──────────────────
+// Reads the thesis CSV bundled under /data and renders a grouped bar
+// chart (one bar per weighting rule, two panels for the two deposit
+// policies). Numbers match thesis Table 5.4 exactly — no in-browser
+// simulation happens here.
+
+const WEIGHT_RULE_ORDER: Array<WeightRuleComparisonRow['weightRule']> = [
+  'uniform', 'deposit', 'skill', 'mechanism', 'best_single',
+];
+
+const WEIGHT_RULE_COLORS: Record<WeightRuleComparisonRow['weightRule'], string> = {
+  uniform:     METHOD.equal.color,
+  deposit:     METHOD.stake_only.color,
+  skill:       METHOD.skill_only.color,
+  mechanism:   METHOD.blended.color,
+  best_single: '#1e3a8a',
+};
+
+const WEIGHT_RULE_LABELS: Record<WeightRuleComparisonRow['weightRule'], string> = {
+  uniform:     'Equal',
+  deposit:     'Stake-only',
+  skill:       'Skill-only',
+  mechanism:   'Skill × stake',
+  best_single: 'Best single',
+};
+
+function WeightRuleComparisonPanel({ rows }: { rows: WeightRuleComparisonRow[] }) {
+  const byPolicy = useMemo(() => {
+    const m = new Map<WeightRuleComparisonRow['depositPolicy'], WeightRuleComparisonRow[]>();
+    for (const r of rows) {
+      const arr = m.get(r.depositPolicy) ?? [];
+      arr.push(r);
+      m.set(r.depositPolicy, arr);
+    }
+    return m;
+  }, [rows]);
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-slate-800 mb-1">Method comparison</h3>
+        <p className="text-xs text-slate-500">Loading canonical results from thesis Table 5.4…</p>
+      </div>
+    );
+  }
+
+  const policies: Array<{
+    key: WeightRuleComparisonRow['depositPolicy'];
+    title: string;
+    subtitle: string;
+  }> = [
+    { key: 'fixed_unit',    title: 'Fixed-unit deposits',    subtitle: 'Every agent posts b = 1. This isolates the weighting rule.' },
+    { key: 'bankroll_conf', title: 'Bankroll-confidence deposits', subtitle: 'b scales with wealth × quantile-width confidence proxy.' },
+  ];
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-800">Method comparison: mean CRPS by weighting rule</h3>
+        <p className="text-xs text-slate-500 mt-1">
+          Canonical thesis numbers (Table 5.4). 20 seeds, T = 1,000, warm-start t &gt; 200.
+          Error bars are &plusmn;1 SE across seeds. Lower is better.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {policies.map((p) => {
+          const policyRows = byPolicy.get(p.key) ?? [];
+          const data = WEIGHT_RULE_ORDER
+            .map((wr) => policyRows.find((r) => r.weightRule === wr))
+            .filter((r): r is WeightRuleComparisonRow => !!r)
+            .map((r) => ({
+              rule: r.weightRule,
+              label: WEIGHT_RULE_LABELS[r.weightRule],
+              mean: r.meanCrpsWarmstart,
+              se: r.seWs,
+              errY: [r.seWs, r.seWs] as [number, number],
+              color: WEIGHT_RULE_COLORS[r.weightRule],
+            }));
+
+          const uniformMean = data.find((d) => d.rule === 'uniform')?.mean ?? NaN;
+          const yMax = Math.max(...data.map((d) => d.mean + d.se)) * 1.05;
+          const yMin = Math.min(...data.map((d) => d.mean - d.se)) * 0.95;
+
+          return (
+            <div key={p.key} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div className="mb-2">
+                <h4 className="text-xs font-semibold text-slate-800">{p.title}</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">{p.subtitle}</p>
+              </div>
+
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={data} margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>
+                  <CartesianGrid {...GRID_PROPS} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748b' }} stroke={AXIS_STROKE} interval={0} />
+                  <YAxis
+                    tick={AXIS_TICK}
+                    stroke={AXIS_STROKE}
+                    domain={[yMin, yMax]}
+                    tickFormatter={(v) => Number(v).toFixed(4)}
+                    label={{ value: 'Mean CRPS', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: '#64748b' }}
+                  />
+                  <Tooltip content={<SmartTooltip />} />
+                  <ReferenceLine y={uniformMean} stroke="#94a3b8" strokeDasharray="4 4">
+                    <Label value="Equal weighting" position="insideTopRight" fontSize={10} fill="#94a3b8" />
+                  </ReferenceLine>
+                  <Bar dataKey="mean" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                    {data.map((d) => (
+                      <Cell key={d.rule} fill={d.color} />
+                    ))}
+                    <LabelList
+                      dataKey="mean"
+                      position="top"
+                      fontSize={10}
+                      fill="#334155"
+                      formatter={(value: unknown) => {
+                        const v = typeof value === 'number' ? value : Number(value);
+                        return Number.isFinite(v) ? v.toFixed(4) : '';
+                      }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* Numeric summary row */}
+              <div className="grid grid-cols-5 gap-1 mt-2">
+                {data.map((d) => {
+                  const delta = d.mean - uniformMean;
+                  const pct = uniformMean > 0 ? (delta / uniformMean) * 100 : 0;
+                  const isEqual = d.rule === 'uniform';
+                  return (
+                    <div key={d.rule} className="rounded border border-slate-200 bg-white px-1.5 py-1">
+                      <div className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: d.color }} />
+                        <span className="text-[10px] font-medium text-slate-600 truncate">{d.label}</span>
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-800 font-semibold mt-0.5">{d.mean.toFixed(4)}</div>
+                      <div className={`text-[10px] font-mono ${isEqual ? 'text-slate-400' : delta < 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {isEqual ? 'baseline' : `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+        <p className="text-xs text-emerald-800 leading-relaxed">
+          <span className="font-semibold">Reading the panel.</span> Under fixed deposits the weights
+          carry all the skill signal, so <em>skill-only</em> narrowly beats the mechanism (the η = 2
+          nonlinearity in the skill gate slightly compresses a signal the skill-only rule exploits
+          directly). Under bankroll deposits the deposit channel already carries skill information,
+          so <em>stake-only</em> is strong and the mechanism's extra skill gate adds little. The two
+          panels together establish the headline from the thesis text: the optimal weighting rule
+          depends on the deposit policy.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
 
 function meanFinite(values: Array<number | undefined | null>): number | null {
   const xs = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
@@ -417,6 +583,7 @@ export default function ResultsPage() {
   const [realData, setRealData] = useState<RealDataResult | null>(null);
   const [realDataElec, setRealDataElec] = useState<RealDataResult | null>(null);
   const [weightRecovery, setWeightRecovery] = useState<WeightRecoveryRow[]>([]);
+  const [weightRuleRows, setWeightRuleRows] = useState<WeightRuleComparisonRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -442,6 +609,8 @@ export default function ResultsPage() {
         if (!cancelled && rdElec) setRealDataElec(rdElec);
         const wr = await loadWeightRecoveryMethod1().catch(() => []);
         if (!cancelled) setWeightRecovery(wr);
+        const wrComp = await loadWeightRuleComparison().catch(() => []);
+        if (!cancelled) setWeightRuleRows(wrComp);
       } catch {
         if (!cancelled) setHasExpData(false);
       } finally {
@@ -570,19 +739,6 @@ export default function ResultsPage() {
   const demoEqual = demoMethods.find((x) => x.key === 'equal')!;
   const demoBlended = demoMethods.find((x) => x.key === 'blended')!;
   const demoDelta = demoBlended.pipeline.summary.meanError - demoEqual.pipeline.summary.meanError;
-
-  const demoCumError = useMemo(() => {
-    const maxLen = Math.max(...demoMethods.map((m) => m.pipeline.rounds.length));
-    const raw = Array.from({ length: maxLen }, (_, i) => {
-      const point: Record<string, number> = { round: i + 1 };
-      for (const m of demoMethods) {
-        const errors = m.pipeline.rounds.slice(0, i + 1).map((r) => r.error);
-        point[m.key] = errors.reduce((a, b) => a + b, 0) / errors.length;
-      }
-      return point;
-    });
-    return downsample(raw, 300);
-  }, [demoMethods]);
 
   const demoDeposits = useMemo(() => {
     const entries: { key: string; label: string; depositPolicy: DepositPolicy }[] = [
@@ -923,18 +1079,43 @@ export default function ResultsPage() {
 
               {/* DM test significance badge */}
               {realData?.dm_test && (
-                <div className="flex items-center gap-3 mt-2">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                    realData.dm_test.significant_at_001 ? 'bg-green-100 text-green-700' :
-                    realData.dm_test.significant_at_005 ? 'bg-amber-100 text-amber-700' :
-                    'bg-slate-100 text-slate-500'
-                  }`}>
-                    Diebold&ndash;Mariano test: p {realData.dm_test.significant_at_001 ? '< 0.001 ***' :
-                      realData.dm_test.significant_at_005 ? '< 0.05 *' : `= ${realData.dm_test.p_value.toFixed(4)}`}
-                  </span>
-                  <span className="text-[11px] text-slate-400">
-                    Mechanism vs equal weighting, Newey&ndash;West (HAC) standard errors
-                  </span>
+                <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                      realData.dm_test.significant_at_001 ? 'bg-green-100 text-green-700' :
+                      realData.dm_test.significant_at_005 ? 'bg-amber-100 text-amber-700' :
+                      'bg-slate-100 text-slate-500'
+                    }`}>
+                      Diebold&ndash;Mariano test: p {realData.dm_test.significant_at_001 ? '< 0.001 ***' :
+                        realData.dm_test.significant_at_005 ? '< 0.05 *' : `= ${realData.dm_test.p_value.toFixed(4)}`}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      Mechanism vs equal weighting, Newey&ndash;West (HAC) standard errors
+                    </span>
+                  </div>
+                  {/* Andrews (1991) auto-HAC DM + 95% block-bootstrap CI, when
+                      the audit_post_hoc.json sidecar is available. Audit pass 6
+                      (D2, D3). */}
+                  {realData.dm_test.statistic_auto_hac != null && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                      <span className="font-mono">
+                        DM<sub>Andrews</sub> = {realData.dm_test.statistic_auto_hac.toFixed(2)}
+                        {realData.dm_test.hac_lag != null && (
+                          <span className="text-slate-400"> (hac_lag = {realData.dm_test.hac_lag})</span>
+                        )}
+                      </span>
+                      {realData.audit_post_hoc?.rules?.mechanism?.delta_95pct_bootstrap_ci && (
+                        <span className="font-mono">
+                          95% CI Δ CRPS: [
+                          {realData.audit_post_hoc.rules.mechanism.delta_95pct_bootstrap_ci.lower.toFixed(5)},{' '}
+                          {realData.audit_post_hoc.rules.mechanism.delta_95pct_bootstrap_ci.upper.toFixed(5)}]
+                        </span>
+                      )}
+                      <span className="text-slate-400">
+                        Andrews (1991) auto-bandwidth; stationary block bootstrap, block = {realData.audit_post_hoc?.block_size ?? 168}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1688,88 +1869,17 @@ export default function ResultsPage() {
               <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 mb-1">Experiment setup</div>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  {DEMO_N} synthetic forecasters, baseline data-generating process
-                  (y &sim; U(0, 1); each agent reports y plus independent noise), {DEMO_T} rounds,
-                  seed {DEMO_SEED}. Four weighting methods are run on identical data; only the
-                  influence rule changes:
-                  equal (w<sub>i</sub> = 1/N), stake-only (w<sub>i</sub> &prop; b<sub>i</sub>),
-                  skill-only (w<sub>i</sub> &prop; g(σ<sub>i</sub>)), and
-                  skill &times; stake (w<sub>i</sub> &prop; b<sub>i</sub> &middot; g(σ<sub>i</sub>)).
-                  Every agent participates every round and reports truthfully, so the only thing
-                  changing is the weighting rule.
+                  Thesis Table 5.4. Latent-fixed DGP with heterogeneous forecaster noise
+                  τ<sub>i</sub> &in; [0.15, 1.0] across six forecasters, T = 1,000 rounds,
+                  averaged over 20 seeds, warm-start t &gt; 200. Two deposit policies are
+                  crossed with five weighting rules; only the weighting rule changes
+                  within each deposit regime. Every agent participates and reports
+                  truthfully.
                 </p>
               </div>
 
-              {/* Method race — cumulative error with interactive annotations */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-800">Method comparison: cumulative forecast error</h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Running average CRPS by method. Lower = better. Gap between lines = mechanism's advantage.
-                  </p>
-                </div>
-
-                {/* Live stats strip — shows final values */}
-                <div className="grid grid-cols-4 gap-2">
-                  {demoMethods.map(m => {
-                    const finalError = m.pipeline.summary.meanError;
-                    const equalError = demoMethods.find(x => x.key === 'equal')!.pipeline.summary.meanError;
-                    const delta = finalError - equalError;
-                    const pct = equalError > 0 ? (delta / equalError * 100) : 0;
-                    return (
-                      <div key={m.key} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: m.color }} />
-                          <span className="text-[11px] font-medium text-slate-600 truncate">{m.label}</span>
-                        </div>
-                        <div className="text-sm font-bold font-mono text-slate-800 mt-0.5">{fmt(finalError, 4)}</div>
-                        {m.key !== 'equal' && (
-                          <div className={`text-[11px] font-mono ${delta < 0 ? 'text-emerald-600' : delta > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                            {delta >= 0 ? '+' : ''}{pct.toFixed(1)}% vs equal
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <ResponsiveContainer width="100%" height={450}>
-                  <LineChart data={demoCumError} margin={{ ...CHART_MARGIN_LABELED, left: 52, right: 24 }}>
-                    <defs>
-                      <linearGradient id="mechAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.08} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid {...GRID_PROPS} />
-                    <XAxis dataKey="round" tick={AXIS_TICK} stroke={AXIS_STROKE}
-                      label={{ value: 'Round', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#64748b' }} />
-                    <YAxis tick={AXIS_TICK} stroke={AXIS_STROKE} domain={['auto', 'auto']}
-                      label={{ value: 'Cumulative mean error (lower = better)', angle: -90, position: 'insideLeft', offset: 8, fontSize: 11, fill: '#64748b' }} />
-                    <Tooltip content={<SmartTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
-                    {/* Phase annotation: EWMA convergence zone */}
-                    <ReferenceArea x1={1} x2={50} fill="#f1f5f9" fillOpacity={0.5} />
-                    <ReferenceLine x={50} stroke="#cbd5e1" strokeDasharray="4 4">
-                      <Label value="EWMA converges (~50 rounds)" position="top" fontSize={11} fill="#94a3b8" offset={8} />
-                    </ReferenceLine>
-                    {demoMethods.map((m) => (
-                      <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color}
-                        strokeWidth={m.key === 'blended' ? 3.5 : 2}
-                        dot={false}
-                        strokeDasharray={m.key === 'equal' ? '8 4' : m.key === 'stake_only' ? '6 3' : m.key === 'skill_only' ? '3 3' : undefined}
-                        activeDot={{ r: 5, strokeWidth: 2 }} />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-
-                {/* Insight callout */}
-                <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    <span className="font-semibold">Reading the chart:</span> the lines sit on top of each other for the first ~50 rounds while the EWMA skill estimate is still learning. After that the Skill × stake line pulls below equal weighting and stays there; the vertical gap is the measured advantage — about {fmt(Math.abs(demoDelta), 4)} mean CRPS ({(Math.abs(demoDelta) / demoEqual.pipeline.summary.meanError * 100).toFixed(1)}%).
-                  </p>
-                </div>
-              </div>
+              {/* Weight-rule comparison — canonical Table 5.4 data */}
+              <WeightRuleComparisonPanel rows={weightRuleRows} />
 
               {/* Skill convergence (demo) — with Real/DGP toggle */}
               <div>

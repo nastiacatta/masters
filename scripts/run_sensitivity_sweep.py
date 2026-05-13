@@ -39,29 +39,11 @@ from onlinev2.real_data.runner import (  # noqa: E402
     run_real_data_comparison,
 )
 
-
-_GRIDS: dict[str, dict[str, list[float]]] = {
-    "coarse": {
-        "gamma": [4.0, 8.0, 16.0],
-        "rho": [0.1, 0.3, 0.5],
-        "lam": [0.05],
-    },
-    "fine": {
-        "gamma": [2.0, 4.0, 8.0, 16.0, 32.0],
-        "rho": [0.05, 0.1, 0.2, 0.3, 0.5, 0.7],
-        "lam": [0.0, 0.05, 0.1, 0.2],
-    },
-    # Local refinement around the current wind-series optimum
-    # (γ, ρ, λ) = (16, 0.5, 0.05). Used to test whether the
-    # coarse-grid optimum sits inside a broad plateau or a narrow
-    # pointy maximum, which affects how robust the headline
-    # improvement figure is to parameter misspecification.
-    "fine_local": {
-        "gamma": [8.0, 12.0, 16.0, 20.0, 24.0, 32.0],
-        "rho": [0.3, 0.4, 0.5, 0.6, 0.7],
-        "lam": [0.03, 0.05, 0.08, 0.12],
-    },
-}
+# Canonical parameter grids shared with ``run_sensitivity_sweep_cached.py``
+# so that ``--grid <name>`` refers to the same parameter space from either
+# script (audit pass 2, M2). See ``scripts/_sweep_grids.py``.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _sweep_grids import GRIDS as _GRIDS  # noqa: E402
 
 
 def _load_wind() -> np.ndarray:

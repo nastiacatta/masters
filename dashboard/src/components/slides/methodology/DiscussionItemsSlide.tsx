@@ -35,7 +35,7 @@ const TOP_SIX: Item[] = [
   {
     index: '5',
     title: 'Restart-per-season decomposition',
-    body: 'Full-run −7.1% is partly cross-seasonal adaptation; within each season the mechanism is −0.83% to −1.20% without exception. Not a contradiction — a decomposition. Open question: how to present it so neither reading is overstated.',
+    body: 'Full-run −7.1% is partly cross-seasonal adaptation; within each season the mechanism is −3.0% to −4.2% without exception. Not a contradiction — a decomposition. Open question: how to present it so neither reading is overstated.',
   },
   {
     index: '6',

@@ -7,6 +7,10 @@
     "coverage_p10_nominal_0.10": 0.1912,
     "coverage_p50_nominal_0.50": 0.6228,
     "coverage_p90_nominal_0.90": 0.9464,
+    "crps_normalized_grid3": 0.032874,
+    "crps_mw_equivalent_grid3": 74.0,
+    "crps_normalized_grid9": 0.040272,
+    "crps_mw_equivalent_grid9": 90.65,
     "crps_normalized": 0.032874,
     "crps_mw_equivalent": 74.0,
     "mean_measured_mw": 773.68
@@ -19,6 +23,10 @@
     "coverage_p10_nominal_0.10": 0.1814,
     "coverage_p50_nominal_0.50": 0.5883,
     "coverage_p90_nominal_0.90": 0.9456,
+    "crps_normalized_grid3": 0.045635,
+    "crps_mw_equivalent_grid3": 102.72,
+    "crps_normalized_grid9": 0.056186,
+    "crps_mw_equivalent_grid9": 126.47,
     "crps_normalized": 0.045635,
     "crps_mw_equivalent": 102.72,
     "mean_measured_mw": 773.68
@@ -31,6 +39,10 @@
     "coverage_p10_nominal_0.10": 0.1863,
     "coverage_p50_nominal_0.50": 0.5852,
     "coverage_p90_nominal_0.90": 0.9388,
+    "crps_normalized_grid3": 0.043805,
+    "crps_mw_equivalent_grid3": 98.6,
+    "crps_normalized_grid9": 0.053859,
+    "crps_mw_equivalent_grid9": 121.23,
     "crps_normalized": 0.043805,
     "crps_mw_equivalent": 98.6,
     "mean_measured_mw": 773.68
@@ -43,6 +55,10 @@
     "coverage_p10_nominal_0.10": 0.2529,
     "coverage_p50_nominal_0.50": 0.5039,
     "coverage_p90_nominal_0.90": 0.8599,
+    "crps_normalized_grid3": 0.16544,
+    "crps_mw_equivalent_grid3": 372.4,
+    "crps_normalized_grid9": 0.201115,
+    "crps_mw_equivalent_grid9": 452.7,
     "crps_normalized": 0.16544,
     "crps_mw_equivalent": 372.4,
     "mean_measured_mw": 761.68

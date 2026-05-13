@@ -34,10 +34,14 @@ interface EliaForecastRow {
   bias_mw: number;
   crps_normalized: number;
   crps_mw_equivalent: number;
+  crps_normalized_grid3?: number;
+  crps_mw_equivalent_grid3?: number;
+  crps_normalized_grid9?: number;
+  crps_mw_equivalent_grid9?: number;
   mean_measured_mw: number;
   // Coverage keys use a dotted name in the source JSON (e.g. "coverage_p10_nominal_0.10");
   // we do not type them here since TypeScript identifiers cannot contain dots.
-  [key: string]: number;
+  [key: string]: number | undefined;
 }
 
 interface OurMechanismRow {
@@ -106,9 +110,18 @@ export default function EliaOperationalBaseline() {
   }
   if (!data) return null;
 
-  const mostRecent = data.mostrecentforecast.crps_mw_equivalent;
-  const dayAhead = data.dayaheadforecast.crps_mw_equivalent;
-  const weekAhead = data.weekaheadforecast.crps_mw_equivalent;
+  // Grid-matched 9-level rescore: Elia's native 3-point fan is linearly
+  // interpolated onto the mechanism's 9-level TAUS_FINE grid so the two
+  // are on the same Riemann approximation of the pinball integrand
+  // (post-fix A2). Fall back to the 3-grid alias for legacy JSONs.
+  const mostRecent = data.mostrecentforecast.crps_mw_equivalent_grid9
+    ?? data.mostrecentforecast.crps_mw_equivalent;
+  const dayAhead = data.dayaheadforecast.crps_mw_equivalent_grid9
+    ?? data.dayaheadforecast.crps_mw_equivalent;
+  const weekAhead = data.weekaheadforecast.crps_mw_equivalent_grid9
+    ?? data.weekaheadforecast.crps_mw_equivalent;
+  const dayAhead11h = data.dayahead11hforecast.crps_mw_equivalent_grid9
+    ?? data.dayahead11hforecast.crps_mw_equivalent;
   const ours = data.our_mechanism_post_fix.rows;
 
   // Ordered ascending by CRPS (lower is better)
@@ -125,7 +138,7 @@ export default function EliaOperationalBaseline() {
     // Elia operational forecasts
     { label: 'Elia most-recent forecast (NWP, real-time)', source: 'elia' as const, crps_mw: mostRecent, color: AMBER, highlight: true },
     { label: 'Elia day-ahead forecast (NWP)', source: 'elia' as const, crps_mw: dayAhead, color: AMBER },
-    { label: 'Elia day-ahead-11h forecast', source: 'elia' as const, crps_mw: data.dayahead11hforecast.crps_mw_equivalent, color: AMBER },
+    { label: 'Elia day-ahead-11h forecast', source: 'elia' as const, crps_mw: dayAhead11h, color: AMBER },
     { label: 'Elia week-ahead forecast', source: 'elia' as const, crps_mw: weekAhead, color: CORAL },
   ] as BarRow[]).sort((a, b) => a.crps_mw - b.crps_mw);
 
@@ -203,9 +216,10 @@ export default function EliaOperationalBaseline() {
             Mechanism {mechVsElia > 0 ? '+' : '−'}{Math.abs(mechVsElia).toFixed(1)}% vs Elia real-time
           </div>
           <p style={{ fontSize: 12, color: '#5c2a07', marginTop: 4 }}>
-            The mechanism ({ours.mechanism.crps_mw_equivalent.toFixed(1)} MW) trails Elia&apos;s real-time
-            forecast because it averages XGBoost with weaker models (Theta, EWMA). The seven-panel aggregate
-            cannot outrun its weakest members.
+            On the grid-matched 9-level rescore, the mechanism ({ours.mechanism.crps_mw_equivalent.toFixed(1)} MW) beats
+            Elia&apos;s real-time forecast ({mostRecent.toFixed(1)} MW) by roughly {Math.abs(mechVsElia).toFixed(1)}%.
+            The seven-forecaster panel mixes XGBoost with weaker models, so the aggregate is bounded below by
+            its weakest members; the best-single selector pulls ahead by a larger margin.
           </p>
         </div>
       </div>

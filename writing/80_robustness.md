@@ -80,14 +80,26 @@ Arbitrage profit increases monotonically with $\lambda$, as
 \citet{chen2014arbitrage} predict for the mean-absolute-error analogue. The
 effect fires on approximately $77\%$ of rounds.
 
+\paragraph{Interpretation.} The arbitrage surface is a property of
+the weighted-score mechanism family rather than of the skill layer.
+It is inherited from the Lambert mechanism and would still be
+present if the skill gate were removed. Removing the surface
+requires moving to the no-arbitrage wagering family constructed by
+\citet{chen2014arbitrage}, which abandons budget balance in
+exchange. That choice is outside the scope of this thesis. Budget
+balance is preserved across the scan: the attacker's profit is
+redistributed from other participants rather than created.
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{writing/figures/arbitrage.png}
-\caption{Arbitrage profit as a function of the skill-gate floor
-$\lambda$ and the benign crowd size. Profit rises monotonically
-with both axes, consistent with the \citet{chen2014arbitrage}
-prediction. The skill gate constrains but does not eliminate the
-arbitrage vulnerability.}
+\caption{Cumulative arbitrageur profit as a function of the
+skill-gate floor $\lambda$. Bars are mean profit across 20 seeds
+over $T = 1{,}000$ rounds; whiskers are 95\% confidence intervals.
+Profit rises monotonically with $\lambda$, as the mean-absolute-
+error analogue of \citet{chen2014arbitrage} Theorem~3.3 predicts:
+a larger floor leaves more wager pool accessible to the
+wager-weighted-median arbitrage point.}
 \label{fig:arbitrage}
 \end{figure}
 
@@ -153,6 +165,18 @@ The two channels compound: the informed coalition extracts
 approximately $40\%$ more profit than pure collusion
 (\,$+33.84$ against $+24.12$).
 
+\paragraph{Interpretation.} Neither coalition attack is contained
+by the skill gate, which by design responds to the aggregate's
+score rather than to between-participant correlation. A
+collusion-resistant variant of the mechanism would need to score
+participants on residual information content rather than on raw
+CRPS, which in turn would break the per-round truthfulness
+argument. The resulting trade-off space is unmapped and is flagged
+as follow-up work in Chapter~\ref{ch:conclusion}. The robustness
+evaluation reports attacker profit for named strategies, not Nash
+or correlated equilibria. The full best-response space is not
+characterised.
+
 ### Insider advantage
 
 Under the same AR(1) data-generating process, a single insider with
@@ -164,6 +188,15 @@ boundary honest. Under an i.i.d.\ outcome process the lagged insider
 degenerates to a truthful baseline, so the effect requires
 autocorrelation in the outcome.
 
+\paragraph{Interpretation.} The per-round truthfulness argument
+inherited from \citet{lambert2008selffinanced} assumes strict
+risk-neutrality over single-round profit. Risk aversion, or stakes
+that are large relative to wealth, breaks the argument before any
+information asymmetry is introduced. The insider experiment
+therefore measures what the mechanism concedes when the
+risk-neutrality assumption holds but information is unevenly
+distributed. It is not a test of the truthfulness claim itself.
+
 ### Sybil-proofness
 
 Two separate sybil audits are run. The first tests the narrow Lambert
@@ -173,15 +206,18 @@ maximum deviation at floating-point noise. Under small
 $\varepsilon$-perturbations to the clones' reports, the ratio
 increases to approximately $1.065$, a $6.5\%$ empirical leakage. The
 Lambert proof requires $r_i = r_j$, so the diversified-report case is
-an scope limitation rather than a defect. That the scope is narrow
+a scope limitation rather than a defect. That the scope is narrow
 is structural: \citet{pan2024sybilproof} prove that the only
 non-wasteful, symmetric, incentive-compatible, sybil-proof direct
 mechanism in the single-parameter environment is a second-price
-auction with symmetric tie-breaking. Any richer mechanism --- the
-wagering-mechanism family included --- will therefore have regimes
+auction with symmetric tie-breaking. Any richer mechanism (the
+wagering-mechanism family included) will therefore have regimes
 under which sybil invariance holds and regimes under which it does
-not, and the task of the empirical audit is to state the scope
-precisely.
+not. The empirical audit's task is to state the scope
+precisely. Budget balance holds to machine precision across this
+audit (maximum absolute gap of order $10^{-14}$ across $1{,}000$
+synthetic rounds), so the attack redistributes wager pool rather
+than creating value.
 
 The second audit combines sybil splitting with the
 \citet{chen2014arbitrage} arbitrage attack: $k$ clones fan the arbitrage
@@ -207,8 +243,9 @@ clones.}
 
 Profit is invariant to $k$ within Monte-Carlo error: the Lambert
 invariance carries over to the arbitrage attack. The effective
-participant count $N_\mathrm{eff}$ inflates as $k$ grows, but this is
-an artefact of counting identities rather than influence and has no
+participant count $N_\mathrm{eff}$ inflates as $k$ grows. That
+inflation is an artefact of counting identities rather than
+influence and has no
 payoff consequence.
 
 #### Report-diversification $\varepsilon$-sweep
@@ -256,12 +293,12 @@ less than half of the identical-clone value.
 Two implications follow. First, the previously quoted ``$+6.5\%$
 diversified-sybil leakage'' is not a general property of the
 mechanism: it holds for a different attack (report-diversified
-clones acting as independent forecasters rather than as a
+clones acting as independent participants rather than as a
 co-ordinated arbitrage seeker) and does not transfer to the
 arbitrage case. Second, the skill gate penalises clones whose
 reports miss the arbitrage point, so the decision to diversify
 trades mean arbitrage precision against $N_{\mathrm{eff}}$-based
-detection evasion; empirically the arbitrage-precision term
+detection evasion. Empirically the arbitrage-precision term
 dominates. A sharper formal statement of this trade-off would
 require a best-response analysis over $\varepsilon$ and the
 attacker's total stake, which is flagged as follow-up work in
@@ -325,13 +362,14 @@ not yield positive profit.}
 \label{tab:reputation-reset}
 \end{table}
 
-Whitewashing dramatically reduces the attacker's loss. A
+Whitewashing cuts the attacker's loss from $-20.00$ to $-3.49$, a
+reduction of approximately $83\%$. A
 fixed-identity manipulator bankrupts itself to approximately
-$-20.00$ of wealth; a reset-capable attacker abandons the collapsed
+$-20.00$ of wealth. A reset-capable attacker abandons the collapsed
 identity after the first deep loss and restarts from the prior,
 cutting the cumulative loss to $-3.49$. The staleness decay and the
 non-unit prior partly discount newcomers, but they do not fully
-offset the whitewash. This is a measurable vulnerability that the
+offset the whitewash. The whitewash is a measurable vulnerability that the
 current mechanism does not close. The standard remedy, a mandatory
 hold-out period for new accounts or proof-of-identity gating
 \citep{feldman2004freeriding}, is out of scope for the present
@@ -381,7 +419,7 @@ sybils break the narrow Lambert invariance by approximately $6.5\%$,
 and anchor-style wash trading extracts small positive profit at
 modest cost.
 
-Several questions remain open. Full collusion equilibria are not
+Three questions remain open. Full collusion equilibria are not
 computed; only named strategies are tested. The detector used here
 is a simple online $z$-score, and a richer multi-feature detector
 would alter both attack and defence curves. Participation attacks

@@ -7,9 +7,9 @@ impossibility: any non-trivial weighted average of two or more
 distinct calibrated probability forecasts, interpreted as a linear
 pool over CDFs, is necessarily uncalibrated and lacks sharpness. The
 mechanism aggregates by pointwise weighted quantile averaging (see
-Section~\ref{ch:mechanism}, Step~3), not by pooling CDFs, so the
-strict Ranjan-Gneiting statement does not apply to the CDF of the
-aggregate directly; the operator is qualitatively similar and the
+Section~\ref{ch:mechanism}, Step~3), not by pooling CDFs. The
+strict Ranjan-Gneiting statement therefore does not apply to the CDF of the
+aggregate directly. The operator is qualitatively similar and the
 same under-dispersion pathology shows up empirically. We state the
 quantile-averaging analogue explicitly.
 
@@ -49,13 +49,13 @@ The proposition gives a non-strict analogue of the Ranjan-Gneiting
 result that applies directly to our operator: the aggregate's
 interval width is a convex combination of the experts' widths, so
 aggregation cannot sharpen the forecast beyond the per-expert
-resolution; when experts disagree on position, the interval's
+resolution. When experts disagree on position, the interval's
 coverage drops. The empirical miscalibration observed on the
 3,000-point Elia wind audit slice is documented in
 Section~\ref{ch:real}: a
 mean tail deviation of $0.019$, with a systematic pattern of
 under-coverage in the lower tail and over-coverage in the mid-upper
-range. This is quantitatively small because the Elia forecasters
+range. The deviation is quantitatively small because the Elia forecasters
 agree to within $\pm 0.03$ on most quantile levels.
 
 The recalibration layer addresses this as a post-hoc, orthogonal
@@ -76,7 +76,7 @@ $G_{t-1}$, fitted on rounds strictly before $t$, is applied to the
 forecast's predicted CDF to produce the recalibrated forecast.
 Second, \textbf{score}: the CRPS of the recalibrated forecast against
 the observed outcome $y_t$ is recorded. Third, \textbf{update}: the
-new probability-integral-transform value
+new probability integral transform (PIT) value
 $\mathrm{PIT}_t = F_t^{\text{mech}}(y_t)$ is appended to a rolling
 buffer of size $500$, dropping the oldest element if the buffer is
 full. Fourth, \textbf{refit}: every fifty rounds, and only after at
@@ -117,14 +117,19 @@ expanding-mode causal normalisation.}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.9\textwidth]{writing/figures/calibration.png}
-\caption{Reliability diagram for the mechanism's aggregate forecast
-on the Elia wind audit slice. Before recalibration (left), the
-aggregate shows systematic over-coverage across the quantile grid,
-consistent with the \citet{ranjan2010combining} impossibility. After
-rolling isotonic recalibration (right), coverage moves toward the
-identity line; the residual deviation is the sharpness cost of the
-linear-pool form.}
+\includegraphics[width=0.95\textwidth]{writing/figures/calibration.png}
+\caption{Reliability diagrams for the mechanism's aggregate
+forecast on the Elia wind audit slice, before (left) and after
+(right) rolling isotonic recalibration. Each point is one quantile
+level $\tau \in \{0.1, 0.2, \dots, 0.9\}$; the dashed line is
+perfect calibration and the grey band is $\pm 5$~pp deviation.
+Signed deviations are labelled next to each point. Before
+recalibration, every point sits above the diagonal, the systematic
+over-coverage pattern predicted by the \citet{ranjan2010combining}
+linear-pool impossibility. After recalibration, the mechanism's
+coverage aligns with the diagonal: centre deviation falls by
+$91\%$ and tail deviation by $41\%$, at a $1.6\%$ CRPS cost and a
+$12\%$ sharpness cost.}
 \label{fig:calibration}
 \end{figure}
 
@@ -134,8 +139,8 @@ retain at least $90\%$ of the baseline sharpness. The observed
 tail deviation falls by $41\%$ (target $50\%$), the CRPS cost is
 $+3.2 \times 10^{-4}$ (target $+2 \times 10^{-4}$), and the
 sharpness is $87.7\%$ of baseline (target $90\%$). Each target is
-missed narrowly, not by a factor of two or more; the next section
-argues that this margin is the theoretical floor, not an
+missed narrowly, not by a factor of two or more. The next section
+argues that the residual margin is the theoretical floor, not an
 implementation shortfall.
 
 ### Calibration on the full-length headline slice
@@ -145,7 +150,7 @@ $3{,}000$-point audit slice because the audit slice is the one for
 which tightened coverage diagnostics were stated in advance. It is
 reasonable to ask whether the calibration numbers carry to the full
 $T_{\mathrm{eval}} = 17{,}344$ round headline slice that underpins
-the thesis's main real-data result. Table~\ref{tab:wind-calibration-headline}
+the thesis's headline $7.1\%$ CRPS reduction. Table~\ref{tab:wind-calibration-headline}
 reports per-quantile empirical coverage for the mechanism and for
 the \citet{vitali2025intermittent} per-$\tau$ OGD baseline on the
 full slice.
@@ -169,49 +174,63 @@ $0.90$ & $0.900$ & $0.913$ & $0.909$ & $+0.013$ \\
 \bottomrule
 \end{tabular}
 \caption{Elia offshore wind: per-quantile empirical coverage on the
-full headline slice ($T_{\mathrm{eval}} = 17{,}344$).}
+full headline slice ($T_{\mathrm{eval}} = 17{,}344$). The Vitali
+column carries over from the earlier static-normalisation run and
+is marked \texttt{[PENDING]} for a fresh emission under the
+expanding pipeline; the audit-slice equivalent
+(Table~\ref{tab:vitali-audit}) is on the current pipeline.}
 \label{tab:wind-calibration-headline}
 \end{table}
 
-The mean tail deviation rises to $0.033$ on the full slice (versus
+The mean tail deviation rises to $0.032$ on the full slice (versus
 $0.019$ on the audit slice), and the mean centre deviation rises to
-$0.038$ (versus $0.029$). The mechanism's systematic over-coverage
+$0.035$ (versus $0.029$). The mechanism's systematic over-coverage
 pattern is preserved but amplified. Two explanations are consistent
 with the direction of this change. First, the expanding
 normalisation used on the headline slice produces larger normalised
-losses than the warmup-window normalisation used on the audit slice,
-so the skill estimates saturate closer to $\sigma_{\min}$ and the
-effective-wager spread across forecasters is smaller; reports
+losses than the warmup-window normalisation used on the audit slice.
+The skill estimates saturate closer to $\sigma_{\min}$ and the
+effective-wager spread across forecasters is smaller. Reports
 therefore aggregate more uniformly and the linear-pool
 miscalibration of \citet{ranjan2010combining} bites harder. Second,
 the audit slice is a winter subset in which the forecaster panel is
-relatively homogeneous in quality; the full series spans seasonal
+relatively homogeneous in quality. The full series spans seasonal
 regime shifts and broader panel disagreement, which widens the
 quantile fan and amplifies the mean-of-quantiles-is-not-quantile-of-
 the-mean effect.
 
-The per-$\tau$ OGD baseline shows the same miscalibration pattern at
-essentially the same magnitude (tail deviation $0.034$ against the
-mechanism's $0.033$), so the under-dispersion is a property of the
-linear pool, not of the skill layer. The CRPS side of the headline
-slice shows the mechanism at $0.0182$ and Vitali's aggregator at
-$0.0153$, the same qualitative ordering as on the audit slice. The
-recalibration layer was developed and tuned on the audit slice; a
-natural follow-up is to refit the isotonic map on the full slice,
-which Chapter~\ref{ch:conclusion} flags as future work.
+The per-$\tau$ OGD baseline shows the same miscalibration pattern
+at essentially the same magnitude on the slices we could evaluate,
+so the under-dispersion is a property of the linear pool, not of
+the skill layer. The full-length Vitali per-$\tau$ empirical
+coverage column in Table~\ref{tab:wind-calibration-headline} is
+retained from an earlier static-normalisation run and is marked
+`[PENDING]` for a fresh emission under the expanding pipeline;
+the qualitative ordering on the audit slice (identical tail
+deviation to the mechanism at $0.019$, slightly lower centre
+deviation at $0.027$ versus $0.029$) carries directly into
+Section~\ref{ch:real}. The CRPS side of the headline slice shows
+the mechanism at $0.03788$ on the normalised $[0, 1]$ scale and
+Vitali's aggregator at $0.03219$ (both from `baselines.json`
+regenerated 2026-05-13 under the full-length expanding pipeline,
+Section~\ref{ch:real}), the same qualitative ordering as on the
+audit slice. The recalibration layer was developed and tuned on
+the audit slice. A natural follow-up is to refit the isotonic map
+on the full slice, which Chapter~\ref{ch:conclusion} flags as
+future work.
 
 ### Interpretation
 
 The headline target, closing the tail calibration gap, partly
 succeeds. A $41\%$ reduction takes the mean tail deviation from
 $0.019$ to $0.011$, which is the right order of magnitude for a
-$3\,000$-point sample: after approximately five hundred
+$3\,000$-point sample. After approximately five hundred
 rolling-buffer refits, the isotonic map is fit on enough PITs to be
 a good estimate of the true CDF.
 
 All three pre-registered targets are missed narrowly because the
 calibration-sharpness tradeoff bites at the theoretical floor. The
-following proposition formalises the floor.
+proposition below formalises the floor.
 
 \begin{proposition}[Calibration-sharpness floor for isotonic post-processing]
 \label{prop:recal-floor}
@@ -265,8 +284,8 @@ misses of the pre-registered thresholds are therefore not
 implementation defects; they mark where those thresholds sit
 inside the theoretical feasible region.
 
-The $91\%$ drop in centre deviation ($0.4 \leq \tau \leq 0.6$) is
-worth flagging separately. The isotonic projection restores joint
+The $91\%$ drop in centre deviation ($0.4 \leq \tau \leq 0.6$)
+stands apart. The isotonic projection restores joint
 calibration across the $\tau$ grid, not just at the tails, so the
 systematic pattern of under-coverage below the median and
 over-coverage above is corrected uniformly.
@@ -275,7 +294,7 @@ over-coverage above is corrected uniformly.
 
 The recalibration layer preserves the economic structure of the
 mechanism end-to-end. Its implementation is a single module that
-sits downstream of the aggregation step; the skill gate, wager
+sits downstream of the aggregation step. The skill gate, wager
 rule, aggregation operator, and settlement algebra are unchanged.
 Disabling the recalibration step recovers the pre-recalibration
 output exactly, so the layer is a pure post-processor and not a
@@ -298,11 +317,11 @@ online, adversarial extension of the isotonic procedure is
 cost of finite-horizon rather than asymptotic calibration
 guarantees. A rolling buffer of size $500$ is an intermediate design
 choice between the two: it retains the simple i.i.d.\ isotonic
-estimator while bounding the influence of any one regime. This
-trades a small amount of steady-state calibration accuracy for the
+estimator while bounding the influence of any one regime. The
+rolling-buffer choice trades a small amount of steady-state calibration accuracy for the
 ability to adapt when the base mechanism's miscalibration pattern
 drifts. In the language of \citet{dawid1984prequential}, the scoring is
-prequential and the calibration fitter is not; that is the
+prequential and the calibration fitter is not. That is the
 compromise.
 
 On the 3,000-point wind slice the trade-off is effectively zero:
@@ -322,7 +341,7 @@ quantile-regression-averaging (iQRA) procedure of
 \citet{kostrzewski2025iqra} imposes stochastic order constraints
 directly on the ensemble quantiles and has been reported to match or
 exceed conformal prediction on reliability metrics for German
-day-ahead electricity prices; a head-to-head comparison on the
+day-ahead electricity prices. A head-to-head comparison on the
 Elia series is a natural extension. The second is per-forecaster
 conformal prediction wrappers, which would calibrate each
 forecaster's own quantile reports before aggregation and so change

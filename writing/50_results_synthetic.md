@@ -23,7 +23,7 @@ invariants over $1\,000$ rounds and $20$ seeds.
 Invariant & Result \\
 \midrule
 Maximum absolute budget gap & $2.84 \times 10^{-14}$ \\
-Mean profit & $3.01 \times 10^{-17}$ \\
+Mean per-round profit & at floating-point noise ($10^{-17}$) \\
 Equal-score zero profit & holds \\
 Sybil profit ratio (identical reports, conserved wager)
   & $1.000000$ \\
@@ -36,9 +36,9 @@ Perfect forecast beats shifted forecast & holds \\
 \label{tab:correctness}
 \end{table}
 
-The mechanism is self-financed to machine precision: the mean profit
-at the seventeenth decimal confirms redistribution rather than
-creation of value. The narrow Lambert sybil invariance holds with
+The mechanism is self-financed to machine precision: the
+per-round mean profit at the seventeenth decimal confirms
+redistribution rather than creation of value. The narrow Lambert sybil invariance holds with
 residuals at floating-point noise.
 
 ### Skill recovery on the known-noise panel
@@ -46,12 +46,12 @@ residuals at floating-point noise.
 On the known-$\sigma$ synthetic panel ($T = 2\,000$, learning rate
 $\rho$ retuned to $0.05$ so that the EWMA saturates on the short
 horizon), the Spearman rank correlation between the learned skill
-$\sigma$ and the ground-truth CRPS is exactly $1$ on all five
-canonical seeds. The learned $\sigma$ remains in
-$[\sigma_{\min}, 1]$ and is strictly monotone in the loss; the timing
-invariant $\sigma_t = f(L_{t-1})$ is satisfied pointwise; absent
-participants' skill does not drift under $\kappa = 0$; and the
-$\gamma$ round-trip (loss-to-skill-to-loss) is idempotent.
+$\sigma$ and the ground-truth Continuous Ranked Probability Score (CRPS) is exactly $1$ on all five
+canonical seeds $\{0, 1, 2, 42, 2024\}$. The learned $\sigma$ remains in
+$[\sigma_{\min}, 1]$ and is strictly monotone in the loss. The
+timing invariant $\sigma_t = f(L_{t-1})$ is satisfied pointwise.
+Absent participants' skill does not drift under $\kappa = 0$.
+The $\gamma$ round-trip (loss-to-skill-to-loss) is idempotent.
 
 On the extended six-forecaster run ($T = 20{,}000$, twenty seeds,
 quantile mode), Table~\ref{tab:skill-recovery} reports the
@@ -85,10 +85,14 @@ $1/6! \approx 0.14\%$.
 \centering
 \includegraphics[width=0.92\textwidth]{writing/figures/skill_trajectory.png}
 \caption{Learned skill $\sigma_i$ over time on the six-forecaster
-known-noise panel. After an adaptation phase of roughly 100 to 500
-rounds the trajectories separate cleanly and retain the ordering
-implied by the ground-truth noise scale $\tau$. The dashed regions
-show one-standard-deviation bands across twenty seeds.}
+known-noise panel ($\tau \in \{0.15, 0.22, 0.32, 0.46, 0.68, 1.00\}$).
+After a 200-round warm-up at the prior $\sigma = 1$, the
+trajectories separate in a fast-adaptation phase (roughly
+$200 \leq t \leq 800$) and then refine their ordering over the
+remaining rounds. End-of-line labels identify each forecaster by
+true noise scale $\tau$; the colour ramp runs from teal
+(low-noise, skilled) to coral (high-noise). The dashed line marks
+the $\sigma_{\min} = 0.10$ floor.}
 \label{fig:skill-trajectory}
 \end{figure}
 
@@ -98,7 +102,7 @@ followed by a slow refinement that tightens the ordering between
 forecasters of similar quality. The EWMA-plus-exponential map is not
 regret-minimising; it is an estimator of reliability. On a stationary
 panel with known signal, it converges to the correct ranking, and
-this is the experiment that establishes that convergence.
+the known-noise panel establishes that convergence.
 
 ### Forecaster panel integrity
 
@@ -151,10 +155,10 @@ Elia real-data runs in Section~\ref{ch:real} therefore use
 fixed-unit deposits throughout, and any headline improvement
 reported there is attributable to the skill gate. What the table
 does say is that the deposit \emph{channel} is the widest available
-information channel: if an operator could constrain deposits to
-encode observable confidence (e.g. through a client-imposed stake
+information channel. If an operator could constrain deposits to
+encode observable confidence (for example through a client-imposed stake
 cap or a participation protocol), the CRPS ceiling would shift
-dramatically; absent that constraint, the skill gate is the only
+by tens of percent. Absent that constraint, the skill gate is the only
 lever the operator has.
 The synthetic result is therefore a statement about where the
 information ceilings sit, not about what a deployed mechanism can
@@ -163,10 +167,12 @@ achieve on its own.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.9\textwidth]{writing/figures/deposit_policy.png}
-\caption{Deposit-policy ablation under a fixed weighting rule.
-Bankroll-confidence deposits close roughly one quarter of the gap
-between fixed deposits and the oracle-precision ceiling, using only
-quantities observable to the mechanism.}
+\caption{Deposit-policy ablation under a fixed weighting rule, 20
+seeds, $T = 1{,}000$, six forecasters, quantile-CRPS scoring. The
+bankroll-confidence policy uses only observable quantities
+(wealth and reported interval width) and closes roughly one
+quarter of the gap between fixed deposits and the
+oracle-precision ceiling.}
 \label{fig:deposit-policy}
 \end{figure}
 
@@ -195,7 +201,7 @@ Rolling best single & $0.02305$ & $0.00012$ \\
 \label{tab:weight-rule-fixed}
 \end{table}
 
-The skill-only rule improves on uniform averaging by $3.5\%$. The
+The skill-only rule reduces CRPS against uniform averaging by $3.5\%$. The
 mechanism sits marginally behind skill-only under fixed deposits
 because the $\eta = 2$ nonlinearity in the skill gate compresses a
 signal the skill-only rule exploits directly.
@@ -206,7 +212,7 @@ strong ($0.02642$ CRPS), and the mechanism's additional skill gate
 adds little. Together the two tables establish that the optimal
 weighting rule depends on the deposit policy. When the skill signal
 must be extracted from the weights (fixed deposits), a skill-gated
-rule helps; when the skill signal is already in the deposit (bankroll
+rule helps. When the skill signal is already in the deposit (bankroll
 deposits), simpler weights suffice. The present contribution is to package
 both levers into a single self-financed mechanism that remains
 correct regardless of which channel carries the information.
@@ -247,17 +253,17 @@ E$^-$ (fixed wealth) & $0.05496$ & $+0.00169$ & $0.130$ & $0.000$ \\
 \end{table}
 
 The dominant finding is that removing the weight cap (variant
-D$^-$) improves CRPS by $0.0234$, because a single strong forecaster
+D$^-$) reduces CRPS by $0.0234$, because a single strong forecaster
 can capture nearly all the weight on a data-generating process where
 one forecaster has much lower noise than the others. The Herfindahl
 index as measured pre-cap remains at $0.334$, but the effective
-post-cap distribution is sharply concentrated; the Gini coefficient
+post-cap distribution is sharply concentrated. The Gini coefficient
 remains high at $0.774$. The cap exists for economic-fairness
-reasons, not for CRPS reasons; the ablation quantifies its cost
+reasons, not for CRPS reasons. The ablation quantifies its cost
 transparently.
 
 Removing the bankroll channel entirely (variants B$^-$ and E$^-$)
-pushes HHI to approximately $0.13$---near-uniform weights, and the
+pushes HHI to approximately $0.13$, near-uniform weights, and the
 Gini coefficient to zero, because the wealth channel is disabled.
 The deposit information is lost in both cases, consistent with the
 deposit-policy ablation above. Variants A$^-$ and C$^-$ are
@@ -267,10 +273,11 @@ signal enters more directly.
 ### Panel-size scaling
 
 The headline synthetic panel has $n = 6$ forecasters. The mechanism's
-behaviour at larger panel sizes --- weight concentration, the bite of
-the weight cap $\omega_{\max}$, and the sign of the CRPS improvement
-against uniform --- is a standard reviewer question for this class of
-mechanism. Table~\ref{tab:panel-scaling} reports mean CRPS and the
+behaviour at larger panel sizes, including weight concentration, the
+bite of the weight cap $\omega_{\max}$, and the sign of the CRPS
+change against uniform, is a standard reviewer question for
+this class of mechanism. Table~\ref{tab:panel-scaling} reports mean
+CRPS and the
 effective participant count $N_{\mathrm{eff}} = 1/\mathrm{HHI}$ on the
 same latent-fixed data-generating process as
 Table~\ref{tab:weight-rule-fixed}, across $n \in \{6, 12, 25, 50, 100\}$
@@ -296,19 +303,19 @@ $(\gamma, \rho, \lambda, \eta) = (4, 0.1, 0.3, 2)$ across all $n$.}
 \label{tab:panel-scaling}
 \end{table}
 
-Three things are worth recording.
+Three things follow from the table.
 
 First, $N_{\mathrm{eff}}$ grows approximately as $0.4n$, so the
 mechanism places meaningful weight on roughly $40\%$ of the panel at
-every scale; the weight cap $\omega_{\max}$ does not bind at any
+every scale. The weight cap $\omega_{\max}$ does not bind at any
 tested $n$. A $100$-forecaster panel therefore does not collapse the
 aggregate onto a handful of forecasters, which is the concentration
 failure mode that panel-size scaling experiments most commonly
 surface.
 
-Second, the sign of the CRPS improvement flips between $n = 12$
+Second, the sign of the CRPS change flips between $n = 12$
 and $n = 25$. At $n = 6$ and $n = 12$ the mechanism is
-slightly worse than uniform averaging; at $n \geq 25$ it overtakes
+slightly worse than uniform averaging. At $n \geq 25$ it overtakes
 uniform and the gap widens with $n$. The default hyperparameters were
 tuned for a ten-forecaster panel, so their sub-optimality at
 $n = 6$ is a statement about the tuning, not the mechanism: a
@@ -331,7 +338,7 @@ single-round profit. Under risk aversion a participant's optimal
 quantile report shifts away from the true quantile toward the centre
 of their belief. This experiment sweeps a shared CRRA-analogue
 risk-aversion level $\gamma_{\mathrm{ra}} \in \{0, 0.25, 0.5, 1, 2, 4\}$
-across a ten-user panel that uses the hedged-reporting policy (pull
+across a ten-participant panel that uses the hedged-reporting policy (pull
 toward $0.5$ scaled by $\gamma_{\mathrm{ra}}$) against a truthful
 baseline on the same seeds and outcome draws.
 
@@ -361,22 +368,22 @@ unpacking. On this synthetic panel the outcome is drawn uniformly
 on $[0, 1]$, so the mean of the outcome distribution is
 exactly $0.5$. Hedged reporting pulls the point forecast toward
 $0.5$, which is, on average, the optimal point forecast for this
-distribution. CRPS therefore improves with risk aversion on the
+distribution. CRPS therefore falls with rising risk aversion on the
 symmetric-outcome panel, not because hedging is incentive-compatible
-in Lambert's sense --- the per-round truthfulness argument still
-says it is not --- but because the panel's point-forecast
+in Lambert's sense (the per-round truthfulness argument still
+says it is not), but because the panel's point-forecast
 optimum coincides with the hedging target.
 
 Two takeaways follow. The first is that CRPS is not a sufficient
-witness for truthfulness: the mechanism's aggregate can improve
+witness for truthfulness: the mechanism's aggregate can fall
 under systematic mis-reporting when the mis-report happens to align
 with the conditional mean. The per-round profit column records
 $\Delta = 0$ across the sweep because, in a symmetric outcome
 process with uniformly hedged reporting, the cross-agent payoff
 re-distribution cancels. The second is that the risk-aversion
-penalty is invisible on a symmetric, stationary DGP; the Lambert
+penalty is invisible on a symmetric, stationary DGP. The Lambert
 truthfulness argument should therefore be audited on an
-asymmetric outcome process --- for example, an exponential or a
-truncated-normal distribution --- before the per-round truthfulness
-claim is extended beyond the linear-utility regime. This audit is
-flagged as follow-up work in Chapter~\ref{ch:conclusion}.
+asymmetric outcome process, for example an exponential or a
+truncated-normal distribution, before the per-round truthfulness
+claim is extended beyond the linear-utility regime. The asymmetric-DGP
+audit is flagged as follow-up work in Chapter~\ref{ch:conclusion}.

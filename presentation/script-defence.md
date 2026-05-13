@@ -226,7 +226,7 @@ On Elia electricity, the mechanism is essentially tied with equal weights. The f
 
 The mechanism reduces CRPS relative to equal weighting on wind, but how does it compare to the prior mechanisms from slide 4? I ran all three on the same pipeline.
 
-Vitali and Pinson reach the lowest CRPS in the benchmark — around eighteen per cent better than equal weights on wind. That is not surprising: their weights are unconstrained on a simplex, and they explicitly optimise a loss. What they give up is self-financing — payoffs are not guaranteed to be covered by wagers.
+Vitali and Pinson reach the lowest CRPS in the benchmark — around twenty-one per cent better than equal weights on wind. That is not surprising: their weights are unconstrained on a simplex, and they explicitly optimise a loss. What they give up is self-financing — payoffs are not guaranteed to be covered by wagers.
 
 Raja et al. is close to equal weighting. The mechanism is self-financed but has no memory across rounds, so it cannot reward consistent skill.
 

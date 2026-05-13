@@ -798,6 +798,12 @@ export interface RealDataResult {
     hac_lag?: number;
     hac_bandwidth_mode?: string;
     statistic_legacy_horizon1?: number;
+    // Added in audit pass 6 (D2): merged from ``audit_post_hoc.json``
+    // when available. These are the Andrews-auto-HAC Diebold-Mariano
+    // statistic and its p-value for the paired Δ CRPS vs uniform, with
+    // hac_lag selected by Andrews (1991). See ``RealDataAuditPostHoc``.
+    statistic_auto_hac?: number;
+    p_value_auto_hac?: number;
   };
   dm_test_skill?: {
     statistic: number;
@@ -842,6 +848,11 @@ export interface RealDataResult {
       test_delta_vs_uniform: number;
     }>;
   };
+  // Post-hoc audit sidecar (Andrews-auto HAC DM stats and 95% block-
+  // bootstrap CIs on the paired Δ CRPS vs uniform). Populated by
+  // ``loadRealDataComparison`` when ``audit_post_hoc.json`` is present
+  // alongside ``comparison.json``. Audit pass 6 (D1).
+  audit_post_hoc?: RealDataAuditPostHoc;
 }
 
 export async function loadRealDataComparison(seriesName: string = 'elia_wind'): Promise<RealDataResult | null> {
@@ -849,9 +860,86 @@ export async function loadRealDataComparison(seriesName: string = 'elia_wind'): 
     const raw = await fetchJSON<RealDataResult>(
       `${DATA_BASE}/real_data/${seriesName}/data/comparison.json`,
     );
-    if (raw?.rows?.length) return raw;
+    if (raw?.rows?.length) {
+      // Best-effort merge of post-hoc audit stats (Andrews (1991) auto-HAC DM
+      // statistic + 95% block-bootstrap CIs on Δ CRPS) when available. The
+      // sidecar is produced by the post-fix audit pipeline alongside
+      // comparison.json. Audit pass 6 (D1/D2/D3).
+      try {
+        const posthoc = await loadRealDataAuditPostHoc(seriesName);
+        if (posthoc) {
+          const mech = posthoc.rules.mechanism;
+          if (mech) {
+            raw.audit_post_hoc = posthoc;
+            // Augment the DM badge with the Andrews stat so existing
+            // renderers can show "p < 0.001 ***" based on the more
+            // conservative statistic without changing their shape.
+            if (raw.dm_test && mech.dm_uniform_vs_method_auto_hac) {
+              raw.dm_test.hac_lag = mech.dm_uniform_vs_method_auto_hac.hac_lag;
+              raw.dm_test.hac_bandwidth_mode = mech.dm_uniform_vs_method_auto_hac.hac_mode;
+              raw.dm_test.statistic_auto_hac = mech.dm_uniform_vs_method_auto_hac.statistic;
+              raw.dm_test.p_value_auto_hac = mech.dm_uniform_vs_method_auto_hac.p_value;
+            }
+          }
+        }
+      } catch {
+        // Sidecar absent is not an error — older comparison.json files
+        // predate the post-hoc pipeline.
+      }
+      return raw;
+    }
   } catch {
     // Not available.
+  }
+  return null;
+}
+
+
+/** One rule row in ``audit_post_hoc.json`` (Andrews-auto HAC DM + block-
+ *  bootstrap CIs on the paired Δ CRPS vs uniform). Audit pass 6 (D1). */
+export interface RealDataAuditPostHocRule {
+  n: number;
+  mean_crps: number;
+  mean_crps_uniform_aligned: number;
+  delta_crps_vs_uniform: number;
+  dm_uniform_vs_method_auto_hac: {
+    statistic: number;
+    p_value: number;
+    hac_lag: number;
+    hac_mode: string;
+  };
+  dm_uniform_vs_method_legacy_horizon1: {
+    statistic: number;
+    p_value: number;
+    hac_lag: number;
+  };
+  delta_95pct_bootstrap_ci: {
+    lower: number;
+    upper: number;
+    se: number;
+  };
+}
+
+/** Shape of ``audit_post_hoc.json`` as written by the post-fix pipeline. */
+export interface RealDataAuditPostHoc {
+  series_name: string;
+  T_eval: number;
+  block_size: number;
+  rules: Record<string, RealDataAuditPostHocRule>;
+}
+
+/** Load the post-hoc audit sidecar for a real-data series. Returns ``null``
+ *  when the file is absent (older or bespoke runs). */
+export async function loadRealDataAuditPostHoc(
+  seriesName: string = 'elia_wind',
+): Promise<RealDataAuditPostHoc | null> {
+  try {
+    const raw = await fetchJSON<RealDataAuditPostHoc>(
+      `${DATA_BASE}/real_data/${seriesName}/data/audit_post_hoc.json`,
+    );
+    if (raw?.rules) return raw;
+  } catch {
+    // Sidecar absent.
   }
   return null;
 }
@@ -917,6 +1005,45 @@ export async function loadPanelSizeSensitivity(): Promise<PanelSweepResult | nul
     return null;
   }
 }
+
+/** One row of the weight-rule comparison (Table 5.4 in the thesis).
+ *  Each row is one (deposit_policy, weight_rule) cell, averaged over 20 seeds.
+ */
+export interface WeightRuleComparisonRow {
+  depositPolicy: 'fixed_unit' | 'bankroll_conf';
+  weightRule: 'uniform' | 'deposit' | 'skill' | 'mechanism' | 'best_single';
+  /** Mean CRPS across all rounds, averaged over 20 seeds. */
+  meanCrpsAll: number;
+  /** Standard error across seeds for meanCrpsAll. */
+  seAll: number;
+  /** Mean CRPS on warm-start window t > T0 (matches thesis reporting). */
+  meanCrpsWarmstart: number;
+  /** Standard error for meanCrpsWarmstart. */
+  seWs: number;
+}
+
+/** Load the canonical weight-rule comparison CSV used in thesis Table 5.4. */
+export async function loadWeightRuleComparison(): Promise<WeightRuleComparisonRow[]> {
+  const raw = await fetchCSV<{
+    deposit_policy: string;
+    weight_rule: string;
+    mean_crps_all: number;
+    se_all: number;
+    mean_crps_warmstart: number;
+    se_ws: number;
+  }>(`${DATA_BASE}/core/experiments/weight_rule_comparison/data/weight_rule_comparison.csv`);
+  return raw
+    .filter((r) => r.deposit_policy && r.weight_rule)
+    .map((r) => ({
+      depositPolicy: r.deposit_policy as WeightRuleComparisonRow['depositPolicy'],
+      weightRule: r.weight_rule as WeightRuleComparisonRow['weightRule'],
+      meanCrpsAll: Number(r.mean_crps_all),
+      seAll: Number(r.se_all),
+      meanCrpsWarmstart: Number(r.mean_crps_warmstart),
+      seWs: Number(r.se_ws),
+    }));
+}
+
 
 // ── Audit adapters ─────────────────────────────────────────────────
 

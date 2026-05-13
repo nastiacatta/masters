@@ -13,15 +13,19 @@
 front_matter/01_abstract.md
 
 # -- main body --
-# Canonical academic structure (introduction → background → methods
-# → results → discussion → conclusion), with the DESE-required
-# project-management and personal-reflection sections placed after
-# the conclusion so they do not interrupt the technical argument.
-# The four results blocks are grouped under a single Results chapter
-# via concatenation: 50_results.md emits the chapter heading, the
-# four _results_* files contribute section-level content.
-10_introduction.md
-20_literature_review.md
+# The thesis opens with a merged introduction + background chapter
+# (motivation → gap → research question → contributions →
+# self-financed wagering → online forecast combination →
+# probabilistic evaluation → gap statement → roadmap), flowing
+# directly into the mechanism, methodology, and results. Discussion
+# is not a standalone chapter: interpretation of each result sits
+# next to the numbers that produced it. The DESE-required
+# project-management and personal-reflection sections are placed
+# after the conclusion so they do not interrupt the technical
+# argument. The four results blocks are grouped under a single
+# Results chapter via concatenation: 50_results.md emits the chapter
+# heading, the four _results_* files contribute section content.
+10_intro_and_background.md
 30_mechanism_design.md
 40_methodology.md
 50_results.md
@@ -29,7 +33,6 @@ front_matter/01_abstract.md
 60_results_real_data.md
 70_recalibration_layer.md
 80_robustness.md
-90_discussion_and_limits.md
 99_conclusion.md
 15_project_management.md
 95_reflection.md

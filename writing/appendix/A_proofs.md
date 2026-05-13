@@ -144,7 +144,7 @@ $w_i = m_i / \sum_j m_j$; in the
 \citet{vitali2025intermittent} design the weights are learned per
 level by simplex-projected online gradient descent, at the cost of
 budget balance. The CRPS gap between the two approaches on the
-Elia wind data (roughly eleven percentage points on the
+Elia wind data (roughly fourteen percentage points on the
 full-length run, see Section~\ref{ch:real}) is the price of
 preserving the Lambert settlement algebra.
 
